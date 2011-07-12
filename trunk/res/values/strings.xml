@@ -3,4 +3,7 @@
     <string name="hello">Hello World!</string>
     <string name="app_name">Secure SMS</string>
     <string name="compose_send">Send</string>
+    <item type="string" name="compose_sending">Sending...</item>
+    <item type="string" name="compose_sending_error_general">Your text message could not have been send due to a connectivity error of your phone.</item>
+    <item name="compose_sending_error_ok" type="string">OK</item>
 </resources>
