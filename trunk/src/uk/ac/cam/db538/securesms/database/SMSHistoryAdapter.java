@@ -15,18 +15,18 @@ import android.util.Log;
 public class SMSHistoryAdapter {
 	private static final String DATABASE_NAME = "SecureSMS.db";
 	private static final String DATABASE_TABLE = "history";
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 3;
 	
 	public static final String KEY_ID = "_id";
-	
-	public static final String KEY_PHONENUMBER = "phonenumber";
+	public static final String KEY_PHONENUMBER = "phone_number";
 	public static final int COLUMN_PHONENUMBER = 1;
-	
-	public static final String KEY_MSGBODY = "msgbody";
+	public static final String KEY_MSGBODY = "message_body";
 	public static final int COLUMN_MSGBODY = 2;
+	public static final String KEY_CREATIONTIME = "creation_time";
+	public static final int COLUMN_CREATIONTIME = 3;
 	
-	private static final String[] ALL_COLUMNS = new String[] { KEY_ID, KEY_PHONENUMBER, KEY_MSGBODY };	
-	private static final String DATABASE_CREATE = "CREATE TABLE " + DATABASE_TABLE + " (" + KEY_ID + " integer primary key autoincrement, " + KEY_PHONENUMBER + " text not null, " + KEY_MSGBODY + " text not null);";
+	private static final String[] ALL_COLUMNS = new String[] { KEY_ID, KEY_PHONENUMBER, KEY_MSGBODY, KEY_CREATIONTIME };	
+	private static final String DATABASE_CREATE = "CREATE TABLE " + DATABASE_TABLE + " (" + KEY_ID + " integer primary key autoincrement, " + KEY_PHONENUMBER + " text not null, " + KEY_MSGBODY + " text not null, " + KEY_CREATIONTIME + " text not null);";
 	
 	private static class DbHelper extends SQLiteOpenHelper {
 		public DbHelper(Context context, String name, CursorFactory factory, int version) {
@@ -42,7 +42,7 @@ public class SMSHistoryAdapter {
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			// CHANGE IF NECESSARY TO INCREASE THE VERSION OF DATABASE
 			Log.w("SMSHistoryHelper", "Upgrading from version " + oldVersion + " to " + newVersion + " which will destroy all data");
-			db.execSQL("DROP TABLE IF EXISTS " + DATABASE_NAME);
+			db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE);
 			onCreate(db);
 		}
 	}
@@ -69,6 +69,7 @@ public class SMSHistoryAdapter {
 		ContentValues newEntry = new ContentValues();
 		newEntry.put(KEY_PHONENUMBER, entry.getPhoneNumber());
 		newEntry.put(KEY_MSGBODY, entry.getMessageBody());
+		newEntry.put(KEY_CREATIONTIME, entry.getCreationTime().format3339(false));
 		long res;
 		try {
 			res = mDatabase.insert(DATABASE_TABLE, null, newEntry);
@@ -98,10 +99,12 @@ public class SMSHistoryAdapter {
 	
 	public SMSHistoryEntry getEntry(long index) {
 		Cursor query = mDatabase.query(DATABASE_TABLE, ALL_COLUMNS, KEY_ID + "=" + index, null, null, null, null, "1");
+		Time time = new Time();
+		time.parse3339(query.getString(COLUMN_MSGBODY));
 		return new SMSHistoryEntry(index, 
 		                           query.getString(COLUMN_PHONENUMBER), 
 		                           query.getString(COLUMN_MSGBODY), 
-		                           new Time()
+		                           time
 		                           );
 	}
 }
