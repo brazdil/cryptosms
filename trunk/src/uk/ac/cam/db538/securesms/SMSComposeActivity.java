@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.securesms;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.view.View;
@@ -19,6 +20,7 @@ public class SMSComposeActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.smscompose);
 		
+		final short smsPort = (short) R.integer.presets_data_sms_port;
 		final Button buttonSend = (Button) this.findViewById(R.id.compose_buttonSend);
 		final EditText editPhoneNumber = (EditText) this.findViewById(R.id.compose_editTo);
 		final EditText editMessageBody = (EditText) this.findViewById(R.id.compose_editMessageBody);
@@ -27,7 +29,8 @@ public class SMSComposeActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				SmsManager sms = SmsManager.getDefault();
-				sms.sendTextMessage(editPhoneNumber.getText().toString(), null, editMessageBody.getText().toString(), null, null);
+				sms.sendDataMessage(editPhoneNumber.getText().toString(), null, smsPort, editMessageBody.getText().toString().getBytes(), null, null);
+				//sms.sendTextMessage(editPhoneNumber.getText().toString(), null, editMessageBody.getText().toString(), null, null);
 			}
 		});
 	}

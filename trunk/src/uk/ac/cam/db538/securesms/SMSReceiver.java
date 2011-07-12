@@ -4,13 +4,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.widget.Toast;
 
 public class SMSReceiver extends BroadcastReceiver {
 
-	public static final String SMS_RECEIVED="android.provider.Telephony.SMS_RECEIVED";
+	public static final String SMS_RECEIVED="android.intent.action.DATA_SMS_RECEIVED";
 	
 	public SMSReceiver() {
 		super();
@@ -27,7 +26,8 @@ public class SMSReceiver extends BroadcastReceiver {
 					messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
 				for (SmsMessage msg : messages) {
 					byte[] data = msg.getUserData();
-					Toast.makeText(context, msg.getOriginatingAddress() + ": " + msg.getMessageBody(), Toast.LENGTH_LONG).show();
+					String body = new String(data);
+					Toast.makeText(context, msg.getOriginatingAddress() + ": " + body, Toast.LENGTH_LONG).show();
 				}
 			}
 		}
