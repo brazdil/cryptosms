@@ -25,10 +25,11 @@ public class SMSReceiver extends BroadcastReceiver {
 				SmsMessage[] messages = new SmsMessage[pdus.length];
 				for (int i = 0; i < pdus.length; ++i)
 					messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
-				for (SmsMessage msg : messages)
+				for (SmsMessage msg : messages) {
+					byte[] data = msg.getUserData();
 					Toast.makeText(context, msg.getOriginatingAddress() + ": " + msg.getMessageBody(), Toast.LENGTH_LONG).show();
+				}
 			}
 		}
 	}
-
 }
