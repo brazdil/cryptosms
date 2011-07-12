@@ -2,19 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="uk.ac.cam.db538.securesms"
       android:versionCode="1"
-      android:versionName="1.0">
+      android:versionName="0.1">
     <uses-sdk android:minSdkVersion="7" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <application android:icon="@drawable/icon" android:label="@string/app_name">
-    	<receiver android:name="SMSReceiver">
+    	<receiver android:name=".receivers.SMSReceiver">
 			<intent-filter android:priority="10">
         		<action android:name="android.intent.action.DATA_SMS_RECEIVED" />
           		<data android:scheme="sms" />
            		<data android:port="@integer/presets_data_sms_port" />
        		</intent-filter>
         </receiver>
-    	<activity android:label="@string/app_name" android:icon="@drawable/icon" android:name="SMSComposeActivity">
+    	<activity android:label="@string/app_name" android:icon="@drawable/icon" android:name=".activities.SMSConversationActivity">
     		<intent-filter>
     			<action android:name="android.intent.action.MAIN"></action>
     			<category android:name="android.intent.category.LAUNCHER"></category>

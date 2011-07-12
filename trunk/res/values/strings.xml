@@ -6,4 +6,6 @@
     <item type="string" name="compose_sending">Sending...</item>
     <item type="string" name="compose_sending_error_general">Your text message could not have been send due to a connectivity error of your phone.</item>
     <item name="compose_sending_error_ok" type="string">OK</item>
+    <string name="database_exception_insert">New entry could not have been inserted into the database.</string>
+    <item name="compose_sending_error_save" type="string">Error while saving the message into history database.</item>
 </resources>
