@@ -4,7 +4,6 @@ import java.io.*;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
-import android.text.format.Time;
 
 public class SMSHistory {
 	

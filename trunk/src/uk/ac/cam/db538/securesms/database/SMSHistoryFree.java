@@ -30,6 +30,6 @@ public class SMSHistoryFree {
 	}
 
 	public void setIndexNext(long indexNext) {
-		this.mIndexNext = mIndexNext;
+		this.mIndexNext = indexNext;
 	}
 }
