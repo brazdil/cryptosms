@@ -8,7 +8,7 @@ import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class SMSHistoryConversation {
+public class SmsHistoryConversation {
 	
 	private static final String CHARSET_LATIN = "ISO-8859-1";
 	
@@ -25,7 +25,7 @@ public class SMSHistoryConversation {
 
 	private static final int OFFSET_RANDOMDATA = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
 
-	private static final int OFFSET_NEXTINDEX = SMSHistory.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_NEXTINDEX = SmsHistory.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
 	
@@ -40,7 +40,7 @@ public class SMSHistoryConversation {
 	private long mIndexPrev;
 	private long mIndexNext;
 	
-	SMSHistoryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
+	SmsHistoryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
 		mKeysExchanged = keysExchanged;
 		mPhoneNumber = phoneNumber;
 		mTimeStamp = timeStamp;
@@ -115,11 +115,11 @@ public class SMSHistoryConversation {
 		this.mIndexNext = indexNext;
 	}
 
-	static byte[] createData(SMSHistoryConversation conversation) throws HistoryFileException {
+	static byte[] createData(SmsHistoryConversation conversation) throws HistoryFileException {
 		try {
 			byte[] temp;
 			
-			ByteBuffer convBuffer = ByteBuffer.allocate(SMSHistory.ENCRYPTED_ENTRY_SIZE);
+			ByteBuffer convBuffer = ByteBuffer.allocate(SmsHistory.ENCRYPTED_ENTRY_SIZE);
 			
 			// flags
 			byte flags = 0;
@@ -163,9 +163,9 @@ public class SMSHistoryConversation {
 			convBuffer.put(Encryption.getRandomData(LENGTH_RANDOMDATA));
 			
 			// indices
-			convBuffer.put(SMSHistory.getBytes(conversation.mIndexMessages)); 
-			convBuffer.put(SMSHistory.getBytes(conversation.mIndexPrev));
-			convBuffer.put(SMSHistory.getBytes(conversation.mIndexNext));
+			convBuffer.put(SmsHistory.getBytes(conversation.mIndexMessages)); 
+			convBuffer.put(SmsHistory.getBytes(conversation.mIndexPrev));
+			convBuffer.put(SmsHistory.getBytes(conversation.mIndexNext));
 			
 			return Encryption.encodeWithPassphrase(convBuffer.array());
 		} catch (UnsupportedEncodingException ex) {
@@ -173,7 +173,7 @@ public class SMSHistoryConversation {
 		}
 	}
 	
-	static SMSHistoryConversation parseData(byte[] dataEncrypted) throws HistoryFileException {
+	static SmsHistoryConversation parseData(byte[] dataEncrypted) throws HistoryFileException {
 		try {
 			byte[] dataPlain = Encryption.decodeWithPassphrase(dataEncrypted);
 			
@@ -190,14 +190,14 @@ public class SMSHistoryConversation {
 			Time timeStamp = new Time();
 			timeStamp.parse3339(new String(dataTimeStamp, CHARSET_LATIN));
 	
-			return new SMSHistoryConversation(keysExchanged,
+			return new SmsHistoryConversation(keysExchanged,
 			                                  new String(dataPhoneNumber, CHARSET_LATIN), 
 			                                  timeStamp, 
 			                                  dataSessionKey_Out, 
 			                                  dataSessionKey_In, 
-			                                  SMSHistory.getInt(dataPlain, OFFSET_MSGSINDEX), 
-			                                  SMSHistory.getInt(dataPlain, OFFSET_PREVINDEX),
-			                                  SMSHistory.getInt(dataPlain, OFFSET_NEXTINDEX)
+			                                  SmsHistory.getInt(dataPlain, OFFSET_MSGSINDEX), 
+			                                  SmsHistory.getInt(dataPlain, OFFSET_PREVINDEX),
+			                                  SmsHistory.getInt(dataPlain, OFFSET_NEXTINDEX)
 			                                  );
 		} catch (UnsupportedEncodingException ex) {
 			throw new HistoryFileException("Error in phone number or time stamp charset");

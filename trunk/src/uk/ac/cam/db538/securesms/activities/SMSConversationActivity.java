@@ -5,7 +5,7 @@ import java.io.IOException;
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.DatabaseException;
 import uk.ac.cam.db538.securesms.database.HistoryFileException;
-import uk.ac.cam.db538.securesms.database.SMSHistory;
+import uk.ac.cam.db538.securesms.database.SmsHistory;
 import uk.ac.cam.db538.securesms.database.SMSHistoryAdapter;
 import uk.ac.cam.db538.securesms.database.SMSHistoryEntry;
 import android.app.Activity;
@@ -89,7 +89,7 @@ public class SMSConversationActivity extends Activity {
 		
 		editContact.setText("no... :'(");
 		try {
-			SMSHistory smsHistory = SMSHistory.getSingleton(getApplicationContext());
+			SmsHistory smsHistory = SmsHistory.getSingleton(getApplicationContext());
 			if (smsHistory.getFileVersion() == 1)
 				editContact.setText("YES!!! =)");
 		} catch (IOException e) {

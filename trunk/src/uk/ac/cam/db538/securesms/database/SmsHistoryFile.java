@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 
-public class SMSHistoryFile {
+public class SmsHistoryFile {
 	public RandomAccessFile mFile;
 	public FileLock mLock;
 
-	public SMSHistoryFile(String filename) throws IOException {
+	public SmsHistoryFile(String filename) throws IOException {
 		mFile = new RandomAccessFile(filename, "rw");
 		mLock = null;
 	}
