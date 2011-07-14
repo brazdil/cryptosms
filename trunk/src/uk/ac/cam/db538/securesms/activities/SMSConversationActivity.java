@@ -1,11 +1,11 @@
 package uk.ac.cam.db538.securesms.activities;
 
+import java.io.IOException;
+
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.R.id;
-import uk.ac.cam.db538.securesms.R.integer;
-import uk.ac.cam.db538.securesms.R.layout;
-import uk.ac.cam.db538.securesms.R.string;
 import uk.ac.cam.db538.securesms.database.DatabaseException;
+import uk.ac.cam.db538.securesms.database.HistoryFileException;
+import uk.ac.cam.db538.securesms.database.SMSHistory;
 import uk.ac.cam.db538.securesms.database.SMSHistoryAdapter;
 import uk.ac.cam.db538.securesms.database.SMSHistoryEntry;
 import android.app.Activity;
@@ -18,14 +18,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -89,7 +86,18 @@ public class SMSConversationActivity extends Activity {
 		                                dialog.cancel();
 		                            }
 		                        });
-
+		
+		editContact.setText("no... :'(");
+		try {
+			SMSHistory smsHistory = SMSHistory.getSingleton(getApplicationContext());
+			if (smsHistory.getFileVersion() == 1)
+				editContact.setText("YES!!! =)");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (HistoryFileException e) {
+			e.printStackTrace();
+		}
+		
 		// Send button
 		buttonSend.setOnClickListener(new OnClickListener() {
 			@Override
@@ -144,7 +152,7 @@ public class SMSConversationActivity extends Activity {
 				);
 				
 				// Handler of delivery status
-				/*Intent deliveredIntent = new Intent(DELIVERED_SMS_ACTION);
+				Intent deliveredIntent = new Intent(DELIVERED_SMS_ACTION);
 				PendingIntent deliveredPI = PendingIntent.getBroadcast(getApplicationContext(), 0, deliveredIntent, 0);
 				registerReceiver(new BroadcastReceiver() {
 						@Override
@@ -153,9 +161,9 @@ public class SMSConversationActivity extends Activity {
 						}
 					},
 					new IntentFilter(DELIVERED_SMS_ACTION)
-				);*/
+				);
 				
-				sms.sendDataMessage(phoneNumber, null, portDataSMS, messageBody.getBytes(), sentPI, null /*deliveredPI*/);
+				sms.sendDataMessage(phoneNumber, null, portDataSMS, messageBody.getBytes(), sentPI, deliveredPI);
 			}
 		});
 	}

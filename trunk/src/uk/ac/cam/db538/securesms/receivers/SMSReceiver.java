@@ -1,11 +1,9 @@
 package uk.ac.cam.db538.securesms.receivers;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.R.integer;
 import uk.ac.cam.db538.securesms.database.DatabaseException;
 import uk.ac.cam.db538.securesms.database.SMSHistoryAdapter;
 import uk.ac.cam.db538.securesms.database.SMSHistoryEntry;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
