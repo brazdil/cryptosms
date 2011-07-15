@@ -1,49 +1,33 @@
 package uk.ac.cam.db538.securesms.database;
 
 import static org.junit.Assert.*;
+import junit.framework.TestCase;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.database.SmsHistory;
 
-public class SmsHistory_Test {
+public class SmsHistory_Test extends TestCase {
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+	protected void setUp() throws Exception {
+		super.setUp();
 	}
 
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
+	protected void tearDown() throws Exception {
+		super.tearDown();
 	}
-
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
-
-	@Test
+	
 	public void testGetFileVersion() {
 		fail("Not yet implemented");
 	}
-
-	@Test
+	
 	public void testCreateFile() {
 		fail("Not yet implemented");
 	}
-
-	@Test
+	
 	public void testAddFreeEntries() {
 		fail("Not yet implemented");
 	}
-
-	@Test
+	
 	public void testGetInt() {
 		byte[] data;
 		long result;
@@ -79,7 +63,6 @@ public class SmsHistory_Test {
 			result = SmsHistory.getInt(data, 5);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
-			assertTrue(true);
 		}
 		
 		// negative index
@@ -88,11 +71,9 @@ public class SmsHistory_Test {
 			result = SmsHistory.getInt(data, -1);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
-			assertTrue(true);
 		}
 	}
-
-	@Test
+	
 	public void testGetBytes() {
 		long number;
 		byte[] result, expected;
@@ -102,12 +83,11 @@ public class SmsHistory_Test {
 		expected = new byte[] { (byte) 0x84, (byte) 0xD2, (byte) 0xC3, (byte) 0x6E };
 		number = 2228405102L;
 		result = SmsHistory.getBytes(number);
-		assertArrayEquals(expected, result);
+		CustomAsserts.assertArrayEquals(expected, result);
 		
 		expected = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
 		number = 4294967295L;
 		result = SmsHistory.getBytes(number);
-		assertArrayEquals(expected, result);
+		CustomAsserts.assertArrayEquals(expected, result);
 	}
-
 }
