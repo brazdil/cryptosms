@@ -14,12 +14,12 @@ public class Conversation {
 	private byte[] mSessionKey_Out;
 	private byte[] mSessionKey_In;
 	
-	Conversation() throws DatabaseFileException, IOException {
+	Conversation() {
 		this(0L);
 	}
 
-	Conversation(long indexEntry) throws DatabaseFileException, IOException {
-		setIndexEntry(indexEntry);
+	Conversation(long indexEntry) {
+		mIndexEntry = indexEntry;
 	}
 
 	public void nextSessionKey_Out() {
@@ -30,22 +30,18 @@ public class Conversation {
 		setSessionKey_Out(Encryption.getHash(getSessionKey_In()));
 	}
 
-	void setIndexEntry(long indexEntry) throws DatabaseFileException, IOException {
-		this.mIndexEntry = indexEntry;
-		if (mIndexEntry != 0)
-			update();
-	}
-
 	long getIndexEntry() {
 		return mIndexEntry;
 	}
 	
 	public void update() throws DatabaseFileException, IOException {
-		Database.getSingleton().updateConversation(this);
+		if (mIndexEntry != 0)
+			Database.getSingleton().updateConversation(this);
 	}
 	
 	public void save() throws DatabaseFileException, IOException {
-		Database.getSingleton().saveConversation(this);
+		if (mIndexEntry != 0)
+			Database.getSingleton().saveConversation(this);
 	}
 
 	public void setKeysExchanged(boolean mKeysExchanged) {

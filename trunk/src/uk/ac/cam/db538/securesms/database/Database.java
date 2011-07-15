@@ -269,12 +269,12 @@ public final class Database {
 	}
 	
 	public Conversation createConversation(String phoneNumber, Time timeStamp) throws DatabaseFileException, IOException {
-		Conversation conv = new Conversation();
+		Conversation conv = null;
 		
 		smsFile.lock();
 		try {
 			// get the header
-			FileEntryHeader entryHeader = getHeader(true);
+			FileEntryHeader entryHeader = getHeader(false);
 			
 			// allocate entry for the new conversation
 			long indexNew = getEmptyEntry(false);
@@ -300,10 +300,10 @@ public final class Database {
 			                                                                    0L, 
 			                                                                    0L, 
 			                                                                    indexFirst);
-			setConversation(indexNew, entryConversation);
+			setConversation(indexNew, entryConversation, false);
 			
 			// set the real world class to hold its index
-			conv.setIndexEntry(indexNew);
+			conv = new Conversation(indexNew);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
 		} catch (IOException ex) {
@@ -349,7 +349,7 @@ public final class Database {
 		return getEmptyEntriesCount(true);
 	}
 
-	int getEmptyEntriesCount(boolean lock) throws DatabaseFileException, IOException {
+	private int getEmptyEntriesCount(boolean lock) throws DatabaseFileException, IOException {
 		int count = 0;
 
 		if (lock) smsFile.lock();
@@ -378,8 +378,9 @@ public final class Database {
 		return checkStructure(true);
 	}
 	
-	boolean checkStructure(boolean lock) throws IOException, DatabaseFileException {
+	private boolean checkStructure(boolean lock) throws IOException, DatabaseFileException {
 		boolean visitedAll = true;
+		boolean corruptedPointers = false;
 
 		if (lock) smsFile.lock();
 		try {
@@ -404,6 +405,18 @@ public final class Database {
 				indexNext = free.getIndexNext();
 			}
 			
+			// go through all the conversations
+			FileEntryConversation conv;
+			indexNext = header.getIndexConversations();
+			long indexPrev = 0;
+			while (indexNext != 0) {
+				conv = getConversation(indexNext);
+				visitedEntries[(int) indexNext] = true;
+				if (conv.getIndexPrev() != indexPrev)
+					corruptedPointers = true;
+				indexNext = conv.getIndexNext();
+			}
+			
 			// now check that all have been visited
 			for (int i = 0; i < countEntries; ++i)
 				visitedAll &= visitedEntries[i];
@@ -415,7 +428,7 @@ public final class Database {
 			if (lock) smsFile.unlock();
 		}
 		
-		return visitedAll;
+		return (visitedAll && !corruptedPointers);
 	}
 	
 	static void freeSingleton() {
