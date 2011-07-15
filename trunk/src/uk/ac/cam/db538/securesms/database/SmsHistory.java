@@ -38,7 +38,7 @@ public class SmsHistory {
 	public void createFile() throws FileNotFoundException, IOException, HistoryFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
 		byte[] headerEncoded = SmsHistory_Header.createData(new SmsHistory_Header(0, 0));
-		setEntry(headerEncoded, 0);
+		setEntry(0, headerEncoded);
 		addFreeEntries(countFreeEntries);
 	}
 	
@@ -59,11 +59,11 @@ public class SmsHistory {
 		return data;
 	}
 	
-	private void setEntry(byte[] data, long index) throws HistoryFileException, IOException {
-		setEntry(data, index, true);
+	private void setEntry(long index, byte[] data) throws HistoryFileException, IOException {
+		setEntry(index, data, true);
 	}
 	
-	private void setEntry(byte[] data, long index, boolean lock) throws HistoryFileException, IOException {
+	private void setEntry(long index, byte[] data, boolean lock) throws HistoryFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		if (offset > smsFile.mFile.length())
 			throw new HistoryFileException("Index in history file out of bounds");
@@ -73,28 +73,56 @@ public class SmsHistory {
 		smsFile.mFile.write(data);
 		if (lock) smsFile.unlock();
 	}
+	
+	private SmsHistory_Header getHeader() throws HistoryFileException, IOException {
+		return getHeader(true);
+	}
 
-	private long getFreeEntry() throws HistoryFileException, IOException {
-		SmsHistory_Header header = SmsHistory_Header.parseData(getEntry(0));
+	private SmsHistory_Header getHeader(boolean lock) throws HistoryFileException, IOException {
+		return SmsHistory_Header.parseData(getEntry(0, lock));
+	}
+	
+	private long getFreeEntry() throws HistoryFileException, IOException { 
+		return getFreeEntry(true);
+	}
+	
+	private long getFreeEntry(boolean lock) throws HistoryFileException, IOException {
+		if (lock) smsFile.lock();
+		
+		SmsHistory_Header header = getHeader(false);
 		long previousFree = header.getIndexFree();
 		if (previousFree == 0) {
 			// there are no free entries left
-			addFreeEntries(ALIGN_SIZE / CHUNK_SIZE);
-			return getFreeEntry();
+			// add some
+			addFreeEntries(ALIGN_SIZE / CHUNK_SIZE, false);
+			// recursively get a free entry
+			long free = getFreeEntry(false);
+			// unlock file
+			if (lock) smsFile.unlock();
+			// and return
+			return free;
 		}
 		else {
 			// remove the entry from stack
-			SmsHistory_Free free = SmsHistory_Free.parseData(getEntry(previousFree));
+			SmsHistory_Free free = SmsHistory_Free.parseData(getEntry(previousFree, false));
 			header.setIndexFree(free.getIndexNext());
 			// update header
-			setEntry(SmsHistory_Header.createData(header), 0);
+			setEntry(0, SmsHistory_Header.createData(header), false);
+			// unlock file
+			if (lock) smsFile.unlock();		
 			// return the index of the freed entry
 			return previousFree;
 		}
 	}
 	
-	public void addFreeEntries(int count) throws IOException, HistoryFileException {
-		SmsHistory_Header header = SmsHistory_Header.parseData(getEntry(0));
+	public void addFreeEntries(int count) throws IOException, HistoryFileException { 
+		addFreeEntries(count, true);
+	}
+	
+	public void addFreeEntries(int count, boolean lock) throws IOException, HistoryFileException {
+		if (lock) smsFile.lock();
+
+		SmsHistory_Header header = getHeader(false);
 		long previousFree = header.getIndexFree();
 		long countEntries = smsFile.mFile.length() / CHUNK_SIZE;
 		byte[][] entriesEncoded = new byte[count][];
@@ -105,11 +133,11 @@ public class SmsHistory {
 		header.setIndexFree(previousFree);
 		byte[] headerEncoded = SmsHistory_Header.createData(header);
 		
-		smsFile.lock();
 		for (int i = 0; i < count; ++i)
-			setEntry(entriesEncoded[i], countEntries + i, false);
-		setEntry(headerEncoded, 0, false);
-		smsFile.unlock();
+			setEntry(countEntries + 1, entriesEncoded[i], false);
+		setEntry(0, headerEncoded, false);
+		
+		if (lock) smsFile.unlock();
 	}
 
 	static long getInt(byte[] data) {
