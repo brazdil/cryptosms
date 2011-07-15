@@ -1,16 +1,12 @@
 package uk.ac.cam.db538.securesms.database;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 public class FileEntryConversation {
-	
-	private static final String CHARSET_LATIN = "ISO-8859-1";
 	
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_PHONENUMBER = 32;
@@ -29,7 +25,7 @@ public class FileEntryConversation {
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
 	
-	private static final int LENGTH_RANDOMDATA = OFFSET_RANDOMDATA - OFFSET_MSGSINDEX;	
+	private static final int LENGTH_RANDOMDATA = OFFSET_MSGSINDEX - OFFSET_RANDOMDATA;	
 
 	private boolean mKeysExchanged;
 	private String mPhoneNumber;
@@ -41,6 +37,11 @@ public class FileEntryConversation {
 	private long mIndexNext;
 	
 	FileEntryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
+		if (indexMessages > 0xFFFFFFFFL || 
+		    indexPrev > 0xFFFFFFFFL ||
+		    indexNext > 0xFFFFFFFFL)
+			throw new IndexOutOfBoundsException();
+
 		mKeysExchanged = keysExchanged;
 		mPhoneNumber = phoneNumber;
 		mTimeStamp = timeStamp;
@@ -116,91 +117,59 @@ public class FileEntryConversation {
 	}
 
 	static byte[] createData(FileEntryConversation conversation) throws DatabaseFileException {
-		try {
-			byte[] temp;
-			
-			ByteBuffer convBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
-			
-			// flags
-			byte flags = 0;
-			if (conversation.mKeysExchanged)
-				flags |= (byte) ((1 << 7) & 0xFF);
-			convBuffer.put(flags);
-			
-			// phone number
-			temp = conversation.mPhoneNumber.getBytes(CHARSET_LATIN);
-			byte[] bytePhoneNumber = new byte[LENGTH_PHONENUMBER];
-			if (temp.length >= LENGTH_PHONENUMBER) {
-				// copy only enough bytes to fit the space
-				System.arraycopy(temp, 0, bytePhoneNumber, 0, LENGTH_PHONENUMBER);
-			}
-			else {
-				// copy all the bytes and fill the rest with zeros
-				Arrays.fill(bytePhoneNumber, (byte) 0x00);
-				System.arraycopy(temp, 0, bytePhoneNumber, 0, temp.length);
-			}
-			convBuffer.put(bytePhoneNumber);
-			
-			// time stamp
-			temp = conversation.mTimeStamp.format3339(false).getBytes(CHARSET_LATIN);
-			byte[] byteTimeStamp = new byte[LENGTH_TIMESTAMP];
-			if (temp.length >= LENGTH_TIMESTAMP) {
-				// copy only enough bytes to fit the space (should never exceed!!!)
-				System.arraycopy(temp, 0, byteTimeStamp, 0, LENGTH_PHONENUMBER);
-			}
-			else {
-				// copy all the bytes and fill the rest with zeros
-				Arrays.fill(byteTimeStamp, (byte) 0x00);
-				System.arraycopy(temp, 0, byteTimeStamp, 0, temp.length);
-			}
-			convBuffer.put(byteTimeStamp);
-	
-			// session keys
-			convBuffer.put(conversation.mSessionKey_Out);
-			convBuffer.put(conversation.mSessionKey_In);
-			
-			// random data
-			convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
-			
-			// indices
-			convBuffer.put(Database.getBytes(conversation.mIndexMessages)); 
-			convBuffer.put(Database.getBytes(conversation.mIndexPrev));
-			convBuffer.put(Database.getBytes(conversation.mIndexNext));
-			
-			return Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
-		} catch (UnsupportedEncodingException ex) {
-			throw new DatabaseFileException("Error in phone number or time stamp charset");
-		}
+		ByteBuffer convBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
+		
+		// flags
+		byte flags = 0;
+		if (conversation.mKeysExchanged)
+			flags |= (byte) ((1 << 7) & 0xFF);
+		convBuffer.put(flags);
+		
+		// phone number
+		convBuffer.put(Database.toLatin(conversation.mPhoneNumber, LENGTH_PHONENUMBER));
+		
+		// time stamp
+		convBuffer.put(Database.toLatin(conversation.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
+
+		// session keys
+		convBuffer.put(conversation.mSessionKey_Out);
+		convBuffer.put(conversation.mSessionKey_In);
+		
+		// random data
+		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
+		
+		// indices
+		convBuffer.put(Database.getBytes(conversation.mIndexMessages)); 
+		convBuffer.put(Database.getBytes(conversation.mIndexPrev));
+		convBuffer.put(Database.getBytes(conversation.mIndexNext));
+		
+		return Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
 	}
 	
 	static FileEntryConversation parseData(byte[] dataEncrypted) throws DatabaseFileException {
-		try {
-			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			
-			byte flags = dataPlain[OFFSET_FLAGS];
-			boolean keysExchanged = ((flags & (1 << 7)) == 0) ? false : true;
-			byte[] dataPhoneNumber = new byte[LENGTH_PHONENUMBER];
-			System.arraycopy(dataPlain, OFFSET_PHONENUMBER, dataPhoneNumber, 0, LENGTH_PHONENUMBER);
-			byte[] dataTimeStamp = new byte[LENGTH_TIMESTAMP];
-			System.arraycopy(dataPlain, OFFSET_TIMESTAMP, dataTimeStamp, 0, LENGTH_TIMESTAMP);
-			byte[] dataSessionKey_Out = new byte[LENGTH_SESSIONKEY];
-			System.arraycopy(dataPlain, OFFSET_SESSIONKEY_OUTGOING, dataSessionKey_Out, 0, LENGTH_SESSIONKEY);
-			byte[] dataSessionKey_In = new byte[LENGTH_SESSIONKEY];
-			System.arraycopy(dataPlain, OFFSET_SESSIONKEY_INCOMING, dataSessionKey_In, 0, LENGTH_SESSIONKEY);
-			Time timeStamp = new Time();
-			timeStamp.parse3339(new String(dataTimeStamp, CHARSET_LATIN));
-	
-			return new FileEntryConversation(keysExchanged,
-			                                  new String(dataPhoneNumber, CHARSET_LATIN), 
-			                                  timeStamp, 
-			                                  dataSessionKey_Out, 
-			                                  dataSessionKey_In, 
-			                                  Database.getInt(dataPlain, OFFSET_MSGSINDEX), 
-			                                  Database.getInt(dataPlain, OFFSET_PREVINDEX),
-			                                  Database.getInt(dataPlain, OFFSET_NEXTINDEX)
-			                                  );
-		} catch (UnsupportedEncodingException ex) {
-			throw new DatabaseFileException("Error in phone number or time stamp charset");
-		}
+		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+		
+		byte flags = dataPlain[OFFSET_FLAGS];
+		boolean keysExchanged = ((flags & (1 << 7)) == 0) ? false : true;
+		byte[] dataPhoneNumber = new byte[LENGTH_PHONENUMBER];
+		System.arraycopy(dataPlain, OFFSET_PHONENUMBER, dataPhoneNumber, 0, LENGTH_PHONENUMBER);
+		byte[] dataTimeStamp = new byte[LENGTH_TIMESTAMP];
+		System.arraycopy(dataPlain, OFFSET_TIMESTAMP, dataTimeStamp, 0, LENGTH_TIMESTAMP);
+		byte[] dataSessionKey_Out = new byte[LENGTH_SESSIONKEY];
+		System.arraycopy(dataPlain, OFFSET_SESSIONKEY_OUTGOING, dataSessionKey_Out, 0, LENGTH_SESSIONKEY);
+		byte[] dataSessionKey_In = new byte[LENGTH_SESSIONKEY];
+		System.arraycopy(dataPlain, OFFSET_SESSIONKEY_INCOMING, dataSessionKey_In, 0, LENGTH_SESSIONKEY);
+		Time timeStamp = new Time();
+		timeStamp.parse3339(Database.fromLatin(dataTimeStamp));
+
+		return new FileEntryConversation(keysExchanged,
+		                                 Database.fromLatin(dataPhoneNumber),
+		                                 timeStamp, 
+		                                 dataSessionKey_Out, 
+		                                 dataSessionKey_In, 
+		                                 Database.getInt(dataPlain, OFFSET_MSGSINDEX), 
+		                                 Database.getInt(dataPlain, OFFSET_PREVINDEX),
+		                                 Database.getInt(dataPlain, OFFSET_NEXTINDEX)
+		                                 );
 	}
 }

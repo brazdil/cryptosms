@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.securesms.database;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
@@ -10,6 +11,7 @@ public final class Database {
 	
 	private static final String FILE_NAME = "data.db";
 	
+	private static final String CHARSET_LATIN = "ISO-8859-1";
 	static final int CHUNK_SIZE = 256;
 	static final int ALIGN_SIZE = 256 * 32; // 8KB
 	static final int ENCRYPTED_ENTRY_SIZE = CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD;
@@ -60,6 +62,42 @@ public final class Database {
 		result[2] = (byte) ((integer >> 8) & 0xFF);
 		result[3] = (byte) (integer & 0xFF);
 		return result;
+	}
+	
+	static byte[] toLatin(String text, int bufferLength) {
+		ByteBuffer buffer = ByteBuffer.allocate(bufferLength);
+
+		byte[] latin = null;
+		try {
+			latin = text.getBytes(CHARSET_LATIN);
+		} catch (UnsupportedEncodingException e) {
+		}
+		
+		if (latin.length < bufferLength) {
+			buffer.put(latin);
+			buffer.put((byte) 0x00);
+			buffer.put(Encryption.generateRandomData(bufferLength - latin.length - 1));
+		}
+		else
+			buffer.put(latin, 0, bufferLength);
+		
+		return buffer.array();		
+	}
+	
+	static String fromLatin(byte[] latinData) {
+		return fromLatin(latinData, 0, latinData.length);
+	}
+	
+	static String fromLatin(byte[] latinData, int offset, int len) {
+		int length = 0;
+		while (length < len && latinData[offset + length] != 0)
+			++length;
+		
+		try {
+			return new String(latinData, offset, Math.min(len, length), CHARSET_LATIN);
+		} catch (UnsupportedEncodingException ex) {
+			return null;
+		}		
 	}
 	
 	// FILE MANIPULATION

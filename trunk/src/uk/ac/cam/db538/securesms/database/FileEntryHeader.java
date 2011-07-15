@@ -7,9 +7,9 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
 public class FileEntryHeader {
 	static final int CURRENT_VERSION = 1;
 	
-	static final int LENGTH_PLAIN_HEADER = 4;
-	static final int LENGTH_ENCRYPTED_HEADER = Database.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
-	static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
+	private static final int LENGTH_PLAIN_HEADER = 4;
+	private static final int LENGTH_ENCRYPTED_HEADER = Database.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
+	private static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
 
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
 	private static final int OFFSET_FREEINDEX = OFFSET_CONVINDEX - 4;
