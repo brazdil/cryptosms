@@ -15,7 +15,7 @@ public class SmsHistory_Conversation {
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_PHONENUMBER = 32;
 	private static final int LENGTH_TIMESTAMP = 29;
-	private static final int LENGTH_SESSIONKEY = 32;
+	private static final int LENGTH_SESSIONKEY = Encryption.KEY_LENGTH;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_PHONENUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
@@ -160,14 +160,14 @@ public class SmsHistory_Conversation {
 			convBuffer.put(conversation.mSessionKey_In);
 			
 			// random data
-			convBuffer.put(Encryption.getRandomData(LENGTH_RANDOMDATA));
+			convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 			
 			// indices
 			convBuffer.put(SmsHistory.getBytes(conversation.mIndexMessages)); 
 			convBuffer.put(SmsHistory.getBytes(conversation.mIndexPrev));
 			convBuffer.put(SmsHistory.getBytes(conversation.mIndexNext));
 			
-			return Encryption.encryptSymmetric(convBuffer.array());
+			return Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
 		} catch (UnsupportedEncodingException ex) {
 			throw new HistoryFileException("Error in phone number or time stamp charset");
 		}
@@ -175,7 +175,7 @@ public class SmsHistory_Conversation {
 	
 	static SmsHistory_Conversation parseData(byte[] dataEncrypted) throws HistoryFileException {
 		try {
-			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted);
+			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
 			byte flags = dataPlain[OFFSET_FLAGS];
 			boolean keysExchanged = ((flags & (1 << 7)) == 0) ? false : true;

@@ -59,7 +59,7 @@ public class SmsHistory_Header {
 
 	static byte[] createData(SmsHistory_Header header) {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
-		headerBuffer.put(Encryption.getRandomData(LENGTH_ENCRYPTED_HEADER - 8));
+		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
 		headerBuffer.put(SmsHistory.getBytes(header.mIndexFree)); 
 		headerBuffer.put(SmsHistory.getBytes(header.mIndexConversations));
 		
@@ -68,7 +68,7 @@ public class SmsHistory_Header {
 		headerBufferEncrypted.put((byte) 0x4D); // M
 		headerBufferEncrypted.put((byte) 0x53); // S
 		headerBufferEncrypted.put((byte) (header.mVersion & 0xFF)); // version
-		headerBufferEncrypted.put(Encryption.encryptSymmetric(headerBuffer.array()));
+		headerBufferEncrypted.put(Encryption.encryptSymmetric(headerBuffer.array(), Encryption.retreiveEncryptionKey()));
 		
 		return headerBufferEncrypted.array();
 	}
@@ -84,7 +84,7 @@ public class SmsHistory_Header {
 
 		byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD];
 		System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD);
-		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted);
+		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		return new SmsHistory_Header(version,
 		                            SmsHistory.getInt(dataPlain, OFFSET_FREEINDEX), 
 		                            SmsHistory.getInt(dataPlain, OFFSET_CONVINDEX)

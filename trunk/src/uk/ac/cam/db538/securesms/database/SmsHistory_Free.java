@@ -18,13 +18,13 @@ public class SmsHistory_Free {
 
 	static byte[] createData(SmsHistory_Free free) {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(SmsHistory.ENCRYPTED_ENTRY_SIZE);
-		entryBuffer.put(Encryption.getRandomData(OFFSET_NEXTINDEX));
+		entryBuffer.put(Encryption.generateRandomData(OFFSET_NEXTINDEX));
 		entryBuffer.put(SmsHistory.getBytes(free.mIndexNext));
-		return Encryption.encryptSymmetric(entryBuffer.array());
+		return Encryption.encryptSymmetric(entryBuffer.array(), Encryption.retreiveEncryptionKey());
 	}
 
 	static SmsHistory_Free parseData(byte[] dataEncrypted) {
-		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted);
+		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		return new SmsHistory_Free(SmsHistory.getInt(dataPlain, OFFSET_NEXTINDEX));
 	}
 
