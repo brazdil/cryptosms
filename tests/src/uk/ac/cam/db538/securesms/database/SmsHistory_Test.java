@@ -1,6 +1,10 @@
 package uk.ac.cam.db538.securesms.database;
 
 import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.IOException;
+
 import junit.framework.TestCase;
 
 import uk.ac.cam.db538.securesms.CustomAsserts;
@@ -8,24 +12,64 @@ import uk.ac.cam.db538.securesms.database.SmsHistory;
 
 public class SmsHistory_Test extends TestCase {
 
+	private static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
+	
 	protected void setUp() throws Exception {
 		super.setUp();
+
+		// delete the file before each test
+		File file = new File(TESTING_FILE);
+		if (file.exists())
+			file.delete();
+		
+		// and free the singleton
+		SmsHistory.freeSingleton();
 	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
 	}
 	
-	public void testGetFileVersion() {
-		fail("Not yet implemented");
-	}
-	
 	public void testCreateFile() {
-		fail("Not yet implemented");
+		SmsHistory history;
+		try {
+			// file shouldn't exist before
+			assertFalse(new File(TESTING_FILE).exists());
+			
+			// should be created during getting of the singleton
+			history = SmsHistory.getSingleton(TESTING_FILE);
+			
+			// then it should exist
+			assertTrue(new File(TESTING_FILE).exists());
+			
+			// and its size should be aligned as specified
+			assertEquals(new File(TESTING_FILE).length(), SmsHistory.ALIGN_SIZE);
+
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (HistoryFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
 	}
 	
 	public void testAddFreeEntries() {
-		fail("Not yet implemented");
+		SmsHistory history;
+		try {
+			// tests whether the number of added free entries fits
+			history = SmsHistory.getSingleton(TESTING_FILE);
+			int countFree = history.getFreeEntriesCount();
+			history.addFreeEntries(10);
+			assertEquals(countFree + 10, history.getFreeEntriesCount());
+
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (HistoryFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
 	}
 	
 	public void testGetInt() {
