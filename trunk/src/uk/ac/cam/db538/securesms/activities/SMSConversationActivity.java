@@ -78,7 +78,8 @@ public class SMSConversationActivity extends Activity {
 		
 		editContact.setText("no... :'(");
 		try {
-			Database smsHistory = Database.getSingleton(getApplicationContext());
+			Database.initSingleton(getApplicationContext());
+			Database smsHistory = Database.getSingleton();
 			if (smsHistory.getFileVersion() == 1)
 				editContact.setText("YES!!! =)");
 		} catch (IOException e) {

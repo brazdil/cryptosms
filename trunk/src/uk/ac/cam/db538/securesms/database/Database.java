@@ -4,6 +4,7 @@ import java.io.*;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
+import android.text.format.Time;
 
 public final class Database {
 	
@@ -17,15 +18,19 @@ public final class Database {
 	
 	private static Database mSingleton = null;
 	
-	public static Database getSingleton(Context context) throws IOException, DatabaseFileException {
-		String filename = context.getFilesDir().getAbsolutePath() + "/" + FILE_NAME;
-		return getSingleton(filename);
+	public static Database getSingleton() throws DatabaseFileException {
+		if (mSingleton == null) 
+			throw new DatabaseFileException("Database not initialized yet");
+		return mSingleton;
 	}
 	
-	public static Database getSingleton(String filename) throws IOException, DatabaseFileException {
-		if (mSingleton == null)
-			mSingleton = new Database(filename);
-		return mSingleton;
+	public static void initSingleton(Context context) throws IOException, DatabaseFileException {
+		String filename = context.getFilesDir().getAbsolutePath() + "/" + FILE_NAME;
+		initSingleton(filename);
+	}
+	
+	public static void initSingleton(String filename) throws IOException, DatabaseFileException {
+		mSingleton = new Database(filename);
 	}
 	
 	// LOW-LEVEL BIT MANIPULATION
@@ -199,6 +204,22 @@ public final class Database {
 		}
 	}
 	
+	private FileEntryConversation getConversation(long indexEntry) throws DatabaseFileException, IOException {
+		return getConversation(indexEntry, true);
+	}
+	
+	private FileEntryConversation getConversation(long indexEntry, boolean lock) throws DatabaseFileException, IOException {
+		return FileEntryConversation.parseData(getEntry(indexEntry, lock));
+	}
+	
+	private void setConversation(long indexEntry, FileEntryConversation entryConversation) throws DatabaseFileException, IOException {
+		setConversation(indexEntry, entryConversation, true);
+	}
+	
+	private void setConversation(long indexEntry, FileEntryConversation entryConversation, boolean lock) throws DatabaseFileException, IOException {
+		setEntry(indexEntry, FileEntryConversation.createData(entryConversation), lock);		
+	}
+	
 	// HIGH-LEVEL STUFF
 
 	public int getFileVersion() throws DatabaseFileException, IOException {
@@ -209,8 +230,79 @@ public final class Database {
 		addEmptyEntries(count, true);
 	}
 	
-	public void createConversation() {
+	public Conversation createConversation(String phoneNumber, Time timeStamp) throws DatabaseFileException, IOException {
+		Conversation conv = new Conversation();
 		
+		smsFile.lock();
+		try {
+			// get the header
+			FileEntryHeader entryHeader = getHeader(true);
+			
+			// allocate entry for the new conversation
+			long indexNew = getEmptyEntry(false);
+			
+			// get the index of first conversation in list
+			long indexFirst = entryHeader.getIndexConversations();
+			// if it exists, update it and save it
+			if (indexFirst > 0) {
+				FileEntryConversation convFirst = getConversation(indexFirst);
+				convFirst.setIndexPrev(indexNew);
+				setConversation(indexFirst, convFirst);
+			}
+
+			// generate a session key
+			byte[] sessionKey = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+			
+			// create new entry and save it
+			FileEntryConversation entryConversation = new FileEntryConversation(false,
+			                                                                    phoneNumber, 
+			                                                                    timeStamp, 
+			                                                                    sessionKey, 
+			                                                                    sessionKey, 
+			                                                                    0L, 
+			                                                                    0L, 
+			                                                                    indexFirst);
+			setConversation(indexNew, entryConversation);
+			
+			// set the real world class to hold its index
+			conv.setIndexEntry(indexNew);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			smsFile.unlock();
+		}
+		
+		return conv;
+	}
+	
+	void updateConversation(Conversation conv) throws DatabaseFileException, IOException {
+		FileEntryConversation entryConversation = getConversation(conv.getIndexEntry());
+		conv.setKeysExchanged(entryConversation.getKeysExchanged());
+		conv.setPhoneNumber(entryConversation.getPhoneNumber());
+		conv.setTimeStamp(entryConversation.getTimeStamp());
+		conv.setSessionKey_Out(entryConversation.getSessionKey_Out());
+		conv.setSessionKey_In(entryConversation.getSessionKey_In());
+	}
+
+	void saveConversation(Conversation conv) throws DatabaseFileException, IOException {
+		smsFile.lock();
+		try {
+			FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), false);
+			entryConversation.setKeysExchanged(conv.getKeysExchanged());
+			entryConversation.setPhoneNumber(conv.getPhoneNumber());
+			entryConversation.setTimeStamp(conv.getTimeStamp());
+			entryConversation.setSessionKey_Out(conv.getSessionKey_Out());
+			entryConversation.setSessionKey_In(conv.getSessionKey_In());
+			setConversation(conv.getIndexEntry(), entryConversation, false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			smsFile.unlock();
+		}
 	}
 
 	// FOR TESTING PURPOSES

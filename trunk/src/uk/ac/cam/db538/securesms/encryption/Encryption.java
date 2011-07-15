@@ -21,16 +21,20 @@ public class Encryption {
 		return data;
 	}
 
-	public static byte[] getHash(String password) {
+	public static byte[] getHash(String text) {
+		return getHash(text.getBytes());
+	}
+	
+	public static byte[] getHash(byte[] data) {
 		try {
 			MessageDigest digester = MessageDigest.getInstance(HASHING_ALGORITHM);
-			return digester.digest(password.getBytes());
+			return digester.digest(data);
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-	
+
 	public static byte[] encryptSymmetric(byte[] data, byte[] key) {
 		ByteBuffer result = ByteBuffer.allocate(data.length + ENCRYPTION_OVERHEAD);
 		// IV
