@@ -3,6 +3,8 @@ package uk.ac.cam.db538.securesms.database;
 import java.io.File;
 import java.io.IOException;
 
+import android.text.format.Time;
+
 import junit.framework.TestCase;
 
 import uk.ac.cam.db538.securesms.CustomAsserts;
@@ -171,7 +173,32 @@ public class Database_Test extends TestCase {
 	}
 	
 	public void testCreateConversation() {
-		fail("Not yet implemented");
+		Database history;
+		try {
+			history = Database.getSingleton();
+			Time time = new Time(); time.setToNow();
+
+			// check that it takes only one entry
+			int countEmpty = history.getEmptyEntriesCount();
+			for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
+			{
+				history.createConversation("Shut the fuck up!", time);
+				if (countEmpty == 0)
+					assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = history.getEmptyEntriesCount()));
+				else
+					assertEquals(countEmpty - 1, (countEmpty = history.getEmptyEntriesCount()));
+			}
+			
+			// check structure
+			// DOESN'T VISIT EVERYTHING!!!
+			assertTrue(history.checkStructure());
+		} catch (DatabaseFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
+
+		fail("Not finished yet!!!");
 	}
 
 }
