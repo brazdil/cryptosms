@@ -8,7 +8,7 @@ import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class SmsHistoryConversation {
+public class SmsHistory_Conversation {
 	
 	private static final String CHARSET_LATIN = "ISO-8859-1";
 	
@@ -40,7 +40,7 @@ public class SmsHistoryConversation {
 	private long mIndexPrev;
 	private long mIndexNext;
 	
-	SmsHistoryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
+	SmsHistory_Conversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
 		mKeysExchanged = keysExchanged;
 		mPhoneNumber = phoneNumber;
 		mTimeStamp = timeStamp;
@@ -115,7 +115,7 @@ public class SmsHistoryConversation {
 		this.mIndexNext = indexNext;
 	}
 
-	static byte[] createData(SmsHistoryConversation conversation) throws HistoryFileException {
+	static byte[] createData(SmsHistory_Conversation conversation) throws HistoryFileException {
 		try {
 			byte[] temp;
 			
@@ -173,7 +173,7 @@ public class SmsHistoryConversation {
 		}
 	}
 	
-	static SmsHistoryConversation parseData(byte[] dataEncrypted) throws HistoryFileException {
+	static SmsHistory_Conversation parseData(byte[] dataEncrypted) throws HistoryFileException {
 		try {
 			byte[] dataPlain = Encryption.decodeWithPassphrase(dataEncrypted);
 			
@@ -190,7 +190,7 @@ public class SmsHistoryConversation {
 			Time timeStamp = new Time();
 			timeStamp.parse3339(new String(dataTimeStamp, CHARSET_LATIN));
 	
-			return new SmsHistoryConversation(keysExchanged,
+			return new SmsHistory_Conversation(keysExchanged,
 			                                  new String(dataPhoneNumber, CHARSET_LATIN), 
 			                                  timeStamp, 
 			                                  dataSessionKey_Out, 

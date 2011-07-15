@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class SmsHistoryHeader {
+public class SmsHistory_Header {
 	static final int LENGTH_PLAIN_HEADER = 4;
 	static final int LENGTH_ENCRYPTED_HEADER = SmsHistory.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
 
@@ -15,11 +15,11 @@ public class SmsHistoryHeader {
 	private long mIndexConversations;
 	private int mVersion;
 	
-	SmsHistoryHeader(long indexFree, long indexConversations) {
+	SmsHistory_Header(long indexFree, long indexConversations) {
 		this(indexFree, indexConversations, 1);
 	}
 	
-	SmsHistoryHeader(long indexFree, long indexConversations, int version) {
+	SmsHistory_Header(long indexFree, long indexConversations, int version) {
 		mIndexFree = indexFree;
 		mIndexConversations = indexConversations;
 		mVersion = version;
@@ -49,7 +49,7 @@ public class SmsHistoryHeader {
 		mVersion = version;
 	}
 
-	static byte[] createData(SmsHistoryHeader header) {
+	static byte[] createData(SmsHistory_Header header) {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.getRandomData(LENGTH_ENCRYPTED_HEADER - 8));
 		headerBuffer.put(SmsHistory.getBytes(header.mIndexFree)); 
@@ -65,7 +65,7 @@ public class SmsHistoryHeader {
 		return headerBufferEncrypted.array();
 	}
 	
-	static SmsHistoryHeader parseData(byte[] dataAll) throws HistoryFileException {
+	static SmsHistory_Header parseData(byte[] dataAll) throws HistoryFileException {
 		if (dataAll[0] != (byte) 0x53 ||
 		    dataAll[1] != (byte) 0x4D ||
 		    dataAll[2] != (byte) 0x53
@@ -77,7 +77,7 @@ public class SmsHistoryHeader {
 		byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER];
 		System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER);
 		byte[] dataPlain = Encryption.decodeWithPassphrase(dataEncrypted);
-		return new SmsHistoryHeader(SmsHistory.getInt(dataPlain, OFFSET_FREEINDEX), 
+		return new SmsHistory_Header(SmsHistory.getInt(dataPlain, OFFSET_FREEINDEX), 
 		                            SmsHistory.getInt(dataPlain, OFFSET_CONVINDEX),
 		                            version
 		                            );

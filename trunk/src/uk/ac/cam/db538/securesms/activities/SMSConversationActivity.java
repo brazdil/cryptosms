@@ -3,11 +3,7 @@ package uk.ac.cam.db538.securesms.activities;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.database.DatabaseException;
-import uk.ac.cam.db538.securesms.database.HistoryFileException;
-import uk.ac.cam.db538.securesms.database.SmsHistory;
-import uk.ac.cam.db538.securesms.database.SMSHistoryAdapter;
-import uk.ac.cam.db538.securesms.database.SMSHistoryEntry;
+import uk.ac.cam.db538.securesms.database.*;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
@@ -36,8 +32,6 @@ public class SMSConversationActivity extends Activity {
 	private AutoCompleteTextView editContact;
 	private EditText editMessageBody;
 	
-	private SMSHistoryAdapter adapterHistory;
-
 	public SMSConversationActivity() {
 		super();
 	}
@@ -48,10 +42,6 @@ public class SMSConversationActivity extends Activity {
 		this.setContentView(R.layout.smsconversation);
 		
 		final Resources r = this.getResources();
-		
-		// Open connection to history database
-		adapterHistory = new SMSHistoryAdapter(getApplicationContext());
-		adapterHistory.open();
 		
 		// Values
 		final short portDataSMS = (short) r.getInteger(R.integer.presets_data_sms_port);
@@ -121,21 +111,6 @@ public class SMSConversationActivity extends Activity {
 							switch (getResultCode()) {
 							case Activity.RESULT_OK:
 								// Successfully sent
-								// Save to history database
-								try {
-									Time time = new Time();
-									time.setToNow();
-									adapterHistory.insertEntry(new SMSHistoryEntry(0, 
-									                                               phoneNumber, 
-										                                           messageBody, 
-										                                           time
-										                                           ));
-								}
-								catch (DatabaseException ex) {
-									errorDialogShown = true;
-									AlertDialog dialog = dialogbuilderSavingError.create();
-									dialog.show();
-								}
 								break;
 							default:
 								// ERROR!
