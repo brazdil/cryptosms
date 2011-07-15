@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import junit.framework.TestCase;
 
-public class SmsHistory_Header_Test extends TestCase {
+public class FileEntryHeader_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -16,11 +16,11 @@ public class SmsHistory_Header_Test extends TestCase {
 	}
 
 	public void testSmsHistory_HeaderIntLongLong() {
-		SmsHistory_Header header;
+		FileEntryHeader header;
 		
 		// ASSIGNMENT
 		
-		header = new SmsHistory_Header(12, 13L, 15L);
+		header = new FileEntryHeader(12, 13L, 15L);
 		assertEquals(header.getVersion(), 12);
 		assertEquals(header.getIndexFree(), 13L);
 		assertEquals(header.getIndexConversations(), 15L);
@@ -29,7 +29,7 @@ public class SmsHistory_Header_Test extends TestCase {
 		
 		// indexFree
 		try {
-			header = new SmsHistory_Header(1, 
+			header = new FileEntryHeader(1, 
 			                               0x0100000000L,
 					                       1L);
 			assertTrue(false);
@@ -38,7 +38,7 @@ public class SmsHistory_Header_Test extends TestCase {
 		
 		// indexConversation
 		try {
-			header = new SmsHistory_Header(1,
+			header = new FileEntryHeader(1,
 					                       1L,
                                            0x0100000000L); 
 			assertTrue(false);
@@ -47,7 +47,7 @@ public class SmsHistory_Header_Test extends TestCase {
 
 		// version
 		try {
-			header = new SmsHistory_Header(0x100,
+			header = new FileEntryHeader(0x100,
 			                               1L,
 					                       1L);
 			assertTrue(false);
@@ -60,11 +60,11 @@ public class SmsHistory_Header_Test extends TestCase {
 		long indexConversation = 13L;
 		int version = 1;
 		
-		SmsHistory_Header header = new SmsHistory_Header(version, indexFree, indexConversation);
-		byte[] dataAll = SmsHistory_Header.createData(header);
+		FileEntryHeader header = new FileEntryHeader(version, indexFree, indexConversation);
+		byte[] dataAll = FileEntryHeader.createData(header);
 		
 		// chunk length
-		assertEquals(dataAll.length, SmsHistory.CHUNK_SIZE);
+		assertEquals(dataAll.length, Database.CHUNK_SIZE);
 		
 		// plain header
 		assertEquals(dataAll[0], (byte) 0x53); // S
@@ -73,13 +73,13 @@ public class SmsHistory_Header_Test extends TestCase {
 		assertEquals(dataAll[3], (byte) version); // Version 1
 		
 		// decrypt the encoded part
-		ByteBuffer buf = ByteBuffer.allocate(SmsHistory.CHUNK_SIZE - 4);
-		buf.put(dataAll, 4, SmsHistory.CHUNK_SIZE - 4);
-		byte[] dataPlain = Encryption.decryptSymmetric(buf.array());
+		ByteBuffer buf = ByteBuffer.allocate(Database.CHUNK_SIZE - 4);
+		buf.put(dataAll, 4, Database.CHUNK_SIZE - 4);
+		byte[] dataPlain = Encryption.decryptSymmetric(buf.array(), Encryption.retreiveEncryptionKey());
 		
 		// check the indices
-		assertEquals(SmsHistory.getInt(dataPlain, SmsHistory.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
-		assertEquals(SmsHistory.getInt(dataPlain, SmsHistory.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
+		assertEquals(Database.getInt(dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
+		assertEquals(Database.getInt(dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
 	}
 
 	public void testParseData() {
@@ -87,31 +87,31 @@ public class SmsHistory_Header_Test extends TestCase {
 		long indexConversation = 13L;
 		int version = 1;
 		
-		byte[] dataPlain = new byte[SmsHistory_Header.LENGTH_ENCRYPTED_HEADER];
-		System.arraycopy(SmsHistory.getBytes(indexFree), 0, dataPlain, SmsHistory.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
-		System.arraycopy(SmsHistory.getBytes(indexConversation), 0, dataPlain, SmsHistory.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
-		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain);
+		byte[] dataPlain = new byte[FileEntryHeader.LENGTH_ENCRYPTED_HEADER];
+		System.arraycopy(Database.getBytes(indexFree), 0, dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
+		System.arraycopy(Database.getBytes(indexConversation), 0, dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
+		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
 		
-		byte[] dataAll = new byte[SmsHistory.CHUNK_SIZE];
-		System.arraycopy(dataEncrypted, 0, dataAll, 4, SmsHistory.CHUNK_SIZE - 4);
+		byte[] dataAll = new byte[Database.CHUNK_SIZE];
+		System.arraycopy(dataEncrypted, 0, dataAll, 4, Database.CHUNK_SIZE - 4);
 
 		// wrong header (SMS)
 		dataAll[0] = 0x53; // S
 		dataAll[1] = 0x53; // S
 		dataAll[2] = 0x53; // S
 		try {
-			SmsHistory_Header.parseData(dataAll);
+			FileEntryHeader.parseData(dataAll);
 			assertTrue(false);
-		} catch (HistoryFileException ex) {
+		} catch (DatabaseFileException ex) {
 		}
 
 		// fixed, version set
 		dataAll[1] = 0x4D; // M
 		dataAll[3] = (byte) version;
-		SmsHistory_Header header = null;
+		FileEntryHeader header = null;
 		try {
-			header = SmsHistory_Header.parseData(dataAll);
-		} catch (HistoryFileException ex) {
+			header = FileEntryHeader.parseData(dataAll);
+		} catch (DatabaseFileException ex) {
 			assertTrue(false);
 		}
 		assertEquals(indexFree, header.getIndexFree());
