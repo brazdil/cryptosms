@@ -92,6 +92,32 @@ public class Database_Test extends TestCase {
 		CustomAsserts.assertArrayEquals(expected, result);
 	}
 
+	public void testToLatin() {
+		// should trim after 5 bytes
+		String strABCDE = "ABCDEFG";
+		byte[] byteABCDE = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x44, (byte) 0x45 };
+		CustomAsserts.assertArrayEquals(Database.toLatin(strABCDE, 5), byteABCDE);
+
+		// check only first four bytes - fifth is random
+		String strABC = "ABC";
+		byte[] byteABC = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x00, (byte) 0x00 };
+		CustomAsserts.assertArrayEquals(Database.toLatin(strABC, 5), 0, byteABC, 4);
+	}
+
+	public void testFromLatin() {
+		// simple
+		byte[] byteABC = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x00, (byte) 0x00 };
+		assertEquals(Database.fromLatin(byteABC), "ABC");
+
+		// with offset
+		byte[] byteABC2 = new byte[] { (byte) 0x00, (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x00, (byte) 0x00 };
+		assertEquals(Database.fromLatin(byteABC2, 1, 5), "ABC");
+		
+		// full
+		byte[] byteABCDE = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x44, (byte) 0x45 };
+		assertEquals(Database.fromLatin(byteABCDE), "ABCDE");
+	}
+
 	public void testCreateFile() {
 		Database history;
 		try {
@@ -148,11 +174,4 @@ public class Database_Test extends TestCase {
 		fail("Not yet implemented");
 	}
 
-	public void testToLatin() {
-		fail("Not yet implemented");
-	}
-
-	public void testFromLatin() {
-		fail("Not yet implemented");
-	}
 }
