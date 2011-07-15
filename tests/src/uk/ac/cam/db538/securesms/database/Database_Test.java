@@ -22,52 +22,11 @@ public class Database_Test extends TestCase {
 		
 		// and free the singleton
 		Database.freeSingleton();
+		Database.initSingleton(TESTING_FILE);
 	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
-	}
-	
-	public void testCreateFile() {
-		Database history;
-		try {
-			// file shouldn't exist before
-			assertFalse(new File(TESTING_FILE).exists());
-			
-			// should be created during getting of the singleton
-			history = Database.getSingleton(TESTING_FILE);
-			
-			// then it should exist
-			assertTrue(new File(TESTING_FILE).exists());
-			
-			// and its size should be aligned as specified
-			assertEquals(new File(TESTING_FILE).length(), Database.ALIGN_SIZE);
-
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
-	}
-	
-	public void testAddFreeEntries() {
-		Database history;
-		try {
-			// tests whether the number of added free entries fits
-			history = Database.getSingleton(TESTING_FILE);
-			int countFree = history.getEmptyEntriesCount();
-			history.addEmptyEntries(10);
-			assertEquals(countFree + 10, history.getEmptyEntriesCount());
-
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
 	}
 	
 	public void testGetInt() {
@@ -131,5 +90,69 @@ public class Database_Test extends TestCase {
 		number = 4294967295L;
 		result = Database.getBytes(number);
 		CustomAsserts.assertArrayEquals(expected, result);
+	}
+
+	public void testCreateFile() {
+		Database history;
+		try {
+			// delete the file before each test
+			File file = new File(TESTING_FILE);
+			if (file.exists())
+				file.delete();
+			
+			// and free the singleton
+			Database.freeSingleton();
+
+			// file shouldn't exist before
+			assertFalse(new File(TESTING_FILE).exists());
+			
+			// should be created during the initialisation
+			Database.initSingleton(TESTING_FILE);
+			// then it should exist
+			assertTrue(new File(TESTING_FILE).exists());
+
+			// now we can get the singleton
+			history = Database.getSingleton();
+			
+			// and its size should be aligned as specified
+			assertEquals(new File(TESTING_FILE).length(), Database.ALIGN_SIZE);
+
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (DatabaseFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
+	}
+	
+	public void testAddFreeEntries() {
+		Database history;
+		try {
+			// tests whether the number of added free entries fits
+			history = Database.getSingleton();
+			int countFree = history.getEmptyEntriesCount();
+			history.addEmptyEntries(10);
+			assertEquals(countFree + 10, history.getEmptyEntriesCount());
+
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (DatabaseFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
+	}
+	
+	public void testCreateConversation() {
+		fail("Not yet implemented");
+	}
+
+	public void testToLatin() {
+		fail("Not yet implemented");
+	}
+
+	public void testFromLatin() {
+		fail("Not yet implemented");
 	}
 }

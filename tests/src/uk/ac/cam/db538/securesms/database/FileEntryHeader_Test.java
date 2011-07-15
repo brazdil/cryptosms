@@ -15,7 +15,7 @@ public class FileEntryHeader_Test extends TestCase {
 		super.tearDown();
 	}
 
-	public void testSmsHistory_HeaderIntLongLong() {
+	public void testConstructor() {
 		FileEntryHeader header;
 		
 		// ASSIGNMENT
@@ -87,7 +87,7 @@ public class FileEntryHeader_Test extends TestCase {
 		long indexConversation = 13L;
 		int version = 1;
 		
-		byte[] dataPlain = new byte[FileEntryHeader.LENGTH_ENCRYPTED_HEADER];
+		byte[] dataPlain = new byte[Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD];
 		System.arraycopy(Database.getBytes(indexFree), 0, dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
 		System.arraycopy(Database.getBytes(indexConversation), 0, dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());

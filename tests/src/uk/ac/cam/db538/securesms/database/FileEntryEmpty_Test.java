@@ -13,7 +13,7 @@ public class FileEntryEmpty_Test extends TestCase {
 		super.tearDown();
 	}
 
-	public void testSmsHistory_Free() {
+	public void testConstructor() {
 		FileEntryEmpty free;
 		
 		// ASSIGNMENT
@@ -28,7 +28,6 @@ public class FileEntryEmpty_Test extends TestCase {
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
-		
 	}
 
 	public void testCreateData() {
