@@ -10,6 +10,9 @@ public class SmsHistory_Free {
 	private long mIndexNext;
 	
 	SmsHistory_Free(long indexNext) {
+		if (indexNext > 0xFFFFFFFFL) 
+			throw new IndexOutOfBoundsException();
+
 		mIndexNext = indexNext;
 	}
 
