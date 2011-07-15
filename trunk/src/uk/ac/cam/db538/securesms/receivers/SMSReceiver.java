@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
-import android.text.format.Time;
 import android.widget.Toast;
 
 public class SMSReceiver extends BroadcastReceiver {

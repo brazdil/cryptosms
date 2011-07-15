@@ -4,11 +4,11 @@ import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class SmsHistory_Header {
+public class FileEntryHeader {
 	static final int CURRENT_VERSION = 1;
 	
 	static final int LENGTH_PLAIN_HEADER = 4;
-	static final int LENGTH_ENCRYPTED_HEADER = SmsHistory.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
+	static final int LENGTH_ENCRYPTED_HEADER = Database.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
 	static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
 
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
@@ -18,11 +18,11 @@ public class SmsHistory_Header {
 	private long mIndexConversations;
 	private int mVersion;
 	
-	SmsHistory_Header(long indexFree, long indexConversations) {
+	FileEntryHeader(long indexFree, long indexConversations) {
 		this(CURRENT_VERSION, indexFree, indexConversations);
 	}
 	
-	SmsHistory_Header(int version, long indexFree, long indexConversations) {
+	FileEntryHeader(int version, long indexFree, long indexConversations) {
 		if (indexFree > 0xFFFFFFFFL || 
 			indexConversations > 0xFFFFFFFFL ||
 			version > 0xFF)
@@ -57,13 +57,13 @@ public class SmsHistory_Header {
 		mVersion = version;
 	}
 
-	static byte[] createData(SmsHistory_Header header) {
+	static byte[] createData(FileEntryHeader header) {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
-		headerBuffer.put(SmsHistory.getBytes(header.mIndexFree)); 
-		headerBuffer.put(SmsHistory.getBytes(header.mIndexConversations));
+		headerBuffer.put(Database.getBytes(header.mIndexFree)); 
+		headerBuffer.put(Database.getBytes(header.mIndexConversations));
 		
-		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(SmsHistory.CHUNK_SIZE);
+		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(Database.CHUNK_SIZE);
 		headerBufferEncrypted.put((byte) 0x53); // S
 		headerBufferEncrypted.put((byte) 0x4D); // M
 		headerBufferEncrypted.put((byte) 0x53); // S
@@ -73,21 +73,21 @@ public class SmsHistory_Header {
 		return headerBufferEncrypted.array();
 	}
 	
-	static SmsHistory_Header parseData(byte[] dataAll) throws HistoryFileException {
+	static FileEntryHeader parseData(byte[] dataAll) throws DatabaseFileException {
 		if (dataAll[0] != (byte) 0x53 ||
 		    dataAll[1] != (byte) 0x4D ||
 		    dataAll[2] != (byte) 0x53
 		   )
-			throw new HistoryFileException("Not an SMS history file");
+			throw new DatabaseFileException("Not an SMS history file");
 		
 		int version = 0 | (dataAll[3] & 0xFF);
 
 		byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD];
 		System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD);
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-		return new SmsHistory_Header(version,
-		                            SmsHistory.getInt(dataPlain, OFFSET_FREEINDEX), 
-		                            SmsHistory.getInt(dataPlain, OFFSET_CONVINDEX)
+		return new FileEntryHeader(version,
+		                            Database.getInt(dataPlain, OFFSET_FREEINDEX), 
+		                            Database.getInt(dataPlain, OFFSET_CONVINDEX)
 		                            );
 	}
 }

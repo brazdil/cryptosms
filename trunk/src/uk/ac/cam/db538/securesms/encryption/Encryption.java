@@ -8,7 +8,7 @@ public class Encryption {
 	public static final int KEY_LENGTH = 32;
 	public static final int ENCRYPTION_OVERHEAD = 64;
 
-	private static final String ENCRYPTION_ALGORITHM = "PBEWithSHA256And256BitAES-CBC-BC";
+	//private static final String ENCRYPTION_ALGORITHM = "PBEWithSHA256And256BitAES-CBC-BC";
 	private static final String HASHING_ALGORITHM = "SHA-256";
 	
 	private static Random mRandom = null;

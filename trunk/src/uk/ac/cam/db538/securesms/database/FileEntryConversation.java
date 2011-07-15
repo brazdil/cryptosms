@@ -8,7 +8,7 @@ import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class SmsHistory_Conversation {
+public class FileEntryConversation {
 	
 	private static final String CHARSET_LATIN = "ISO-8859-1";
 	
@@ -25,7 +25,7 @@ public class SmsHistory_Conversation {
 
 	private static final int OFFSET_RANDOMDATA = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
 
-	private static final int OFFSET_NEXTINDEX = SmsHistory.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
 	
@@ -40,7 +40,7 @@ public class SmsHistory_Conversation {
 	private long mIndexPrev;
 	private long mIndexNext;
 	
-	SmsHistory_Conversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
+	FileEntryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
 		mKeysExchanged = keysExchanged;
 		mPhoneNumber = phoneNumber;
 		mTimeStamp = timeStamp;
@@ -115,11 +115,11 @@ public class SmsHistory_Conversation {
 		this.mIndexNext = indexNext;
 	}
 
-	static byte[] createData(SmsHistory_Conversation conversation) throws HistoryFileException {
+	static byte[] createData(FileEntryConversation conversation) throws DatabaseFileException {
 		try {
 			byte[] temp;
 			
-			ByteBuffer convBuffer = ByteBuffer.allocate(SmsHistory.ENCRYPTED_ENTRY_SIZE);
+			ByteBuffer convBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
 			
 			// flags
 			byte flags = 0;
@@ -163,17 +163,17 @@ public class SmsHistory_Conversation {
 			convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 			
 			// indices
-			convBuffer.put(SmsHistory.getBytes(conversation.mIndexMessages)); 
-			convBuffer.put(SmsHistory.getBytes(conversation.mIndexPrev));
-			convBuffer.put(SmsHistory.getBytes(conversation.mIndexNext));
+			convBuffer.put(Database.getBytes(conversation.mIndexMessages)); 
+			convBuffer.put(Database.getBytes(conversation.mIndexPrev));
+			convBuffer.put(Database.getBytes(conversation.mIndexNext));
 			
 			return Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
 		} catch (UnsupportedEncodingException ex) {
-			throw new HistoryFileException("Error in phone number or time stamp charset");
+			throw new DatabaseFileException("Error in phone number or time stamp charset");
 		}
 	}
 	
-	static SmsHistory_Conversation parseData(byte[] dataEncrypted) throws HistoryFileException {
+	static FileEntryConversation parseData(byte[] dataEncrypted) throws DatabaseFileException {
 		try {
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
@@ -190,17 +190,17 @@ public class SmsHistory_Conversation {
 			Time timeStamp = new Time();
 			timeStamp.parse3339(new String(dataTimeStamp, CHARSET_LATIN));
 	
-			return new SmsHistory_Conversation(keysExchanged,
+			return new FileEntryConversation(keysExchanged,
 			                                  new String(dataPhoneNumber, CHARSET_LATIN), 
 			                                  timeStamp, 
 			                                  dataSessionKey_Out, 
 			                                  dataSessionKey_In, 
-			                                  SmsHistory.getInt(dataPlain, OFFSET_MSGSINDEX), 
-			                                  SmsHistory.getInt(dataPlain, OFFSET_PREVINDEX),
-			                                  SmsHistory.getInt(dataPlain, OFFSET_NEXTINDEX)
+			                                  Database.getInt(dataPlain, OFFSET_MSGSINDEX), 
+			                                  Database.getInt(dataPlain, OFFSET_PREVINDEX),
+			                                  Database.getInt(dataPlain, OFFSET_NEXTINDEX)
 			                                  );
 		} catch (UnsupportedEncodingException ex) {
-			throw new HistoryFileException("Error in phone number or time stamp charset");
+			throw new DatabaseFileException("Error in phone number or time stamp charset");
 		}
 	}
 }

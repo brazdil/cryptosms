@@ -16,7 +16,6 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.SmsManager;
-import android.text.format.Time;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AutoCompleteTextView;
@@ -79,12 +78,12 @@ public class SMSConversationActivity extends Activity {
 		
 		editContact.setText("no... :'(");
 		try {
-			SmsHistory smsHistory = SmsHistory.getSingleton(getApplicationContext());
+			Database smsHistory = Database.getSingleton(getApplicationContext());
 			if (smsHistory.getFileVersion() == 1)
 				editContact.setText("YES!!! =)");
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (HistoryFileException e) {
+		} catch (DatabaseFileException e) {
 			e.printStackTrace();
 		}
 		
