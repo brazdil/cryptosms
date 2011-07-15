@@ -167,7 +167,7 @@ public class SmsHistory_Conversation {
 			convBuffer.put(SmsHistory.getBytes(conversation.mIndexPrev));
 			convBuffer.put(SmsHistory.getBytes(conversation.mIndexNext));
 			
-			return Encryption.encodeWithPassphrase(convBuffer.array());
+			return Encryption.encryptSymmetric(convBuffer.array());
 		} catch (UnsupportedEncodingException ex) {
 			throw new HistoryFileException("Error in phone number or time stamp charset");
 		}
@@ -175,7 +175,7 @@ public class SmsHistory_Conversation {
 	
 	static SmsHistory_Conversation parseData(byte[] dataEncrypted) throws HistoryFileException {
 		try {
-			byte[] dataPlain = Encryption.decodeWithPassphrase(dataEncrypted);
+			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted);
 			
 			byte flags = dataPlain[OFFSET_FLAGS];
 			boolean keysExchanged = ((flags & (1 << 7)) == 0) ? false : true;

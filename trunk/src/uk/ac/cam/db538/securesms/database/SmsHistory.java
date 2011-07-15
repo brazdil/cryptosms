@@ -112,9 +112,13 @@ public class SmsHistory {
 		smsFile.unlock();
 	}
 
+	static long getInt(byte[] data) {
+		return getInt(data, 0);
+	}
+
 	static long getInt(byte[] data, int offset) {
 		if (offset > data.length - 4)
-			return 0L;
+			throw new IndexOutOfBoundsException();
 
 		long result = data[offset] & 0xFF;
 		result <<= 8;

@@ -22,7 +22,7 @@ public class Encryption {
 		return null;
 	}
 	
-	public static byte[] encodeWithPassphrase(byte[] data) {
+	public static byte[] encryptSymmetric(byte[] data) {
 		ByteBuffer result = ByteBuffer.allocate(data.length + ENCRYPTION_OVERHEAD);
 		// IV
 		for (int i = 0; i < ENCRYPTION_OVERHEAD / 4; i++)
@@ -38,7 +38,7 @@ public class Encryption {
 		return result.array();
 	}
 	
-	public static byte[] decodeWithPassphrase(byte[] data) {
+	public static byte[] decryptSymmetric(byte[] data) {
 		ByteBuffer result = ByteBuffer.allocate(data.length - ENCRYPTION_OVERHEAD);
 		result.put(data, ENCRYPTION_OVERHEAD / 2, data.length - ENCRYPTION_OVERHEAD);
 		return result.array();

@@ -5,8 +5,11 @@ import java.nio.ByteBuffer;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 public class SmsHistory_Header {
+	static final int CURRENT_VERSION = 1;
+	
 	static final int LENGTH_PLAIN_HEADER = 4;
 	static final int LENGTH_ENCRYPTED_HEADER = SmsHistory.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
+	static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
 
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
 	private static final int OFFSET_FREEINDEX = OFFSET_CONVINDEX - 4;
@@ -16,10 +19,15 @@ public class SmsHistory_Header {
 	private int mVersion;
 	
 	SmsHistory_Header(long indexFree, long indexConversations) {
-		this(indexFree, indexConversations, 1);
+		this(CURRENT_VERSION, indexFree, indexConversations);
 	}
 	
-	SmsHistory_Header(long indexFree, long indexConversations, int version) {
+	SmsHistory_Header(int version, long indexFree, long indexConversations) {
+		if (indexFree > 0xFFFFFFFFL || 
+			indexConversations > 0xFFFFFFFFL ||
+			version > 0xFF)
+			throw new IndexOutOfBoundsException();
+		
 		mIndexFree = indexFree;
 		mIndexConversations = indexConversations;
 		mVersion = version;
@@ -60,7 +68,7 @@ public class SmsHistory_Header {
 		headerBufferEncrypted.put((byte) 0x4D); // M
 		headerBufferEncrypted.put((byte) 0x53); // S
 		headerBufferEncrypted.put((byte) (header.mVersion & 0xFF)); // version
-		headerBufferEncrypted.put(Encryption.encodeWithPassphrase(headerBuffer.array()));
+		headerBufferEncrypted.put(Encryption.encryptSymmetric(headerBuffer.array()));
 		
 		return headerBufferEncrypted.array();
 	}
@@ -74,12 +82,12 @@ public class SmsHistory_Header {
 		
 		int version = 0 | (dataAll[3] & 0xFF);
 
-		byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER];
-		System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER);
-		byte[] dataPlain = Encryption.decodeWithPassphrase(dataEncrypted);
-		return new SmsHistory_Header(SmsHistory.getInt(dataPlain, OFFSET_FREEINDEX), 
-		                            SmsHistory.getInt(dataPlain, OFFSET_CONVINDEX),
-		                            version
+		byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD];
+		System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD);
+		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted);
+		return new SmsHistory_Header(version,
+		                            SmsHistory.getInt(dataPlain, OFFSET_FREEINDEX), 
+		                            SmsHistory.getInt(dataPlain, OFFSET_CONVINDEX)
 		                            );
 	}
 }
