@@ -6,7 +6,15 @@ import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class FileEntryConversation {
+/**
+ * 
+ * Class representing a conversation entry in the secure storage file.
+ * Not to be used outside the package.
+ * 
+ * @author David Brazdil
+ *
+ */
+class FileEntryConversation {
 	
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_PHONENUMBER = 32;
@@ -47,43 +55,43 @@ public class FileEntryConversation {
 		setIndexNext(indexNext);
 	}
 	
-	public boolean getKeysExchanged() {
+	boolean getKeysExchanged() {
 		return mKeysExchanged;
 	}
 
-	public void setKeysExchanged(boolean keysExchanged) {
+	void setKeysExchanged(boolean keysExchanged) {
 		mKeysExchanged = keysExchanged;
 	}
 
-	public String getPhoneNumber() {
+	String getPhoneNumber() {
 		return mPhoneNumber;
 	}
 
-	public void setPhoneNumber(String phoneNumber) {
+	void setPhoneNumber(String phoneNumber) {
 		this.mPhoneNumber = phoneNumber;
 	}
 
-	public Time getTimeStamp() {
+	Time getTimeStamp() {
 		return mTimeStamp;
 	}
 
-	public void setTimeStamp(Time timeStamp) {
+	void setTimeStamp(Time timeStamp) {
 		this.mTimeStamp = timeStamp;
 	}
 
-	public byte[] getSessionKey_Out() {
+	byte[] getSessionKey_Out() {
 		return mSessionKey_Out;
 	}
 
-	public void setSessionKey_Out(byte[] sessionKeyOut) {
+	void setSessionKey_Out(byte[] sessionKeyOut) {
 		mSessionKey_Out = sessionKeyOut;
 	}
 
-	public byte[] getSessionKey_In() {
+	byte[] getSessionKey_In() {
 		return mSessionKey_In;
 	}
 
-	public void setSessionKey_In(byte[] sessionKeyIn) {
+	void setSessionKey_In(byte[] sessionKeyIn) {
 		mSessionKey_In = sessionKeyIn;
 	}
 

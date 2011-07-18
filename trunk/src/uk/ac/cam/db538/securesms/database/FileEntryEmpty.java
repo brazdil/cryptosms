@@ -4,7 +4,15 @@ import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class FileEntryEmpty {
+/**
+ * 
+ * Class representing an empty entry in the secure storage file.
+ * Not to be used outside the package.
+ * 
+ * @author David Brazdil
+ *
+ */
+class FileEntryEmpty {
 	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
 
 	private long mIndexNext;
@@ -25,11 +33,11 @@ public class FileEntryEmpty {
 		return new FileEntryEmpty(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
 	}
 
-	public long getIndexNext() {
+	long getIndexNext() {
 		return mIndexNext;
 	}
 
-	public void setIndexNext(long indexNext) {
+	void setIndexNext(long indexNext) {
 		if (indexNext > 0xFFFFFFFFL || indexNext < 0L) 
 			throw new IndexOutOfBoundsException();
 

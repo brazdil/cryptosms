@@ -1,9 +1,16 @@
 package uk.ac.cam.db538.securesms.database;
 
-import java.io.IOException;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import java.io.IOException;
 import android.text.format.Time;
 
+/**
+ * 
+ * Class representing a conversation with a specific person
+ * 
+ * @author David Brazdil
+ *
+ */
 public class Conversation {
 	private long mIndexEntry; // READ ONLY
 	private boolean mKeysExchanged;
@@ -12,10 +19,6 @@ public class Conversation {
 	private byte[] mSessionKey_Out;
 	private byte[] mSessionKey_In;
 	
-	Conversation() {
-		this(0L);
-	}
-
 	Conversation(long indexEntry) {
 		if (indexEntry > 0xFFFFFFFFL || indexEntry <= 0L)
 			throw new IndexOutOfBoundsException();
@@ -23,10 +26,16 @@ public class Conversation {
 		mIndexEntry = indexEntry;
 	}
 
+	/**
+	 * Hashes the session key for sending
+	 */
 	public void nextSessionKey_Out() {
 		setSessionKey_Out(Encryption.getHash(getSessionKey_Out()));
 	}
 
+	/**
+	 * Hashes the session key for receiving
+	 */
 	public void nextSessionKey_In() {
 		setSessionKey_Out(Encryption.getHash(getSessionKey_In()));
 	}
@@ -35,13 +44,18 @@ public class Conversation {
 		return mIndexEntry;
 	}
 	
+	/**
+	 * Loads data from the secure file (locks the file)
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void update() throws DatabaseFileException, IOException {
 		update(true);
 	}
 	
 	/**
-	 * 
-	 * @param lock
+	 * Loads data from the secure file
+	 * @param lock		Specifies whether the file should be locked during the operation.
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
@@ -50,49 +64,60 @@ public class Conversation {
 			Database.getSingleton().updateConversation(this, lock);
 	}
 	
+	/**
+	 * Saves data to the secure file (locks the file)
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void save() throws DatabaseFileException, IOException {
 		save(true);
 	}
 	
+	/**
+	 * Saves data to the secure file
+	 * @param lock		Specifies whether the file should be locked during the operation.
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void save(boolean lock) throws DatabaseFileException, IOException {
 		if (mIndexEntry != 0)
 			Database.getSingleton().saveConversation(this, false);
 	}
 
-	public void setKeysExchanged(boolean mKeysExchanged) {
-		this.mKeysExchanged = mKeysExchanged;
+	public void setKeysExchanged(boolean keysExchanged) {
+		this.mKeysExchanged = keysExchanged;
 	}
 
 	public boolean getKeysExchanged() {
 		return mKeysExchanged;
 	}
 
-	public void setPhoneNumber(String mPhoneNumber) {
-		this.mPhoneNumber = mPhoneNumber;
+	public void setPhoneNumber(String phoneNumber) {
+		this.mPhoneNumber = phoneNumber;
 	}
 
 	public String getPhoneNumber() {
 		return mPhoneNumber;
 	}
 
-	public void setTimeStamp(Time mTimeStamp) {
-		this.mTimeStamp = mTimeStamp;
+	public void setTimeStamp(Time timeStamp) {
+		this.mTimeStamp = timeStamp;
 	}
 
 	public Time getTimeStamp() {
 		return mTimeStamp;
 	}
 	
-	public void setSessionKey_Out(byte[] mSessionKey_Out) {
-		this.mSessionKey_Out = mSessionKey_Out;
+	public void setSessionKey_Out(byte[] sessionKey_Out) {
+		this.mSessionKey_Out = sessionKey_Out;
 	}
 
 	public byte[] getSessionKey_Out() {
 		return mSessionKey_Out;
 	}
 
-	public void setSessionKey_In(byte[] mSessionKey_In) {
-		this.mSessionKey_In = mSessionKey_In;
+	public void setSessionKey_In(byte[] sessionKey_In) {
+		this.mSessionKey_In = sessionKey_In;
 	}
 
 	public byte[] getSessionKey_In() {

@@ -4,7 +4,15 @@ import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
-public class FileEntryHeader {
+/**
+ * 
+ * Class representing the header entry in the secure storage file.
+ * Not to be used outside the package.
+ * 
+ * @author David Brazdil
+ *
+ */
+class FileEntryHeader {
 	static final int CURRENT_VERSION = 1;
 	
 	private static final int LENGTH_PLAIN_HEADER = 4;
@@ -28,32 +36,32 @@ public class FileEntryHeader {
 		setVersion(version);
 	}
 
-	public long getIndexFree() {
+	long getIndexFree() {
 		return mIndexFree;
 	}
 
-	public void setIndexFree(long indexFree) {
+	void setIndexFree(long indexFree) {
 		if (indexFree > 0xFFFFFFFFL || indexFree < 0L)
 			throw new IndexOutOfBoundsException();
 		mIndexFree = indexFree;
 	}
 
-	public long getIndexConversations() {
+	long getIndexConversations() {
 		return mIndexConversations;
 	}
 
-	public void setIndexConversations(long indexConversations) {
+	void setIndexConversations(long indexConversations) {
 		if (indexConversations > 0xFFFFFFFFL || indexConversations < 0L)
 			throw new IndexOutOfBoundsException();
 		
 		mIndexConversations = indexConversations;
 	}
 
-	public int getVersion() {
+	int getVersion() {
 		return mVersion;
 	}
 
-	public void setVersion(int version) {
+	void setVersion(int version) {
 		if (version > 0xFF)
 			throw new IndexOutOfBoundsException();
 		

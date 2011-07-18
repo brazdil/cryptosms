@@ -5,22 +5,29 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 
-public class DatabaseFile {
-	public RandomAccessFile mFile;
-	public FileLock mLock;
+/**
+ * Represents the opened secure storage file 
+ * 
+ * @author David Brazdil
+ *
+ */
+class DatabaseFile {
+	RandomAccessFile mFile;
+	FileLock mLock;
 
-	public DatabaseFile(String filename) throws IOException {
+	
+	DatabaseFile(String filename) throws IOException {
 		String directory = new File(filename).getParent();
 		new File(directory).mkdirs();
 		mFile = new RandomAccessFile(filename, "rw");
 		mLock = null;
 	}
 
-	public void lock() throws IOException {
+	void lock() throws IOException {
 		mLock = mFile.getChannel().lock();
 	}
 	
-	public void unlock() {
+	void unlock() {
 		try {
 			if (mLock.isValid())
 				mLock.release();

@@ -8,8 +8,16 @@ import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
+import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
+/**
+ * 
+ * Singleton class for operations on the secure storage file
+ * 
+ * @author David Brazdil
+ *
+ */
 public final class Database {
 	
 	private static final String FILE_NAME = "data.db";
@@ -23,18 +31,38 @@ public final class Database {
 	
 	private static Database mSingleton = null;
 	
+	/**
+	 * Returns the instance of the Database singleton class.
+	 * Singleton has to be initialised beforehand with the initSingleton method.   
+	 * @return instance of Database class
+	 * @throws DatabaseFileException
+	 */
 	public static Database getSingleton() throws DatabaseFileException {
 		if (mSingleton == null) 
 			throw new DatabaseFileException("Database not initialized yet");
 		return mSingleton;
 	}
 	
+	/**
+	 * Initialises the Database singleton automatically based on the environment settings supplied by application context. 
+	 * @param context		Application context. Used to get the path of a folder for package data.
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public static void initSingleton(Context context) throws IOException, DatabaseFileException {
 		String filename = context.getFilesDir().getAbsolutePath() + "/" + FILE_NAME;
 		initSingleton(filename);
 	}
-	
+
+	/**
+	 * Initialises the Database singleton to use a specified file as the secure storage.
+	 * @param filename 		Path to the secure storage file.
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public static void initSingleton(String filename) throws IOException, DatabaseFileException {
+		if (mSingleton != null) 
+			throw new DatabaseFileException("Database already initialized");
 		mSingleton = new Database(filename);
 	}
 	
@@ -66,7 +94,7 @@ public final class Database {
 		result[3] = (byte) (integer & 0xFF);
 		return result;
 	}
-	
+
 	static byte[] toLatin(String text, int bufferLength) {
 		ByteBuffer buffer = ByteBuffer.allocate(bufferLength);
 
@@ -114,18 +142,38 @@ public final class Database {
 			createFile();
 	}
 	
+	/**
+	 * Locks the secure storage file.
+	 * @throws IOException
+	 */
 	public void lockFile() throws IOException {
 		lockFile(true);
 	}
 
+	/**
+	 * Locks the secure storage file if the condition is set to true.
+	 * @param condition		Lock condition
+	 * @throws IOException
+	 */
 	public void lockFile(boolean condition) throws IOException {
 		if (condition) smsFile.lock();
 	}
 	
+	/**
+	 * Unlocks the secure storage file.
+	 * Doesn't do anything if the file is not locked or the lock is invalid.
+	 * @throws IOException
+	 */
 	public void unlockFile() throws IOException {
 		unlockFile(true);
 	}
 
+	/**
+	 * Unlocks the secure storage file provided the condition parameter is set to true.
+	 * Doesn't do anything if the file is not locked or the lock is invalid.
+	 * @param condition		Unlock condition.
+	 * @throws IOException
+	 */
 	public void unlockFile(boolean condition) throws IOException {
 		if (condition) smsFile.unlock();
 	}
@@ -287,14 +335,49 @@ public final class Database {
 	
 	// HIGH-LEVEL STUFF
 
+	/**
+	 * Returns the secure storage file version from the header
+	 */
 	public int getFileVersion() throws DatabaseFileException, IOException {
 		return getHeader().getVersion();
 	}
 
+	/**
+	 * Adds new free entries into the file, increasing its size.
+	 * @param count		Number of new free entries.
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public void addEmptyEntries(int count) throws IOException, DatabaseFileException { 
 		addEmptyEntries(count, true);
 	}
 	
+	/**
+	 * Takes a free entry from the storage file and turns it into a conversation.
+	 * If there are no free entries left, it creates new ones.
+	 * Session keys are generated randomly.
+	 * Time stamps is set to current time. 
+	 * @param phoneNumber		Phone number of the recipient.
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation createConversation(String phoneNumber) throws DatabaseFileException, IOException {
+		Time timeStamp = new Time();
+		timeStamp.setToNow();
+		return createConversation(phoneNumber, timeStamp);
+	}
+	
+	/**
+	 * Takes a free entry from the storage file and turns it into a conversation.
+	 * If there are no free entries left, it creates new ones.
+	 * Session keys are generated randomly. 
+	 * @param phoneNumber		Phone number of the recipient
+	 * @param timeStamp			Time stamp
+	 * @return					New Conversation class
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Conversation createConversation(String phoneNumber, Time timeStamp) throws DatabaseFileException, IOException {
 		Conversation conv = null;
 		
@@ -316,15 +399,16 @@ public final class Database {
 				setConversation(indexFirst, convFirst, false);
 			}
 
-			// generate a session key
-			byte[] sessionKey = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+			// generate session keys
+			byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+			byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
 			
 			// create new entry and save it
 			FileEntryConversation entryConversation = new FileEntryConversation(false,
 			                                                                    phoneNumber, 
 			                                                                    timeStamp, 
-			                                                                    sessionKey, 
-			                                                                    sessionKey, 
+			                                                                    sessionKey_Out, 
+			                                                                    sessionKey_In, 
 			                                                                    0L, 
 			                                                                    0L, 
 			                                                                    indexFirst);
@@ -336,6 +420,7 @@ public final class Database {
 			
 			// set the real world class to hold its index
 			conv = new Conversation(indexNew);
+			conv.update(false);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
 		} catch (IOException ex) {
@@ -345,6 +430,82 @@ public final class Database {
 		}
 		
 		return conv;
+	}
+	
+	/**
+	 * Finds a conversation in the secure file based on the phone number of the recipient.
+	 * 
+	 * @param phoneNumber		Phone number of the recipient.
+	 * @return					Conversation class. Null if not found.
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	public Conversation getConversation(String phoneNumber) throws IOException, DatabaseFileException {
+		return getConversation(phoneNumber, true);
+	}
+	
+	private Conversation getConversation(String phoneNumber, boolean lock) throws IOException, DatabaseFileException {
+		Conversation conv = null;
+
+		lockFile(lock);
+		try {
+			FileEntryHeader entryHeader = getHeader(false);
+			FileEntryConversation entryConv;
+			long indexNext = entryHeader.getIndexConversations();
+			while (indexNext != 0) {
+				entryConv = getConversation(indexNext, false);
+				
+				if (PhoneNumberUtils.compare(phoneNumber, entryConv.getPhoneNumber())) {
+					// phone numbers are the same (or similar enough)
+					
+					if (entryConv.getPhoneNumber().length() != 13 && !entryConv.getPhoneNumber().startsWith("+") &&
+						phoneNumber.length() == 13 && phoneNumber.startsWith("+")
+						) {
+						// the new one should be in the international format, while the old should not
+						// replace it
+						entryConv.setPhoneNumber(phoneNumber);
+						setConversation(indexNext, entryConv, false);
+					}
+					
+					// create the Conversation class
+					conv = new Conversation(indexNext);
+					conv.update(false);
+					
+					// stop searching
+					indexNext = 0;
+				}
+				else {
+					indexNext = entryConv.getIndexNext();
+				}
+			}
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile(lock);
+		}
+		
+		return conv;
+	}
+	
+	/**
+	 * Tries to find the conversation in the secure file using the getConversation method. If it fails, it creates a new one with the createConversation method.
+	 * @param phoneNumber		Phone number of the recipient.
+	 * @return					Instance of Conversation class. 
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation getOrCreateConversation(String phoneNumber) throws DatabaseFileException, IOException {
+		return getOrCreateConversation(phoneNumber, true);
+	}
+	
+	private Conversation getOrCreateConversation(String phoneNumber, boolean lock) throws DatabaseFileException, IOException {
+		Conversation conv = getConversation(phoneNumber);
+		if (conv == null)
+			return createConversation(phoneNumber);
+		else
+			return conv;
 	}
 	
 	void updateConversation(Conversation conv) throws DatabaseFileException, IOException {
