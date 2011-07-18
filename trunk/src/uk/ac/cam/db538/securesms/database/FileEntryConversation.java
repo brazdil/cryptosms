@@ -19,15 +19,18 @@ class FileEntryConversation {
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_PHONENUMBER = 32;
 	private static final int LENGTH_TIMESTAMP = 29;
+	private static final int LENGTH_LASTID = 1;
 	private static final int LENGTH_SESSIONKEY = Encryption.KEY_LENGTH;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_PHONENUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
 	private static final int OFFSET_TIMESTAMP = OFFSET_PHONENUMBER + LENGTH_PHONENUMBER;
 	private static final int OFFSET_SESSIONKEY_OUTGOING = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
-	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
-
-	private static final int OFFSET_RANDOMDATA = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
+	private static final int OFFSET_LASTID_OUTGOING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
+	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_LASTID_OUTGOING + LENGTH_LASTID;
+	private static final int OFFSET_LASTID_INCOMING = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
+	
+	private static final int OFFSET_RANDOMDATA = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
 
 	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
@@ -39,17 +42,21 @@ class FileEntryConversation {
 	private String mPhoneNumber;
 	private Time mTimeStamp;
 	private byte[] mSessionKey_Out;
+	private byte mLastID_Out;
 	private byte[] mSessionKey_In;
+	private byte mLastID_In;
 	private long mIndexMessages;
 	private long mIndexPrev;
 	private long mIndexNext;
 	
-	FileEntryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
+	FileEntryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte lastID_Out, byte[] sessionKey_In, byte lastID_In, long indexMessages, long indexPrev, long indexNext) {
 		setKeysExchanged(keysExchanged);
 		setPhoneNumber(phoneNumber);
 		setTimeStamp(timeStamp);
 		setSessionKey_Out(sessionKey_Out);
+		setLastID_Out(lastID_Out);
 		setSessionKey_In(sessionKey_In);
+		setLastID_In(lastID_In);
 		setIndexMessages(indexMessages);
 		setIndexPrev(indexPrev);
 		setIndexNext(indexNext);
@@ -93,6 +100,22 @@ class FileEntryConversation {
 
 	void setSessionKey_In(byte[] sessionKeyIn) {
 		mSessionKey_In = sessionKeyIn;
+	}
+	
+	byte getLastID_Out() {
+		return mLastID_Out;
+	}
+	
+	void setLastID_Out(byte lastID_Out) {
+		mLastID_Out = lastID_Out;
+	}
+
+	byte getLastID_In() {
+		return mLastID_In;
+	}
+	
+	void setLastID_In(byte lastID_In) {
+		mLastID_In = lastID_In;
 	}
 
 	long getIndexMessages() {
@@ -143,9 +166,11 @@ class FileEntryConversation {
 		// time stamp
 		convBuffer.put(Database.toLatin(conversation.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
 
-		// session keys
+		// session keys and last IDs
 		convBuffer.put(conversation.mSessionKey_Out);
+		convBuffer.put((byte) conversation.mLastID_Out);
 		convBuffer.put(conversation.mSessionKey_In);
+		convBuffer.put((byte) conversation.mLastID_In);
 		
 		// random data
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
@@ -163,22 +188,22 @@ class FileEntryConversation {
 		
 		byte flags = dataPlain[OFFSET_FLAGS];
 		boolean keysExchanged = ((flags & (1 << 7)) == 0) ? false : true;
-		byte[] dataPhoneNumber = new byte[LENGTH_PHONENUMBER];
-		System.arraycopy(dataPlain, OFFSET_PHONENUMBER, dataPhoneNumber, 0, LENGTH_PHONENUMBER);
-		byte[] dataTimeStamp = new byte[LENGTH_TIMESTAMP];
-		System.arraycopy(dataPlain, OFFSET_TIMESTAMP, dataTimeStamp, 0, LENGTH_TIMESTAMP);
+
 		byte[] dataSessionKey_Out = new byte[LENGTH_SESSIONKEY];
 		System.arraycopy(dataPlain, OFFSET_SESSIONKEY_OUTGOING, dataSessionKey_Out, 0, LENGTH_SESSIONKEY);
 		byte[] dataSessionKey_In = new byte[LENGTH_SESSIONKEY];
 		System.arraycopy(dataPlain, OFFSET_SESSIONKEY_INCOMING, dataSessionKey_In, 0, LENGTH_SESSIONKEY);
+
 		Time timeStamp = new Time();
-		timeStamp.parse3339(Database.fromLatin(dataTimeStamp));
+		timeStamp.parse3339(Database.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
 
 		return new FileEntryConversation(keysExchanged,
-		                                 Database.fromLatin(dataPhoneNumber),
+		                                 Database.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER),
 		                                 timeStamp, 
 		                                 dataSessionKey_Out, 
+		                                 dataPlain[OFFSET_LASTID_OUTGOING],
 		                                 dataSessionKey_In, 
+		                                 dataPlain[OFFSET_LASTID_INCOMING],
 		                                 Database.getInt(dataPlain, OFFSET_MSGSINDEX), 
 		                                 Database.getInt(dataPlain, OFFSET_PREVINDEX),
 		                                 Database.getInt(dataPlain, OFFSET_NEXTINDEX)

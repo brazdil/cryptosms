@@ -410,7 +410,9 @@ public final class Database {
 			                                                                    phoneNumber, 
 			                                                                    timeStamp, 
 			                                                                    sessionKey_Out, 
-			                                                                    sessionKey_In, 
+			                                                                    (byte) 0x00,
+			                                                                    sessionKey_In,
+			                                                                    (byte) 0x00,
 			                                                                    0L, 
 			                                                                    0L, 
 			                                                                    indexFirst);
@@ -561,7 +563,9 @@ public final class Database {
 		conv.setPhoneNumber(entryConversation.getPhoneNumber());
 		conv.setTimeStamp(entryConversation.getTimeStamp());
 		conv.setSessionKey_Out(entryConversation.getSessionKey_Out());
+		conv.setLastID_Out(entryConversation.getLastID_Out());
 		conv.setSessionKey_In(entryConversation.getSessionKey_In());
+		conv.setLastID_In(entryConversation.getLastID_In());
 	}
 	
 	void saveConversation(Conversation conv) throws DatabaseFileException, IOException {
@@ -576,7 +580,9 @@ public final class Database {
 			entryConversation.setPhoneNumber(conv.getPhoneNumber());
 			entryConversation.setTimeStamp(conv.getTimeStamp());
 			entryConversation.setSessionKey_Out(conv.getSessionKey_Out());
+			entryConversation.setLastID_Out(conv.getLastID_Out());
 			entryConversation.setSessionKey_In(conv.getSessionKey_In());
+			entryConversation.setLastID_In(conv.getLastID_In());
 			setConversation(conv.getIndexEntry(), entryConversation, false);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());

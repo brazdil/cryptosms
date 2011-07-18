@@ -17,7 +17,9 @@ public class Conversation implements Comparable<Conversation> {
 	private String mPhoneNumber;
 	private Time mTimeStamp;
 	private byte[] mSessionKey_Out;
+	private byte mLastID_Out;
 	private byte[] mSessionKey_In;
+	private byte mLastID_In;
 	
 	Conversation(long indexEntry) {
 		if (indexEntry > 0xFFFFFFFFL || indexEntry <= 0L)
@@ -122,6 +124,22 @@ public class Conversation implements Comparable<Conversation> {
 
 	public byte[] getSessionKey_In() {
 		return mSessionKey_In;
+	}
+
+	public void setLastID_In(byte lastID_In) {
+		this.mLastID_In = lastID_In;
+	}
+
+	public byte getLastID_In() {
+		return mLastID_In;
+	}
+
+	public void setLastID_Out(byte lastID_Out) {
+		this.mLastID_Out = lastID_Out;
+	}
+
+	public byte getLastID_Out() {
+		return mLastID_Out;
 	}
 
 	@Override
