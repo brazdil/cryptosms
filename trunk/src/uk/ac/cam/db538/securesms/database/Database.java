@@ -180,6 +180,14 @@ public final class Database {
 		return FileEntryHeader.parseData(getEntry(0, lock));
 	}
 	
+	private void setHeader(FileEntryHeader entryHeader) throws DatabaseFileException, IOException {
+		setHeader(entryHeader, true);
+	}
+
+	private void setHeader(FileEntryHeader entryHeader, boolean lock) throws DatabaseFileException, IOException {
+		setEntry(0, FileEntryHeader.createData(entryHeader), lock);
+	}
+
 	private long getEmptyEntry() throws DatabaseFileException, IOException { 
 		return getEmptyEntry(true);
 	}
@@ -273,19 +281,20 @@ public final class Database {
 		
 		smsFile.lock();
 		try {
+			// allocate entry for the new conversation
+			// has to be first, because it changes the header
+			long indexNew = getEmptyEntry(false);
+			
 			// get the header
 			FileEntryHeader entryHeader = getHeader(false);
-			
-			// allocate entry for the new conversation
-			long indexNew = getEmptyEntry(false);
 			
 			// get the index of first conversation in list
 			long indexFirst = entryHeader.getIndexConversations();
 			// if it exists, update it and save it
 			if (indexFirst > 0) {
-				FileEntryConversation convFirst = getConversation(indexFirst);
+				FileEntryConversation convFirst = getConversation(indexFirst, false);
 				convFirst.setIndexPrev(indexNew);
-				setConversation(indexFirst, convFirst);
+				setConversation(indexFirst, convFirst, false);
 			}
 
 			// generate a session key
@@ -301,6 +310,10 @@ public final class Database {
 			                                                                    0L, 
 			                                                                    indexFirst);
 			setConversation(indexNew, entryConversation, false);
+			
+			// update index in header
+			entryHeader.setIndexConversations(indexNew);
+			setHeader(entryHeader, false);
 			
 			// set the real world class to hold its index
 			conv = new Conversation(indexNew);
@@ -410,10 +423,11 @@ public final class Database {
 			indexNext = header.getIndexConversations();
 			long indexPrev = 0;
 			while (indexNext != 0) {
-				conv = getConversation(indexNext);
+				conv = getConversation(indexNext, false);
 				visitedEntries[(int) indexNext] = true;
 				if (conv.getIndexPrev() != indexPrev)
 					corruptedPointers = true;
+				indexPrev = indexNext;
 				indexNext = conv.getIndexNext();
 			}
 			
