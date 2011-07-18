@@ -514,11 +514,11 @@ public final class Database {
 	 * Returns a list of all the conversations in the storage file.
 	 * Conversations are sorted by their time stamps from oldest to newest.
 	 */
-	public ArrayList<Conversation> getAllConversations() throws DatabaseFileException, IOException {
-		return getAllConversations(true);
+	public ArrayList<Conversation> getListOfConversations() throws DatabaseFileException, IOException {
+		return getListOfConversations(true);
 	}
 
-	private ArrayList<Conversation> getAllConversations(Boolean lock) throws DatabaseFileException, IOException {		
+	private ArrayList<Conversation> getListOfConversations(Boolean lock) throws DatabaseFileException, IOException {		
 		ArrayList<Conversation> list = new ArrayList<Conversation>();
 		Conversation conv;
 		
