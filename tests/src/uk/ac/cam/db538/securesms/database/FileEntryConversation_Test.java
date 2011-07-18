@@ -24,17 +24,21 @@ public class FileEntryConversation_Test extends TestCase {
 		String phoneNumber = "+123456789012";
 		Time timeStamp = new Time(); timeStamp.setToNow();
 		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte lastID_Out = 0x12;
 		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte lastID_In = 0x52;
 		long indexMessages = 5L;
 		long indexPrev = 120L;
 		long indexNext = 248L;
 		
-		conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, indexPrev, indexNext);
+		conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, indexNext);
 		assertEquals(conv.getKeysExchanged(), keysExchanged);
 		assertEquals(conv.getPhoneNumber(), phoneNumber);
 		assertEquals(conv.getTimeStamp(), timeStamp);
 		CustomAsserts.assertArrayEquals(conv.getSessionKey_Out(), sessionKey_Out);
+		assertEquals(conv.getLastID_Out(), lastID_Out);
 		CustomAsserts.assertArrayEquals(conv.getSessionKey_In(), sessionKey_In);
+		assertEquals(conv.getLastID_In(), lastID_In);
 		assertEquals(conv.getIndexMessages(), indexMessages);
 		assertEquals(conv.getIndexPrev(), indexPrev);
 		assertEquals(conv.getIndexNext(), indexNext);
@@ -43,39 +47,39 @@ public class FileEntryConversation_Test extends TestCase {
 		
 		// indexMessages
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, 0x0100000000L, indexPrev, indexNext);
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out,  sessionKey_In, lastID_In, 0x0100000000L, indexPrev, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 		
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, -1L, indexPrev, indexNext);
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, -1L, indexPrev, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		// indexPrev
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, 0x0100000000L, indexNext);
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, 0x0100000000L, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, -1L, indexNext);
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, -1L, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		// indexNext
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, indexPrev, 0x0100000000L);
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, 0x0100000000L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, indexPrev, -1L);
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, -1L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
@@ -87,7 +91,9 @@ public class FileEntryConversation_Test extends TestCase {
 		String phoneNumberResult = "+1234567890126549873sdfsat6ewrt9";
 		Time timeStamp = new Time(); timeStamp.setToNow();
 		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte lastID_Out = 0x12;
 		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte lastID_In = 0x52;
 		long indexMessages = 5L;
 		long indexPrev = 120L;
 		long indexNext = 248L;
@@ -97,7 +103,7 @@ public class FileEntryConversation_Test extends TestCase {
 		flags |= (keysExchanged) ? 0x80 : 0x00;
 		
 		// get the generated data
-		FileEntryConversation conv = new FileEntryConversation(keysExchanged, phoneNumberLong, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, indexPrev, indexNext);
+		FileEntryConversation conv = new FileEntryConversation(keysExchanged, phoneNumberLong, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, indexNext);
 		byte[] dataEncrypted = null;
 		try {
 			dataEncrypted = FileEntryConversation.createData(conv);
@@ -117,7 +123,9 @@ public class FileEntryConversation_Test extends TestCase {
 		Time time = new Time(); time.parse3339(Database.fromLatin(dataPlain, 33, 29));
 		assertEquals(Time.compare(time, timeStamp), 0);
 		CustomAsserts.assertArrayEquals(dataPlain, 62, sessionKey_Out, Encryption.KEY_LENGTH);
-		CustomAsserts.assertArrayEquals(dataPlain, 94, sessionKey_In, Encryption.KEY_LENGTH);
+		assertEquals(dataPlain[94], lastID_Out);
+		CustomAsserts.assertArrayEquals(dataPlain, 95, sessionKey_In, Encryption.KEY_LENGTH);
+		assertEquals(dataPlain[127], lastID_In);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
@@ -128,7 +136,9 @@ public class FileEntryConversation_Test extends TestCase {
 		String phoneNumber = "+123456789012";
 		Time timeStamp = new Time(); timeStamp.setToNow();
 		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte lastID_Out = 0x12;
 		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte lastID_In = 0x52;
 		long indexMessages = 5L;
 		long indexPrev = 120L;
 		long indexNext = 248L;
@@ -143,7 +153,9 @@ public class FileEntryConversation_Test extends TestCase {
 		System.arraycopy(Database.toLatin(phoneNumber, 32), 0, dataPlain, 1, 32);
 		System.arraycopy(Database.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 33, 29);
 		System.arraycopy(sessionKey_Out, 0, dataPlain, 62, 32);
-		System.arraycopy(sessionKey_In, 0, dataPlain, 94, 32);
+		dataPlain[94] = lastID_Out;
+		System.arraycopy(sessionKey_In, 0, dataPlain, 95, 32);
+		dataPlain[127] = lastID_In;
 		System.arraycopy(Database.getBytes(indexMessages), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
 		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
 		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
