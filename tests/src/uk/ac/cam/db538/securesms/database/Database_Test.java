@@ -198,4 +198,38 @@ public class Database_Test extends TestCase {
 		}
 	}
 
+	public void testGetConversation() {
+		Database history;
+		try {
+			history = Database.getSingleton();
+			Time time = new Time(); time.setToNow();
+
+			String phoneNumberUK = "07572458912";
+			String phoneNumberInternational = "+447572458912";
+			String phoneNumberDifferent = "458912";
+			
+			// conv1 should have the UK number stored
+			Conversation conv1 = history.createConversation(phoneNumberUK);
+			assertEquals(conv1.getPhoneNumber(), phoneNumberUK);
+			
+			// try to find it using the international number
+			Conversation conv2 = history.getConversation(phoneNumberInternational);
+			assertEquals(conv1.getIndexEntry(), conv2.getIndexEntry());
+			
+			// it should change the number to international
+			assertEquals(conv2.getPhoneNumber(), phoneNumberInternational);
+			conv1.update();
+			assertEquals(conv1.getPhoneNumber(), phoneNumberInternational);
+			
+			// try finding a different number
+			assertEquals(history.getConversation(phoneNumberDifferent), null);
+			
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (DatabaseFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
+	}
 }
