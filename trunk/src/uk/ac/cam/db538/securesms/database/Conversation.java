@@ -11,7 +11,7 @@ import android.text.format.Time;
  * @author David Brazdil
  *
  */
-public class Conversation {
+public class Conversation implements Comparable<Conversation> {
 	private long mIndexEntry; // READ ONLY
 	private boolean mKeysExchanged;
 	private String mPhoneNumber;
@@ -122,6 +122,11 @@ public class Conversation {
 
 	public byte[] getSessionKey_In() {
 		return mSessionKey_In;
+	}
+
+	@Override
+	public int compareTo(Conversation another) {
+		return Time.compare(this.getTimeStamp(), another.getTimeStamp());
 	}
 	
 	

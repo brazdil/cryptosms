@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
@@ -506,6 +508,47 @@ public final class Database {
 			return createConversation(phoneNumber);
 		else
 			return conv;
+	}
+	
+	/*
+	 * Returns a list of all the conversations in the storage file.
+	 * Conversations are sorted by their time stamps from oldest to newest.
+	 */
+	public ArrayList<Conversation> getAllConversations() throws DatabaseFileException, IOException {
+		return getAllConversations(true);
+	}
+
+	private ArrayList<Conversation> getAllConversations(Boolean lock) throws DatabaseFileException, IOException {		
+		ArrayList<Conversation> list = new ArrayList<Conversation>();
+		Conversation conv;
+		
+		lockFile(lock);
+		try {
+			FileEntryHeader entryHeader = getHeader(false);
+			FileEntryConversation entryConv;
+			long indexNext = entryHeader.getIndexConversations();
+			while (indexNext != 0) {
+				entryConv = getConversation(indexNext, false);
+				
+				// create the Conversation class
+				conv = new Conversation(indexNext);
+				conv.update(false);
+				
+				// put it in the list
+				list.add(conv);
+				
+				indexNext = entryConv.getIndexNext();
+			}
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile(lock);
+		}
+
+		Collections.sort(list);
+		return list;
 	}
 	
 	void updateConversation(Conversation conv) throws DatabaseFileException, IOException {
