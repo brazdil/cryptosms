@@ -30,17 +30,33 @@ public class FileEntryHeader_Test extends TestCase {
 		// indexFree
 		try {
 			header = new FileEntryHeader(1, 
-			                               0x0100000000L,
-					                       1L);
+			                             0x0100000000L,
+			                             1L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 		
+		try {
+			header = new FileEntryHeader(1, 
+                                         -1L,
+                                         1L);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+
 		// indexConversation
 		try {
 			header = new FileEntryHeader(1,
-					                       1L,
-                                           0x0100000000L); 
+					                     1L,
+                                         0x0100000000L); 
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+
+		try {
+			header = new FileEntryHeader(1,
+					                     1L,
+                                         -1L); 
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}

@@ -48,6 +48,12 @@ public class FileEntryConversation_Test extends TestCase {
 		} catch (IndexOutOfBoundsException ex) {
 		}
 		
+		try {
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, -1L, indexPrev, indexNext);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+
 		// indexPrev
 		try {
 			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, 0x0100000000L, indexNext);
@@ -55,9 +61,21 @@ public class FileEntryConversation_Test extends TestCase {
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
+		try {
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, -1L, indexNext);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+
 		// indexNext
 		try {
 			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, indexPrev, 0x0100000000L);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+
+		try {
+			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, sessionKey_In, indexMessages, indexPrev, -1L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}

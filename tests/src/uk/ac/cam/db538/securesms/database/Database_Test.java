@@ -12,7 +12,7 @@ import uk.ac.cam.db538.securesms.database.Database;
 
 public class Database_Test extends TestCase {
 
-	private static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
+	static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
 	
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -190,15 +190,12 @@ public class Database_Test extends TestCase {
 			}
 			
 			// check structure
-			// DOESN'T VISIT EVERYTHING!!!
 			assertTrue(history.checkStructure());
 		} catch (DatabaseFileException e) {
 			assertTrue(e.getMessage(), false);
 		} catch (IOException e) {
 			assertTrue(e.getMessage(), false);
 		}
-
-		fail("Not finished yet!!!");
 	}
 
 }

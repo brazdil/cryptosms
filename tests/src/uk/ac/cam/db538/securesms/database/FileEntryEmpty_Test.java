@@ -28,6 +28,12 @@ public class FileEntryEmpty_Test extends TestCase {
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
+
+		try {
+			free = new FileEntryEmpty(-1L);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
 	}
 
 	public void testCreateData() {
