@@ -37,19 +37,14 @@ public class FileEntryConversation {
 	private long mIndexNext;
 	
 	FileEntryConversation(boolean keysExchanged, String phoneNumber, Time timeStamp, byte[] sessionKey_Out, byte[] sessionKey_In, long indexMessages, long indexPrev, long indexNext) {
-		if (indexMessages > 0xFFFFFFFFL || 
-		    indexPrev > 0xFFFFFFFFL ||
-		    indexNext > 0xFFFFFFFFL)
-			throw new IndexOutOfBoundsException();
-
-		mKeysExchanged = keysExchanged;
-		mPhoneNumber = phoneNumber;
-		mTimeStamp = timeStamp;
-		mSessionKey_Out = sessionKey_Out;
-		mSessionKey_In = sessionKey_In;
-		mIndexMessages = indexMessages;
-		mIndexPrev = indexPrev;
-		mIndexNext = indexNext;
+		setKeysExchanged(keysExchanged);
+		setPhoneNumber(phoneNumber);
+		setTimeStamp(timeStamp);
+		setSessionKey_Out(sessionKey_Out);
+		setSessionKey_In(sessionKey_In);
+		setIndexMessages(indexMessages);
+		setIndexPrev(indexPrev);
+		setIndexNext(indexNext);
 	}
 	
 	public boolean getKeysExchanged() {
@@ -97,6 +92,9 @@ public class FileEntryConversation {
 	}
 
 	void setIndexMessages(long indexMessages) {
+		if (indexMessages > 0xFFFFFFFFL || indexMessages < 0L)
+			throw new IndexOutOfBoundsException();
+			
 		this.mIndexMessages = indexMessages;
 	}
 
@@ -105,6 +103,9 @@ public class FileEntryConversation {
 	}
 
 	void setIndexPrev(long indexPrev) {
+		if (indexPrev > 0xFFFFFFFFL || indexPrev < 0L)
+			throw new IndexOutOfBoundsException();
+		
 		this.mIndexPrev = indexPrev;
 	}
 
@@ -113,6 +114,9 @@ public class FileEntryConversation {
 	}
 
 	void setIndexNext(long indexNext) {
+	    if (indexNext > 0xFFFFFFFFL || indexNext < 0L)
+	    	throw new IndexOutOfBoundsException();
+		
 		this.mIndexNext = indexNext;
 	}
 

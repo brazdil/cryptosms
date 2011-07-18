@@ -1,6 +1,9 @@
 package uk.ac.cam.db538.securesms.database;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
@@ -111,11 +114,27 @@ public final class Database {
 			createFile();
 	}
 	
+	public void lockFile() throws IOException {
+		lockFile(true);
+	}
+
+	public void lockFile(boolean condition) throws IOException {
+		if (condition) smsFile.lock();
+	}
+	
+	public void unlockFile() throws IOException {
+		unlockFile(true);
+	}
+
+	public void unlockFile(boolean condition) throws IOException {
+		if (condition) smsFile.unlock();
+	}
+
 	private void createFile() throws FileNotFoundException, IOException, DatabaseFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
 		byte[] headerEncoded = FileEntryHeader.createData(new FileEntryHeader(0, 0));
 		
-		smsFile.lock();
+		lockFile();
 		try {
 			setEntry(0, headerEncoded, false);
 			addEmptyEntries(countFreeEntries, false);
@@ -124,7 +143,7 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			smsFile.unlock();
+			unlockFile();
 		}
 	}
 	
@@ -137,7 +156,7 @@ public final class Database {
 		if (offset > smsFile.mFile.length() - CHUNK_SIZE)
 			throw new DatabaseFileException("Index in history file out of bounds");
 		
-		if (lock) smsFile.lock();
+		lockFile(lock);
 		byte[] data = new byte[CHUNK_SIZE];
 		try {
 			smsFile.mFile.seek(offset);
@@ -145,7 +164,7 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			if (lock) smsFile.unlock();
+			unlockFile(lock);
 		}
 
 		return data;
@@ -161,14 +180,14 @@ public final class Database {
 		if (offset > fileSize)
 			throw new DatabaseFileException("Index in history file out of bounds");
 
-		if (lock) smsFile.lock();
+		lockFile(lock);
 		try {
 			smsFile.mFile.seek(offset);
 			smsFile.mFile.write(data);
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			if (lock) smsFile.unlock();
+			unlockFile(lock);
 		}
 	}
 	
@@ -193,14 +212,14 @@ public final class Database {
 	}
 	
 	private long getEmptyEntry(boolean lock) throws DatabaseFileException, IOException {
-		if (lock) smsFile.lock();
+		lockFile(lock);
 		long result = 0;
 		try {
 			FileEntryHeader header = getHeader(false);
 			long previousFree = header.getIndexFree();
 			if (previousFree == 0) {
 				// there are no free entries left
-				// add some
+				// => add some
 				addEmptyEntries(ALIGN_SIZE / CHUNK_SIZE, false);
 				// recursively get a free entry
 				result = getEmptyEntry(false);
@@ -219,13 +238,13 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			if (lock) smsFile.unlock();
+			unlockFile(lock);
 		}
 		return result;
 	}
 	
 	private void addEmptyEntries(int count, boolean lock) throws IOException, DatabaseFileException {
-		if (lock) smsFile.lock();
+		lockFile(lock);
 		try {
 			FileEntryHeader header = getHeader(false);
 			long previousFree = header.getIndexFree();
@@ -246,7 +265,7 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			if (lock) smsFile.unlock();
+			unlockFile(lock);
 		}
 	}
 	
@@ -279,7 +298,7 @@ public final class Database {
 	public Conversation createConversation(String phoneNumber, Time timeStamp) throws DatabaseFileException, IOException {
 		Conversation conv = null;
 		
-		smsFile.lock();
+		lockFile();
 		try {
 			// allocate entry for the new conversation
 			// has to be first, because it changes the header
@@ -322,23 +341,31 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			smsFile.unlock();
+			unlockFile();
 		}
 		
 		return conv;
 	}
 	
 	void updateConversation(Conversation conv) throws DatabaseFileException, IOException {
-		FileEntryConversation entryConversation = getConversation(conv.getIndexEntry());
+		updateConversation(conv, true);
+	}
+	
+	void updateConversation(Conversation conv, boolean lock) throws DatabaseFileException, IOException {
+		FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), lock);
 		conv.setKeysExchanged(entryConversation.getKeysExchanged());
 		conv.setPhoneNumber(entryConversation.getPhoneNumber());
 		conv.setTimeStamp(entryConversation.getTimeStamp());
 		conv.setSessionKey_Out(entryConversation.getSessionKey_Out());
 		conv.setSessionKey_In(entryConversation.getSessionKey_In());
 	}
-
+	
 	void saveConversation(Conversation conv) throws DatabaseFileException, IOException {
-		smsFile.lock();
+		saveConversation(conv, true);
+	}
+
+	void saveConversation(Conversation conv, boolean lock) throws DatabaseFileException, IOException {
+		lockFile(lock);
 		try {
 			FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), false);
 			entryConversation.setKeysExchanged(conv.getKeysExchanged());
@@ -352,7 +379,7 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			smsFile.unlock();
+			unlockFile(lock);
 		}
 	}
 
@@ -365,7 +392,7 @@ public final class Database {
 	private int getEmptyEntriesCount(boolean lock) throws DatabaseFileException, IOException {
 		int count = 0;
 
-		if (lock) smsFile.lock();
+		lockFile(lock);
 		try {
 			FileEntryHeader header = getHeader(false);
 			FileEntryEmpty free;
@@ -381,7 +408,7 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			if (lock) smsFile.unlock();
+			unlockFile(lock);
 		}
 		
 		return count;
@@ -395,7 +422,7 @@ public final class Database {
 		boolean visitedAll = true;
 		boolean corruptedPointers = false;
 
-		if (lock) smsFile.lock();
+		lockFile(lock);
 		try {
 			if (smsFile.mFile.length() % CHUNK_SIZE != 0)
 				throw new DatabaseFileException("File is not aligned to " + CHUNK_SIZE + "-byte chunks!");
@@ -439,7 +466,7 @@ public final class Database {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			if (lock) smsFile.unlock();
+			unlockFile(lock);
 		}
 		
 		return (visitedAll && !corruptedPointers);

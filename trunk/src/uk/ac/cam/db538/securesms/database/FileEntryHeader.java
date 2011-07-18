@@ -23,14 +23,9 @@ public class FileEntryHeader {
 	}
 	
 	FileEntryHeader(int version, long indexFree, long indexConversations) {
-		if (indexFree > 0xFFFFFFFFL || 
-			indexConversations > 0xFFFFFFFFL ||
-			version > 0xFF)
-			throw new IndexOutOfBoundsException();
-		
-		mIndexFree = indexFree;
-		mIndexConversations = indexConversations;
-		mVersion = version;
+		setIndexFree(indexFree);
+		setIndexConversations(indexConversations);
+		setVersion(version);
 	}
 
 	public long getIndexFree() {
@@ -38,6 +33,8 @@ public class FileEntryHeader {
 	}
 
 	public void setIndexFree(long indexFree) {
+		if (indexFree > 0xFFFFFFFFL || indexFree < 0L)
+			throw new IndexOutOfBoundsException();
 		mIndexFree = indexFree;
 	}
 
@@ -46,6 +43,9 @@ public class FileEntryHeader {
 	}
 
 	public void setIndexConversations(long indexConversations) {
+		if (indexConversations > 0xFFFFFFFFL || indexConversations < 0L)
+			throw new IndexOutOfBoundsException();
+		
 		mIndexConversations = indexConversations;
 	}
 
@@ -54,6 +54,9 @@ public class FileEntryHeader {
 	}
 
 	public void setVersion(int version) {
+		if (version > 0xFF)
+			throw new IndexOutOfBoundsException();
+		
 		mVersion = version;
 	}
 

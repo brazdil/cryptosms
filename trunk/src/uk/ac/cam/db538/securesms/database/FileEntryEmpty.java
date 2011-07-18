@@ -10,10 +10,7 @@ public class FileEntryEmpty {
 	private long mIndexNext;
 	
 	FileEntryEmpty(long indexNext) {
-		if (indexNext > 0xFFFFFFFFL) 
-			throw new IndexOutOfBoundsException();
-
-		mIndexNext = indexNext;
+		setIndexNext(indexNext);
 	}
 
 	static byte[] createData(FileEntryEmpty free) {
@@ -33,6 +30,9 @@ public class FileEntryEmpty {
 	}
 
 	public void setIndexNext(long indexNext) {
+		if (indexNext > 0xFFFFFFFFL || indexNext < 0L) 
+			throw new IndexOutOfBoundsException();
+
 		this.mIndexNext = indexNext;
 	}
 }

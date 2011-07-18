@@ -1,13 +1,11 @@
 package uk.ac.cam.db538.securesms.database;
 
 import java.io.IOException;
-
 import uk.ac.cam.db538.securesms.encryption.Encryption;
-
 import android.text.format.Time;
 
 public class Conversation {
-	private long mIndexEntry;
+	private long mIndexEntry; // READ ONLY
 	private boolean mKeysExchanged;
 	private String mPhoneNumber;
 	private Time mTimeStamp;
@@ -19,6 +17,9 @@ public class Conversation {
 	}
 
 	Conversation(long indexEntry) {
+		if (indexEntry > 0xFFFFFFFFL || indexEntry <= 0L)
+			throw new IndexOutOfBoundsException();
+		
 		mIndexEntry = indexEntry;
 	}
 
@@ -35,13 +36,27 @@ public class Conversation {
 	}
 	
 	public void update() throws DatabaseFileException, IOException {
+		update(true);
+	}
+	
+	/**
+	 * 
+	 * @param lock
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public void update(boolean lock) throws DatabaseFileException, IOException {
 		if (mIndexEntry != 0)
-			Database.getSingleton().updateConversation(this);
+			Database.getSingleton().updateConversation(this, lock);
 	}
 	
 	public void save() throws DatabaseFileException, IOException {
+		save(true);
+	}
+	
+	public void save(boolean lock) throws DatabaseFileException, IOException {
 		if (mIndexEntry != 0)
-			Database.getSingleton().saveConversation(this);
+			Database.getSingleton().saveConversation(this, false);
 	}
 
 	public void setKeysExchanged(boolean mKeysExchanged) {
