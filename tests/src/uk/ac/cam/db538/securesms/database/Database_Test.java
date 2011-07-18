@@ -257,7 +257,7 @@ public class Database_Test extends TestCase {
 			conv4.save();
 			
 			// get all conversations
-			ArrayList<Conversation> list = history.getAllConversations();
+			ArrayList<Conversation> list = history.getListOfConversations();
 			
 			// check that it is there and sorted
 			assertEquals(list.get(0).getPhoneNumber(), "4");
