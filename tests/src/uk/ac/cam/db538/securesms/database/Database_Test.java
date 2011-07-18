@@ -2,6 +2,7 @@ package uk.ac.cam.db538.securesms.database;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import android.text.format.Time;
 
@@ -223,6 +224,46 @@ public class Database_Test extends TestCase {
 			
 			// try finding a different number
 			assertEquals(history.getConversation(phoneNumberDifferent), null);
+			
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (DatabaseFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
+	}
+
+	public void testGetAllConversation() {
+		Database history;
+		try {
+			history = Database.getSingleton();
+			Time time1 = new Time(); time1.set(1, 1, 1998);
+			Time time2 = new Time(); time2.set(1, 1, 1994);
+			Time time3 = new Time(); time3.set(1, 1, 1996);
+			Time time4 = new Time(); time4.set(1, 1, 1989);
+
+			Conversation conv1 = history.createConversation("1");
+			conv1.setTimeStamp(time1);
+			conv1.save();
+			Conversation conv2 = history.createConversation("2");
+			conv2.setTimeStamp(time2);
+			conv2.save();
+			Conversation conv3 = history.createConversation("3");
+			conv3.setTimeStamp(time3);
+			conv3.save();
+			Conversation conv4 = history.createConversation("4");
+			conv4.setTimeStamp(time4);
+			conv4.save();
+			
+			// get all conversations
+			ArrayList<Conversation> list = history.getAllConversations();
+			
+			// check that it is there and sorted
+			assertEquals(list.get(0).getPhoneNumber(), "4");
+			assertEquals(list.get(1).getPhoneNumber(), "2");
+			assertEquals(list.get(2).getPhoneNumber(), "3");
+			assertEquals(list.get(3).getPhoneNumber(), "1");
 			
 			// check structure
 			assertTrue(history.checkStructure());
