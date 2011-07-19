@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.securesms.database;
 
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 import java.io.IOException;
 import android.text.format.Time;
 
@@ -13,33 +12,14 @@ import android.text.format.Time;
  */
 public class Conversation implements Comparable<Conversation> {
 	private long mIndexEntry; // READ ONLY
-	private boolean mKeysExchanged;
 	private String mPhoneNumber;
 	private Time mTimeStamp;
-	private byte[] mSessionKey_Out;
-	private byte mLastID_Out;
-	private byte[] mSessionKey_In;
-	private byte mLastID_In;
 	
 	Conversation(long indexEntry) {
 		if (indexEntry > 0xFFFFFFFFL || indexEntry <= 0L)
 			throw new IndexOutOfBoundsException();
 		
 		mIndexEntry = indexEntry;
-	}
-
-	/**
-	 * Hashes the session key for sending
-	 */
-	public void nextSessionKey_Out() {
-		setSessionKey_Out(Encryption.getHash(getSessionKey_Out()));
-	}
-
-	/**
-	 * Hashes the session key for receiving
-	 */
-	public void nextSessionKey_In() {
-		setSessionKey_Out(Encryption.getHash(getSessionKey_In()));
 	}
 
 	long getIndexEntry() {
@@ -86,14 +66,6 @@ public class Conversation implements Comparable<Conversation> {
 			Database.getSingleton().saveConversation(this, false);
 	}
 
-	public void setKeysExchanged(boolean keysExchanged) {
-		this.mKeysExchanged = keysExchanged;
-	}
-
-	public boolean getKeysExchanged() {
-		return mKeysExchanged;
-	}
-
 	public void setPhoneNumber(String phoneNumber) {
 		this.mPhoneNumber = phoneNumber;
 	}
@@ -110,38 +82,6 @@ public class Conversation implements Comparable<Conversation> {
 		return mTimeStamp;
 	}
 	
-	public void setSessionKey_Out(byte[] sessionKey_Out) {
-		this.mSessionKey_Out = sessionKey_Out;
-	}
-
-	public byte[] getSessionKey_Out() {
-		return mSessionKey_Out;
-	}
-
-	public void setSessionKey_In(byte[] sessionKey_In) {
-		this.mSessionKey_In = sessionKey_In;
-	}
-
-	public byte[] getSessionKey_In() {
-		return mSessionKey_In;
-	}
-
-	public void setLastID_In(byte lastID_In) {
-		this.mLastID_In = lastID_In;
-	}
-
-	public byte getLastID_In() {
-		return mLastID_In;
-	}
-
-	public void setLastID_Out(byte lastID_Out) {
-		this.mLastID_Out = lastID_Out;
-	}
-
-	public byte getLastID_Out() {
-		return mLastID_Out;
-	}
-
 	@Override
 	public int compareTo(Conversation another) {
 		return Time.compare(this.getTimeStamp(), another.getTimeStamp());

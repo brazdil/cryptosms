@@ -401,18 +401,10 @@ public final class Database {
 				setConversation(indexFirst, convFirst, false);
 			}
 
-			// generate session keys
-			byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-			byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-			
 			// create new entry and save it
-			FileEntryConversation entryConversation = new FileEntryConversation(false,
-			                                                                    phoneNumber, 
-			                                                                    timeStamp, 
-			                                                                    sessionKey_Out, 
-			                                                                    (byte) 0x00,
-			                                                                    sessionKey_In,
-			                                                                    (byte) 0x00,
+			FileEntryConversation entryConversation = new FileEntryConversation(phoneNumber, 
+			                                                                    timeStamp,
+			                                                                    0L,
 			                                                                    0L, 
 			                                                                    0L, 
 			                                                                    indexFirst);
@@ -559,13 +551,8 @@ public final class Database {
 	
 	void updateConversation(Conversation conv, boolean lock) throws DatabaseFileException, IOException {
 		FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), lock);
-		conv.setKeysExchanged(entryConversation.getKeysExchanged());
 		conv.setPhoneNumber(entryConversation.getPhoneNumber());
 		conv.setTimeStamp(entryConversation.getTimeStamp());
-		conv.setSessionKey_Out(entryConversation.getSessionKey_Out());
-		conv.setLastID_Out(entryConversation.getLastID_Out());
-		conv.setSessionKey_In(entryConversation.getSessionKey_In());
-		conv.setLastID_In(entryConversation.getLastID_In());
 	}
 	
 	void saveConversation(Conversation conv) throws DatabaseFileException, IOException {
@@ -576,13 +563,8 @@ public final class Database {
 		lockFile(lock);
 		try {
 			FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), false);
-			entryConversation.setKeysExchanged(conv.getKeysExchanged());
 			entryConversation.setPhoneNumber(conv.getPhoneNumber());
 			entryConversation.setTimeStamp(conv.getTimeStamp());
-			entryConversation.setSessionKey_Out(conv.getSessionKey_Out());
-			entryConversation.setLastID_Out(conv.getLastID_Out());
-			entryConversation.setSessionKey_In(conv.getSessionKey_In());
-			entryConversation.setLastID_In(conv.getLastID_In());
 			setConversation(conv.getIndexEntry(), entryConversation, false);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
