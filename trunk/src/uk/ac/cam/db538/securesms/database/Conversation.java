@@ -82,6 +82,34 @@ public class Conversation implements Comparable<Conversation> {
 		return mTimeStamp;
 	}
 	
+	/**
+	 * Assigns new random session keys to this conversation. Last IDs are set to zero.
+	 * @param simPhoneNumber	Phone number of this SIM card.
+	 * @return					Instance of SessionKyes
+	 * @throws IOException 
+	 * @throws DatabaseFileException 
+	 */
+	public SessionKeys assignSessionKeys(String simPhoneNumber) throws DatabaseFileException, IOException {
+		return Database.getSingleton().createSessionKeys(this, simPhoneNumber);
+	}
+
+	/**
+	 * Assigns new session keys to this conversation
+	 * @param keysSent			Whether the keys have already been sent across
+	 * @param keysConfirmed		Whether the other party has confirmed the keys
+	 * @param simPhoneNumber	Phone number of the current SIM card		
+	 * @param sessionKey_Out	Session key for sending
+	 * @param lastID_Out		Last ID of sent SMS
+	 * @param sessionKey_In		Session key for receiving
+	 * @param lastID_In			Last ID of received SMS
+	 * @return					Instance of SessionKeys
+	 * @throws IOException 
+	 * @throws DatabaseFileException 
+	 */
+	public SessionKeys assignSessionKeys(boolean keysSent, boolean keysConfirmed, String simPhoneNumber, byte[] sessionKey_Out, byte lastID_Out, byte[] sessionKey_In, byte lastID_In) throws DatabaseFileException, IOException {
+		return Database.getSingleton().createSessionKeys(this, keysSent, keysConfirmed, simPhoneNumber, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In);
+	}
+	
 	@Override
 	public int compareTo(Conversation another) {
 		return Time.compare(this.getTimeStamp(), another.getTimeStamp());

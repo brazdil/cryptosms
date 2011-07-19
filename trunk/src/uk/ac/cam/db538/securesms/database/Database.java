@@ -197,6 +197,7 @@ public final class Database {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private byte[] getEntry(long index) throws DatabaseFileException, IOException {
 		return getEntry(index, true);
 	}
@@ -220,6 +221,7 @@ public final class Database {
 		return data;
 	}
 	
+	@SuppressWarnings("unused")
 	private void setEntry(long index, byte[] data) throws DatabaseFileException, IOException {
 		setEntry(index, data, true);
 	}
@@ -249,6 +251,7 @@ public final class Database {
 		return FileEntryHeader.parseData(getEntry(0, lock));
 	}
 	
+	@SuppressWarnings("unused")
 	private void setHeader(FileEntryHeader entryHeader) throws DatabaseFileException, IOException {
 		setHeader(entryHeader, true);
 	}
@@ -257,6 +260,7 @@ public final class Database {
 		setEntry(0, FileEntryHeader.createData(entryHeader), lock);
 	}
 
+	@SuppressWarnings("unused")
 	private long getEmptyEntry() throws DatabaseFileException, IOException { 
 		return getEmptyEntry(true);
 	}
@@ -319,6 +323,7 @@ public final class Database {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private FileEntryConversation getConversation(long indexEntry) throws DatabaseFileException, IOException {
 		return getConversation(indexEntry, true);
 	}
@@ -327,6 +332,7 @@ public final class Database {
 		return FileEntryConversation.parseData(getEntry(indexEntry, lock));
 	}
 	
+	@SuppressWarnings("unused")
 	private void setConversation(long indexEntry, FileEntryConversation entryConversation) throws DatabaseFileException, IOException {
 		setConversation(indexEntry, entryConversation, true);
 	}
@@ -335,6 +341,24 @@ public final class Database {
 		setEntry(indexEntry, FileEntryConversation.createData(entryConversation), lock);		
 	}
 	
+	@SuppressWarnings("unused")
+	private FileEntrySessionKeys getSessionKeys(long indexEntry) throws DatabaseFileException, IOException {
+		return getSessionKeys(indexEntry, true);
+	}
+	
+	private FileEntrySessionKeys getSessionKeys(long indexEntry, boolean lock) throws DatabaseFileException, IOException {
+		return FileEntrySessionKeys.parseData(getEntry(indexEntry, lock));
+	}
+	
+	@SuppressWarnings("unused")
+	private void setSessionKeys(long indexEntry, FileEntrySessionKeys entrySessionKeys) throws DatabaseFileException, IOException {
+		setSessionKeys(indexEntry, entrySessionKeys, true);
+	}
+	
+	private void setSessionKeys(long indexEntry, FileEntrySessionKeys entrySessionKeys, boolean lock) throws DatabaseFileException, IOException {
+		setEntry(indexEntry, FileEntrySessionKeys.createData(entrySessionKeys), lock);		
+	}
+
 	// HIGH-LEVEL STUFF
 
 	/**
@@ -382,7 +406,7 @@ public final class Database {
 	 */
 	public Conversation createConversation(String phoneNumber, Time timeStamp) throws DatabaseFileException, IOException {
 		Conversation conv = null;
-		
+
 		lockFile();
 		try {
 			// allocate entry for the new conversation
@@ -574,7 +598,113 @@ public final class Database {
 			unlockFile(lock);
 		}
 	}
+	
+	/**
+	 * Assigns new, randomly generated keys to an existing conversation. IDs sets to 0.
+	 * @param conv				Existing conversation
+	 * @param phoneNumber		Phone number of the current SIM
+	 * @return					Instance of SessionKeys
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	SessionKeys createSessionKeys(Conversation conv, String phoneNumber) throws DatabaseFileException, IOException {
+		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+		return createSessionKeys(conv, false, false, phoneNumber, sessionKey_Out, (byte) 0x00, sessionKey_In, (byte) 0x00);
+	}
+	
+	/**
+	 * Assigns new session keys to an existing conversation
+	 * @param conv 				Existing conversation
+	 * @param keysSent			Whether the keys have already been sent across
+	 * @param keysConfirmed		Whether the other party has confirmed the keys
+	 * @param phoneNumber		Phone number of the current SIM card		
+	 * @param sessionKey_Out	Session key for sending
+	 * @param lastID_Out		Last ID of sent SMS
+	 * @param sessionKey_In		Session key for receiving
+	 * @param lastID_In			Last ID of received SMS
+	 * @return					Instance of SessionKeys
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	SessionKeys createSessionKeys(Conversation conv, boolean keysSent, boolean keysConfirmed, String phoneNumber, byte[] sessionKey_Out, byte lastID_Out, byte[] sessionKey_In, byte lastID_In) throws DatabaseFileException, IOException {
+		SessionKeys keys = null;
 
+		lockFile();
+		try {
+			// allocate entry for the new conversation
+			// has to be first, because it changes the header
+			long indexNew = getEmptyEntry(false);
+			
+			// get the conversation
+			FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), false);
+			
+			// get the index of first session keys in list
+			long indexFirst = entryConversation.getIndexSessionKeys();
+
+			// create new entry and save it
+			FileEntrySessionKeys entrySessionKeys = new FileEntrySessionKeys(keysSent, keysConfirmed, phoneNumber, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexFirst);
+			setSessionKeys(indexNew, entrySessionKeys, false);
+			
+			// update index in conversation
+			entryConversation.setIndexSessionKeys(indexNew);
+			setConversation(conv.getIndexEntry(), entryConversation, false);
+			
+			// set the real world class to hold its index
+			keys = new SessionKeys(indexNew);
+			keys.update(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile();
+		}
+		
+		return keys;
+	}
+
+	void updateSessionKeys(SessionKeys sessionKeys) throws DatabaseFileException, IOException {
+		updateSessionKeys(sessionKeys, true);
+		
+	}
+
+	void updateSessionKeys(SessionKeys sessionKeys, boolean lock) throws DatabaseFileException, IOException {
+		FileEntrySessionKeys entrySessionKeys = getSessionKeys(sessionKeys.getIndexEntry(), lock);
+		sessionKeys.setKeysSent(entrySessionKeys.getKeysSent());
+		sessionKeys.setKeysConfirmed(entrySessionKeys.getKeysConfirmed());
+		sessionKeys.setPhoneNumber(entrySessionKeys.getPhoneNumber());
+		sessionKeys.setSessionKey_Out(entrySessionKeys.getSessionKey_Out());
+		sessionKeys.setLastID_Out(entrySessionKeys.getLastID_Out());
+		sessionKeys.setSessionKey_In(entrySessionKeys.getSessionKey_In());
+		sessionKeys.setLastID_In(entrySessionKeys.getLastID_In());
+	}
+	
+	void saveSessionKeys(SessionKeys sessionKeys) throws DatabaseFileException, IOException {
+		saveSessionKeys(sessionKeys, true);
+	}
+
+	void saveSessionKeys(SessionKeys sessionKeys, boolean lock) throws DatabaseFileException, IOException {
+		lockFile(lock);
+		try {
+			FileEntrySessionKeys entrySessionKeys = getSessionKeys(sessionKeys.getIndexEntry(), false);
+			entrySessionKeys.setKeysSent(sessionKeys.getKeysSent());
+			entrySessionKeys.setKeysConfirmed(sessionKeys.getKeysConfirmed());
+			entrySessionKeys.setPhoneNumber(sessionKeys.getPhoneNumber());
+			entrySessionKeys.setSessionKey_Out(sessionKeys.getSessionKey_Out());
+			entrySessionKeys.setLastID_Out(sessionKeys.getLastID_Out());
+			entrySessionKeys.setSessionKey_In(sessionKeys.getSessionKey_In());
+			entrySessionKeys.setLastID_In(sessionKeys.getLastID_In());
+			setSessionKeys(sessionKeys.getIndexEntry(), entrySessionKeys, false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile(lock);
+		}
+	}
+	
 	// FOR TESTING PURPOSES
 
 	int getEmptyEntriesCount() throws DatabaseFileException, IOException {
