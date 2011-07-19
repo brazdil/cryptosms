@@ -1,8 +1,6 @@
 package uk.ac.cam.db538.securesms.database;
 
-import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
-import android.text.format.Time;
 import junit.framework.TestCase;
 
 public class FileEntryMessagePart_Test extends TestCase {

@@ -3,12 +3,7 @@ package uk.ac.cam.db538.securesms.database;
 import java.io.File;
 import java.io.IOException;
 
-import android.text.format.Time;
-
-import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.database.Message.MessageType;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
-
 import junit.framework.TestCase;
 
 public class MessagePart_Test extends TestCase {
