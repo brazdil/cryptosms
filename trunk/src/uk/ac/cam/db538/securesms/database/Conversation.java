@@ -1,6 +1,8 @@
 package uk.ac.cam.db538.securesms.database;
 
 import java.io.IOException;
+
+import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import android.text.format.Time;
 
 /**
@@ -89,7 +91,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException 
 	 * @throws DatabaseFileException 
 	 */
-	public SessionKeys assignSessionKeys(String simPhoneNumber) throws DatabaseFileException, IOException {
+	public SessionKeys newSessionKeys(String simPhoneNumber) throws DatabaseFileException, IOException {
 		return Database.getSingleton().createSessionKeys(this, simPhoneNumber);
 	}
 
@@ -106,10 +108,24 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException 
 	 * @throws DatabaseFileException 
 	 */
-	public SessionKeys assignSessionKeys(boolean keysSent, boolean keysConfirmed, String simPhoneNumber, byte[] sessionKey_Out, byte lastID_Out, byte[] sessionKey_In, byte lastID_In) throws DatabaseFileException, IOException {
+	public SessionKeys newSessionKeys(boolean keysSent, boolean keysConfirmed, String simPhoneNumber, byte[] sessionKey_Out, byte lastID_Out, byte[] sessionKey_In, byte lastID_In) throws DatabaseFileException, IOException {
 		return Database.getSingleton().createSessionKeys(this, keysSent, keysConfirmed, simPhoneNumber, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In);
 	}
 	
+	/**
+	 * Creates new message in this conversation
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Message newMessage(MessageType messageType) throws DatabaseFileException, IOException {
+		return Database.getSingleton().createMessage(this, messageType);
+	}
+
+	public Message newMessage(boolean deliveredPart, boolean deliveredAll, MessageType messageType, Time timeStamp, String messageBody) throws DatabaseFileException, IOException {
+		return Database.getSingleton().createMessage(this, deliveredPart, deliveredAll, messageType, timeStamp, messageBody);
+	}
+
 	@Override
 	public int compareTo(Conversation another) {
 		return Time.compare(this.getTimeStamp(), another.getTimeStamp());

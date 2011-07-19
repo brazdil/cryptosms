@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
 import android.telephony.PhoneNumberUtils;
@@ -359,6 +360,24 @@ public final class Database {
 		setEntry(indexEntry, FileEntrySessionKeys.createData(entrySessionKeys), lock);		
 	}
 
+	@SuppressWarnings("unused")
+	private FileEntryMessage getMessage(long indexEntry) throws DatabaseFileException, IOException {
+		return getMessage(indexEntry, true);
+	}
+	
+	private FileEntryMessage getMessage(long indexEntry, boolean lock) throws DatabaseFileException, IOException {
+		return FileEntryMessage.parseData(getEntry(indexEntry, lock));
+	}
+	
+	@SuppressWarnings("unused")
+	private void setMessage(long indexEntry, FileEntryMessage entryMessage) throws DatabaseFileException, IOException {
+		setMessage(indexEntry, entryMessage, true);
+	}
+	
+	private void setMessage(long indexEntry, FileEntryMessage entryMessage, boolean lock) throws DatabaseFileException, IOException {
+		setEntry(indexEntry, FileEntryMessage.createData(entryMessage), lock);		
+	}
+
 	// HIGH-LEVEL STUFF
 
 	/**
@@ -663,7 +682,7 @@ public final class Database {
 		
 		return keys;
 	}
-
+	
 	void updateSessionKeys(SessionKeys sessionKeys) throws DatabaseFileException, IOException {
 		updateSessionKeys(sessionKeys, true);
 		
@@ -705,6 +724,89 @@ public final class Database {
 		}
 	}
 	
+	Message createMessage(Conversation conv, MessageType messageType) throws DatabaseFileException, IOException {
+		Time time = new Time(); time.setToNow();
+		return createMessage(conv, false, false, messageType, time, "");
+	}
+	
+	Message createMessage(Conversation conv, boolean deliveredPart, boolean deliveredAll, MessageType messageType, Time timeStamp, String messageBody) throws DatabaseFileException, IOException {
+		Message msg = null;
+
+		lockFile();
+		try {
+			// allocate entry for the new conversation
+			// has to be first, because it changes the header
+			long indexNew = getEmptyEntry(false);
+			
+			// get the conversation
+			FileEntryConversation entryConversation = getConversation(conv.getIndexEntry(), false);
+			
+			// get the index of first session keys in list
+			long indexFirst = entryConversation.getIndexMessages();
+			if (indexFirst != 0) {
+				FileEntryMessage messageFirst = getMessage(indexFirst, false);
+				messageFirst.setIndexPrev(indexNew);
+				setMessage(indexFirst, messageFirst, false);
+			}
+
+			// create new entry and save it
+			FileEntryMessage entryMessage = new FileEntryMessage(deliveredPart, deliveredAll, messageType, timeStamp, messageBody, 0L, 0L, indexFirst);
+			setMessage(indexNew, entryMessage, false);
+			
+			// update index in conversation
+			entryConversation.setIndexMessages(indexNew);
+			setConversation(conv.getIndexEntry(), entryConversation, false);
+			
+			// set the real world class to hold its index
+			msg = new Message(indexNew);
+			msg.update(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile();
+		}
+		
+		return msg;
+	}
+	
+	void updateMessage(Message msg) throws DatabaseFileException, IOException {
+		updateMessage(msg, true);
+	}
+	
+	void updateMessage(Message msg, boolean lock) throws DatabaseFileException, IOException {
+		FileEntryMessage entryMessage = getMessage(msg.getIndexEntry(), lock);
+		msg.setDeliveredPart(entryMessage.getDeliveredPart());
+		msg.setDeliveredAll(entryMessage.getDeliveredAll());
+		msg.setMessageType(entryMessage.getMessageType());
+		msg.setTimeStamp(entryMessage.getTimeStamp());
+		msg.setMessageBody(entryMessage.getMessageBody());
+	}
+	
+	void saveMessage(Message msg) throws DatabaseFileException, IOException {
+		saveMessage(msg, true);
+	}
+
+	void saveMessage(Message msg, boolean lock) throws DatabaseFileException, IOException {
+		lockFile(lock);
+		try {
+			FileEntryMessage entryMessage = getMessage(msg.getIndexEntry(), false);
+			entryMessage.setDeliveredPart(msg.getDeliveredPart());
+			entryMessage.setDeliveredAll(msg.getDeliveredAll());
+			entryMessage.setMessageType(msg.getMessageType());
+			entryMessage.setTimeStamp(msg.getTimeStamp());
+			entryMessage.setMessageBody(msg.getMessageBody());
+			setMessage(msg.getIndexEntry(), entryMessage, false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile(lock);
+		}
+	}
+
 	// FOR TESTING PURPOSES
 
 	int getEmptyEntriesCount() throws DatabaseFileException, IOException {
@@ -776,6 +878,16 @@ public final class Database {
 				visitedEntries[(int) indexNext] = true;
 				if (conv.getIndexPrev() != indexPrev)
 					corruptedPointers = true;
+				
+				// go through all its session keys
+				long indexKeys = conv.getIndexSessionKeys();
+				FileEntrySessionKeys keys;
+				while (indexKeys != 0) {
+					keys = getSessionKeys(indexKeys, false);
+					visitedEntries[(int) indexKeys] = true;
+					indexKeys = keys.getIndexNext();
+				}
+				
 				indexPrev = indexNext;
 				indexNext = conv.getIndexNext();
 			}

@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 
 import android.text.format.Time;
 
+import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -31,11 +32,6 @@ class FileEntryMessage {
 	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
 	
 	private static final int LENGTH_RANDOMDATA = OFFSET_MSGSINDEX - OFFSET_RANDOMDATA;	
-
-	enum MessageType {
-		INCOMING,
-		OUTGOING
-	}
 
 	private boolean mDeliveredPart;
 	private boolean mDeliveredAll;
