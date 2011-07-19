@@ -234,7 +234,7 @@ public class Database_Test extends TestCase {
 		}
 	}
 
-	public void testGetAllConversation() {
+	public void testGetAllConversations() {
 		Database history;
 		try {
 			history = Database.getSingleton();
@@ -273,4 +273,31 @@ public class Database_Test extends TestCase {
 			assertTrue(e.getMessage(), false);
 		}
 	}
+	
+	public void testCreateSessionKeys() {
+		Database history;
+		try {
+			history = Database.getSingleton();
+			Conversation conv = history.createConversation("phone number adfsdf");
+			
+			// check that it takes only one entry
+			int countEmpty = history.getEmptyEntriesCount();
+			for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
+			{
+				history.createSessionKeys(conv, "phone number sfdgfsdg");
+				if (countEmpty == 0)
+					assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = history.getEmptyEntriesCount()));
+				else
+					assertEquals(countEmpty - 1, (countEmpty = history.getEmptyEntriesCount()));
+			}
+
+			// check structure
+			assertTrue(history.checkStructure());
+		} catch (DatabaseFileException e) {
+			assertTrue(e.getMessage(), false);
+		} catch (IOException e) {
+			assertTrue(e.getMessage(), false);
+		}
+	}
+
 }

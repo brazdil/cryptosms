@@ -74,7 +74,7 @@ public class SessionKeys_Test extends TestCase {
 		
 		Conversation conv = database.createConversation(phoneNumberConversation);
 		
-		SessionKeys keysWrite = conv.assignSessionKeys("");
+		SessionKeys keysWrite = conv.newSessionKeys("");
 		SessionKeys keysRead = new SessionKeys(keysWrite.getIndexEntry());
 		
 		keysWrite.setKeysSent(keysSent);

@@ -63,7 +63,7 @@ public class Conversation_Test extends TestCase {
 		Database database = Database.getSingleton();
 		
 		String phoneNumber = "+123456789012";
-		Time timeStamp = new Time(); timeStamp.setToNow();
+		Time timeStamp = new Time(); timeStamp.set(5, 2, 1928);
 		
 		Conversation convWrite = database.createConversation("", new Time());
 		Conversation convRead = new Conversation(convWrite.getIndexEntry());
