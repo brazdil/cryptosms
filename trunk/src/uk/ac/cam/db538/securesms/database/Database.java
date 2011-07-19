@@ -378,6 +378,24 @@ public final class Database {
 		setEntry(indexEntry, FileEntryMessage.createData(entryMessage), lock);		
 	}
 
+	@SuppressWarnings("unused")
+	private FileEntryMessagePart getMessagePart(long indexEntry) throws DatabaseFileException, IOException {
+		return getMessagePart(indexEntry, true);
+	}
+	
+	private FileEntryMessagePart getMessagePart(long indexEntry, boolean lock) throws DatabaseFileException, IOException {
+		return FileEntryMessagePart.parseData(getEntry(indexEntry, lock));
+	}
+	
+	@SuppressWarnings("unused")
+	private void setMessagePart(long indexEntry, FileEntryMessagePart entryMessagePart) throws DatabaseFileException, IOException {
+		setMessagePart(indexEntry, entryMessagePart, true);
+	}
+	
+	private void setMessagePart(long indexEntry, FileEntryMessagePart entryMessagePart, boolean lock) throws DatabaseFileException, IOException {
+		setEntry(indexEntry, FileEntryMessagePart.createData(entryMessagePart), lock);		
+	}
+
 	// HIGH-LEVEL STUFF
 
 	/**
@@ -798,6 +816,77 @@ public final class Database {
 			entryMessage.setTimeStamp(msg.getTimeStamp());
 			entryMessage.setMessageBody(msg.getMessageBody());
 			setMessage(msg.getIndexEntry(), entryMessage, false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile(lock);
+		}
+	}
+
+	MessagePart createMessagePart(Message msg) throws DatabaseFileException, IOException {
+		return createMessagePart(msg, false, "");
+	}
+	
+	MessagePart createMessagePart(Message msg, boolean deliveredPart, String messageBody) throws DatabaseFileException, IOException {
+		MessagePart msgPart = null;
+
+		lockFile();
+		try {
+			// allocate entry for the new conversation
+			// has to be first, because it changes the header
+			long indexNew = getEmptyEntry(false);
+			
+			// get the message
+			FileEntryMessage entryMessage = getMessage(msg.getIndexEntry(), false);
+			
+			// get the index of first session keys in list
+			long indexFirst = entryMessage.getIndexMessageParts();
+
+			// create new entry and save it
+			FileEntryMessagePart entryMessagePart = new FileEntryMessagePart(deliveredPart, messageBody, indexFirst);
+			setMessagePart(indexNew, entryMessagePart, false);
+			
+			// update index in conversation
+			entryMessage.setIndexMessageParts(indexNew);
+			setMessage(msg.getIndexEntry(), entryMessage, false);
+			
+			// set the real world class to hold its index
+			msgPart = new MessagePart(indexNew);
+			msgPart.update(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			unlockFile();
+		}
+		
+		return msgPart;
+	}
+
+	void updateMessagePart(MessagePart msgPart) throws DatabaseFileException, IOException {
+		updateMessagePart(msgPart, true);
+	}
+	
+	void updateMessagePart(MessagePart msgPart, boolean lock) throws DatabaseFileException, IOException {
+		FileEntryMessagePart entryMessagePart = getMessagePart(msgPart.getIndexEntry(), lock);
+		msgPart.setDeliveredPart(entryMessagePart.getDeliveredPart());
+		msgPart.setMessageBody(entryMessagePart.getMessageBody());
+	}
+	
+	void saveMessagePart(MessagePart msgPart) throws DatabaseFileException, IOException {
+		saveMessagePart(msgPart, true);
+	}
+
+	void saveMessagePart(MessagePart msgPart, boolean lock) throws DatabaseFileException, IOException {
+		lockFile(lock);
+		try {
+			FileEntryMessagePart entryMessagePart = getMessagePart(msgPart.getIndexEntry(), false);
+			entryMessagePart.setDeliveredPart(msgPart.getDeliveredPart());
+			entryMessagePart.setMessageBody(msgPart.getMessageBody());
+			setMessagePart(msgPart.getIndexEntry(), entryMessagePart, false);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
 		} catch (IOException ex) {

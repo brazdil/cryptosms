@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import android.text.format.Time;
 
-public class Message {
+public class MessagePart {
 	public enum MessageType {
 		INCOMING,
 		OUTGOING
@@ -12,12 +12,9 @@ public class Message {
 
 	private long mIndexEntry; // READ ONLY
 	private boolean mDeliveredPart;
-	private boolean mDeliveredAll;
-	private MessageType mMessageType;
-	private Time mTimeStamp;
 	private String mMessageBody;
 	
-	Message(long indexEntry) {
+	MessagePart(long indexEntry) {
 		if (indexEntry > 0xFFFFFFFFL || indexEntry <= 0L)
 			throw new IndexOutOfBoundsException();
 		
@@ -45,7 +42,7 @@ public class Message {
 	 */
 	public void update(boolean lock) throws DatabaseFileException, IOException {
 		if (mIndexEntry != 0)
-			Database.getSingleton().updateMessage(this, lock);
+			Database.getSingleton().updateMessagePart(this, lock);
 	}
 	
 	/**
@@ -65,7 +62,7 @@ public class Message {
 	 */
 	public void save(boolean lock) throws DatabaseFileException, IOException {
 		if (mIndexEntry != 0)
-			Database.getSingleton().saveMessage(this, false);
+			Database.getSingleton().saveMessagePart(this, false);
 	}
 
 	public void setDeliveredPart(boolean deliveredPart) {
@@ -76,43 +73,11 @@ public class Message {
 		return mDeliveredPart;
 	}
 
-	public void setDeliveredAll(boolean deliveredAll) {
-		this.mDeliveredAll = deliveredAll;
-	}
-
-	public boolean getDeliveredAll() {
-		return mDeliveredAll;
-	}
-
-	public void setMessageType(MessageType messageType) {
-		this.mMessageType = messageType;
-	}
-
-	public MessageType getMessageType() {
-		return mMessageType;
-	}
-
-	public void setTimeStamp(Time timeStamp) {
-		this.mTimeStamp = timeStamp;
-	}
-
-	public Time getTimeStamp() {
-		return mTimeStamp;
-	}
-
 	public void setMessageBody(String messageBody) {
 		this.mMessageBody = messageBody;
 	}
 
 	public String getMessageBody() {
 		return mMessageBody;
-	}
-
-	public MessagePart newMessagePart() throws DatabaseFileException, IOException {
-		return Database.getSingleton().createMessagePart(this); 
-	}
-	
-	public MessagePart newMessagePart(boolean deliveredPart, String messageBody) throws DatabaseFileException, IOException {
-		return Database.getSingleton().createMessagePart(this, deliveredPart, messageBody);
 	}
 }
