@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.securesms.database;
 
-import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.text.format.Time;
 import junit.framework.TestCase;
@@ -20,90 +19,88 @@ public class FileEntryConversation_Test extends TestCase {
 		
 		// ASSIGNMENT
 		
-		boolean keysExchanged = true;
 		String phoneNumber = "+123456789012";
 		Time timeStamp = new Time(); timeStamp.setToNow();
-		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_Out = 0x12;
-		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_In = 0x52;
+		long indexKeys = 12L;
 		long indexMessages = 5L;
 		long indexPrev = 120L;
 		long indexNext = 248L;
 		
-		conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, indexNext);
-		assertEquals(conv.getKeysExchanged(), keysExchanged);
+		conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, indexMessages, indexPrev, indexNext);
 		assertEquals(conv.getPhoneNumber(), phoneNumber);
 		assertEquals(conv.getTimeStamp(), timeStamp);
-		CustomAsserts.assertArrayEquals(conv.getSessionKey_Out(), sessionKey_Out);
-		assertEquals(conv.getLastID_Out(), lastID_Out);
-		CustomAsserts.assertArrayEquals(conv.getSessionKey_In(), sessionKey_In);
-		assertEquals(conv.getLastID_In(), lastID_In);
+		assertEquals(conv.getIndexSessionKeys(), indexKeys);
 		assertEquals(conv.getIndexMessages(), indexMessages);
 		assertEquals(conv.getIndexPrev(), indexPrev);
 		assertEquals(conv.getIndexNext(), indexNext);
 		
 		// INDICES OUT OF BOUNDS
 		
-		// indexMessages
+		// indexSessionKeys
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out,  sessionKey_In, lastID_In, 0x0100000000L, indexPrev, indexNext);
+			conv = new FileEntryConversation(phoneNumber, timeStamp, 0x0100000000L, indexMessages, indexPrev, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 		
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, -1L, indexPrev, indexNext);
+			conv = new FileEntryConversation(phoneNumber, timeStamp, -1L, indexMessages, indexPrev, indexNext);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+
+		// indexMessages
+		try {
+			conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, 0x0100000000L, indexPrev, indexNext);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+		
+		try {
+			conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, -1L, indexPrev, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		// indexPrev
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, 0x0100000000L, indexNext);
+			conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, indexMessages, 0x0100000000L, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, -1L, indexNext);
+			conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, indexMessages, -1L, indexNext);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		// indexNext
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, 0x0100000000L);
+			conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, indexMessages, indexPrev, 0x0100000000L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		try {
-			conv = new FileEntryConversation(keysExchanged, phoneNumber, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, -1L);
+			conv = new FileEntryConversation(phoneNumber, timeStamp, indexKeys, indexMessages, indexPrev, -1L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 	}
 
 	public void testCreateData() {
-		boolean keysExchanged = true;
+		byte flags = 0;
 		String phoneNumberLong = "+1234567890126549873sdfsat6ewrt987wet3df1g3s2g1e6r5t46wert4dfsgdfsg";
 		String phoneNumberResult = "+1234567890126549873sdfsat6ewrt9";
 		Time timeStamp = new Time(); timeStamp.setToNow();
-		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_Out = 0x12;
-		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_In = 0x52;
+		long indexKeys = 12L;
 		long indexMessages = 5L;
 		long indexPrev = 120L;
 		long indexNext = 248L;
 
-		// compute expected values
-		byte flags = 0;
-		flags |= (keysExchanged) ? 0x80 : 0x00;
-		
 		// get the generated data
-		FileEntryConversation conv = new FileEntryConversation(keysExchanged, phoneNumberLong, timeStamp, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In, indexMessages, indexPrev, indexNext);
+		FileEntryConversation conv = new FileEntryConversation(phoneNumberLong, timeStamp, indexKeys, indexMessages, indexPrev, indexNext);
 		byte[] dataEncrypted = null;
 		try {
 			dataEncrypted = FileEntryConversation.createData(conv);
@@ -118,44 +115,31 @@ public class FileEntryConversation_Test extends TestCase {
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		
 		// check the data
-		assertEquals(dataPlain[0], flags);
+		assertEquals(flags, dataPlain[0]);
 		assertEquals(Database.fromLatin(dataPlain, 1, 32), phoneNumberResult);
 		Time time = new Time(); time.parse3339(Database.fromLatin(dataPlain, 33, 29));
 		assertEquals(Time.compare(time, timeStamp), 0);
-		CustomAsserts.assertArrayEquals(dataPlain, 62, sessionKey_Out, Encryption.KEY_LENGTH);
-		assertEquals(dataPlain[94], lastID_Out);
-		CustomAsserts.assertArrayEquals(dataPlain, 95, sessionKey_In, Encryption.KEY_LENGTH);
-		assertEquals(dataPlain[127], lastID_In);
+		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16), indexKeys);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
 	public void testParseData() {
-		boolean keysExchanged = true;
+		byte flags = 0;
 		String phoneNumber = "+123456789012";
 		Time timeStamp = new Time(); timeStamp.setToNow();
-		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_Out = 0x12;
-		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_In = 0x52;
+		long indexKeys = 12L;
 		long indexMessages = 5L;
 		long indexPrev = 120L;
 		long indexNext = 248L;
-
-		// prepare stuff
-		byte flags = 0;
-		flags |= (keysExchanged) ? 0x80 : 0x00;
 
 		// create plain data
 		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
 		System.arraycopy(Database.toLatin(phoneNumber, 32), 0, dataPlain, 1, 32);
 		System.arraycopy(Database.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 33, 29);
-		System.arraycopy(sessionKey_Out, 0, dataPlain, 62, 32);
-		dataPlain[94] = lastID_Out;
-		System.arraycopy(sessionKey_In, 0, dataPlain, 95, 32);
-		dataPlain[127] = lastID_In;
+		System.arraycopy(Database.getBytes(indexKeys), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16, 4);
 		System.arraycopy(Database.getBytes(indexMessages), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
 		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
 		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
@@ -172,11 +156,9 @@ public class FileEntryConversation_Test extends TestCase {
 		}
 		
 		// check the indices
-		assertEquals(keysExchanged, conv.getKeysExchanged());
 		assertEquals(phoneNumber, conv.getPhoneNumber());
 		assertEquals(Time.compare(timeStamp, conv.getTimeStamp()), 0);
-		CustomAsserts.assertArrayEquals(sessionKey_Out, conv.getSessionKey_Out());
-		CustomAsserts.assertArrayEquals(sessionKey_In, conv.getSessionKey_In());
+		assertEquals(indexKeys, conv.getIndexSessionKeys());
 		assertEquals(indexMessages, conv.getIndexMessages());
 		assertEquals(indexPrev, conv.getIndexPrev());
 		assertEquals(indexNext, conv.getIndexNext());

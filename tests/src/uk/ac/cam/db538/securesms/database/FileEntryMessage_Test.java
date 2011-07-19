@@ -95,7 +95,7 @@ public class FileEntryMessage_Test extends TestCase {
 		byte flags = 0;
 		flags |= (deliveredPart) ? 0x80 : 0x00;
 		flags |= (deliveredAll) ? 0x40 : 0x00;
-		flags |= (messageType == messageType.OUTGOING) ? 0x20 : 0x00;
+		flags |= (messageType == MessageType.OUTGOING) ? 0x20 : 0x00;
 		
 		// get the generated data
 		FileEntryMessage message = new FileEntryMessage(deliveredPart, deliveredAll, messageType, timeStamp, messageBody, indexMessageParts, indexPrev, indexNext);
