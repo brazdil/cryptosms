@@ -2,8 +2,6 @@ package uk.ac.cam.db538.securesms.database;
 
 import java.io.IOException;
 
-import android.text.format.Time;
-
 public class MessagePart {
 	public enum MessageType {
 		INCOMING,

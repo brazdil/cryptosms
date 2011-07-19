@@ -2,9 +2,6 @@ package uk.ac.cam.db538.securesms.database;
 
 import java.nio.ByteBuffer;
 
-import android.text.format.Time;
-
-import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
