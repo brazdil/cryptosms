@@ -54,6 +54,7 @@ public final class Database {
 	 */
 	public static void initSingleton(Context context) throws IOException, DatabaseFileException {
 		String filename = context.getFilesDir().getAbsolutePath() + "/" + FILE_NAME;
+
 		initSingleton(filename);
 	}
 
@@ -65,8 +66,19 @@ public final class Database {
 	 */
 	public static void initSingleton(String filename) throws IOException, DatabaseFileException {
 		if (mSingleton != null) 
-			throw new DatabaseFileException("Database already initialized");
-		mSingleton = new Database(filename);
+			return; //throw new DatabaseFileException("Database already initialized");
+		
+		//TODO: Just For Testing!!! 
+		File file = new File(filename);
+		if (file.exists())
+			file.delete();
+
+		new Database(filename);
+
+		
+		//TODO: Just For Testing!!!
+		Conversation conv1 = mSingleton.createConversation("+420605219051");
+		Conversation conv2 = mSingleton.createConversation("+20104544366");
 	}
 	
 	// LOW-LEVEL BIT MANIPULATION
@@ -137,12 +149,20 @@ public final class Database {
 	// FILE MANIPULATION
 
 	private DatabaseFile smsFile;
+	private ArrayList<Conversation> mCacheConversations = null;
+	private ArrayList<Conversation> mCacheConversations_ByTimeStamp = null;
+	private ArrayList<Conversation> mCacheConversations_BySessionKeys = null;
 	
 	private Database(String filename) throws IOException, DatabaseFileException {
+		mSingleton = this;
+		
 		boolean exists = new File(filename).exists();
 		smsFile = new DatabaseFile(filename);
 		if (!exists)
 			createFile();
+
+		if (mCacheConversations == null)
+			mCacheConversations = cacheAllConversations();
 	}
 	
 	/**
@@ -478,6 +498,7 @@ public final class Database {
 			// set the real world class to hold its index
 			conv = new Conversation(indexNew);
 			conv.update(false);
+			mCacheConversations.add(conv);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
 		} catch (IOException ex) {
@@ -502,6 +523,11 @@ public final class Database {
 	}
 	
 	private Conversation getConversation(String phoneNumber, boolean lock) throws IOException, DatabaseFileException {
+		// check whether it is already cached
+		for (Conversation conv: mCacheConversations)
+			if (PhoneNumberUtils.compare(conv.getPhoneNumber(), phoneNumber))
+				return conv;
+		
 		Conversation conv = null;
 
 		lockFile(lock);
@@ -527,6 +553,7 @@ public final class Database {
 					// create the Conversation class
 					conv = new Conversation(indexNext);
 					conv.update(false);
+					mCacheConversations.add(conv);
 					
 					// stop searching
 					indexNext = 0;
@@ -570,10 +597,14 @@ public final class Database {
 	 * Conversations are sorted by their time stamps from oldest to newest.
 	 */
 	public ArrayList<Conversation> getListOfConversations() throws DatabaseFileException, IOException {
-		return getListOfConversations(true);
+		return mCacheConversations;
 	}
 
-	private ArrayList<Conversation> getListOfConversations(Boolean lock) throws DatabaseFileException, IOException {		
+	private ArrayList<Conversation> cacheAllConversations() throws DatabaseFileException, IOException {
+		return cacheAllConversations(true);
+	}
+
+	private ArrayList<Conversation> cacheAllConversations(Boolean lock) throws DatabaseFileException, IOException {		
 		ArrayList<Conversation> list = new ArrayList<Conversation>();
 		Conversation conv;
 		

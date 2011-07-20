@@ -128,7 +128,7 @@ public class Conversation implements Comparable<Conversation> {
 
 	@Override
 	public int compareTo(Conversation another) {
-		return Time.compare(this.getTimeStamp(), another.getTimeStamp());
+		return - Time.compare(this.getTimeStamp(), another.getTimeStamp());
 	}
 	
 	
