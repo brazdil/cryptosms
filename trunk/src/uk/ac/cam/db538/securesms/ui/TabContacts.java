@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.securesms.ui;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
@@ -28,8 +29,8 @@ public class TabContacts extends ListActivity {
         headerView.bind(getString(R.string.new_contact), getString(R.string.create_new_contact));
         listView.addHeaderView(headerView, null, true);
         
-        try {
-			setListAdapter(new ArrayAdapter<Conversation>(this, R.layout.item_main_recent, Database.getSingleton().getListOfConversations()) {
+//        try {
+			setListAdapter(new ArrayAdapter<Conversation>(this, R.layout.item_main_recent, /*INSERT ARRAYLIST*/ new ArrayList<Conversation>()) {
 				@Override
 				public View getView(int position, View convertView, ViewGroup parent) {
 					ConversationListItem row;
@@ -44,11 +45,11 @@ public class TabContacts extends ListActivity {
 					return row;
 				}
 			});
-		} catch (DatabaseFileException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		} catch (DatabaseFileException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 
         /*
         listView.setOnCreateContextMenuListener(mConvListOnCreateContextMenuListener);

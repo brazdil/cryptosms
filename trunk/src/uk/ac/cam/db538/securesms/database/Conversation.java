@@ -1,135 +1,279 @@
 package uk.ac.cam.db538.securesms.database;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import android.text.format.Time;
+
+import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
  * 
- * Class representing a conversation with a specific person
+ * Class representing a conversation entry in the secure storage file.
  * 
  * @author David Brazdil
  *
  */
-public class Conversation implements Comparable<Conversation> {
-	private long mIndexEntry; // READ ONLY
-	private String mPhoneNumber;
-	private Time mTimeStamp;
+public class Conversation {
+	// FILE FORMAT
+	private static final int LENGTH_FLAGS = 1;
+	private static final int LENGTH_PHONENUMBER = 32;
+	private static final int LENGTH_TIMESTAMP = 29;
+
+	private static final int OFFSET_FLAGS = 0;
+	private static final int OFFSET_PHONENUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
+	private static final int OFFSET_TIMESTAMP = OFFSET_PHONENUMBER + LENGTH_PHONENUMBER;
 	
-	Conversation(long indexEntry) {
-		if (indexEntry > 0xFFFFFFFFL || indexEntry <= 0L)
-			throw new IndexOutOfBoundsException();
-		
-		mIndexEntry = indexEntry;
+	private static final int OFFSET_RANDOMDATA = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
+
+	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
+	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
+	private static final int OFFSET_KEYSINDEX = OFFSET_MSGSINDEX - 4;
+	
+	private static final int LENGTH_RANDOMDATA = OFFSET_KEYSINDEX - OFFSET_RANDOMDATA;	
+	
+	// STATIC
+	
+	private static ArrayList<Conversation> cacheConversation = new ArrayList<Conversation>();
+	
+	/**
+	 * Returns instance of a new Conversation 
+	 * @return
+	 * @throws IOException 
+	 * @throws DatabaseFileException 
+	 */
+	public static Conversation createConversation() throws DatabaseFileException, IOException {
+		return createConversation(true);
 	}
 
-	long getIndexEntry() {
-		return mIndexEntry;
+	/**
+	 * Returns instance of a new Conversation 
+	 * @return
+	 * @throws IOException 
+	 * @throws DatabaseFileException 
+	 */
+	public static Conversation createConversation(boolean lock) throws DatabaseFileException, IOException {
+		return new Conversation(Empty.getEmptyIndex(lock), false, lock);
 	}
 	
 	/**
-	 * Loads data from the secure file (locks the file)
-	 * @throws DatabaseFileException
-	 * @throws IOException
+	 * Returns an instance of Conversation class with given index in file.
+	 * @param index		Index in file
 	 */
-	public void update() throws DatabaseFileException, IOException {
-		update(true);
+	static Conversation getConversation(long index) throws DatabaseFileException, IOException {
+		return getConversation(index, true);
 	}
 	
 	/**
-	 * Loads data from the secure file
-	 * @param lock		Specifies whether the file should be locked during the operation.
-	 * @throws DatabaseFileException
-	 * @throws IOException
+	 * Returns an instance of Conversation class with given index in file.
+	 * @param index		Index in file
+	 * @param lock		File lock allow
 	 */
-	public void update(boolean lock) throws DatabaseFileException, IOException {
-		if (mIndexEntry != 0)
-			Database.getSingleton().updateConversation(this, lock);
+	static Conversation getConversation(long index, boolean lockAllow) throws DatabaseFileException, IOException {
+		if (index <= 0L)
+			return null;
+		
+		// try looking it up
+		for (Conversation conv: cacheConversation)
+			if (conv.getEntryIndex() == index)
+				return conv; 
+		
+		// create a new one
+		return new Conversation(index, true, lockAllow);
 	}
 	
-	/**
-	 * Saves data to the secure file (locks the file)
-	 * @throws DatabaseFileException
-	 * @throws IOException
-	 */
-	public void save() throws DatabaseFileException, IOException {
-		save(true);
+	// INTERNAL FIELDS
+	private long mEntryIndex; // READ ONLY
+	private String mPhoneNumber;
+	private Time mTimeStamp;
+	private long mIndexSessionKeys;
+	private long mIndexMessages;
+	private long mIndexPrev;
+	private long mIndexNext;
+	
+	// CONSTRUCTORS
+	
+	private Conversation(long index, boolean readFromFile) throws DatabaseFileException, IOException {
+		this(index, readFromFile, true);
 	}
 	
-	/**
-	 * Saves data to the secure file
-	 * @param lock		Specifies whether the file should be locked during the operation.
-	 * @throws DatabaseFileException
-	 * @throws IOException
-	 */
-	public void save(boolean lock) throws DatabaseFileException, IOException {
-		if (mIndexEntry != 0)
-			Database.getSingleton().saveConversation(this, false);
+	private Conversation(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
+		mEntryIndex = index;
+		
+		if (readFromFile) {
+			byte[] dataEncrypted = Database.getDatabase().getEntry(index, lockAllow);
+			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			
+			Time timeStamp = new Time();
+			timeStamp.parse3339(Database.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
+
+			setPhoneNumber(Database.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
+			setTimeStamp(timeStamp);
+			setIndexSessionKeys(Database.getInt(dataPlain, OFFSET_KEYSINDEX));
+			setIndexMessages(Database.getInt(dataPlain, OFFSET_MSGSINDEX));
+			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
+		}
+		else {
+			// default values
+			Time timeStamp = new Time();
+			timeStamp.setToNow();
+			
+			setPhoneNumber("");
+			setTimeStamp(timeStamp);
+			setIndexSessionKeys(0L);
+			setIndexMessages(0L);
+			setIndexPrev(0L);
+			setIndexNext(0L);
+			
+			saveToFile(lockAllow);
+		}
+
+		cacheConversation.add(this);
+	}
+
+	// FUNCTIONS
+	
+	public void saveToFile() throws DatabaseFileException, IOException {
+		saveToFile(true);
+	}
+	
+	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
+		ByteBuffer convBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
+		
+		// flags
+		byte flags = 0;
+		convBuffer.put(flags);
+		
+		// phone number
+		convBuffer.put(Database.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
+		
+		// time stamp
+		convBuffer.put(Database.toLatin(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
+
+		// random data
+		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
+		
+		// indices
+		convBuffer.put(Database.getBytes(this.mIndexSessionKeys)); 
+		convBuffer.put(Database.getBytes(this.mIndexMessages)); 
+		convBuffer.put(Database.getBytes(this.mIndexPrev));
+		convBuffer.put(Database.getBytes(this.mIndexNext));
+		
+		byte[] dataEncrypted = Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
+		Database.getDatabase().setEntry(this.mEntryIndex, dataEncrypted, lock);
+	}
+
+	public Conversation getPreviousConversation() throws DatabaseFileException, IOException {
+		return getPreviousConversation(true);
+	}
+	
+	public Conversation getPreviousConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+		return Conversation.getConversation(mIndexPrev, lockAllow);
+	}
+
+	public Conversation getNextConversation() throws DatabaseFileException, IOException {
+		return getNextConversation(true);
+	}
+	
+	public Conversation getNextConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+		return Conversation.getConversation(mIndexNext, lockAllow);
+	}
+	
+	public void delete() {
+		delete(true);
+	}
+	
+	public void delete(boolean lock) {
+		//TODO: To be implemented
+	}
+	
+	public Message getFirstMessage() throws DatabaseFileException, IOException {
+		return getFirstMessage(true);
+	}
+	
+	public Message getFirstMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+		return Message.getMessage(mIndexMessages, lockAllow);
+	}
+	
+	public ArrayList<Message> getMessages(boolean lockAllow) throws DatabaseFileException, IOException {
+		ArrayList<Message> list = new ArrayList<Message>();
+		Message msg = getFirstMessage(lockAllow);
+		while (msg != null) {
+			list.add(msg);
+			msg = msg.getNextMessage(lockAllow);
+		}
+		return list;
+	}
+	
+	// GETTERS / SETTERS
+	long getEntryIndex() {
+		return mEntryIndex;
+	}
+	
+	public String getPhoneNumber() {
+		return mPhoneNumber;
 	}
 
 	public void setPhoneNumber(String phoneNumber) {
 		this.mPhoneNumber = phoneNumber;
 	}
 
-	public String getPhoneNumber() {
-		return mPhoneNumber;
+	public Time getTimeStamp() {
+		return mTimeStamp;
 	}
 
 	public void setTimeStamp(Time timeStamp) {
 		this.mTimeStamp = timeStamp;
 	}
 
-	public Time getTimeStamp() {
-		return mTimeStamp;
-	}
-	
-	/**
-	 * Assigns new random session keys to this conversation. Last IDs are set to zero.
-	 * @param simPhoneNumber	Phone number of this SIM card.
-	 * @return					Instance of SessionKyes
-	 * @throws IOException 
-	 * @throws DatabaseFileException 
-	 */
-	public SessionKeys newSessionKeys(String simPhoneNumber) throws DatabaseFileException, IOException {
-		return Database.getSingleton().createSessionKeys(this, simPhoneNumber);
+	long getIndexSessionKeys() {
+		return mIndexSessionKeys;
 	}
 
-	/**
-	 * Assigns new session keys to this conversation
-	 * @param keysSent			Whether the keys have already been sent across
-	 * @param keysConfirmed		Whether the other party has confirmed the keys
-	 * @param simPhoneNumber	Phone number of the current SIM card		
-	 * @param sessionKey_Out	Session key for sending
-	 * @param lastID_Out		Last ID of sent SMS
-	 * @param sessionKey_In		Session key for receiving
-	 * @param lastID_In			Last ID of received SMS
-	 * @return					Instance of SessionKeys
-	 * @throws IOException 
-	 * @throws DatabaseFileException 
-	 */
-	public SessionKeys newSessionKeys(boolean keysSent, boolean keysConfirmed, String simPhoneNumber, byte[] sessionKey_Out, byte lastID_Out, byte[] sessionKey_In, byte lastID_In) throws DatabaseFileException, IOException {
-		return Database.getSingleton().createSessionKeys(this, keysSent, keysConfirmed, simPhoneNumber, sessionKey_Out, lastID_Out, sessionKey_In, lastID_In);
-	}
-	
-	/**
-	 * Creates new message in this conversation
-	 * @return
-	 * @throws DatabaseFileException
-	 * @throws IOException
-	 */
-	public Message newMessage(MessageType messageType) throws DatabaseFileException, IOException {
-		return Database.getSingleton().createMessage(this, messageType);
+	void setIndexSessionKeys(long indexSessionKyes) {
+		if (indexSessionKyes > 0xFFFFFFFFL || indexSessionKyes < 0L)
+			throw new IndexOutOfBoundsException();
+			
+		this.mIndexSessionKeys = indexSessionKyes;
 	}
 
-	public Message newMessage(boolean deliveredPart, boolean deliveredAll, MessageType messageType, Time timeStamp, String messageBody) throws DatabaseFileException, IOException {
-		return Database.getSingleton().createMessage(this, deliveredPart, deliveredAll, messageType, timeStamp, messageBody);
+	long getIndexMessages() {
+		return mIndexMessages;
 	}
 
-	@Override
-	public int compareTo(Conversation another) {
-		return - Time.compare(this.getTimeStamp(), another.getTimeStamp());
+	void setIndexMessages(long indexMessages) {
+		if (indexMessages > 0xFFFFFFFFL || indexMessages < 0L)
+			throw new IndexOutOfBoundsException();
+			
+		this.mIndexMessages = indexMessages;
+	}
+
+	long getIndexPrev() {
+		return mIndexPrev;
+	}
+
+	void setIndexPrev(long indexPrev) {
+		if (indexPrev > 0xFFFFFFFFL || indexPrev < 0L)
+			throw new IndexOutOfBoundsException();
+		
+		this.mIndexPrev = indexPrev;
+	}
+
+	long getIndexNext() {
+		return mIndexNext;
+	}
+
+	void setIndexNext(long indexNext) {
+	    if (indexNext > 0xFFFFFFFFL || indexNext < 0L)
+	    	throw new IndexOutOfBoundsException();
+		
+		this.mIndexNext = indexNext;
 	}
 	
-	
+	Conversation getNextEmpty() throws DatabaseFileException, IOException {
+		return Conversation.getConversation(mIndexNext);
+	}
 }
