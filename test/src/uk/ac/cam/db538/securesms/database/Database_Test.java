@@ -2,12 +2,7 @@ package uk.ac.cam.db538.securesms.database;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-
-import android.text.format.Time;
-
 import junit.framework.TestCase;
-
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.database.Database;
 
