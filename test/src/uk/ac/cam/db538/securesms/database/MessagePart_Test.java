@@ -37,6 +37,8 @@ public class MessagePart_Test extends TestCase {
 	public void testConstruction() throws DatabaseFileException, IOException {
 		// Check that it is assigned to a proper message, etc...
 		Conversation conv = Conversation.createConversation();
+		Header.getHeader().attachConversation(conv);
+		
 		Message msg = Message.createMessage();
 		conv.attachMessage(msg);
 		
@@ -49,6 +51,8 @@ public class MessagePart_Test extends TestCase {
 		
 		assertSame(msg.getFirstMessagePart(), msgPart1);
 		assertNotSame(msg.getFirstMessagePart(), msgPart2);
+
+		assertTrue(Common.checkStructure());
 		
 		// Check that the data is saved properly
 		setData(msgPart1);
@@ -60,7 +64,6 @@ public class MessagePart_Test extends TestCase {
 		msgPart1 = MessagePart.getMessagePart(index);
 		
 		checkData(msgPart1);
-		assertTrue(Common.checkStructure());
 	}
 	
 	public void testIndices() throws DatabaseFileException, IOException {

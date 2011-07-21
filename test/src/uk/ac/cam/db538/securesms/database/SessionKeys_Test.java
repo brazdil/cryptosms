@@ -1,115 +1,145 @@
 package uk.ac.cam.db538.securesms.database;
 
-import java.io.File;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
-
 import junit.framework.TestCase;
 
 public class SessionKeys_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		Common.clearFile();	}
+		Common.clearFile();
+	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
 	}
 
-/*	public void testSessionKeys() {
-		SessionKeys keys;
-		
-		// ASSIGNMENT
-		
-		try {
-			keys = new SessionKeys(120L);
-			assertEquals(keys.getIndexEntry(), 120L);
-		} catch (IndexOutOfBoundsException ex) {
-			assertTrue(false);
-		}
-		
-		// INDEX OUT OF BOUNDS
-		
-		try {
-			keys = new SessionKeys(0x100000000L);
-			assertTrue(false);
-		} catch (IndexOutOfBoundsException ex) {
-		}
+	private boolean keysSent = true;
+	private boolean keysConfirmed = true;
+	private String simNumber = "+123456789012";
+	private byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+	private byte lastID_Out = 0x12;
+	private byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+	private byte lastID_In = 0x18;
+	private long indexPrev = 247L;
+	private long indexNext = 248L;
+	private String simNumberLong = "+1234567890126549873sdfsat6ewrt987wet3df1g3s2g1e6r5t46wert4dfsgdfsg";
+	private String simNumberResult = "+1234567890126549873sdfsat6ewrt9";
+	private byte flags = (byte) 0xC0;
 
-		try {
-			keys = new SessionKeys(0L);
-			assertTrue(false);
-		} catch (IndexOutOfBoundsException ex) {
-		}
-
-		try {
-			keys = new SessionKeys(-1L);
-			assertTrue(false);
-		} catch (IndexOutOfBoundsException ex) {
-		}
-	}
-
-	public void testSaveUpdate() throws DatabaseFileException, IOException {
-		Database_Old database = Database_Old.getSingleton();
-		
-		boolean keysSent = true;
-		boolean keysConfirmed = true;
-		String phoneNumberConversation = "+123456789012";
-		String phoneNumberSIM = "+123456789034";
-		byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_Out = 0x12;
-		byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
-		byte lastID_In = 0x18;
-		
-		Conversation_Old conv = database.createConversation(phoneNumberConversation);
-		
-		SessionKeys keysWrite = conv.newSessionKeys("");
-		SessionKeys keysRead = new SessionKeys(keysWrite.getIndexEntry());
-		
-		keysWrite.setKeysSent(keysSent);
-		keysWrite.setKeysConfirmed(keysConfirmed);
-		keysWrite.setPhoneNumber(phoneNumberSIM);
-		keysWrite.setSessionKey_Out(sessionKey_Out);
-		keysWrite.setLastID_Out(lastID_Out);
-		keysWrite.setSessionKey_In(sessionKey_In);
-		keysWrite.setLastID_In(lastID_In);
-		keysWrite.save();
-		
-		keysRead.update();
-		assertEquals(keysSent, keysRead.getKeysSent());
-		assertEquals(keysConfirmed, keysRead.getKeysConfirmed());
-		assertEquals(phoneNumberSIM, keysRead.getPhoneNumber());
-		CustomAsserts.assertArrayEquals(keysRead.getSessionKey_Out(), sessionKey_Out);
-		assertEquals(lastID_Out, keysRead.getLastID_Out());
-		CustomAsserts.assertArrayEquals(keysRead.getSessionKey_In(), sessionKey_In);
-		assertEquals(lastID_In, keysRead.getLastID_In());
+	private void setData(SessionKeys keys, boolean longer) {
+		keys.setKeysSent(keysSent);
+		keys.setKeysConfirmed(keysConfirmed);
+		keys.setSimNumber((longer) ? simNumberLong : simNumber);
+		keys.setSessionKey_Out(sessionKey_Out);
+		keys.setLastID_Out(lastID_Out);
+		keys.setSessionKey_In(sessionKey_In);
+		keys.setLastID_In(lastID_In);
+		keys.setIndexPrev(indexPrev);
+		keys.setIndexNext(indexNext);
 	}
 	
-	public void testCreateSessionKeys() {
-		Database history;
-		try {
-			history = Database.getSingleton();
-			Conversation conv = history.createConversation("phone number adfsdf");
-			
-			// check that it takes only one entry
-			int countEmpty = history.getEmptyEntriesCount();
-			for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
-			{
-				history.createSessionKeys(conv, "phone number sfdgfsdg");
-				if (countEmpty == 0)
-					assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = history.getEmptyEntriesCount()));
-				else
-					assertEquals(countEmpty - 1, (countEmpty = history.getEmptyEntriesCount()));
-			}
+	private void checkData(SessionKeys keys, boolean longer) {
+		assertEquals(keysSent, keys.getKeysSent());
+		assertEquals(keysConfirmed, keys.getKeysConfirmed());
+		assertEquals((longer) ? simNumberResult : simNumber, keys.getSimNumber());
+		CustomAsserts.assertArrayEquals(keys.getSessionKey_Out(), sessionKey_Out);
+		assertEquals(lastID_Out, keys.getLastID_Out());
+		CustomAsserts.assertArrayEquals(keys.getSessionKey_In(), sessionKey_In);
+		assertEquals(lastID_In, keys.getLastID_In());
+	}
+	
+	public void testConstruction() throws DatabaseFileException, IOException {
+		Conversation conv = Conversation.createConversation();
+		Header.getHeader().attachConversation(conv);
 
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
+		SessionKeys keys = SessionKeys.createSessionKeys();
+		conv.attachSessionKeys(keys);
+		
+		assertTrue(Common.checkStructure());
+
+		setData(keys, false);
+		keys.saveToFile();
+		long index = keys.getEntryIndex();
+
+		// force to be re-read
+		SessionKeys.forceClearCache();
+		keys = SessionKeys.getSessionKeys(index);
+		
+		checkData(keys, false);
+	}
+			
+	public void testIndices() throws DatabaseFileException, IOException {
+		// INDICES OUT OF BOUNDS
+		SessionKeys keys = SessionKeys.createSessionKeys();
+		// indexNext
+		try {
+			keys.setIndexNext(0x0100000000L);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
 		}
-	}*/
+
+		try {
+			keys.setIndexNext(-1L);
+			assertTrue(false);
+		} catch (IndexOutOfBoundsException ex) {
+		}
+	}
+
+	public void testCreateData() throws DatabaseFileException, IOException {
+		SessionKeys keys = SessionKeys.createSessionKeys();
+		setData(keys, true);
+		keys.saveToFile();
+		
+		// get the generated data
+		byte[] dataEncrypted = Database.getDatabase().getEntry(keys.getEntryIndex());
+		
+		// chunk length
+		assertEquals(dataEncrypted.length, Database.CHUNK_SIZE);
+		
+		// decrypt the encoded part
+		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+		
+		// check the data
+		assertEquals(flags, dataPlain[0]);
+		assertEquals(Database.fromLatin(dataPlain, 1, 32), simNumberResult);
+		CustomAsserts.assertArrayEquals(dataPlain, 33, sessionKey_Out, 0, 32);
+		assertEquals(lastID_Out, dataPlain[65]);
+		CustomAsserts.assertArrayEquals(dataPlain, 66, sessionKey_In, 0, 32);
+		assertEquals(lastID_In, dataPlain[98]);
+		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);		
+		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+	}
+
+	public void testParseData() throws DatabaseFileException, IOException {
+		SessionKeys keys = SessionKeys.createSessionKeys();
+		long index = keys.getEntryIndex();
+		
+		// create plain data
+		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
+		dataPlain[0] = flags;
+		System.arraycopy(Database.toLatin(simNumber, 32), 0, dataPlain, 1, 32);
+		System.arraycopy(sessionKey_Out, 0, dataPlain, 33, 32);
+		dataPlain[65] = lastID_Out;
+		System.arraycopy(sessionKey_In, 0, dataPlain, 66, 32);
+		dataPlain[98] = lastID_In;
+		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		
+		// encrypt it
+		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
+
+		// inject it into the file
+		Database.getDatabase().setEntry(index, dataEncrypted);
+		
+		// have it parsed
+		SessionKeys.forceClearCache();
+		keys = SessionKeys.getSessionKeys(index);
+		
+		// check the indices
+		checkData(keys, false);
+	}
 }

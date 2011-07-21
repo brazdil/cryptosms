@@ -21,7 +21,7 @@ public class Header_Test extends TestCase {
 		// create a header
 		Header header = Header.createHeader();
 		header.setVersion(12);
-		header.setIndexFree(13L);
+		header.setIndexEmpty(13L);
 		header.setIndexConversations(15L);
 		header.saveToFile();
 
@@ -30,7 +30,7 @@ public class Header_Test extends TestCase {
 		header = Header.getHeader();
 		
 		assertEquals(header.getVersion(), 12);
-		assertEquals(header.getIndexFree(), 13L);
+		assertEquals(header.getIndexEmpty(), 13L);
 		assertEquals(header.getIndexConversations(), 15L);
 	}
 	
@@ -40,13 +40,13 @@ public class Header_Test extends TestCase {
 		
 		// indexFree
 		try {
-			header.setIndexFree(0x0100000000L);
+			header.setIndexEmpty(0x0100000000L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 		
 		try {
-			header.setIndexFree(-1L);
+			header.setIndexEmpty(-1L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
@@ -78,7 +78,7 @@ public class Header_Test extends TestCase {
 		int version = 32;
 		
 		Header header = Header.createHeader();
-		header.setIndexFree(indexFree);
+		header.setIndexEmpty(indexFree);
 		header.setIndexConversations(indexConversation);
 		header.setVersion(version);
 		header.saveToFile();
@@ -138,7 +138,7 @@ public class Header_Test extends TestCase {
 		Header header = null;
 		try {
 			header = Header.getHeader();
-			assertEquals(indexFree, header.getIndexFree());
+			assertEquals(indexFree, header.getIndexEmpty());
 			assertEquals(indexConversation, header.getIndexConversations());
 			assertEquals(version, header.getVersion());
 		} catch (DatabaseFileException ex) {

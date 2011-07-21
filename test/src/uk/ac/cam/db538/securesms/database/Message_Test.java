@@ -54,8 +54,14 @@ public class Message_Test extends TestCase {
 	public void testConstruction() throws DatabaseFileException, IOException {
 		// create a Message entry
 		Conversation conv = Conversation.createConversation();
+		Header.getHeader().attachConversation(conv);
+		
 		Message msg = Message.createMessage();
 		conv.attachMessage(msg);
+
+		// check structure
+		assertTrue(Common.checkStructure());
+		
 		setData(msg);
 		msg.saveToFile();
 		long index = msg.getEntryIndex();
@@ -65,7 +71,6 @@ public class Message_Test extends TestCase {
 		msg = Message.getMessage(index);
 		
 		checkData(msg);
-		assertTrue(Common.checkStructure());
 	}
 	
 	public void testIndices() throws DatabaseFileException, IOException {

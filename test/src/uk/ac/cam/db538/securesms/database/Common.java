@@ -13,6 +13,14 @@ public class Common {
 		if (file.exists())
 			file.delete();
 		
+		// clear caches
+		Header.forceClearCache();
+		Empty.forceClearCache();
+		Conversation.forceClearCache();
+		SessionKeys.forceClearCache();
+		Message.forceClearCache();
+		MessagePart.forceClearCache();
+		
 		// free the singleton
 		Database.freeSingleton();
 		Database.initSingleton(TESTING_FILE);
@@ -90,7 +98,6 @@ public class Common {
 					part = part.getNextMessagePart();
 				}
 				
-				
 				// next
 				msgPrevious = msg.getEntryIndex();
 				msg = msg.getNextMessage();
@@ -100,6 +107,9 @@ public class Common {
 			convPrevious = conv.getEntryIndex();
 			conv = conv.getNextConversation();
 		}
+		
+		for (boolean b : visitedEntries)
+			visitedAll = visitedAll && b;
 		
 		return (visitedAll && !corruptedPointers);
 	}

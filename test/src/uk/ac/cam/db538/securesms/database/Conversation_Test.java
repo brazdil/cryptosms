@@ -199,25 +199,20 @@ public class Conversation_Test extends TestCase {
 		checkData(conv, false);
 	}
 	
-	public void testCreateConversation() {
-		try {
-			// check that it takes only one entry
-			int countEmpty = Empty.getEmptyEntriesCount();
-			for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
-			{
-				Conversation.createConversation();
-				if (countEmpty == 0)
-					assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = Empty.getEmptyEntriesCount()));
-				else
-					assertEquals(countEmpty - 1, (countEmpty = Empty.getEmptyEntriesCount()));
-			}
-			
-			// check structure
-			assertTrue(Common.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
+	public void testCreateConversation() throws DatabaseFileException, IOException {
+		// check that it takes only one entry
+		Header header = Header.getHeader();
+		int countEmpty = Empty.getEmptyEntriesCount();
+		for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE + 3; ++i)
+		{
+			header.attachConversation(Conversation.createConversation());
+			if (countEmpty == 0)
+				assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = Empty.getEmptyEntriesCount()));
+			else
+				assertEquals(countEmpty - 1, (countEmpty = Empty.getEmptyEntriesCount()));
 		}
+		
+		// check structure
+		assertTrue(Common.checkStructure());
 	}
 }
