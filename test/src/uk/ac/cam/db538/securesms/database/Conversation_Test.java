@@ -1,13 +1,8 @@
 package uk.ac.cam.db538.securesms.database;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-
 import uk.ac.cam.db538.securesms.encryption.Encryption;
-
 import android.text.format.Time;
-
 import junit.framework.TestCase;
 
 public class Conversation_Test extends TestCase {

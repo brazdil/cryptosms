@@ -127,7 +127,7 @@ public class Database_Test extends TestCase {
 			assertTrue(new File(Common.TESTING_FILE).exists());
 
 			// now we can get the singleton
-			Database history = Database.getDatabase();
+			Database.getDatabase();
 			
 			// and file's size should be aligned as specified
 			assertEquals(new File(Common.TESTING_FILE).length(), Database.ALIGN_SIZE);

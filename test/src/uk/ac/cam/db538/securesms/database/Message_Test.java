@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.securesms.database;
 
-import java.io.File;
 import java.io.IOException;
 import android.text.format.Time;
 import uk.ac.cam.db538.securesms.database.Message.MessageType;
