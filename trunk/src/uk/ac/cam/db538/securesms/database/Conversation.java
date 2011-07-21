@@ -220,7 +220,36 @@ public class Conversation {
 	}
 	
 	public SessionKeys getFirstSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+		if (mIndexSessionKeys == 0)
+			return null;
 		return SessionKeys.getSessionKeys(mIndexSessionKeys, lockAllow);
+	}
+
+	public void attachSessionKeys(SessionKeys keys) throws DatabaseFileException, IOException {
+		attachSessionKeys(keys, true);
+	}
+
+	public void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws DatabaseFileException, IOException {
+		Database.getDatabase().lockFile(lockAllow);
+		try {
+			long indexFirstInStack = getIndexSessionKeys();
+			if (indexFirstInStack != 0) {
+				SessionKeys firstInStack = SessionKeys.getSessionKeys(indexFirstInStack);
+				firstInStack.setIndexPrev(keys.getEntryIndex());
+				firstInStack.saveToFile(false);
+			}
+			keys.setIndexNext(indexFirstInStack);
+			keys.setIndexPrev(0L);
+			keys.saveToFile(false);
+			this.setIndexSessionKeys(keys.getEntryIndex());
+			this.saveToFile(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			Database.getDatabase().unlockFile(lockAllow);	
+		}
 	}
 
 	public void attachMessage(Message msg) throws DatabaseFileException, IOException {
@@ -237,6 +266,7 @@ public class Conversation {
 				firstInStack.saveToFile(false);
 			}
 			msg.setIndexNext(indexFirstInStack);
+			msg.setIndexPrev(0L);
 			msg.saveToFile(false);
 			this.setIndexMessages(msg.getEntryIndex());
 			this.saveToFile(false);

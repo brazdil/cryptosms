@@ -63,12 +63,15 @@ public final class Database {
 		new Database(filename);
 
 		//TODO: Just For Testing!!!
+		/*Header header = Header.getHeader();
 		Conversation conv1 = Conversation.createConversation();
+		header.attachConversation(conv1);
 		conv1.setPhoneNumber("+420605219051");
 		conv1.saveToFile();
 		Conversation conv2 = Conversation.createConversation();
+		header.attachConversation(conv2);
 		conv2.setPhoneNumber("+20104544366");
-		conv2.saveToFile();
+		conv2.saveToFile();*/
 	}
 	
 	// LOW-LEVEL BIT MANIPULATION
@@ -155,7 +158,7 @@ public final class Database {
 	 * @throws IOException
 	 * @throws DatabaseFileException
 	 */
-	private synchronized void createFile() throws FileNotFoundException, IOException, DatabaseFileException {
+	private synchronized void createFile() throws IOException, DatabaseFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
 		
 		lockFile();

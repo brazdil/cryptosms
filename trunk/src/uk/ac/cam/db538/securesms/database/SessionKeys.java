@@ -50,6 +50,23 @@ public class SessionKeys {
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
+	static SessionKeys createSessionKeys() throws DatabaseFileException, IOException {
+		return createSessionKeys(true);
+	}
+	
+	/**
+	 * Returns an instance of Empty class with given index in file.
+	 * @param index		Index in file
+	 * @param lock		File lock allow
+	 */
+	static SessionKeys createSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+		return new SessionKeys(Empty.getEmptyIndex(lockAllow), true, lockAllow);
+	}
+
+	/**
+	 * Returns an instance of Empty class with given index in file.
+	 * @param index		Index in file
+	 */
 	static SessionKeys getSessionKeys(long index) throws DatabaseFileException, IOException {
 		return getSessionKeys(index, true);
 	}
@@ -164,6 +181,7 @@ public class SessionKeys {
 		keysBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
+		keysBuffer.put(Database.getBytes(this.mIndexPrev));
 		keysBuffer.put(Database.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(keysBuffer.array(), Encryption.retreiveEncryptionKey());

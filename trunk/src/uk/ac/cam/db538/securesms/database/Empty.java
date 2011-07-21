@@ -104,7 +104,7 @@ class Empty {
 					addEmptyEntries(Database.ALIGN_SIZE / Database.CHUNK_SIZE, false);
 				}
 				// remove the entry from stack
-				header.setIndexFree(empty.getIndexNext());
+				header.setIndexEmpty(empty.getIndexNext());
 				// remove from cache
 				synchronized (cacheEmpty) {				
 					cacheEmpty.remove(empty);
@@ -133,23 +133,13 @@ class Empty {
 		db.lockFile(lock);
 		try {
 			Header header = Header.getHeader(false);
-			// get first empty index
-			long previousFree = header.getIndexFree();
 			Empty empty;
 			for (int i = 0; i < count; ++i) {
 				// create the empty entry
 				empty = Empty.createEmpty(false);
-				// set pointer to the previous head of stack
-				empty.setIndexNext(previousFree);
-				// dump it into the file
-				empty.saveToFile(false);
-				// increase index
-				previousFree = empty.getEntryIndex();
+				// set it to the header
+				header.attachEmpty(empty, false);
 			}
-			// update header
-			header.setIndexFree(previousFree);
-			// save it
-			header.saveToFile(false);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
 		} catch (IOException ex) {

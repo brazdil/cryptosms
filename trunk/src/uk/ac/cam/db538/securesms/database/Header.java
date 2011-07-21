@@ -77,7 +77,7 @@ public class Header {
 	}
 	
 	// INTERNAL FIELDS
-	private long mIndexFree;
+	private long mIndexEmpty;
 	private long mIndexConversations;
 	private int mVersion;
 	
@@ -103,13 +103,13 @@ public class Header {
 			
 			// set fields
 			setVersion(version);
-			setIndexFree(Database.getInt(dataPlain, OFFSET_FREEINDEX));
+			setIndexEmpty(Database.getInt(dataPlain, OFFSET_FREEINDEX));
 			setIndexConversations(Database.getInt(dataPlain, OFFSET_CONVINDEX));
 		}
 		else {
 			// default values			
 			setVersion(CURRENT_VERSION);
-			setIndexFree(0L);
+			setIndexEmpty(0L);
 			setIndexConversations(0L);
 			
 			saveToFile(lockAllow);
@@ -123,7 +123,7 @@ public class Header {
 	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
-		headerBuffer.put(Database.getBytes(this.getIndexFree())); 
+		headerBuffer.put(Database.getBytes(this.getIndexEmpty())); 
 		headerBuffer.put(Database.getBytes(this.getIndexConversations()));
 		
 		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(Database.CHUNK_SIZE);
@@ -137,10 +137,10 @@ public class Header {
 	}
 	
 	public Empty getFirstEmpty() throws DatabaseFileException, IOException {
-		if (this.mIndexFree == 0)
+		if (this.mIndexEmpty == 0)
 			return null;
 		else
-			return Empty.getEmpty(this.mIndexFree);
+			return Empty.getEmpty(this.mIndexEmpty);
 	}
 	
 	public Conversation getFirstConversation() throws DatabaseFileException, IOException {
@@ -150,16 +150,67 @@ public class Header {
 			return Conversation.getConversation(this.mIndexConversations);
 	}
 	
-	// GETTERS / SETTERS
+	public void attachConversation(Conversation conv) throws IOException, DatabaseFileException {
+		attachConversation(conv, true);
+	}
 	
-	long getIndexFree() {
-		return mIndexFree;
+	public void attachConversation(Conversation conv, boolean lockAllow) throws IOException, DatabaseFileException {
+		Database.getDatabase().lockFile(lockAllow);
+		try {
+			long indexFirstInStack = getIndexConversations();
+			if (indexFirstInStack != 0) {
+				Conversation first = Conversation.getConversation(indexFirstInStack, false);
+				first.setIndexPrev(conv.getEntryIndex());
+				first.saveToFile(false);
+			}
+
+			conv.setIndexNext(indexFirstInStack);
+			conv.setIndexPrev(0L);
+			conv.saveToFile(false);
+			
+			this.setIndexConversations(conv.getEntryIndex());
+			this.saveToFile(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			Database.getDatabase().unlockFile(lockAllow);	
+		}
 	}
 
-	void setIndexFree(long indexFree) {
-		if (indexFree > 0xFFFFFFFFL || indexFree < 0L)
+	public void attachEmpty(Empty empty) throws IOException, DatabaseFileException {
+		attachEmpty(empty, true);
+	}
+	
+	public void attachEmpty(Empty empty, boolean lockAllow) throws IOException, DatabaseFileException {
+		Database.getDatabase().lockFile(lockAllow);
+		try {
+			long indexFirstInStack = getIndexEmpty();
+			empty.setIndexNext(indexFirstInStack);
+			empty.saveToFile(false);
+			
+			this.setIndexEmpty(empty.getEntryIndex());
+			this.saveToFile(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			Database.getDatabase().unlockFile(lockAllow);	
+		}
+	}
+
+	// GETTERS / SETTERS
+	
+	long getIndexEmpty() {
+		return mIndexEmpty;
+	}
+
+	void setIndexEmpty(long indexEmpty) {
+		if (indexEmpty > 0xFFFFFFFFL || indexEmpty < 0L)
 			throw new IndexOutOfBoundsException();
-		mIndexFree = indexFree;
+		mIndexEmpty = indexEmpty;
 	}
 
 	long getIndexConversations() {

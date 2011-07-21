@@ -218,6 +218,9 @@ public class Message {
 	}
 	
 	public MessagePart getFirstMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+		if (mIndexMessageParts == 0)
+			return null;
+		
 		return MessagePart.getMessagePart(mIndexMessageParts, lockAllow);
 	}
 	
