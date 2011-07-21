@@ -1,12 +1,9 @@
 package uk.ac.cam.db538.securesms.ui;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
-import uk.ac.cam.db538.securesms.database.Database;
-import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import android.app.ListActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;

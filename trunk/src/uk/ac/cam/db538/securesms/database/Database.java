@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
@@ -226,7 +225,6 @@ public final class Database {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unused")
 	byte[] getEntry(long index) throws DatabaseFileException, IOException {
 		return getEntry(index, true);
 	}
@@ -265,7 +263,6 @@ public final class Database {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unused")
 	void setEntry(long index, byte[] data) throws DatabaseFileException, IOException {
 		setEntry(index, data, true);
 	}

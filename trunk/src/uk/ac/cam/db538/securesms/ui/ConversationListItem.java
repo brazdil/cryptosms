@@ -17,34 +17,18 @@
 
 package uk.ac.cam.db538.securesms.ui;
 
-import java.util.List;
-
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
 
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
-import android.os.Handler;
-import android.provider.ContactsContract.Intents;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.StyleSpan;
-import android.text.style.TextAppearanceSpan;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.QuickContactBadge;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.RelativeLayout.LayoutParams;
 
 /**
  * This class manages the view for given conversation.
@@ -101,7 +85,8 @@ public class ConversationListItem extends RelativeLayout {
     	mConversationHeader = conv;
     }
 
-    private Conversation getConversationHeader() {
+    @SuppressWarnings("unused")
+	private Conversation getConversationHeader() {
     	return mConversationHeader;
     }
 
