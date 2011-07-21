@@ -10,7 +10,7 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
  * 
- * Class representing an message entry in the secure storage file.
+ * Class representing a message entry in the secure storage file.
  * 
  * @author David Brazdil
  *
@@ -52,11 +52,24 @@ public class Message {
 		}
 	}
 
-	static Message createMessage() throws DatabaseFileException, IOException {
+	/**
+	 * Returns an instance of a new Message entry in the storage file.
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public static Message createMessage() throws DatabaseFileException, IOException {
 		return createMessage(true);
 	}
 	
-	static Message createMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+	/**
+	 * Returns an instance of a new Message entry in the storage file.
+	 * @param lockAllow		Allow file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public static Message createMessage(boolean lockAllow) throws DatabaseFileException, IOException {
 		// create a new one
 		return new Message(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
@@ -102,10 +115,26 @@ public class Message {
 	
 	// CONSTRUCTORS
 	
+	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private Message(long index, boolean readFromFile) throws DatabaseFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private Message(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
 		mEntryIndex = index;
 		
@@ -153,19 +182,22 @@ public class Message {
 	}
 
 	// FUNCTIONS
-	
-	public void delete() {
-		delete(true);
-	}
-	
-	public void delete(boolean lock) {
-		//TODO: To be implemented
-	}
-	
+
+	/**
+	 * Save the contents of this class to its place in the storage file.
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile() throws DatabaseFileException, IOException {
 		saveToFile(true);
 	}
-	
+
+	/**
+	 * Save the contents of this class to its place in the storage file.
+	 * @param lock		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
 		ByteBuffer msgBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
 		
@@ -197,38 +229,92 @@ public class Message {
 		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 	
+	/**
+	 * Returns an instance of the Message that's predecessor of this one in the linked list of Messages of this Conversation
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Message getPreviousMessage() throws DatabaseFileException, IOException {
 		return getPreviousMessage(true);
 	}
 	
+	/**
+	 * Returns an instance of the Message that's predecessor of this one in the linked list of Messages of this Conversation
+	 * @param lockAllow		Allow file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Message getPreviousMessage(boolean lockAllow) throws DatabaseFileException, IOException {
 		return Message.getMessage(mIndexPrev, lockAllow);
 	}
 
+	/**
+	 * Returns an instance of the Message that's successor of this one in the linked list of Messages of this Conversation
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Message getNextMessage() throws DatabaseFileException, IOException {
 		return getNextMessage(true);
 	}
 	
+	/**
+	 * Returns an instance of the Message that's successor of this one in the linked list of Messages of this Conversation
+	 * @param lockAllow		Allow file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Message getNextMessage(boolean lockAllow) throws DatabaseFileException, IOException {
 		return Message.getMessage(mIndexNext, lockAllow);
 	}
 	
-	public MessagePart getFirstMessagePart() throws DatabaseFileException, IOException {
+	/**
+	 * Returns first message part in the linked list of MessageParts.
+	 * Should not be public - Message has API for making this seamlessly
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	MessagePart getFirstMessagePart() throws DatabaseFileException, IOException {
 		return getFirstMessagePart(true);
 	}
 	
-	public MessagePart getFirstMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+	/**
+	 * Returns first message part in the linked list of MessageParts.
+	 * Should not be public - Message has API for making this seamlessly
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	MessagePart getFirstMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		if (mIndexMessageParts == 0)
 			return null;
 		
 		return MessagePart.getMessagePart(mIndexMessageParts, lockAllow);
 	}
 	
-	public void assignMessageParts(ArrayList<MessagePart> list) throws IOException, DatabaseFileException {
+	/**
+	 * Replaces assigned message parts with given list
+	 * @param list
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	void assignMessageParts(ArrayList<MessagePart> list) throws IOException, DatabaseFileException {
 		assignMessageParts(list, true);
 	}
 	
-	public void assignMessageParts(ArrayList<MessagePart> list, boolean lockAllow) throws IOException, DatabaseFileException {
+	/**
+	 * Replaces assigned message parts with given list
+	 * @param list
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	void assignMessageParts(ArrayList<MessagePart> list, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexMessageParts();
@@ -261,28 +347,44 @@ public class Message {
 		return mEntryIndex;
 	}
 	
-	void setDeliveredPart(boolean deliveredPart) {
+	public void setDeliveredPart(boolean deliveredPart) {
 		this.mDeliveredPart = deliveredPart;
 	}
 
-	boolean getDeliveredPart() {
+	public boolean getDeliveredPart() {
 		return mDeliveredPart;
 	}
 
-	void setDeliveredAll(boolean deliveredAll) {
+	public void setDeliveredAll(boolean deliveredAll) {
 		this.mDeliveredAll = deliveredAll;
 	}
 
-	boolean getDeliveredAll() {
+	public boolean getDeliveredAll() {
 		return mDeliveredAll;
 	}
 
-	void setMessageType(MessageType messageType) {
+	public void setMessageType(MessageType messageType) {
 		this.mMessageType = messageType;
 	}
 
-	MessageType getMessageType() {
+	public MessageType getMessageType() {
 		return mMessageType;
+	}
+
+	public void setMessageBody(String messageBody) {
+		this.mMessageBody = messageBody;
+	}
+
+	public String getMessageBody() {
+		return mMessageBody;
+	}
+
+	public void setTimeStamp(Time timeStamp) {
+		this.mTimeStamp = timeStamp;
+	}
+
+	public Time getTimeStamp() {
+		return mTimeStamp;
 	}
 
 	long getIndexMessageParts() {
@@ -316,21 +418,5 @@ public class Message {
 	    	throw new IndexOutOfBoundsException();
 		
 		this.mIndexNext = indexNext;
-	}
-
-	void setMessageBody(String messageBody) {
-		this.mMessageBody = messageBody;
-	}
-
-	String getMessageBody() {
-		return mMessageBody;
-	}
-
-	void setTimeStamp(Time timeStamp) {
-		this.mTimeStamp = timeStamp;
-	}
-
-	Time getTimeStamp() {
-		return mTimeStamp;
 	}
 }

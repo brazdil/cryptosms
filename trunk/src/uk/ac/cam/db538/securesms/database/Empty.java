@@ -77,23 +77,76 @@ class Empty {
 		return new Empty(index, true, lockAllow);
 	}
 	
+	/**
+	 * Creates a new Empty class at the index of an already existing element.
+	 * This old element has to make sure that it there are no pointers pointing to it before it asks to be written over.
+	 * @param index		Index in the file
+	 * @return	
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	static Empty replaceWithEmpty(long index) throws DatabaseFileException, IOException {
+		return replaceWithEmpty(index, true);
+	}
+	
+	/**
+	 * Creates a new Empty class at the index of an already existing element.
+	 * This old element has to make sure that it there are no pointers pointing to it before it asks to be written over.
+	 * @param index			Index in the file
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	static Empty replaceWithEmpty(long index, boolean lockAllow) throws DatabaseFileException, IOException {
+		return new Empty(index, false, lockAllow);
+	}
+	
+	/**
+	 * Returns an index of a single entry that was removed from the linked list of empty entries and is now available to be replaced by useful data entry.
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	static long getEmptyIndex() throws DatabaseFileException, IOException {
 		return getEmptyIndices(1)[0];
 	}
 	
-	static long getEmptyIndex(boolean lock) throws DatabaseFileException, IOException {
-		return getEmptyIndices(1)[0];
+	/**
+	 * Returns an index of a single entry that was removed from the linked list of empty entries and is now available to be replaced by useful data entry.
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	static long getEmptyIndex(boolean lockAllow) throws DatabaseFileException, IOException {
+		return getEmptyIndices(1, lockAllow)[0];
 	}
 	
+	/**
+	 * Returns an index of several entries that were removed from the linked list of empty entries and are now available to be replaced by useful data entry.
+	 * @param count		Number of entries requested
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	static long[] getEmptyIndices(int count) throws DatabaseFileException, IOException {
 		return getEmptyIndices(count, true);
 	}
 	
-	static long[] getEmptyIndices(int count, boolean lock) throws DatabaseFileException, IOException {
+	/**
+	 * Returns an index of several entries that were removed from the linked list of empty entries and are now available to be replaced by useful data entry.
+	 * @param count			Number of entries requested
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	static long[] getEmptyIndices(int count, boolean lockAllow) throws DatabaseFileException, IOException {
 		Database db = Database.getDatabase();
 		long[] indices = new long[count];
 		
-		db.lockFile(lock);
+		db.lockFile(lockAllow);
 		try {
 			Header header = Header.getHeader();
 			for (int i = 0; i < count; ++i) {
@@ -119,18 +172,31 @@ class Empty {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			db.unlockFile(lock);
+			db.unlockFile(lockAllow);
 		}
 		return indices;
 	}
 	
+	/**
+	 * Appends new empty entries to the storage file
+	 * @param count		Number of entries requested
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	static void addEmptyEntries(int count) throws IOException, DatabaseFileException {
 		addEmptyEntries(count, true);
 	}
 
-	static void addEmptyEntries(int count, boolean lock) throws IOException, DatabaseFileException {
+	/**
+	 * Appends new empty entries to the storage file
+	 * @param count		Number of entries requested
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	static void addEmptyEntries(int count, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database db = Database.getDatabase();
-		db.lockFile(lock);
+		db.lockFile(lockAllow);
 		try {
 			Header header = Header.getHeader(false);
 			Empty empty;
@@ -145,10 +211,17 @@ class Empty {
 		} catch (IOException ex) {
 			throw new IOException(ex.getMessage());
 		} finally {
-			db.unlockFile(lock);
+			db.unlockFile(lockAllow);
 		}
 	}
 
+	/**
+	 * Count the number of empty entries available
+	 * NOTE: Will cache all of them! It is intended to be used only by the testing classes.
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	static int getEmptyEntriesCount() throws DatabaseFileException, IOException {
 		int count = 0;
 		
@@ -165,10 +238,25 @@ class Empty {
 	private long mEntryIndex; // READ ONLY
 	private long mIndexNext;
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private Empty(long index, boolean readFromFile) throws DatabaseFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private Empty(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
 		mEntryIndex = index;
 		
@@ -189,18 +277,54 @@ class Empty {
 		}
 	}
 
+	// FUNCTIONS
+	
+	/**
+	 * Saves contents of the class to the storage file
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile() throws DatabaseFileException, IOException {
 		saveToFile(true);
 	}
 	
-	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
+	/**
+	 * Saves contents of the class to the storage file
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public void saveToFile(boolean lockAllow) throws DatabaseFileException, IOException {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
 		entryBuffer.put(Encryption.generateRandomData(OFFSET_NEXTINDEX));
 		entryBuffer.put(Database.getBytes(this.mIndexNext));
 		byte[] dataEncrypted = Encryption.encryptSymmetric(entryBuffer.array(), Encryption.retreiveEncryptionKey());
-		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lockAllow);
 	}
 
+	/**
+	 * Return an instance of the next Empty entry in the linked list, or null if there isn't any.
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	Empty getNextEmpty() throws DatabaseFileException, IOException {
+		return getNextEmpty(true);
+	}
+
+	/**
+	 * Return an instance of the next Empty entry in the linked list, or null if there isn't any.
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	Empty getNextEmpty(boolean lockAllow) throws DatabaseFileException, IOException {
+		return Empty.getEmpty(mIndexNext, lockAllow);
+	}
+
+	// GETTERS / SETTERS
+	
 	long getEntryIndex() {
 		return mEntryIndex;
 	}
@@ -216,7 +340,4 @@ class Empty {
 		this.mIndexNext = indexNext;
 	}
 	
-	Empty getNextEmpty() throws DatabaseFileException, IOException {
-		return Empty.getEmpty(mIndexNext);
-	}
 }

@@ -43,28 +43,28 @@ public class SessionKeys {
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		cacheSessionKeys = new ArrayList<SessionKeys>();
+		synchronized (cacheSessionKeys) {
+			cacheSessionKeys = new ArrayList<SessionKeys>();
+		}
 	}
 
 	/**
-	 * Returns an instance of Empty class with given index in file.
-	 * @param index		Index in file
+	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 */
 	static SessionKeys createSessionKeys() throws DatabaseFileException, IOException {
 		return createSessionKeys(true);
 	}
 	
 	/**
-	 * Returns an instance of Empty class with given index in file.
-	 * @param index		Index in file
+	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 * @param lock		File lock allow
 	 */
 	static SessionKeys createSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
-		return new SessionKeys(Empty.getEmptyIndex(lockAllow), true, lockAllow);
+		return new SessionKeys(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
 
 	/**
-	 * Returns an instance of Empty class with given index in file.
+	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file  
 	 * @param index		Index in file
 	 */
 	static SessionKeys getSessionKeys(long index) throws DatabaseFileException, IOException {
@@ -72,7 +72,7 @@ public class SessionKeys {
 	}
 	
 	/**
-	 * Returns an instance of Empty class with given index in file.
+	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file  
 	 * @param index		Index in file
 	 * @param lock		File lock allow
 	 */
@@ -81,9 +81,11 @@ public class SessionKeys {
 			return null;
 		
 		// try looking it up
-		for (SessionKeys keys: cacheSessionKeys)
-			if (keys.getEntryIndex() == index)
-				return keys; 
+		synchronized (cacheSessionKeys) {
+			for (SessionKeys keys: cacheSessionKeys)
+				if (keys.getEntryIndex() == index)
+					return keys; 
+		}
 		
 		// create a new one
 		return new SessionKeys(index, true, lockAllow);
@@ -103,10 +105,25 @@ public class SessionKeys {
 	
 	// CONSTRUCTORS
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private SessionKeys(long index, boolean readFromFile) throws DatabaseFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private SessionKeys(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
 		mEntryIndex = index;
 		
@@ -148,15 +165,28 @@ public class SessionKeys {
 			saveToFile(lockAllow);
 		}
 
-		cacheSessionKeys.add(this);
+		synchronized (cacheSessionKeys) {
+			cacheSessionKeys.add(this);
+		}
 	}
 
 	// FUNCTIONS
 	
+	/**
+	 * Saves contents of the class to the storage file
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile() throws DatabaseFileException, IOException {
 		saveToFile(true);
 	}
 	
+	/**
+	 * Saves contents of the class to the storage file
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
 		ByteBuffer keysBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
 		
@@ -188,18 +218,44 @@ public class SessionKeys {
 		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
+	/**
+	 * Returns an instance of the predecessor in the list of session keys for parent conversation
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public SessionKeys getPreviousSessionKeys() throws DatabaseFileException, IOException {
 		return getPreviousSessionKeys(true);
 	}
 	
+	/**
+	 * Returns an instance of the predecessor in the list of session keys for parent conversation
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public SessionKeys getPreviousSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
 		return getSessionKeys(mIndexPrev, lockAllow);
 	}
 
+	/**
+	 * Returns an instance of the successor in the list of session keys for parent conversation
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public SessionKeys getNextSessionKeys() throws DatabaseFileException, IOException {
 		return getNextSessionKeys(true);
 	}
 	
+	/**
+	 * Returns an instance of the predecessor in the list of session keys for parent conversation
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public SessionKeys getNextSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
 		return getSessionKeys(mIndexNext, lockAllow);
 	}
@@ -210,59 +266,59 @@ public class SessionKeys {
 		return mEntryIndex;
 	}
 	
-	boolean getKeysSent() {
+	public boolean getKeysSent() {
 		return mKeysSent;
 	}
 
-	void setKeysSent(boolean keysSent) {
+	public void setKeysSent(boolean keysSent) {
 		mKeysSent = keysSent;
 	}
 
-	boolean getKeysConfirmed() {
+	public boolean getKeysConfirmed() {
 		return mKeysConfirmed;
 	}
 
-	void setKeysConfirmed(boolean keysConfirmed) {
+	public void setKeysConfirmed(boolean keysConfirmed) {
 		mKeysConfirmed = keysConfirmed;
 	}
 
-	String getSimNumber() {
+	public String getSimNumber() {
 		return mSimNumber;
 	}
 
-	void setSimNumber(String simNumber) {
+	public void setSimNumber(String simNumber) {
 		this.mSimNumber = simNumber;
 	}
 
-	byte[] getSessionKey_Out() {
+	public byte[] getSessionKey_Out() {
 		return mSessionKey_Out;
 	}
 
-	void setSessionKey_Out(byte[] sessionKeyOut) {
+	public void setSessionKey_Out(byte[] sessionKeyOut) {
 		mSessionKey_Out = sessionKeyOut;
 	}
 
-	byte[] getSessionKey_In() {
+	public byte[] getSessionKey_In() {
 		return mSessionKey_In;
 	}
 
-	void setSessionKey_In(byte[] sessionKeyIn) {
+	public void setSessionKey_In(byte[] sessionKeyIn) {
 		mSessionKey_In = sessionKeyIn;
 	}
 	
-	byte getLastID_Out() {
+	public byte getLastID_Out() {
 		return mLastID_Out;
 	}
 	
-	void setLastID_Out(byte lastID_Out) {
+	public void setLastID_Out(byte lastID_Out) {
 		mLastID_Out = lastID_Out;
 	}
 
-	byte getLastID_In() {
+	public byte getLastID_In() {
 		return mLastID_In;
 	}
 	
-	void setLastID_In(byte lastID_In) {
+	public void setLastID_In(byte lastID_In) {
 		mLastID_In = lastID_In;
 	}
 

@@ -76,10 +76,16 @@ public final class Database {
 	
 	// LOW-LEVEL BIT MANIPULATION
 	
+	/**
+	 * Expects four bytes and returns an unsigned integer stored in a long that's represented by the bytes.
+	 */
 	static long getInt(byte[] data) {
 		return getInt(data, 0);
 	}
 
+	/**
+	 * Expects four bytes (in an array at specified offset) and returns an unsigned integer stored in a long that's represented by the bytes.
+	 */
 	static long getInt(byte[] data, int offset) {
 		if (offset > data.length - 4)
 			throw new IndexOutOfBoundsException();
@@ -94,6 +100,9 @@ public final class Database {
 		return result;
 	}
 	
+	/**
+	 * Expects an unsigned integer stored in the 4 low bytes of a long and returns an array of 4 bytes that represent them.
+	 */
 	static byte[] getBytes(long integer) {
 		byte[] result = new byte[4];
 		result[0] = (byte) ((integer >> 24) & 0xFF);
@@ -103,6 +112,12 @@ public final class Database {
 		return result;
 	}
 
+	/**
+	 * Turns a string into an ASCII series of bytes. 
+	 * @param text				Encoded string
+	 * @param bufferLength		Maximum size of the resulting array
+	 * @return
+	 */
 	static byte[] toLatin(String text, int bufferLength) {
 		ByteBuffer buffer = ByteBuffer.allocate(bufferLength);
 
@@ -123,10 +138,22 @@ public final class Database {
 		return buffer.array();		
 	}
 	
+	/**
+	 * Takes a byte array with ASCII characters in it, and turns it into a string
+	 * @param latinData		Data to be processed
+	 * @return
+	 */
 	static String fromLatin(byte[] latinData) {
 		return fromLatin(latinData, 0, latinData.length);
 	}
 	
+	/**
+	 * Takes a byte array with ASCII characters in it, and turns it into a string
+	 * @param latinData		Data to be processed
+	 * @param offset		Offset in the array
+	 * @param len			Length of data
+	 * @return
+	 */
 	static String fromLatin(byte[] latinData, int offset, int len) {
 		int length = 0;
 		while (length < len && latinData[offset + length] != 0)
@@ -143,6 +170,12 @@ public final class Database {
 	
 	private DatabaseFile smsFile;
 
+	/**
+	 * Constructor
+	 * @param filename
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	private Database(String filename) throws IOException, DatabaseFileException {
 		mSingleton = this;
 		

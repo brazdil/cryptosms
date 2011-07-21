@@ -38,7 +38,7 @@ public class Header {
 	}
 	
 	/**
-	 * Returns an instance of Header class. Locks the file
+	 * Returns an instance of Header class. Locks the file if necessary
 	 * @return
 	 * @throws IOException 
 	 * @throws DatabaseFileException 
@@ -51,7 +51,7 @@ public class Header {
 	
 	/**
 	 * Returns an instance of Header class
-	 * @param lockAllow 		Lock the file if data not cached
+	 * @param lockAllow 		Lock the file if necessary
 	 * @return
 	 * @throws DatabaseFileException
 	 * @throws IOException
@@ -64,6 +64,7 @@ public class Header {
 	
 	/**
 	 * Only to be called from within Database.createFile()
+	 * Forces the header to be created with default values and written to the file.
 	 * @throws IOException 
 	 * @throws DatabaseFileException 
 	 */
@@ -71,6 +72,13 @@ public class Header {
 		return createHeader(true);
 	}
 
+	/**
+	 * Only to be called from within Database.createFile()
+	 * Forces the header to be created with default values and written to the file.
+	 * @param lockAllow 		Lock the file if necessary
+	 * @throws IOException 
+	 * @throws DatabaseFileException 
+	 */
 	static Header createHeader(boolean lockAllow) throws DatabaseFileException, IOException {
 		cacheHeader = new Header(false, lockAllow);
 		return cacheHeader;
@@ -81,6 +89,23 @@ public class Header {
 	private long mIndexConversations;
 	private int mVersion;
 	
+	/**
+	 * Constructor
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	private Header(boolean readFromDisk) throws DatabaseFileException, IOException {
+		this(readFromDisk, true);
+	}
+	
+	/**
+	 * Constructor
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private Header(boolean readFromDisk, boolean lockAllow) throws DatabaseFileException, IOException {
 		if (readFromDisk) {
 			// read bytes from file
@@ -116,10 +141,21 @@ public class Header {
 		}
 	}
 
+	/**
+	 * Save data to the storage file
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile() throws DatabaseFileException, IOException {
 		saveToFile(true);
 	}
 	
+	/**
+	 * Save data to the storage file
+	 * @param lock		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
@@ -136,24 +172,71 @@ public class Header {
 		Database.getDatabase().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
 	}
 	
+	/**
+	 * Return instance of the first object in the empty-entry stack
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Empty getFirstEmpty() throws DatabaseFileException, IOException {
+		return getFirstEmpty(true);
+	}
+
+	/**
+	 * Return instance of the first object in the empty-entry stack
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws IOException 
+	 * @throws DatabaseFileException 
+	 */
+	public Empty getFirstEmpty(boolean lockAllow) throws DatabaseFileException, IOException {
 		if (this.mIndexEmpty == 0)
 			return null;
 		else
-			return Empty.getEmpty(this.mIndexEmpty);
+			return Empty.getEmpty(this.mIndexEmpty, lockAllow);
 	}
 	
+	/**
+	 * Return instance of the first object in the conversations linked list
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	public Conversation getFirstConversation() throws DatabaseFileException, IOException {
+		return getFirstConversation(true);
+	}
+	
+	/**
+	 * Return instance of the first object in the conversations linked list
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation getFirstConversation(boolean lockAllow) throws DatabaseFileException, IOException {
 		if (this.mIndexConversations == 0) 
 			return null;
 		else
-			return Conversation.getConversation(this.mIndexConversations);
+			return Conversation.getConversation(this.mIndexConversations, lockAllow);
 	}
-	
+
+	/**
+	 * Insert new element into the linked list of conversations
+	 * @param conv
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public void attachConversation(Conversation conv) throws IOException, DatabaseFileException {
 		attachConversation(conv, true);
 	}
 	
+	/**
+	 * Insert new element into the linked list of conversations
+	 * @param lockAllow		Allow the file to be locked
+	 * @param conv
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public void attachConversation(Conversation conv, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database.getDatabase().lockFile(lockAllow);
 		try {
@@ -179,10 +262,23 @@ public class Header {
 		}
 	}
 
+	/**
+	 * Insert new element into the stack of empty entries
+	 * @param conv
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public void attachEmpty(Empty empty) throws IOException, DatabaseFileException {
 		attachEmpty(empty, true);
 	}
 	
+	/**
+	 * Insert new element into the stack of empty entries
+	 * @param lockAllow		Allow the file to be locked
+	 * @param conv
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
 	public void attachEmpty(Empty empty, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database.getDatabase().lockFile(lockAllow);
 		try {

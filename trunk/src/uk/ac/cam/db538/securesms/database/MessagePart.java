@@ -9,6 +9,7 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
 /**
  * 
  * Class representing a message part entry in the secure storage file.
+ * This should not be accessible outside the package. Message has API for handling it seamlessly
  * 
  * @author David Brazdil
  *
@@ -41,10 +42,23 @@ class MessagePart {
 		}
 	}
 	
+	/**
+	 * Replaces an empty entry with new MessagePart
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	static MessagePart createMessagePart() throws DatabaseFileException, IOException {
 		return createMessagePart(true);
 	}
 	
+	/**
+	 * Replaces an empty entry with new MessagePart
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	static MessagePart createMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		return new MessagePart(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
@@ -59,8 +73,8 @@ class MessagePart {
 	
 	/**
 	 * Returns an instance of Empty class with given index in file.
-	 * @param index		Index in file
-	 * @param lock		File lock allow
+	 * @param index			Index in file
+	 * @param lockAllow		File lock allow
 	 */
 	static MessagePart getMessagePart(long index, boolean lockAllow) throws DatabaseFileException, IOException {
 		if (index <= 0L)
@@ -84,10 +98,25 @@ class MessagePart {
 	
 	// CONSTRUCTORS
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private MessagePart(long index, boolean readFromFile) throws DatabaseFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
+	/**
+	 * Constructor
+	 * @param index			Which chunk of data should occupy in file
+	 * @param readFromFile	Does this entry already exist in the file?
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
 	private MessagePart(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
 		mEntryIndex = index;
 		
@@ -118,11 +147,22 @@ class MessagePart {
 
 	// FUNCTIONS
 	
-	public void saveToFile() throws DatabaseFileException, IOException {
+	/**
+	 * Save contents of the class to the storage file
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	void saveToFile() throws DatabaseFileException, IOException {
 		saveToFile(true);
 	}
 	
-	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
+	/**
+	 * Save contents of the class to the storage file
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	void saveToFile(boolean lock) throws DatabaseFileException, IOException {
 		ByteBuffer msgBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -143,40 +183,56 @@ class MessagePart {
 		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
 		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
-	
-	public MessagePart getNextMessagePart() throws DatabaseFileException, IOException {
+
+	/**
+	 * Returns next MessagePart in the linked list, or null if there isn't any
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	MessagePart getNextMessagePart() throws DatabaseFileException, IOException {
 		return getNextMessagePart(true);
 	}
 	
-	public MessagePart getNextMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+	/**
+	 * Returns next MessagePart in the linked list, or null if there isn't any
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	MessagePart getNextMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		return getMessagePart(mIndexNext, lockAllow);
 	}
 	
-	// supposed to be used only in the package
-	void delete() {
+	/**
+	 * Replace the file space with Empty entry
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	void delete() throws IOException, DatabaseFileException {
 		delete(true);
 	}
 	
-	// supposed to be used only in the package
-	void delete(boolean lockAllow) {
-		
+	/**
+	 * Replace the file space with Empty entry
+	 * @param lockAllow		Allow the file to be locked
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	void delete(boolean lockAllow) throws IOException, DatabaseFileException {
+		// remove yourself from the cache
+		synchronized (cacheMessagePart) {
+			cacheMessagePart.remove(this);			
+		}
+		// replace your file chunk by empty entry and attach yourself to the header
+		Header.getHeader().attachEmpty(Empty.replaceWithEmpty(this.mEntryIndex));
 	}
 	
 	// GETTERS / SETTERS
 
 	long getEntryIndex() {
 		return mEntryIndex;
-	}
-	
-	long getIndexNext() {
-		return mIndexNext;
-	}
-
-	void setIndexNext(long indexNext) {
-	    if (indexNext > 0xFFFFFFFFL || indexNext < 0L)
-	    	throw new IndexOutOfBoundsException();
-		
-		this.mIndexNext = indexNext;
 	}
 	
 	void setDeliveredPart(boolean deliveredPart) {
@@ -193,5 +249,16 @@ class MessagePart {
 
 	String getMessageBody() {
 		return mMessageBody;
+	}
+
+	long getIndexNext() {
+		return mIndexNext;
+	}
+
+	void setIndexNext(long indexNext) {
+	    if (indexNext > 0xFFFFFFFFL || indexNext < 0L)
+	    	throw new IndexOutOfBoundsException();
+		
+		this.mIndexNext = indexNext;
 	}
 }
