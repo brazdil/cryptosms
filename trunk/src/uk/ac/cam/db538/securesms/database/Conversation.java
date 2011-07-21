@@ -223,6 +223,32 @@ public class Conversation {
 		return SessionKeys.getSessionKeys(mIndexSessionKeys, lockAllow);
 	}
 
+	public void attachMessage(Message msg) throws DatabaseFileException, IOException {
+		attachMessage(msg, true);
+	}
+
+	public void attachMessage(Message msg, boolean lockAllow) throws DatabaseFileException, IOException {
+		Database.getDatabase().lockFile(lockAllow);
+		try {
+			long indexFirstInStack = getIndexMessages();
+			if (indexFirstInStack != 0) {
+				Message firstInStack = Message.getMessage(indexFirstInStack);
+				firstInStack.setIndexPrev(msg.getEntryIndex());
+				firstInStack.saveToFile(false);
+			}
+			msg.setIndexNext(indexFirstInStack);
+			msg.saveToFile(false);
+			this.setIndexMessages(msg.getEntryIndex());
+			this.saveToFile(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			Database.getDatabase().unlockFile(lockAllow);	
+		}
+	}
+	
 	public Message getFirstMessage() throws DatabaseFileException, IOException {
 		return getFirstMessage(true);
 	}

@@ -47,7 +47,18 @@ public class Message {
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		cacheMessage = new ArrayList<Message>();
+		synchronized (cacheMessage) {
+			cacheMessage = new ArrayList<Message>();
+		}
+	}
+
+	static Message createMessage() throws DatabaseFileException, IOException {
+		return createMessage(true);
+	}
+	
+	static Message createMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+		// create a new one
+		return new Message(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
 
 	/**
@@ -68,9 +79,11 @@ public class Message {
 			return null;
 		
 		// try looking it up
-		for (Message empty: cacheMessage)
-			if (empty.getEntryIndex() == index)
-				return empty; 
+		synchronized (cacheMessage) {
+			for (Message empty: cacheMessage)
+				if (empty.getEntryIndex() == index)
+					return empty; 
+		}
 		
 		// create a new one
 		return new Message(index, true, lockAllow);
@@ -133,8 +146,10 @@ public class Message {
 			
 			saveToFile(lockAllow);
 		}
-
-		cacheMessage.add(this);
+		
+		synchronized (cacheMessage) {
+			cacheMessage.add(this);
+		}
 	}
 
 	// FUNCTIONS
