@@ -10,22 +10,13 @@ public class MessagePart_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-
-		// delete the file before each test
-		File file = new File(Database_Test.TESTING_FILE);
-		if (file.exists())
-			file.delete();
-		
-		// and free the singleton
-		Database.freeSingleton();
-		Database.initSingleton(Database_Test.TESTING_FILE);
-	}
+		Common.clearFile();	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
 	}
 
-	public void testMessages() {
+/*	public void testMessages() {
 		MessagePart msgPart;
 		
 		// ASSIGNMENT
@@ -59,12 +50,12 @@ public class MessagePart_Test extends TestCase {
 	}
 
 	public void testSaveUpdate() throws DatabaseFileException, IOException {
-		Database database = Database.getSingleton();
+		Database_Old database = Database_Old.getSingleton();
 		
 		boolean deliveredPart = true;
 		String messageBody = "Testing body";
 		
-		Conversation conv = database.createConversation("+123456789012");
+		Conversation_Old conv = database.createConversation("+123456789012");
 		Message msg = conv.newMessage(MessageType.OUTGOING);
 
 		MessagePart msgPartWrite = msg.newMessagePart();
@@ -77,5 +68,5 @@ public class MessagePart_Test extends TestCase {
 		msgPartRead.update();
 		assertEquals(deliveredPart, msgPartRead.getDeliveredPart());
 		assertEquals(messageBody, msgPartRead.getMessageBody());
-	}
+	}*/
 }

@@ -13,19 +13,11 @@ import uk.ac.cam.db538.securesms.database.Database;
 
 public class Database_Test extends TestCase {
 
-	static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
-	
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		// delete the file before each test
-		File file = new File(TESTING_FILE);
-		if (file.exists())
-			file.delete();
-		
-		// and free the singleton
-		Database.freeSingleton();
-		Database.initSingleton(TESTING_FILE);
+		Common.clearFile();
 	}
 
 	protected void tearDown() throws Exception {
@@ -122,182 +114,35 @@ public class Database_Test extends TestCase {
 	}
 
 	public void testCreateFile() {
-		Database history;
 		try {
-			// delete the file before each test
-			File file = new File(TESTING_FILE);
+			// delete the file
+			File file = new File(Common.TESTING_FILE);
 			if (file.exists())
 				file.delete();
 			
 			// and free the singleton
 			Database.freeSingleton();
 
-			// file shouldn't exist before
-			assertFalse(new File(TESTING_FILE).exists());
+			// file shouldn't exist now
+			assertFalse(new File(Common.TESTING_FILE).exists());
 			
 			// should be created during the initialisation
-			Database.initSingleton(TESTING_FILE);
+			Database.initSingleton(Common.TESTING_FILE);
 			// then it should exist
-			assertTrue(new File(TESTING_FILE).exists());
+			assertTrue(new File(Common.TESTING_FILE).exists());
 
 			// now we can get the singleton
-			history = Database.getSingleton();
+			Database history = Database.getDatabase();
 			
-			// and its size should be aligned as specified
-			assertEquals(new File(TESTING_FILE).length(), Database.ALIGN_SIZE);
+			// and file's size should be aligned as specified
+			assertEquals(new File(Common.TESTING_FILE).length(), Database.ALIGN_SIZE);
 
 			// check structure
-			assertTrue(history.checkStructure());
+			assertTrue(Common.checkStructure());
 		} catch (DatabaseFileException e) {
 			assertTrue(e.getMessage(), false);
 		} catch (IOException e) {
 			assertTrue(e.getMessage(), false);
 		}
 	}
-	
-	public void testAddFreeEntries() {
-		Database history;
-		try {
-			// tests whether the number of added free entries fits
-			history = Database.getSingleton();
-			int countFree = history.getEmptyEntriesCount();
-			history.addEmptyEntries(10);
-			assertEquals(countFree + 10, history.getEmptyEntriesCount());
-
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
-	}
-	
-	public void testCreateConversation() {
-		Database history;
-		try {
-			history = Database.getSingleton();
-			Time time = new Time(); time.setToNow();
-
-			// check that it takes only one entry
-			int countEmpty = history.getEmptyEntriesCount();
-			for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
-			{
-				history.createConversation("Shut the fuck up!", time);
-				if (countEmpty == 0)
-					assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = history.getEmptyEntriesCount()));
-				else
-					assertEquals(countEmpty - 1, (countEmpty = history.getEmptyEntriesCount()));
-			}
-			
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
-	}
-
-	public void testGetConversation() {
-		Database history;
-		try {
-			history = Database.getSingleton();
-			Time time = new Time(); time.setToNow();
-
-			String phoneNumberUK = "07572458912";
-			String phoneNumberInternational = "+447572458912";
-			String phoneNumberDifferent = "458912";
-			
-			// conv1 should have the UK number stored
-			Conversation conv1 = history.createConversation(phoneNumberUK);
-			assertEquals(conv1.getPhoneNumber(), phoneNumberUK);
-			
-			// try to find it using the international number
-			Conversation conv2 = history.getConversation(phoneNumberInternational);
-			assertEquals(conv1.getIndexEntry(), conv2.getIndexEntry());
-			
-			// it should change the number to international
-			assertEquals(conv2.getPhoneNumber(), phoneNumberInternational);
-			conv1.update();
-			assertEquals(conv1.getPhoneNumber(), phoneNumberInternational);
-			
-			// try finding a different number
-			assertEquals(history.getConversation(phoneNumberDifferent), null);
-			
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
-	}
-
-	public void testGetAllConversations() {
-		Database history;
-		try {
-			history = Database.getSingleton();
-			Time time1 = new Time(); time1.set(1, 1, 1998);
-			Time time2 = new Time(); time2.set(1, 1, 1994);
-			Time time3 = new Time(); time3.set(1, 1, 1996);
-			Time time4 = new Time(); time4.set(1, 1, 1989);
-
-			Conversation conv1 = history.createConversation("1");
-			conv1.setTimeStamp(time1);
-			conv1.save();
-			Conversation conv2 = history.createConversation("2");
-			conv2.setTimeStamp(time2);
-			conv2.save();
-			Conversation conv3 = history.createConversation("3");
-			conv3.setTimeStamp(time3);
-			conv3.save();
-			Conversation conv4 = history.createConversation("4");
-			conv4.setTimeStamp(time4);
-			conv4.save();
-			
-			// get all conversations
-			ArrayList<Conversation> list = history.getListOfConversations();
-			
-			// check that it is there and sorted
-			assertEquals(list.get(0).getPhoneNumber(), "4");
-			assertEquals(list.get(1).getPhoneNumber(), "2");
-			assertEquals(list.get(2).getPhoneNumber(), "3");
-			assertEquals(list.get(3).getPhoneNumber(), "1");
-			
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
-	}
-	
-	public void testCreateSessionKeys() {
-		Database history;
-		try {
-			history = Database.getSingleton();
-			Conversation conv = history.createConversation("phone number adfsdf");
-			
-			// check that it takes only one entry
-			int countEmpty = history.getEmptyEntriesCount();
-			for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
-			{
-				history.createSessionKeys(conv, "phone number sfdgfsdg");
-				if (countEmpty == 0)
-					assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = history.getEmptyEntriesCount()));
-				else
-					assertEquals(countEmpty - 1, (countEmpty = history.getEmptyEntriesCount()));
-			}
-
-			// check structure
-			assertTrue(history.checkStructure());
-		} catch (DatabaseFileException e) {
-			assertTrue(e.getMessage(), false);
-		} catch (IOException e) {
-			assertTrue(e.getMessage(), false);
-		}
-	}
-
 }
