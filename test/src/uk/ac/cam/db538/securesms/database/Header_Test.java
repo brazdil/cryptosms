@@ -17,9 +17,7 @@ public class Header_Test extends TestCase {
 		super.tearDown();
 	}
 
-	public void testConstructor() throws DatabaseFileException, IOException {
-		// ASSIGNMENT
-		
+	public void testConstruction() throws DatabaseFileException, IOException {
 		// create a header
 		Header header = Header.createHeader();
 		header.setVersion(12);

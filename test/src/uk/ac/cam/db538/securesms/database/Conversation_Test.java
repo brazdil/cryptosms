@@ -51,8 +51,7 @@ public class Conversation_Test extends TestCase {
 		super.tearDown();
 	}
 	
-	public void testConversation() throws DatabaseFileException, IOException {
-		// ASSIGNMENT
+	public void testConstruction() throws DatabaseFileException, IOException {
 		Conversation conv = Conversation.createConversation();
 		setData(conv, false);
 		conv.saveToFile();

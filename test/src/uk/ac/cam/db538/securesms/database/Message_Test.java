@@ -51,9 +51,7 @@ public class Message_Test extends TestCase {
 		assertEquals(msg.getIndexNext(), indexNext);
 	}
 	
-	public void testMessage() throws DatabaseFileException, IOException {
-		// ASSIGNMENT
-		
+	public void testConstruction() throws DatabaseFileException, IOException {
 		// create a Message entry
 		Conversation conv = Conversation.createConversation();
 		Message msg = Message.createMessage();

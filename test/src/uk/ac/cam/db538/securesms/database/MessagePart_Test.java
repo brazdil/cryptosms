@@ -2,8 +2,10 @@ package uk.ac.cam.db538.securesms.database;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.database.Message.MessageType;
+import uk.ac.cam.db538.securesms.encryption.Encryption;
 import junit.framework.TestCase;
 
 public class MessagePart_Test extends TestCase {
@@ -16,57 +18,119 @@ public class MessagePart_Test extends TestCase {
 		super.tearDown();
 	}
 
-/*	public void testMessages() {
-		MessagePart msgPart;
+	private boolean deliveredPart = true;
+	private String messageBody = "Testing body";
+	private long indexNext = 12L;
+	
+	private void setData(MessagePart msgPart) {
+		msgPart.setDeliveredPart(deliveredPart);
+		msgPart.setMessageBody(messageBody);
+		msgPart.setIndexNext(indexNext);
+	}
+	
+	private void checkData(MessagePart msgPart) {
+		assertEquals(deliveredPart, msgPart.getDeliveredPart());
+		assertEquals(messageBody, msgPart.getMessageBody());
+		assertEquals(indexNext, msgPart.getIndexNext());
+	}
+
+	public void testConstruction() throws DatabaseFileException, IOException {
+		// Check that it is assigned to a proper message, etc...
+		Conversation conv = Conversation.createConversation();
+		Message msg = Message.createMessage();
+		conv.attachMessage(msg);
 		
-		// ASSIGNMENT
+		ArrayList<MessagePart> list = new ArrayList<MessagePart>(2);
+		MessagePart msgPart1 = MessagePart.createMessagePart();
+		MessagePart msgPart2 = MessagePart.createMessagePart();
+		list.add(msgPart1);
+		list.add(msgPart2);
+		msg.assignMessageParts(list);
 		
+		assertSame(msg.getFirstMessagePart(), msgPart1);
+		assertNotSame(msg.getFirstMessagePart(), msgPart2);
+		
+		// Check that the data is saved properly
+		setData(msgPart1);
+		msgPart1.saveToFile();
+		long index = msgPart1.getEntryIndex();
+		
+		// force it to be re-read
+		MessagePart.forceClearCache();
+		msgPart1 = MessagePart.getMessagePart(index);
+		
+		checkData(msgPart1);
+		assertTrue(Common.checkStructure());
+	}
+	
+	public void testIndices() throws DatabaseFileException, IOException {
+		// INDICES OUT OF BOUNDS
+		MessagePart msgPart = MessagePart.createMessagePart();
+		
+		// indexNext
 		try {
-			msgPart = new MessagePart(120L);
-			assertEquals(msgPart.getIndexEntry(), 120L);
-		} catch (IndexOutOfBoundsException ex) {
-			assertTrue(false);
-		}
-		
-		// INDEX OUT OF BOUNDS
-		
-		try {
-			msgPart = new MessagePart(0x100000000L);
+			msgPart.setIndexNext(0x0100000000L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 
 		try {
-			msgPart = new MessagePart(0L);
-			assertTrue(false);
-		} catch (IndexOutOfBoundsException ex) {
-		}
-
-		try {
-			msgPart = new MessagePart(-1L);
+			msgPart.setIndexNext(-1L);
 			assertTrue(false);
 		} catch (IndexOutOfBoundsException ex) {
 		}
 	}
 
-	public void testSaveUpdate() throws DatabaseFileException, IOException {
-		Database_Old database = Database_Old.getSingleton();
+	public void testCreateData() throws DatabaseFileException, IOException {
+		// compute expected values
+		byte flags = 0;
+		flags |= (deliveredPart) ? 0x80 : 0x00;
 		
-		boolean deliveredPart = true;
-		String messageBody = "Testing body";
+		// generate data
+		MessagePart msgPart = MessagePart.createMessagePart();
+		setData(msgPart);
+		msgPart.saveToFile();
 		
-		Conversation_Old conv = database.createConversation("+123456789012");
-		Message msg = conv.newMessage(MessageType.OUTGOING);
+		// get the generated data
+		byte[] dataEncrypted = Database.getDatabase().getEntry(msgPart.getEntryIndex());
+		
+		// chunk length
+		assertEquals(dataEncrypted.length, Database.CHUNK_SIZE);
+		
+		// decrypt the encoded part
+		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+		
+		// check the data
+		assertEquals(dataPlain[0], flags);
+		assertEquals(Database.fromLatin(dataPlain, 1, 140), messageBody);
+		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+	}
 
-		MessagePart msgPartWrite = msg.newMessagePart();
-		MessagePart msgPartRead = new MessagePart(msgPartWrite.getIndexEntry());
+	public void testParseData() throws DatabaseFileException, IOException {
+		MessagePart msgPart = MessagePart.createMessagePart();
+		long index = msgPart.getEntryIndex();
+
+		// prepare stuff
+		byte flags = 0;
+		flags |= (deliveredPart) ? 0x80 : 0x00;
+
+		// create plain data
+		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
+		dataPlain[0] = flags;
+		System.arraycopy(Database.toLatin(messageBody, 140), 0, dataPlain, 1, 140);
+		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
-		msgPartWrite.setDeliveredPart(deliveredPart);
-		msgPartWrite.setMessageBody(messageBody);
-		msgPartWrite.save();
+		// encrypt it
+		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
+
+		// inject it into the file
+		Database.getDatabase().setEntry(index, dataEncrypted);
 		
-		msgPartRead.update();
-		assertEquals(deliveredPart, msgPartRead.getDeliveredPart());
-		assertEquals(messageBody, msgPartRead.getMessageBody());
-	}*/
+		// have it parsed
+		MessagePart.forceClearCache();
+		msgPart = MessagePart.getMessagePart(index);
+		
+		// check the indices
+		checkData(msgPart);
+	}
 }

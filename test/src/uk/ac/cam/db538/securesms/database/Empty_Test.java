@@ -16,9 +16,7 @@ public class Empty_Test extends TestCase {
 		super.tearDown();
 	}
 
-	public void testConstructor() throws DatabaseFileException, IOException {
-		// ASSIGNMENT
-		
+	public void testConstruction() throws DatabaseFileException, IOException {
 		// create a free entry
 		Empty free = Empty.createEmpty() ;
 		free.setIndexNext(15L);
