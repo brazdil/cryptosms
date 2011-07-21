@@ -30,6 +30,8 @@ public class Empty_Test extends TestCase {
 		free = Empty.getEmpty(index);
 		
 		assertEquals(free.getIndexNext(), 15L);
+		
+		assertTrue(Common.checkStructure());
 	}
 	
 	public void testIndices() throws DatabaseFileException, IOException {

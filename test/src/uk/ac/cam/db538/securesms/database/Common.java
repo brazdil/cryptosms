@@ -101,6 +101,6 @@ public class Common {
 			conv = conv.getNextConversation();
 		}
 		
-		return visitedAll && !corruptedPointers;
+		return (visitedAll && !corruptedPointers);
 	}
 }
