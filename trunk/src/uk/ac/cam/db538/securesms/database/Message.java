@@ -43,6 +43,14 @@ public class Message {
 	private static ArrayList<Message> cacheMessage = new ArrayList<Message>();
 	
 	/**
+	 * Removes all instances from the list of cached objects.
+	 * Be sure you don't use the instances afterwards.
+	 */
+	public static void forceClearCache() {
+		cacheMessage = new ArrayList<Message>();
+	}
+
+	/**
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
@@ -188,6 +196,14 @@ public class Message {
 	
 	public Message getNextMessage(boolean lockAllow) throws DatabaseFileException, IOException {
 		return Message.getMessage(mIndexNext, lockAllow);
+	}
+	
+	public MessagePart getFirstMessagePart() throws DatabaseFileException, IOException {
+		return getFirstMessagePart(true);
+	}
+	
+	public MessagePart getFirstMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+		return MessagePart.getMessagePart(mIndexMessageParts, lockAllow);
 	}
 
 	// GETTERS / SETTERS

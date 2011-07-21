@@ -39,6 +39,14 @@ public class Conversation {
 	private static ArrayList<Conversation> cacheConversation = new ArrayList<Conversation>();
 	
 	/**
+	 * Removes all instances from the list of cached objects.
+	 * Be sure you don't use the instances afterwards.
+	 */
+	public static void forceClearCache() {
+		cacheConversation = new ArrayList<Conversation>();
+	}
+	
+	/**
 	 * Returns instance of a new Conversation 
 	 * @return
 	 * @throws IOException 
@@ -49,15 +57,15 @@ public class Conversation {
 	}
 
 	/**
-	 * Returns instance of a new Conversation 
+	 * Returns instance of a new Conversation
 	 * @return
 	 * @throws IOException 
 	 * @throws DatabaseFileException 
 	 */
-	public static Conversation createConversation(boolean lock) throws DatabaseFileException, IOException {
-		return new Conversation(Empty.getEmptyIndex(lock), false, lock);
-	}
-	
+	public static Conversation createConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+		// create a new one
+		return new Conversation(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+	}	
 	/**
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param index		Index in file
@@ -82,6 +90,17 @@ public class Conversation {
 		
 		// create a new one
 		return new Conversation(index, true, lockAllow);
+	}
+	
+	/** 
+	 * Explicitly requests each conversation in the file to be loaded to memory
+	 * @throws IOException
+	 * @throws DatabaseFileException
+	 */
+	public static void cacheAllConversations() throws IOException, DatabaseFileException {
+		Conversation convCurrent = Header.getHeader(false).getFirstConversation();
+		while (convCurrent != null) 
+			convCurrent = convCurrent.getNextConversation();
 	}
 	
 	// INTERNAL FIELDS
@@ -190,6 +209,14 @@ public class Conversation {
 		//TODO: To be implemented
 	}
 	
+	public SessionKeys getFirstSessionKeys() throws DatabaseFileException, IOException {
+		return getFirstSessionKeys(true);
+	}
+	
+	public SessionKeys getFirstSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+		return SessionKeys.getSessionKeys(mIndexSessionKeys, lockAllow);
+	}
+
 	public Message getFirstMessage() throws DatabaseFileException, IOException {
 		return getFirstMessage(true);
 	}

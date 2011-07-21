@@ -32,6 +32,14 @@ class MessagePart {
 	private static ArrayList<MessagePart> cacheMessagePart = new ArrayList<MessagePart>();
 	
 	/**
+	 * Removes all instances from the list of cached objects.
+	 * Be sure you don't use the instances afterwards.
+	 */
+	public static void forceClearCache() {
+		cacheMessagePart = new ArrayList<MessagePart>();
+	}
+
+	/**
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */

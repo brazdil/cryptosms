@@ -30,13 +30,22 @@ public class SessionKeys {
 	private static final int OFFSET_RANDOMDATA = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
 
 	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	
-	private static final int LENGTH_RANDOMDATA = OFFSET_NEXTINDEX - OFFSET_RANDOMDATA;	
+	private static final int LENGTH_RANDOMDATA = OFFSET_PREVINDEX - OFFSET_RANDOMDATA;	
 	
 	// STATIC
 	
 	private static ArrayList<SessionKeys> cacheSessionKeys = new ArrayList<SessionKeys>();
 	
+	/**
+	 * Removes all instances from the list of cached objects.
+	 * Be sure you don't use the instances afterwards.
+	 */
+	public static void forceClearCache() {
+		cacheSessionKeys = new ArrayList<SessionKeys>();
+	}
+
 	/**
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
@@ -72,6 +81,7 @@ public class SessionKeys {
 	private byte mLastID_Out;
 	private byte[] mSessionKey_In;
 	private byte mLastID_In;
+	private long mIndexPrev;
 	private long mIndexNext;
 	
 	// CONSTRUCTORS
@@ -103,6 +113,7 @@ public class SessionKeys {
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
+			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
@@ -114,6 +125,7 @@ public class SessionKeys {
 			setLastID_Out((byte) 0x00);
 			setSessionKey_In(Encryption.generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_In((byte) 0x00);
+			setIndexPrev(0L);
 			setIndexNext(0L);
 			
 			saveToFile(lockAllow);
@@ -156,6 +168,14 @@ public class SessionKeys {
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(keysBuffer.array(), Encryption.retreiveEncryptionKey());
 		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+	}
+
+	public SessionKeys getPreviousSessionKeys() throws DatabaseFileException, IOException {
+		return getPreviousSessionKeys(true);
+	}
+	
+	public SessionKeys getPreviousSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+		return getSessionKeys(mIndexPrev, lockAllow);
 	}
 
 	public SessionKeys getNextSessionKeys() throws DatabaseFileException, IOException {
@@ -226,6 +246,17 @@ public class SessionKeys {
 	
 	void setLastID_In(byte lastID_In) {
 		mLastID_In = lastID_In;
+	}
+
+	long getIndexPrev() {
+		return mIndexPrev;
+	}
+
+	void setIndexPrev(long indexPrev) {
+	    if (indexPrev > 0xFFFFFFFFL || indexPrev < 0L)
+	    	throw new IndexOutOfBoundsException();
+		
+		this.mIndexPrev = indexPrev;
 	}
 
 	long getIndexNext() {

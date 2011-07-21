@@ -291,5 +291,9 @@ public final class Database {
 			unlockFile(lock);
 		}
 	}
-	
+
+	// FOR TESTING ONLY
+	static void freeSingleton() {
+		mSingleton = null;
+	}
 }

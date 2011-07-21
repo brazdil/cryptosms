@@ -20,9 +20,43 @@ class Empty {
 	// STATIC
 	
 	private static ArrayList<Empty> cacheEmpty = new ArrayList<Empty>();
+
+	/**
+	 * Removes all instances from the list of cached objects.
+	 * Be sure you don't use the instances afterwards.
+	 */
+	public static void forceClearCache() {
+		cacheEmpty = new ArrayList<Empty>();
+	}
 	
 	/**
 	 * Returns an instance of Empty class with given index in file.
+	 * @param index		Index in file
+	 */
+	static Empty createEmpty(long index) throws DatabaseFileException, IOException {
+		return createEmpty(index, true);
+	}
+
+	/**
+	 * Returns an instance of Empty class with given index in file.
+	 * @param index		Index in file
+	 * @param lock		File lock allow
+	 */
+	static Empty createEmpty(long index, boolean lockAllow) throws DatabaseFileException, IOException {
+		if (index <= 0L)
+			return null;
+		
+		// try looking it up
+		for (Empty empty: cacheEmpty)
+			if (empty.getEntryIndex() == index)
+				return empty; 
+		
+		// create a new one
+		return new Empty(index, false, lockAllow);
+	}
+
+	/**
+	 * Returns an instance of Empty class with given index in file. Reads it from the file if not cached.
 	 * @param index		Index in file
 	 */
 	static Empty getEmpty(long index) throws DatabaseFileException, IOException {
@@ -30,7 +64,7 @@ class Empty {
 	}
 	
 	/**
-	 * Returns an instance of Empty class with given index in file.
+	 * Returns an instance of Empty class with given index in file. Reads it from the file if not cached.
 	 * @param index		Index in file
 	 * @param lock		File lock allow
 	 */
@@ -104,7 +138,7 @@ class Empty {
 			Empty empty;
 			for (int i = 0; i < count; ++i) {
 				// create the empty entry
-				empty = Empty.getEmpty(countEntries + i, false);
+				empty = Empty.createEmpty(countEntries + i, false);
 				// set pointer to the previous head of stack
 				empty.setIndexNext(previousFree);
 				// dump it into the file

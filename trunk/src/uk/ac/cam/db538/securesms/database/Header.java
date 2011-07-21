@@ -2,6 +2,7 @@ package uk.ac.cam.db538.securesms.database;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
@@ -27,6 +28,14 @@ public class Header {
 	
 	// CACHING
 	private static Header cacheHeader = null;
+	
+	/**
+	 * Removes all instances from the list of cached objects.
+	 * Be sure you don't use the instances afterwards.
+	 */
+	public static void forceClearCache() {
+		cacheHeader = null;
+	}
 	
 	/**
 	 * Returns an instance of Header class. Locks the file
@@ -131,6 +140,13 @@ public class Header {
 			return null;
 		else
 			return Empty.getEmpty(this.mIndexFree);
+	}
+	
+	public Conversation getFirstConversation() throws DatabaseFileException, IOException {
+		if (this.mIndexConversations == 0) 
+			return null;
+		else
+			return Conversation.getConversation(this.mIndexConversations);
 	}
 	
 	// GETTERS / SETTERS
