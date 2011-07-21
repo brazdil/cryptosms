@@ -295,6 +295,7 @@ public class Conversation {
 			}
 			keys.setIndexNext(indexFirstInStack);
 			keys.setIndexPrev(0L);
+			keys.setIndexParent(this.mEntryIndex);
 			keys.saveToFile(false);
 			this.setIndexSessionKeys(keys.getEntryIndex());
 			this.saveToFile(false);
@@ -335,6 +336,7 @@ public class Conversation {
 			}
 			msg.setIndexNext(indexFirstInStack);
 			msg.setIndexPrev(0L);
+			msg.setIndexParent(this.mEntryIndex);
 			msg.saveToFile(false);
 			this.setIndexMessages(msg.getEntryIndex());
 			this.saveToFile(false);

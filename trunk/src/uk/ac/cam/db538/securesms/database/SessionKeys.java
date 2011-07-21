@@ -31,8 +31,9 @@ public class SessionKeys {
 
 	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
+	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
-	private static final int LENGTH_RANDOMDATA = OFFSET_PREVINDEX - OFFSET_RANDOMDATA;	
+	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;	
 	
 	// STATIC
 	
@@ -100,6 +101,7 @@ public class SessionKeys {
 	private byte mLastID_Out;
 	private byte[] mSessionKey_In;
 	private byte mLastID_In;
+	private long mIndexParent;
 	private long mIndexPrev;
 	private long mIndexNext;
 	
@@ -147,6 +149,7 @@ public class SessionKeys {
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
+			setIndexParent(Database.getInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
 		}
@@ -159,6 +162,7 @@ public class SessionKeys {
 			setLastID_Out((byte) 0x00);
 			setSessionKey_In(Encryption.generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_In((byte) 0x00);
+			setIndexParent(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);
 			
@@ -171,6 +175,29 @@ public class SessionKeys {
 	}
 
 	// FUNCTIONS
+
+	/**
+	 * Returns an instance of the Conversation class that is the parent of this SessionKeys in the data structure
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation getParent() throws DatabaseFileException, IOException {
+		return getParent(true);
+	}
+	
+	/**
+	 * Returns an instance of the Conversation class that is the parent of this SessionKeys in the data structure
+	 * @param lockAllow		Allow file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation getParent(boolean lockAllow) throws DatabaseFileException, IOException {
+		if (mIndexParent == 0)
+			return null;
+		return Conversation.getConversation(mIndexParent, lockAllow);
+	}
 	
 	/**
 	 * Saves contents of the class to the storage file
@@ -211,6 +238,7 @@ public class SessionKeys {
 		keysBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
+		keysBuffer.put(Database.getBytes(this.mIndexParent));
 		keysBuffer.put(Database.getBytes(this.mIndexPrev));
 		keysBuffer.put(Database.getBytes(this.mIndexNext));
 		
@@ -342,5 +370,13 @@ public class SessionKeys {
 	    	throw new IndexOutOfBoundsException();
 		
 		this.mIndexNext = indexNext;
+	}
+
+	public void setIndexParent(long indexParent) {
+		this.mIndexParent = indexParent;
+	}
+
+	public long getIndexParent() {
+		return mIndexParent;
 	}
 }

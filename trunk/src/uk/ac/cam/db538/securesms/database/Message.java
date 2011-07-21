@@ -30,8 +30,9 @@ public class Message {
 	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
+	private static final int OFFSET_PARENTINDEX = OFFSET_MSGSINDEX - 4;
 	
-	private static final int LENGTH_RANDOMDATA = OFFSET_MSGSINDEX - OFFSET_RANDOMDATA;	
+	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;	
 	
 	public enum MessageType {
 		INCOMING,
@@ -109,6 +110,7 @@ public class Message {
 	private MessageType mMessageType;
 	private Time mTimeStamp;
 	private String mMessageBody;
+	private long mIndexParent;
 	private long mIndexMessageParts;
 	private long mIndexPrev ;
 	private long mIndexNext;
@@ -155,6 +157,7 @@ public class Message {
 			setMessageType((messageOutgoing) ? MessageType.OUTGOING : MessageType.INCOMING);
 			setTimeStamp(timeStamp);
 			setMessageBody(Database.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
+			setIndexParent(Database.getInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexMessageParts(Database.getInt(dataPlain, OFFSET_MSGSINDEX));
 			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
@@ -169,6 +172,7 @@ public class Message {
 			setMessageType(MessageType.OUTGOING);
 			setTimeStamp(timeStamp);
 			setMessageBody("");
+			setIndexParent(0L);
 			setIndexMessageParts(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);
@@ -221,12 +225,36 @@ public class Message {
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
+		msgBuffer.put(Database.getBytes(this.mIndexParent)); 
 		msgBuffer.put(Database.getBytes(this.mIndexMessageParts)); 
 		msgBuffer.put(Database.getBytes(this.mIndexPrev));
 		msgBuffer.put(Database.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
 		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+	}
+
+	/**
+	 * Returns an instance of the Conversation class that is the parent of this Message in the data structure
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation getParent() throws DatabaseFileException, IOException {
+		return getParent(true);
+	}
+	
+	/**
+	 * Returns an instance of the Conversation class that is the parent of this Message in the data structure
+	 * @param lockAllow		Allow file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public Conversation getParent(boolean lockAllow) throws DatabaseFileException, IOException {
+		if (mIndexParent == 0)
+			return null;
+		return Conversation.getConversation(mIndexParent, lockAllow);
 	}
 	
 	/**
@@ -247,6 +275,8 @@ public class Message {
 	 * @throws IOException
 	 */
 	public Message getPreviousMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+		if (mIndexPrev == 0)
+			return null;
 		return Message.getMessage(mIndexPrev, lockAllow);
 	}
 
@@ -268,6 +298,8 @@ public class Message {
 	 * @throws IOException
 	 */
 	public Message getNextMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+		if (mIndexNext == 0)
+			return null;
 		return Message.getMessage(mIndexNext, lockAllow);
 	}
 	
@@ -293,7 +325,6 @@ public class Message {
 	MessagePart getFirstMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		if (mIndexMessageParts == 0)
 			return null;
-		
 		return MessagePart.getMessagePart(mIndexMessageParts, lockAllow);
 	}
 	
@@ -418,5 +449,13 @@ public class Message {
 	    	throw new IndexOutOfBoundsException();
 		
 		this.mIndexNext = indexNext;
+	}
+
+	public void setIndexParent(long indexParent) {
+		this.mIndexParent = indexParent;
+	}
+
+	public long getIndexParent() {
+		return mIndexParent;
 	}
 }
