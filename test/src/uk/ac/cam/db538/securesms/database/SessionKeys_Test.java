@@ -24,6 +24,7 @@ public class SessionKeys_Test extends TestCase {
 	private byte lastID_Out = 0x12;
 	private byte[] sessionKey_In = Encryption.generateRandomData(Encryption.KEY_LENGTH);
 	private byte lastID_In = 0x18;
+	private long indexParent = 246L;
 	private long indexPrev = 247L;
 	private long indexNext = 248L;
 	private String simNumberLong = "+1234567890126549873sdfsat6ewrt987wet3df1g3s2g1e6r5t46wert4dfsgdfsg";
@@ -38,6 +39,7 @@ public class SessionKeys_Test extends TestCase {
 		keys.setLastID_Out(lastID_Out);
 		keys.setSessionKey_In(sessionKey_In);
 		keys.setLastID_In(lastID_In);
+		keys.setIndexParent(indexParent);
 		keys.setIndexPrev(indexPrev);
 		keys.setIndexNext(indexNext);
 	}
@@ -50,6 +52,9 @@ public class SessionKeys_Test extends TestCase {
 		assertEquals(lastID_Out, keys.getLastID_Out());
 		CustomAsserts.assertArrayEquals(keys.getSessionKey_In(), sessionKey_In);
 		assertEquals(lastID_In, keys.getLastID_In());
+		assertEquals(indexParent, keys.getIndexParent());
+		assertEquals(indexPrev, keys.getIndexPrev());
+		assertEquals(indexNext, keys.getIndexNext());
 	}
 	
 	public void testConstruction() throws DatabaseFileException, IOException {
@@ -110,6 +115,7 @@ public class SessionKeys_Test extends TestCase {
 		assertEquals(lastID_Out, dataPlain[65]);
 		CustomAsserts.assertArrayEquals(dataPlain, 66, sessionKey_In, 0, 32);
 		assertEquals(lastID_In, dataPlain[98]);
+		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexParent);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);		
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
@@ -126,6 +132,7 @@ public class SessionKeys_Test extends TestCase {
 		dataPlain[65] = lastID_Out;
 		System.arraycopy(sessionKey_In, 0, dataPlain, 66, 32);
 		dataPlain[98] = lastID_In;
+		System.arraycopy(Database.getBytes(indexParent), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
 		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
 		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		

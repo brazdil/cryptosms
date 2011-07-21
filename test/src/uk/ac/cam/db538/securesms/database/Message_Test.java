@@ -24,6 +24,7 @@ public class Message_Test extends TestCase {
 	private MessageType messageType = MessageType.OUTGOING;
 	private Time timeStamp = new Time(); 
 	private String messageBody = "Testing body";
+	private long indexParent = 127L;
 	private long indexMessageParts = 120L;
 	private long indexPrev = 225L;
 	private long indexNext = 12L;
@@ -34,6 +35,7 @@ public class Message_Test extends TestCase {
 		msg.setMessageType(messageType);
 		msg.setTimeStamp(timeStamp);
 		msg.setMessageBody(messageBody);
+		msg.setIndexParent(indexParent);
 		msg.setIndexMessageParts(indexMessageParts);
 		msg.setIndexPrev(indexPrev);
 		msg.setIndexNext(indexNext);
@@ -45,6 +47,7 @@ public class Message_Test extends TestCase {
 		assertEquals(msg.getMessageType(), messageType);
 		assertEquals(Time.compare(msg.getTimeStamp(), timeStamp), 0);
 		assertEquals(msg.getMessageBody(), messageBody);
+		assertEquals(msg.getIndexParent(), indexParent);
 		assertEquals(msg.getIndexMessageParts(), indexMessageParts);
 		assertEquals(msg.getIndexPrev(), indexPrev);
 		assertEquals(msg.getIndexNext(), indexNext);
@@ -142,6 +145,7 @@ public class Message_Test extends TestCase {
 		Time time = new Time(); time.parse3339(Database.fromLatin(dataPlain, 1, 29));
 		assertEquals(Time.compare(time, timeStamp), 0);
 		assertEquals(Database.fromLatin(dataPlain, 30, 140), messageBody);
+		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16), indexParent);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexMessageParts);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
 		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
@@ -162,6 +166,7 @@ public class Message_Test extends TestCase {
 		dataPlain[0] = flags;
 		System.arraycopy(Database.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 1, 29);
 		System.arraycopy(Database.toLatin(messageBody, 140), 0, dataPlain, 30, 140);
+		System.arraycopy(Database.getBytes(indexParent), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16, 4);
 		System.arraycopy(Database.getBytes(indexMessageParts), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
 		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
 		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
@@ -182,6 +187,7 @@ public class Message_Test extends TestCase {
 		assertEquals(messageType, msg.getMessageType());
 		assertEquals(Time.compare(timeStamp, msg.getTimeStamp()), 0);
 		assertEquals(messageBody, msg.getMessageBody());
+		assertEquals(indexParent, msg.getIndexParent());
 		assertEquals(indexMessageParts, msg.getIndexMessageParts());
 		assertEquals(indexPrev, msg.getIndexPrev());
 		assertEquals(indexNext, msg.getIndexNext());

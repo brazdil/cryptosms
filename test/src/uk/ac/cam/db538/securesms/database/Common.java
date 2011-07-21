@@ -75,6 +75,8 @@ public class Common {
 				// pointers
 				if (keys.getIndexPrev() != keysPrevious)
 					corruptedPointers = true;
+				if (keys.getIndexParent() != conv.getEntryIndex())
+					corruptedPointers = true;
 				
 				// next
 				keysPrevious = keys.getEntryIndex();
@@ -89,6 +91,8 @@ public class Common {
 				
 				// pointers
 				if (msg.getIndexPrev() != msgPrevious)
+					corruptedPointers = true;
+				if (msg.getIndexParent() != conv.getEntryIndex())
 					corruptedPointers = true;
 				
 				// message parts

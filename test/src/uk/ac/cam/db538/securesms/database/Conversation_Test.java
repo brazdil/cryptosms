@@ -198,7 +198,7 @@ public class Conversation_Test extends TestCase {
 		// check that it takes only one entry
 		Header header = Header.getHeader();
 		int countEmpty = Empty.getEmptyEntriesCount();
-		for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE + 3; ++i)
+		for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
 		{
 			header.attachConversation(Conversation.createConversation());
 			if (countEmpty == 0)
