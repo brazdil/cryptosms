@@ -34,7 +34,9 @@ public class Header {
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		cacheHeader = null;
+		synchronized (cacheHeader) {
+			cacheHeader = null;
+		}
 	}
 	
 	/**
@@ -57,9 +59,11 @@ public class Header {
 	 * @throws IOException
 	 */
 	public static Header getHeader(boolean lockAllow) throws DatabaseFileException, IOException {
-		if (cacheHeader == null) 
-			cacheHeader = new Header(true, lockAllow);
-		return cacheHeader;
+		synchronized (cacheHeader) {
+			if (cacheHeader == null) 
+				cacheHeader = new Header(true, lockAllow);
+			return cacheHeader;
+		}
 	}
 	
 	/**
@@ -67,12 +71,15 @@ public class Header {
 	 * @throws IOException 
 	 * @throws DatabaseFileException 
 	 */
-	static void createHeader() throws DatabaseFileException, IOException {
-		createHeader(true);
+	static Header createHeader() throws DatabaseFileException, IOException {
+		return createHeader(true);
 	}
 
-	static void createHeader(boolean lockAllow) throws DatabaseFileException, IOException {
-		cacheHeader = new Header(false, lockAllow);
+	static Header createHeader(boolean lockAllow) throws DatabaseFileException, IOException {
+		synchronized (cacheHeader) {
+			cacheHeader = new Header(false, lockAllow);
+			return cacheHeader;
+		}
 	}
 	
 	// INTERNAL FIELDS
