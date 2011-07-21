@@ -26,33 +26,27 @@ class Empty {
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		cacheEmpty = new ArrayList<Empty>();
+		synchronized (cacheEmpty) {
+			cacheEmpty = new ArrayList<Empty>();
+		}
 	}
 	
 	/**
-	 * Returns an instance of Empty class with given index in file.
+	 * Returns an instance of Empty class at the end of the file
 	 * @param index		Index in file
 	 */
-	static Empty createEmpty(long index) throws DatabaseFileException, IOException {
-		return createEmpty(index, true);
+	static Empty createEmpty() throws DatabaseFileException, IOException {
+		return createEmpty(true);
 	}
 
 	/**
-	 * Returns an instance of Empty class with given index in file.
+	 * Returns an instance of Empty class at the end of the file
 	 * @param index		Index in file
 	 * @param lock		File lock allow
 	 */
-	static Empty createEmpty(long index, boolean lockAllow) throws DatabaseFileException, IOException {
-		if (index <= 0L)
-			return null;
-		
-		// try looking it up
-		for (Empty empty: cacheEmpty)
-			if (empty.getEntryIndex() == index)
-				return empty; 
-		
-		// create a new one
-		return new Empty(index, false, lockAllow);
+	static Empty createEmpty(boolean lockAllow) throws DatabaseFileException, IOException {
+		// create a new one at the end of the file
+		return new Empty(Database.getDatabase().getEntriesCount(), false, lockAllow);
 	}
 
 	/**
@@ -73,9 +67,11 @@ class Empty {
 			return null;
 		
 		// try looking it up
-		for (Empty empty: cacheEmpty)
-			if (empty.getEntryIndex() == index)
-				return empty; 
+		synchronized (cacheEmpty) {
+			for (Empty empty: cacheEmpty)
+				if (empty.getEntryIndex() == index)
+					return empty; 
+		}
 		
 		// create a new one
 		return new Empty(index, true, lockAllow);
@@ -110,7 +106,9 @@ class Empty {
 				// remove the entry from stack
 				header.setIndexFree(empty.getIndexNext());
 				// remove from cache
-				cacheEmpty.remove(empty);
+				synchronized (cacheEmpty) {				
+					cacheEmpty.remove(empty);
+				}
 				// return the index of the freed entry
 				indices[i] = empty.getEntryIndex();
 			}
@@ -126,6 +124,10 @@ class Empty {
 		return indices;
 	}
 	
+	static void addEmptyEntries(int count) throws IOException, DatabaseFileException {
+		addEmptyEntries(count, true);
+	}
+
 	static void addEmptyEntries(int count, boolean lock) throws IOException, DatabaseFileException {
 		Database db = Database.getDatabase();
 		db.lockFile(lock);
@@ -133,18 +135,16 @@ class Empty {
 			Header header = Header.getHeader(false);
 			// get first empty index
 			long previousFree = header.getIndexFree();
-			// figure out the indices offset of our entries
-			long countEntries = db.getEntriesCount();
 			Empty empty;
 			for (int i = 0; i < count; ++i) {
 				// create the empty entry
-				empty = Empty.createEmpty(countEntries + i, false);
+				empty = Empty.createEmpty(false);
 				// set pointer to the previous head of stack
 				empty.setIndexNext(previousFree);
 				// dump it into the file
 				empty.saveToFile(false);
 				// increase index
-				previousFree = countEntries + i;
+				previousFree = empty.getEntryIndex();
 			}
 			// update header
 			header.setIndexFree(previousFree);
@@ -159,6 +159,18 @@ class Empty {
 		}
 	}
 
+	static int getEmptyEntriesCount() throws DatabaseFileException, IOException {
+		int count = 0;
+		
+		Empty free = Header.getHeader().getFirstEmpty();
+		while (free != null) {
+			++count;
+			free = free.getNextEmpty();
+		}
+		
+		return count;
+	}	
+	
 	// INTERNAL FIELDS
 	private long mEntryIndex; // READ ONLY
 	private long mIndexNext;
@@ -182,7 +194,9 @@ class Empty {
 			saveToFile(lockAllow);
 		}
 
-		cacheEmpty.add(this);
+		synchronized (cacheEmpty) {
+			cacheEmpty.add(this);
+		}
 	}
 
 	public void saveToFile() throws DatabaseFileException, IOException {

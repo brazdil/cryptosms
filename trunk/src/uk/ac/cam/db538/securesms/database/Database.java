@@ -155,7 +155,7 @@ public final class Database {
 	 * @throws IOException
 	 * @throws DatabaseFileException
 	 */
-	private void createFile() throws FileNotFoundException, IOException, DatabaseFileException {
+	private synchronized void createFile() throws FileNotFoundException, IOException, DatabaseFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
 		
 		lockFile();
@@ -186,7 +186,7 @@ public final class Database {
 	 * @param condition		Lock condition
 	 * @throws IOException
 	 */
-	public void lockFile(boolean condition) throws IOException {
+	public synchronized void lockFile(boolean condition) throws IOException {
 		if (condition) smsFile.lock();
 	}
 	
@@ -205,7 +205,7 @@ public final class Database {
 	 * @param condition		Unlock condition.
 	 * @throws IOException
 	 */
-	public void unlockFile(boolean condition) throws IOException {
+	public synchronized void unlockFile(boolean condition) throws IOException {
 		if (condition) smsFile.unlock();
 	}
 	
@@ -214,7 +214,7 @@ public final class Database {
 	 * @return
 	 * @throws IOException 
 	 */
-	public long getEntriesCount() throws IOException {
+	public synchronized long getEntriesCount() throws IOException {
 		return smsFile.mFile.length() / CHUNK_SIZE;
 	}
 
@@ -237,7 +237,7 @@ public final class Database {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	byte[] getEntry(long index, boolean lock) throws DatabaseFileException, IOException {
+	synchronized byte[] getEntry(long index, boolean lock) throws DatabaseFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		if (offset > smsFile.mFile.length() - CHUNK_SIZE)
 			throw new DatabaseFileException("Index in history file out of bounds");
@@ -275,7 +275,7 @@ public final class Database {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	void setEntry(long index, byte[] data, boolean lock) throws DatabaseFileException, IOException {
+	synchronized void setEntry(long index, byte[] data, boolean lock) throws DatabaseFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		long fileSize = smsFile.mFile.length();
 		if (offset > fileSize)
