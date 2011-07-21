@@ -43,7 +43,9 @@ public class Conversation {
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		cacheConversation = new ArrayList<Conversation>();
+		synchronized (cacheConversation) {
+			cacheConversation = new ArrayList<Conversation>();
+		}
 	}
 	
 	/**
@@ -84,9 +86,11 @@ public class Conversation {
 			return null;
 		
 		// try looking it up
-		for (Conversation conv: cacheConversation)
-			if (conv.getEntryIndex() == index)
-				return conv; 
+		synchronized (cacheConversation) {
+			for (Conversation conv: cacheConversation)
+				if (conv.getEntryIndex() == index)
+					return conv; 
+		}
 		
 		// create a new one
 		return new Conversation(index, true, lockAllow);
@@ -150,7 +154,9 @@ public class Conversation {
 			saveToFile(lockAllow);
 		}
 
-		cacheConversation.add(this);
+		synchronized (cacheConversation) {
+			cacheConversation.add(this);
+		}
 	}
 
 	// FUNCTIONS
