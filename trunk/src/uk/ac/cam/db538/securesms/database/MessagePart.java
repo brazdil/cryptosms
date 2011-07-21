@@ -36,7 +36,17 @@ class MessagePart {
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		cacheMessagePart = new ArrayList<MessagePart>();
+		synchronized (cacheMessagePart) {
+			cacheMessagePart = new ArrayList<MessagePart>();
+		}
+	}
+	
+	static MessagePart createMessagePart() throws DatabaseFileException, IOException {
+		return createMessagePart(true);
+	}
+	
+	static MessagePart createMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+		return new MessagePart(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
 
 	/**
@@ -57,10 +67,11 @@ class MessagePart {
 			return null;
 		
 		// try looking it up
-		for (MessagePart msgPart: cacheMessagePart)
-			if (msgPart.getEntryIndex() == index)
-				return msgPart; 
-		
+		synchronized (cacheMessagePart) {
+			for (MessagePart msgPart: cacheMessagePart)
+				if (msgPart.getEntryIndex() == index)
+					return msgPart; 
+		}
 		// create a new one
 		return new MessagePart(index, true, lockAllow);
 	}
@@ -100,7 +111,9 @@ class MessagePart {
 			saveToFile(lockAllow);
 		}
 
-		cacheMessagePart.add(this);
+		synchronized (cacheMessagePart) {
+			cacheMessagePart.add(this);
+		}
 	}
 
 	// FUNCTIONS
@@ -137,6 +150,16 @@ class MessagePart {
 	
 	public MessagePart getNextMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		return getMessagePart(mIndexNext, lockAllow);
+	}
+	
+	// supposed to be used only in the package
+	void delete() {
+		delete(true);
+	}
+	
+	// supposed to be used only in the package
+	void delete(boolean lockAllow) {
+		
 	}
 	
 	// GETTERS / SETTERS

@@ -220,6 +220,37 @@ public class Message {
 	public MessagePart getFirstMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		return MessagePart.getMessagePart(mIndexMessageParts, lockAllow);
 	}
+	
+	public void assignMessageParts(ArrayList<MessagePart> list) throws IOException, DatabaseFileException {
+		assignMessageParts(list, true);
+	}
+	
+	public void assignMessageParts(ArrayList<MessagePart> list, boolean lockAllow) throws IOException, DatabaseFileException {
+		Database.getDatabase().lockFile(lockAllow);
+		try {
+			long indexFirstInStack = getIndexMessageParts();
+			while (indexFirstInStack != 0) {
+				MessagePart msgPart = MessagePart.getMessagePart(indexFirstInStack, false);
+				indexFirstInStack = msgPart.getIndexNext();
+				msgPart.delete(false);
+			}
+
+			for (int i = list.size() - 1; i >= 0; --i) {
+				MessagePart msgPart = list.get(i); 
+				msgPart.setIndexNext(indexFirstInStack);
+				indexFirstInStack = msgPart.getEntryIndex();
+				msgPart.saveToFile(false);
+			}
+			this.setIndexMessageParts(indexFirstInStack);
+			this.saveToFile(false);
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			Database.getDatabase().unlockFile(lockAllow);	
+		}
+	}
 
 	// GETTERS / SETTERS
 	
