@@ -17,8 +17,13 @@
 
 package uk.ac.cam.db538.securesms.ui;
 
+import java.io.IOException;
+
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
+import uk.ac.cam.db538.securesms.database.DatabaseFileException;
+import uk.ac.cam.db538.securesms.database.SessionKeys;
+import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -33,12 +38,13 @@ import android.widget.TextView;
 /**
  * This class manages the view for given conversation.
  */
-public class ConversationListItem extends RelativeLayout {
-    private TextView mSubjectView;
+public class TabContactsItem extends RelativeLayout {
+    private TextView mMessageView;
     private TextView mFromView;
     private TextView mDateView;
-    private View mAttachmentView;
-    private View mErrorIndicator;
+    private View mBeingSentView;
+    private View mWaitingForReplyView;
+    private View mKeysExchangedView;
     private ImageView mPresenceView;
     private QuickContactBadge mAvatarView;
 
@@ -46,11 +52,11 @@ public class ConversationListItem extends RelativeLayout {
     
     private Conversation mConversationHeader;
 
-    public ConversationListItem(Context context) {
+    public TabContactsItem(Context context) {
         super(context);
     }
 
-    public ConversationListItem(Context context, AttributeSet attrs) {
+    public TabContactsItem(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         if (sDefaultContactImage == null) {
@@ -62,14 +68,14 @@ public class ConversationListItem extends RelativeLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
 
-        mFromView = (TextView) findViewById(R.id.from);
-        mSubjectView = (TextView) findViewById(R.id.subject);
-
-        mDateView = (TextView) findViewById(R.id.date);
-        mAttachmentView = findViewById(R.id.attachment);
-        mErrorIndicator = findViewById(R.id.error);
-        mPresenceView = (ImageView) findViewById(R.id.presence);
-        mAvatarView = (QuickContactBadge) findViewById(R.id.avatar);
+        mFromView = (TextView) findViewById(R.id.contacts_from);
+        mMessageView = (TextView) findViewById(R.id.contacts_subject);
+        mDateView = (TextView) findViewById(R.id.contacts_date);
+        mBeingSentView = findViewById(R.id.contacts_being_sent);
+        mWaitingForReplyView = findViewById(R.id.contacts_waiting_for_reply);
+        mKeysExchangedView = findViewById(R.id.contacts_keys_exchanged);
+        mPresenceView = (ImageView) findViewById(R.id.contacts_presence);
+        mAvatarView = (QuickContactBadge) findViewById(R.id.contacts_avatar);
     }
 
     public void setPresenceIcon(int iconId) {
@@ -95,7 +101,7 @@ public class ConversationListItem extends RelativeLayout {
      */
     public void bind(String title, String explain) {
         mFromView.setText(title);
-        mSubjectView.setText(explain);
+        mMessageView.setText(explain);
     }
 
 /*    private CharSequence formatMessage(ConversationListItemData ch) {
@@ -176,45 +182,41 @@ public class ConversationListItem extends RelativeLayout {
     }*/
 
     public final void bind(Context context, final Conversation conv) {
-        setConversationHeader(conv);
+        String simNumber = Utils.getSimNumber(context);
+    	setConversationHeader(conv);
+    	
+		try {
+			SessionKeys keys = conv.getSessionKeys(simNumber);
+	    	if (keys != null) {
+	    		switch(keys.getStatus()) {
+	    		default:
+	    		case BEING_SENT:
+	    			mBeingSentView.setVisibility(VISIBLE);
+	    			mMessageView.setText("Sending keys...");
+	    			break;
+	    		case WAITING_FOR_REPLY:
+	    			mWaitingForReplyView.setVisibility(VISIBLE);
+	    			mMessageView.setText("Waiting for confirmation...");
+	    			break;
+	    		case KEYS_EXCHANGED:
+	    			mKeysExchangedView.setVisibility(VISIBLE);
+	    			mMessageView.setText("Encrypted connection");
+	    			break;
+	    		}
+	    	}
+	    	else
+	    		mMessageView.setText("No keys found");
 
-        Drawable background = context.getResources().getDrawable(R.drawable.conversation_item_background_unread);
-        		/*ch.isRead()?
-        		context.getResources().getDrawable(R.drawable.conversation_item_background_read) :
-                mContext.getResources().getDrawable(R.drawable.conversation_item_background_unread);*/
-        setBackgroundDrawable(background);
-
-        LayoutParams attachmentLayout = (LayoutParams)mAttachmentView.getLayoutParams();
-        boolean hasError = true; //ch.hasError();
-        // When there's an error icon, the attachment icon is left of the error icon.
-        // When there is not an error icon, the attachment icon is left of the date text.
-        // As far as I know, there's no way to specify that relationship in xml.
-        if (hasError) {
-            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.error);
-        } else {
-            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.date);
-        }
-
-        boolean hasAttachment = true; //ch.hasAttachment();
-        mAttachmentView.setVisibility(hasAttachment ? VISIBLE : GONE);
-
-        // Date
-        mDateView.setText(conv.getTimeStamp().format("%H:%M"));
-
-        // From
-        mFromView.setText("David Brazdil");
-
-        // Subject
-        mSubjectView.setText("Keys exchanged");
-        LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
-        // We have to make the subject left of whatever optional items are shown on the right.
-        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasAttachment ? R.id.attachment :
-            (hasError ? R.id.error : R.id.date));
-
-        // Transmission error indicator
-        mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
-
-        updateAvatarView();
+	        mDateView.setText("");
+	        mFromView.setText(conv.getPhoneNumber());
+	        updateAvatarView();
+		} catch (DatabaseFileException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     public final void unbind() {

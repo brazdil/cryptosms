@@ -310,38 +310,73 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
-		SessionKeys prev = this.getPreviousSessionKeys(lockAllow);
-		SessionKeys next = this.getNextSessionKeys(lockAllow); 
+		Database db = Database.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			SessionKeys prev = this.getPreviousSessionKeys(false);
+			SessionKeys next = this.getNextSessionKeys(false); 
+	
+			if (prev != null) {
+				// this is not the first message in the list
+				// update the previous one
+				prev.setIndexNext(this.getIndexNext());
+				prev.saveToFile(false);
+			} else {
+				// this IS the first message in the list
+				// update parent
+				Conversation parent = this.getParent(false);
+				parent.setIndexSessionKeys(this.getIndexNext());
+				parent.saveToFile(false);
+			}
+			
+			// update next one
+			if (next != null) {
+				next.setIndexPrev(this.getIndexPrev());
+				next.saveToFile(false);
+			}
+			
+			// delete this message
+			Empty.replaceWithEmpty(mEntryIndex, false);
+					
+			// remove from cache
+			synchronized (cacheSessionKeys) {
+				cacheSessionKeys.remove(this);
+			}
+			
+			// make this instance invalid
+			this.mEntryIndex = -1L;
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
 
-		if (prev != null) {
-			// this is not the first message in the list
-			// update the previous one
-			prev.setIndexNext(this.getIndexNext());
-			prev.saveToFile(lockAllow);
-		} else {
-			// this IS the first message in the list
-			// update parent
-			Conversation parent = this.getParent(lockAllow);
-			parent.setIndexSessionKeys(this.getIndexNext());
-			parent.saveToFile(lockAllow);
+	public enum SessionKeysStatus {
+		BEING_SENT,
+		WAITING_FOR_REPLY,
+		KEYS_EXCHANGED
+	}
+	
+	/**
+	 * Returns the status of session keys exchange 
+	 * @param simNumber
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public SessionKeysStatus getStatus() {
+		if (mKeysSent) {
+			if (mKeysConfirmed)
+				return SessionKeysStatus.KEYS_EXCHANGED;
+			else
+				return SessionKeysStatus.WAITING_FOR_REPLY;
 		}
-		
-		// update next one
-		if (next != null) {
-			next.setIndexPrev(this.getIndexPrev());
-			next.saveToFile(lockAllow);
-		}
-		
-		// delete this message
-		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
-				
-		// remove from cache
-		synchronized (cacheSessionKeys) {
-			cacheSessionKeys.remove(this);
-		}
-		
-		// make this instance invalid
-		this.mEntryIndex = -1L;
+		else
+			return SessionKeysStatus.BEING_SENT;
 	}
 	
 	// GETTERS / SETTERS

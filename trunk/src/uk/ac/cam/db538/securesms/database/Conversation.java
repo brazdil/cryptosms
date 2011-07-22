@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
@@ -161,6 +162,7 @@ public class Conversation {
 		synchronized (cacheConversation) {
 			cacheConversation.add(this);
 		}
+		notifyUpdate();
 	}
 
 	// FUNCTIONS
@@ -404,52 +406,106 @@ public class Conversation {
 	 * @throws IOException
 	 */
 	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
-		Conversation prev = this.getPreviousConversation(lockAllow);
-		Conversation next = this.getNextConversation(lockAllow); 
+		Database db = Database.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+		Conversation prev = this.getPreviousConversation(false);
+		Conversation next = this.getNextConversation(false); 
 
 		if (prev != null) {
 			// this is not the first Conversation in the list
 			// update the previous one
 			prev.setIndexNext(this.getIndexNext());
-			prev.saveToFile(lockAllow);
+			prev.saveToFile(false);
 		} else {
 			// this IS the first Conversation in the list
 			// update parent
-			Header header = Header.getHeader(lockAllow);
+			Header header = Header.getHeader(false);
 			header.setIndexConversations(this.getIndexNext());
-			header.saveToFile(lockAllow);
+			header.saveToFile(false);
 		}
 		
 		// update next one
 		if (next != null) {
 			next.setIndexPrev(this.getIndexPrev());
-			next.saveToFile(lockAllow);
+			next.saveToFile(false);
 		}
 		
 		// delete all of the SessionKeys
-		SessionKeys keys = getFirstSessionKeys(lockAllow);
+		SessionKeys keys = getFirstSessionKeys(false);
 		while (keys != null) {
-			keys.delete(lockAllow);
-			keys = getFirstSessionKeys(lockAllow);
+			keys.delete(false);
+			keys = getFirstSessionKeys(false);
 		}
 		
 		// delete all of the Messages
-		Message msg = getFirstMessage(lockAllow);
+		Message msg = getFirstMessage(false);
 		while (msg != null) {
-			msg.delete(lockAllow);
-			msg = getFirstMessage(lockAllow);
+			msg.delete(false);
+			msg = getFirstMessage(false);
 		}
 
 		// delete this message
-		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
+		Empty.replaceWithEmpty(mEntryIndex, false);
 		
 		// remove from cache
 		synchronized (cacheConversation) {
 			cacheConversation.remove(this);
 		}
+		notifyUpdate();
 		
 		// make this instance invalid
 		this.mEntryIndex = -1L;
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
+
+	/**
+	 * Returns whether there are session keys assigned to this conversation for specified SIM number
+	 * @param simNumber
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public boolean hasAnySessionKeys(String simNumber, boolean lockAllow) throws DatabaseFileException, IOException {
+		return (getSessionKeys(simNumber, lockAllow) != null);
+	}
+
+	/**
+	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any
+	 * @param simNumber
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public SessionKeys getSessionKeys(String simNumber) throws DatabaseFileException, IOException {
+		return getSessionKeys(simNumber, true);
+	}
+
+	/**
+	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any
+	 * @param simNumber
+	 * @param lockAllow		Allow file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public SessionKeys getSessionKeys(String simNumber, boolean lockAllow) throws DatabaseFileException, IOException {
+		SessionKeys keys = getFirstSessionKeys(lockAllow);
+		while (keys != null) {
+			if (PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
+				return keys;
+			keys = keys.getNextSessionKeys(lockAllow);
+		}
+		
+		return null;
 	}
 
 	// GETTERS / SETTERS
@@ -515,5 +571,22 @@ public class Conversation {
 	    	throw new IndexOutOfBoundsException();
 		
 		this.mIndexNext = indexNext;
+	}
+	
+	// LISTENERS
+	
+	private static ArrayList<ConversationUpdateListener> mGlobalListeners = new ArrayList<ConversationUpdateListener>();
+	
+	public static interface ConversationUpdateListener {
+		public void onUpdate();
+	}
+	
+	private static void notifyUpdate() {
+		for (ConversationUpdateListener listener: mGlobalListeners) 
+			listener.onUpdate();
+	}
+	
+	public static void addUpdateListener(ConversationUpdateListener listener) {
+		mGlobalListeners.add(listener);
 	}
 }

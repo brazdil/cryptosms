@@ -17,14 +17,12 @@ public class TabRecent extends ListActivity {
         try {
 			Database.initSingleton(this);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (DatabaseFileException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         
-/*        ListView listView = getListView();
+		/*        ListView listView = getListView();
         LayoutInflater inflater = LayoutInflater.from(this);
         
         // the New Message header

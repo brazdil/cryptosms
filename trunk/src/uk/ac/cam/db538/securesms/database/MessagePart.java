@@ -273,38 +273,49 @@ class MessagePart {
 	 * @throws DatabaseFileException
 	 */
 	void delete(boolean lockAllow) throws IOException, DatabaseFileException {
-		MessagePart prev = this.getPreviousMessagePart(lockAllow);
-		MessagePart next = this.getNextMessagePart(lockAllow); 
-
-		if (prev != null) {
-			// this is not the first message part in the list
-			// update the previous one
-			prev.setIndexNext(this.getIndexNext());
-			prev.saveToFile(lockAllow);
-		} else {
-			// this IS the first message part in the list
-			// update parent
-			Message parent = this.getParent(lockAllow);
-			parent.setIndexMessageParts(this.getIndexNext());
-			parent.saveToFile(lockAllow);
-		}
+		Database db = Database.getDatabase();
 		
-		// update next one
-		if (next != null) {
-			next.setIndexPrev(this.getIndexPrev());
-			next.saveToFile(lockAllow);
+		db.lockFile(lockAllow);
+		try {
+			MessagePart prev = this.getPreviousMessagePart(false);
+			MessagePart next = this.getNextMessagePart(false); 
+	
+			if (prev != null) {
+				// this is not the first message part in the list
+				// update the previous one
+				prev.setIndexNext(this.getIndexNext());
+				prev.saveToFile(false);
+			} else {
+				// this IS the first message part in the list
+				// update parent
+				Message parent = this.getParent(false);
+				parent.setIndexMessageParts(this.getIndexNext());
+				parent.saveToFile(false);
+			}
+			
+			// update next one
+			if (next != null) {
+				next.setIndexPrev(this.getIndexPrev());
+				next.saveToFile(false);
+			}
+			
+			// delete this message
+			Empty.replaceWithEmpty(mEntryIndex, false);
+					
+			// remove from cache
+			synchronized (cacheMessagePart) {
+				cacheMessagePart.remove(this);
+			}
+			
+			// make this instance invalid
+			this.mEntryIndex = -1L;
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			db.unlockFile(lockAllow);
 		}
-		
-		// delete this message
-		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
-				
-		// remove from cache
-		synchronized (cacheMessagePart) {
-			cacheMessagePart.remove(this);
-		}
-		
-		// make this instance invalid
-		this.mEntryIndex = -1L;
 	}
 	
 	// GETTERS / SETTERS

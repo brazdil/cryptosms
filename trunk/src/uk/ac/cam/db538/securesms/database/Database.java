@@ -63,15 +63,14 @@ public final class Database {
 		new Database(filename);
 
 		//TODO: Just For Testing!!!
-		/*Header header = Header.getHeader();
 		Conversation conv1 = Conversation.createConversation();
-		header.attachConversation(conv1);
 		conv1.setPhoneNumber("+420605219051");
+		SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
+		keys1.setSimNumber("+123456789012");
 		conv1.saveToFile();
 		Conversation conv2 = Conversation.createConversation();
-		header.attachConversation(conv2);
 		conv2.setPhoneNumber("+20104544366");
-		conv2.saveToFile();*/
+		conv2.saveToFile();
 	}
 	
 	// LOW-LEVEL BIT MANIPULATION

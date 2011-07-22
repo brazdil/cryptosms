@@ -411,45 +411,56 @@ public class Message {
 	 * @throws IOException
 	 */
 	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
-		Message prev = this.getPreviousMessage(lockAllow);
-		Message next = this.getNextMessage(lockAllow); 
-
-		if (prev != null) {
-			// this is not the first message in the list
-			// update the previous one
-			prev.setIndexNext(this.getIndexNext());
-			prev.saveToFile(lockAllow);
-		} else {
-			// this IS the first message in the list
-			// update parent
-			Conversation parent = this.getParent(lockAllow);
-			parent.setIndexMessages(this.getIndexNext());
-			parent.saveToFile(lockAllow);
+		Database db = Database.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			Message prev = this.getPreviousMessage(false);
+			Message next = this.getNextMessage(false); 
+	
+			if (prev != null) {
+				// this is not the first message in the list
+				// update the previous one
+				prev.setIndexNext(this.getIndexNext());
+				prev.saveToFile(false);
+			} else {
+				// this IS the first message in the list
+				// update parent
+				Conversation parent = this.getParent(false);
+				parent.setIndexMessages(this.getIndexNext());
+				parent.saveToFile(false);
+			}
+			
+			// update next one
+			if (next != null) {
+				next.setIndexPrev(this.getIndexPrev());
+				next.saveToFile(false);
+			}
+			
+			// delete all of the MessageParts
+			MessagePart part = getFirstMessagePart(false);
+			while (part != null) {
+				part.delete(false);
+				part = getFirstMessagePart(false);
+			}
+			
+			// delete this message
+			Empty.replaceWithEmpty(mEntryIndex, false);
+			
+			// remove from cache
+			synchronized (cacheMessage) {
+				cacheMessage.remove(this);
+			}
+			
+			// make this instance invalid
+			this.mEntryIndex = -1L;
+		} catch (DatabaseFileException ex) {
+			throw new DatabaseFileException(ex.getMessage());
+		} catch (IOException ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			db.unlockFile(lockAllow);
 		}
-		
-		// update next one
-		if (next != null) {
-			next.setIndexPrev(this.getIndexPrev());
-			next.saveToFile(lockAllow);
-		}
-		
-		// delete all of the MessageParts
-		MessagePart part = getFirstMessagePart(lockAllow);
-		while (part != null) {
-			part.delete(lockAllow);
-			part = getFirstMessagePart(lockAllow);
-		}
-		
-		// delete this message
-		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
-		
-		// remove from cache
-		synchronized (cacheMessage) {
-			cacheMessage.remove(this);
-		}
-		
-		// make this instance invalid
-		this.mEntryIndex = -1L;
 	}
 
 	// GETTERS / SETTERS
