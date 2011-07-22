@@ -225,7 +225,7 @@ public class Header {
 	 * @throws IOException
 	 * @throws DatabaseFileException
 	 */
-	public void attachConversation(Conversation conv) throws IOException, DatabaseFileException {
+	void attachConversation(Conversation conv) throws IOException, DatabaseFileException {
 		attachConversation(conv, true);
 	}
 	
@@ -236,7 +236,7 @@ public class Header {
 	 * @throws IOException
 	 * @throws DatabaseFileException
 	 */
-	public void attachConversation(Conversation conv, boolean lockAllow) throws IOException, DatabaseFileException {
+	void attachConversation(Conversation conv, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexConversations();
@@ -267,7 +267,7 @@ public class Header {
 	 * @throws IOException
 	 * @throws DatabaseFileException
 	 */
-	public void attachEmpty(Empty empty) throws IOException, DatabaseFileException {
+	void attachEmpty(Empty empty) throws IOException, DatabaseFileException {
 		attachEmpty(empty, true);
 	}
 	
@@ -278,7 +278,7 @@ public class Header {
 	 * @throws IOException
 	 * @throws DatabaseFileException
 	 */
-	public void attachEmpty(Empty empty, boolean lockAllow) throws IOException, DatabaseFileException {
+	void attachEmpty(Empty empty, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexEmpty();

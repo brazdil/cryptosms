@@ -59,8 +59,8 @@ public class Message {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	public static Message createMessage() throws DatabaseFileException, IOException {
-		return createMessage(true);
+	public static Message createMessage(Conversation parent) throws DatabaseFileException, IOException {
+		return createMessage(parent, true);
 	}
 	
 	/**
@@ -70,9 +70,11 @@ public class Message {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	public static Message createMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+	public static Message createMessage(Conversation parent, boolean lockAllow) throws DatabaseFileException, IOException {
 		// create a new one
-		return new Message(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+		Message msg = new Message(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+		parent.attachMessage(msg, lockAllow);
+		return msg;
 	}
 
 	/**
@@ -348,6 +350,7 @@ public class Message {
 	void assignMessageParts(ArrayList<MessagePart> list, boolean lockAllow) throws IOException, DatabaseFileException {
 		Database.getDatabase().lockFile(lockAllow);
 		try {
+			// delete all previous message parts
 			long indexFirstInStack = getIndexMessageParts();
 			while (indexFirstInStack != 0) {
 				MessagePart msgPart = MessagePart.getMessagePart(indexFirstInStack, false);
@@ -355,13 +358,33 @@ public class Message {
 				msgPart.delete(false);
 			}
 
-			for (int i = list.size() - 1; i >= 0; --i) {
-				MessagePart msgPart = list.get(i); 
-				msgPart.setIndexNext(indexFirstInStack);
-				indexFirstInStack = msgPart.getEntryIndex();
+			// add new ones
+			for (int i = 0; i < list.size(); ++i) {
+				MessagePart msgPart = list.get(i);
+				
+				// parent
+				msgPart.setIndexParent(this.mEntryIndex);
+				
+				// previous pointer
+				if (i > 0) 
+					msgPart.setIndexPrev(list.get(i - 1).getEntryIndex());
+				else
+					msgPart.setIndexPrev(0L);
+				
+				// next pointer
+				if (i < list.size() - 1) 
+					msgPart.setIndexNext(list.get(i + 1).getEntryIndex());
+				else
+					msgPart.setIndexNext(0L);
+				
 				msgPart.saveToFile(false);
 			}
-			this.setIndexMessageParts(indexFirstInStack);
+			
+			// update pointer in the conversation 
+			if (list.size() > 0)
+				this.setIndexMessageParts(list.get(0).getEntryIndex());
+			else
+				this.setIndexMessageParts(0L);
 			this.saveToFile(false);
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());
@@ -370,6 +393,63 @@ public class Message {
 		} finally {
 			Database.getDatabase().unlockFile(lockAllow);	
 		}
+	}
+	
+	/**
+	 * Delete Message and all the MessageParts it controls
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public void delete() throws DatabaseFileException, IOException {
+		delete(true);
+	}
+	
+	/**
+	 * Delete Message and all the MessageParts it controls
+	 * @param lockAllow 	Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
+		Message prev = this.getPreviousMessage(lockAllow);
+		Message next = this.getNextMessage(lockAllow); 
+
+		if (prev != null) {
+			// this is not the first message in the list
+			// update the previous one
+			prev.setIndexNext(this.getIndexNext());
+			prev.saveToFile(lockAllow);
+		} else {
+			// this IS the first message in the list
+			// update parent
+			Conversation parent = this.getParent(lockAllow);
+			parent.setIndexMessages(this.getIndexNext());
+			parent.saveToFile(lockAllow);
+		}
+		
+		// update next one
+		if (next != null) {
+			next.setIndexPrev(this.getIndexPrev());
+			next.saveToFile(lockAllow);
+		}
+		
+		// delete all of the MessageParts
+		MessagePart part = getFirstMessagePart(lockAllow);
+		while (part != null) {
+			part.delete(lockAllow);
+			part = getFirstMessagePart(lockAllow);
+		}
+		
+		// delete this message
+		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
+		
+		// remove from cache
+		synchronized (cacheMessage) {
+			cacheMessage.remove(this);
+		}
+		
+		// make this instance invalid
+		this.mEntryIndex = -1L;
 	}
 
 	// GETTERS / SETTERS
@@ -451,11 +531,11 @@ public class Message {
 		this.mIndexNext = indexNext;
 	}
 
-	public void setIndexParent(long indexParent) {
+	void setIndexParent(long indexParent) {
 		this.mIndexParent = indexParent;
 	}
 
-	public long getIndexParent() {
+	long getIndexParent() {
 		return mIndexParent;
 	}
 }

@@ -67,7 +67,9 @@ public class Conversation {
 	 */
 	public static Conversation createConversation(boolean lockAllow) throws DatabaseFileException, IOException {
 		// create a new one
-		return new Conversation(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+		Conversation conv = new Conversation(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+		Header.getHeader(lockAllow).attachConversation(conv, lockAllow);
+		return conv;
 	}	
 	
 	/**
@@ -385,7 +387,71 @@ public class Conversation {
 		}
 		return list;
 	}
+
+	/**
+	 * Delete Message and all the MessageParts it controls
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public void delete() throws DatabaseFileException, IOException {
+		delete(true);
+	}
 	
+	/**
+	 * Delete Message and all the MessageParts it controls
+	 * @param lockAllow 	Allow the file to be locked
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
+		Conversation prev = this.getPreviousConversation(lockAllow);
+		Conversation next = this.getNextConversation(lockAllow); 
+
+		if (prev != null) {
+			// this is not the first Conversation in the list
+			// update the previous one
+			prev.setIndexNext(this.getIndexNext());
+			prev.saveToFile(lockAllow);
+		} else {
+			// this IS the first Conversation in the list
+			// update parent
+			Header header = Header.getHeader(lockAllow);
+			header.setIndexConversations(this.getIndexNext());
+			header.saveToFile(lockAllow);
+		}
+		
+		// update next one
+		if (next != null) {
+			next.setIndexPrev(this.getIndexPrev());
+			next.saveToFile(lockAllow);
+		}
+		
+		// delete all of the SessionKeys
+		SessionKeys keys = getFirstSessionKeys(lockAllow);
+		while (keys != null) {
+			keys.delete(lockAllow);
+			keys = getFirstSessionKeys(lockAllow);
+		}
+		
+		// delete all of the Messages
+		Message msg = getFirstMessage(lockAllow);
+		while (msg != null) {
+			msg.delete(lockAllow);
+			msg = getFirstMessage(lockAllow);
+		}
+
+		// delete this message
+		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
+		
+		// remove from cache
+		synchronized (cacheConversation) {
+			cacheConversation.remove(this);
+		}
+		
+		// make this instance invalid
+		this.mEntryIndex = -1L;
+	}
+
 	// GETTERS / SETTERS
 	long getEntryIndex() {
 		return mEntryIndex;

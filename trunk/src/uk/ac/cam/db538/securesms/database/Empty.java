@@ -46,7 +46,9 @@ class Empty {
 	 */
 	static Empty createEmpty(boolean lockAllow) throws DatabaseFileException, IOException {
 		// create a new one at the end of the file
-		return new Empty(Database.getDatabase().getEntriesCount(), false, lockAllow);
+		Empty empty = new Empty(Database.getDatabase().getEntriesCount(), false, lockAllow);
+		Header.getHeader(lockAllow).attachEmpty(empty, lockAllow);
+		return empty;
 	}
 
 	/**
@@ -99,7 +101,9 @@ class Empty {
 	 * @throws IOException
 	 */
 	static Empty replaceWithEmpty(long index, boolean lockAllow) throws DatabaseFileException, IOException {
-		return new Empty(index, false, lockAllow);
+		Empty empty = new Empty(index, false, lockAllow);
+		Header.getHeader(lockAllow).attachEmpty(empty, lockAllow);
+		return empty;
 	}
 	
 	/**
@@ -198,13 +202,9 @@ class Empty {
 		Database db = Database.getDatabase();
 		db.lockFile(lockAllow);
 		try {
-			Header header = Header.getHeader(false);
-			Empty empty;
 			for (int i = 0; i < count; ++i) {
 				// create the empty entry
-				empty = Empty.createEmpty(false);
-				// set it to the header
-				header.attachEmpty(empty, false);
+				Empty.createEmpty(false);
 			}
 		} catch (DatabaseFileException ex) {
 			throw new DatabaseFileException(ex.getMessage());

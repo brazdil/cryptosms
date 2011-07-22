@@ -25,8 +25,10 @@ class MessagePart {
 	private static final int OFFSET_RANDOMDATA = OFFSET_MESSAGEBODY + LENGTH_MESSAGEBODY;
 
 	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
+	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
-	private static final int LENGTH_RANDOMDATA = OFFSET_NEXTINDEX - OFFSET_RANDOMDATA;	
+	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;	
 	
 	// STATIC
 	
@@ -94,6 +96,8 @@ class MessagePart {
 	private long mEntryIndex; // READ ONLY
 	private boolean mDeliveredPart;
 	private String mMessageBody;
+	private long mIndexParent;
+	private long mIndexPrev;
 	private long mIndexNext;
 	
 	// CONSTRUCTORS
@@ -129,12 +133,16 @@ class MessagePart {
 			
 			setDeliveredPart(deliveredPart);
 			setMessageBody(Database.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
+			setIndexParent(Database.getInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
 			setDeliveredPart(false);
 			setMessageBody("");
+			setIndexParent(0L);
+			setIndexPrev(0L);
 			setIndexNext(0L);
 			
 			saveToFile(lockAllow);
@@ -178,12 +186,56 @@ class MessagePart {
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
+		msgBuffer.put(Database.getBytes(this.mIndexParent));
+		msgBuffer.put(Database.getBytes(this.mIndexPrev));
 		msgBuffer.put(Database.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
 		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
+	/**
+	 * Returns Message that is a parent to this MessagePart in the data structure
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	Message getParent() throws DatabaseFileException, IOException {
+		return getParent(true);
+	}
+	
+	/**
+	 * Returns Message that is a parent to this MessagePart in the data structure
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	Message getParent(boolean lockAllow) throws DatabaseFileException, IOException {
+		return Message.getMessage(mIndexParent, lockAllow);
+	}
+
+	/**
+	 * Returns next MessagePart in the linked list, or null if there isn't any
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	MessagePart getPreviousMessagePart() throws DatabaseFileException, IOException {
+		return getPreviousMessagePart(true);
+	}
+	
+	/**
+	 * Returns next MessagePart in the linked list, or null if there isn't any
+	 * @param lockAllow		Allow the file to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	MessagePart getPreviousMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+		return MessagePart.getMessagePart(mIndexPrev, lockAllow);
+	}
+	
 	/**
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @return
@@ -204,7 +256,7 @@ class MessagePart {
 	MessagePart getNextMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
 		return getMessagePart(mIndexNext, lockAllow);
 	}
-	
+
 	/**
 	 * Replace the file space with Empty entry
 	 * @throws IOException
@@ -221,12 +273,38 @@ class MessagePart {
 	 * @throws DatabaseFileException
 	 */
 	void delete(boolean lockAllow) throws IOException, DatabaseFileException {
-		// remove yourself from the cache
-		synchronized (cacheMessagePart) {
-			cacheMessagePart.remove(this);			
+		MessagePart prev = this.getPreviousMessagePart(lockAllow);
+		MessagePart next = this.getNextMessagePart(lockAllow); 
+
+		if (prev != null) {
+			// this is not the first message part in the list
+			// update the previous one
+			prev.setIndexNext(this.getIndexNext());
+			prev.saveToFile(lockAllow);
+		} else {
+			// this IS the first message part in the list
+			// update parent
+			Message parent = this.getParent(lockAllow);
+			parent.setIndexMessageParts(this.getIndexNext());
+			parent.saveToFile(lockAllow);
 		}
-		// replace your file chunk by empty entry and attach yourself to the header
-		Header.getHeader().attachEmpty(Empty.replaceWithEmpty(this.mEntryIndex));
+		
+		// update next one
+		if (next != null) {
+			next.setIndexPrev(this.getIndexPrev());
+			next.saveToFile(lockAllow);
+		}
+		
+		// delete this message
+		Empty.replaceWithEmpty(mEntryIndex, lockAllow);
+				
+		// remove from cache
+		synchronized (cacheMessagePart) {
+			cacheMessagePart.remove(this);
+		}
+		
+		// make this instance invalid
+		this.mEntryIndex = -1L;
 	}
 	
 	// GETTERS / SETTERS
@@ -249,6 +327,28 @@ class MessagePart {
 
 	String getMessageBody() {
 		return mMessageBody;
+	}
+
+	long getIndexParent() {
+		return mIndexParent;
+	}
+
+	void setIndexParent(long indexParent) {
+	    if (indexParent > 0xFFFFFFFFL || indexParent < 0L)
+	    	throw new IndexOutOfBoundsException();
+		
+		this.mIndexParent = indexParent;
+	}
+
+	long getIndexPrev() {
+		return mIndexPrev;
+	}
+
+	void setIndexPrev(long indexPrev) {
+	    if (indexPrev > 0xFFFFFFFFL || indexPrev < 0L)
+	    	throw new IndexOutOfBoundsException();
+		
+		this.mIndexPrev = indexPrev;
 	}
 
 	long getIndexNext() {
