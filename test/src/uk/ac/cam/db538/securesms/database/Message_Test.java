@@ -56,10 +56,7 @@ public class Message_Test extends TestCase {
 	public void testConstruction() throws DatabaseFileException, IOException {
 		// create a Message entry
 		Conversation conv = Conversation.createConversation();
-		Header.getHeader().attachConversation(conv);
-		
-		Message msg = Message.createMessage();
-		conv.attachMessage(msg);
+		Message msg = Message.createMessage(conv);
 
 		// check structure
 		assertTrue(Common.checkStructure());
@@ -77,7 +74,8 @@ public class Message_Test extends TestCase {
 	
 	public void testIndices() throws DatabaseFileException, IOException {
 		// INDICES OUT OF BOUNDS
-		Message msg = Message.createMessage();
+		Conversation conv = Conversation.createConversation();
+		Message msg = Message.createMessage(conv);
 	
 		// indexMessageParts
 		try {
@@ -121,7 +119,8 @@ public class Message_Test extends TestCase {
 	
 	public void testCreateData() throws DatabaseFileException, IOException {
 		// set data
-		Message msg = Message.createMessage();
+		Conversation conv = Conversation.createConversation();
+		Message msg = Message.createMessage(conv);
 		setData(msg);
 		msg.saveToFile();
 		
@@ -152,7 +151,8 @@ public class Message_Test extends TestCase {
 	}
 	
 	public void testParseData() throws DatabaseFileException, IOException {
-		Message msg = Message.createMessage();
+		Conversation conv = Conversation.createConversation();
+		Message msg = Message.createMessage(conv);
 		long index = msg.getEntryIndex();
 		
 		// prepare stuff

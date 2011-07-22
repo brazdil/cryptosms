@@ -1,6 +1,8 @@
 package uk.ac.cam.db538.securesms.database;
 
 import java.io.IOException;
+import java.util.ArrayList;
+
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.text.format.Time;
 import junit.framework.TestCase;
@@ -48,6 +50,8 @@ public class Conversation_Test extends TestCase {
 	
 	public void testConstruction() throws DatabaseFileException, IOException {
 		Conversation conv = Conversation.createConversation();
+		assertTrue(Common.checkStructure());
+
 		setData(conv, false);
 		conv.saveToFile();
 		long index = conv.getEntryIndex();
@@ -58,6 +62,51 @@ public class Conversation_Test extends TestCase {
 		checkData(conv, false);
 	}
 	
+	public void testDelete() throws DatabaseFileException, IOException {
+		for (int i = 0; i < 5; i++)
+		{
+			Conversation conv = Conversation.createConversation();
+			
+			for (int j = 0; j < 10; ++j)
+			{
+				Message msg = Message.createMessage(conv);
+				{
+					MessagePart part1 = MessagePart.createMessagePart();
+					MessagePart part2 = MessagePart.createMessagePart();
+					MessagePart part3 = MessagePart.createMessagePart();
+					MessagePart part4 = MessagePart.createMessagePart();
+					MessagePart part5 = MessagePart.createMessagePart();
+					
+					ArrayList<MessagePart> list1 = new ArrayList<MessagePart>();
+					ArrayList<MessagePart> list2 = new ArrayList<MessagePart>();
+					
+					list1.add(part1);
+					list1.add(part2);
+					list1.add(part3);
+					msg.assignMessageParts(list1);
+					assertSame(msg.getFirstMessagePart(), part1);
+					
+					list2.add(part4);
+					list2.add(part5);
+					msg.assignMessageParts(list2);
+					
+					assertSame(msg.getFirstMessagePart(), part4);
+				}
+			}
+			
+			for (int k = 0; k < 4; ++k)
+				SessionKeys.createSessionKeys(conv);
+		}
+		
+		assertTrue(Common.checkStructure());
+		
+		Conversation conv;
+		while ((conv = Header.getHeader().getFirstConversation()) != null) {
+			conv.delete();
+			assertTrue(Common.checkStructure());
+		}
+	}
+
 	public void testIndices() throws DatabaseFileException, IOException {
 		// INDEX OUT OF BOUNDS
 		Conversation conv = Conversation.createConversation();
@@ -196,11 +245,10 @@ public class Conversation_Test extends TestCase {
 	
 	public void testCreateConversation() throws DatabaseFileException, IOException {
 		// check that it takes only one entry
-		Header header = Header.getHeader();
 		int countEmpty = Empty.getEmptyEntriesCount();
 		for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
 		{
-			header.attachConversation(Conversation.createConversation());
+			Conversation.createConversation();
 			if (countEmpty == 0)
 				assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = Empty.getEmptyEntriesCount()));
 			else

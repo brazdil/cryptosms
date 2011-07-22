@@ -35,11 +35,7 @@ public class MessagePart_Test extends TestCase {
 	public void testConstruction() throws DatabaseFileException, IOException {
 		// Check that it is assigned to a proper message, etc...
 		Conversation conv = Conversation.createConversation();
-		Header.getHeader().attachConversation(conv);
-		
-		Message msg = Message.createMessage();
-		conv.attachMessage(msg);
-		
+		Message msg = Message.createMessage(conv);
 		ArrayList<MessagePart> list = new ArrayList<MessagePart>(2);
 		MessagePart msgPart1 = MessagePart.createMessagePart();
 		MessagePart msgPart2 = MessagePart.createMessagePart();

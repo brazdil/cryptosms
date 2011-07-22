@@ -19,7 +19,6 @@ public class Empty_Test extends TestCase {
 	public void testConstruction() throws DatabaseFileException, IOException {
 		// create a free entry
 		Empty free = Empty.createEmpty();
-		Header.getHeader().attachEmpty(free);
 
 		assertTrue(Common.checkStructure());
 		

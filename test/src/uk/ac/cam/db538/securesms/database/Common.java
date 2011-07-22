@@ -29,6 +29,7 @@ public class Common {
 	public static boolean checkStructure() throws DatabaseFileException, IOException {
 		boolean visitedAll = true;
 		boolean corruptedPointers = false;
+		boolean multiplePointers = false;
 		
 		// clear caches
 		Header.forceClearCache();
@@ -52,6 +53,8 @@ public class Common {
 		// empty
 		Empty empty = header.getFirstEmpty();
 		while (empty != null) {
+			if (visitedEntries[(int) empty.getEntryIndex()])
+				multiplePointers = true;
 			visitedEntries[(int) empty.getEntryIndex()] = true;
 			empty = empty.getNextEmpty();
 		}
@@ -60,6 +63,8 @@ public class Common {
 		Conversation conv = header.getFirstConversation();
 		long convPrevious = 0L;
 		while (conv != null) {
+			if (visitedEntries[(int) conv.getEntryIndex()])
+				multiplePointers = true;
 			visitedEntries[(int) conv.getEntryIndex()] = true;
 			
 			// pointers
@@ -70,6 +75,8 @@ public class Common {
 			SessionKeys keys = conv.getFirstSessionKeys();
 			long keysPrevious = 0L;
 			while (keys != null) {
+				if (visitedEntries[(int) keys.getEntryIndex()])
+					multiplePointers = true;
 				visitedEntries[(int) keys.getEntryIndex()] = true;
 				
 				// pointers
@@ -78,6 +85,10 @@ public class Common {
 				if (keys.getIndexParent() != conv.getEntryIndex())
 					corruptedPointers = true;
 				
+				// parent
+				if (keys.getIndexParent() != conv.getEntryIndex())
+					corruptedPointers = true;
+
 				// next
 				keysPrevious = keys.getEntryIndex();
 				keys = keys.getNextSessionKeys();
@@ -87,6 +98,8 @@ public class Common {
 			Message msg = conv.getFirstMessage();
 			long msgPrevious = 0L;
 			while (msg != null) {
+				if (visitedEntries[(int) msg.getEntryIndex()])
+					multiplePointers = true;
 				visitedEntries[(int) msg.getEntryIndex()] = true;
 				
 				// pointers
@@ -95,10 +108,27 @@ public class Common {
 				if (msg.getIndexParent() != conv.getEntryIndex())
 					corruptedPointers = true;
 				
+				// parent
+				if (msg.getIndexParent() != conv.getEntryIndex())
+					corruptedPointers = true;
+				
 				// message parts
 				MessagePart part = msg.getFirstMessagePart();
+				long partPrevious = 0L;
 				while (part != null) {
+					if (visitedEntries[(int) part.getEntryIndex()])
+						multiplePointers = true;
 					visitedEntries[(int) part.getEntryIndex()] = true;
+					
+					// pointers
+					if (part.getIndexPrev() != partPrevious)
+						corruptedPointers = true;
+
+					// parent
+					if (part.getIndexParent() != msg.getEntryIndex())
+						corruptedPointers = true;
+
+					partPrevious = part.getEntryIndex();
 					part = part.getNextMessagePart();
 				}
 				
@@ -115,6 +145,6 @@ public class Common {
 		for (boolean b : visitedEntries)
 			visitedAll = visitedAll && b;
 		
-		return (visitedAll && !corruptedPointers);
+		return (visitedAll && !corruptedPointers && !multiplePointers);
 	}
 }

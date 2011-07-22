@@ -59,10 +59,7 @@ public class SessionKeys_Test extends TestCase {
 	
 	public void testConstruction() throws DatabaseFileException, IOException {
 		Conversation conv = Conversation.createConversation();
-		Header.getHeader().attachConversation(conv);
-
-		SessionKeys keys = SessionKeys.createSessionKeys();
-		conv.attachSessionKeys(keys);
+		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		
 		assertTrue(Common.checkStructure());
 
@@ -79,7 +76,8 @@ public class SessionKeys_Test extends TestCase {
 			
 	public void testIndices() throws DatabaseFileException, IOException {
 		// INDICES OUT OF BOUNDS
-		SessionKeys keys = SessionKeys.createSessionKeys();
+		Conversation conv = Conversation.createConversation();
+		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		// indexNext
 		try {
 			keys.setIndexNext(0x0100000000L);
@@ -95,7 +93,8 @@ public class SessionKeys_Test extends TestCase {
 	}
 
 	public void testCreateData() throws DatabaseFileException, IOException {
-		SessionKeys keys = SessionKeys.createSessionKeys();
+		Conversation conv = Conversation.createConversation();
+		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		setData(keys, true);
 		keys.saveToFile();
 		
@@ -121,7 +120,8 @@ public class SessionKeys_Test extends TestCase {
 	}
 
 	public void testParseData() throws DatabaseFileException, IOException {
-		SessionKeys keys = SessionKeys.createSessionKeys();
+		Conversation conv = Conversation.createConversation();
+		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		long index = keys.getEntryIndex();
 		
 		// create plain data
