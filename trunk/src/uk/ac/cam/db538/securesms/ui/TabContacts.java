@@ -67,7 +67,6 @@ public class TabContacts extends ListActivity {
 			};
         	// add listeners			
         	Conversation.addUpdateListener(new ConversationUpdateListener() {
-				@Override
 				public void onUpdate() {
 					try {
 						updateContacts(getApplicationContext());

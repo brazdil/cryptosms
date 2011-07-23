@@ -23,7 +23,6 @@ import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
 import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.database.SessionKeys;
-import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
