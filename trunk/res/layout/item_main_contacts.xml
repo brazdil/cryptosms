@@ -42,7 +42,8 @@
         android:paddingBottom="20dip"
          />
 
-    <TextView android:id="@+id/contacts_from"
+    <TextView 
+        android:id="@+id/contacts_from"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMediumInverse"
@@ -56,45 +57,20 @@
         android:layout_alignWithParentIfMissing="true"
         android:ellipsize="marquee"  />
 
-    <TextView android:id="@+id/contacts_date"
+    <ImageView 
+        android:id="@+id/contacts_icon"
         android:layout_marginTop="2dip"
         android:layout_marginBottom="10dip"
         android:layout_marginLeft="5dip"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmallInverse"
-        android:singleLine="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true" />
-
-    <ImageView android:id="@+id/contacts_keys_exchanged"
-        android:layout_marginLeft="3dip"
-        android:visibility="invisible"
-        android:layout_toLeftOf="@id/contacts_date"
-        android:layout_alignBottom="@id/contacts_date"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:src="@drawable/ic_keys_exchanged" />
-
-    <ImageView android:id="@+id/contacts_waiting_for_reply"
-        android:layout_marginLeft="3dip"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:layout_alignParentBottom="true"
         android:visibility="gone"
-        android:layout_toLeftOf="@+id/contacts_keys_exchanged"
-        android:layout_alignBottom="@id/contacts_date"
-        android:src="@drawable/ic_attachment_universal_small" />
+        android:src="@drawable/item_contacts_keys_error" />
 
-    <ImageView android:id="@+id/contacts_being_sent"
-        android:layout_marginLeft="3dip"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:visibility="gone"
-        android:layout_toLeftOf="@+id/contacts_waiting_for_reply"
-        android:layout_alignBottom="@id/contacts_date"
-        android:src="@drawable/ic_attachment_universal_small" />
-
-    <TextView android:id="@+id/contacts_subject"
+    <TextView 
+        android:id="@+id/contacts_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmallInverse"
@@ -104,7 +80,7 @@
         android:layout_alignParentBottom="true"
         android:layout_toRightOf="@id/contacts_avatar"
         android:layout_alignWithParentIfMissing="true"
-        android:layout_toLeftOf="@id/contacts_date"
+        android:layout_toLeftOf="@id/contacts_icon"
         android:ellipsize="end" />
 
 </uk.ac.cam.db538.securesms.ui.TabContactsItem>

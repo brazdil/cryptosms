@@ -21,15 +21,15 @@ public class MainTabActivity extends TabActivity {
 	    intent = new Intent().setClass(this, TabRecent.class);
 
 	    // Initialize a TabSpec for each tab and add it to the TabHost
-	    spec = tabHost.newTabSpec("recent").setIndicator(res.getString(R.string.recent),
-	                      res.getDrawable(R.drawable.ic_tab_recent))
+	    spec = tabHost.newTabSpec("recent").setIndicator(res.getString(R.string.tab_recent),
+	                      res.getDrawable(R.drawable.tab_recent))
 	                  .setContent(intent);
 	    tabHost.addTab(spec);
 
 	    // Do the same for the other tabs
 	    intent = new Intent().setClass(this, TabContacts.class);
-	    spec = tabHost.newTabSpec("contacts").setIndicator(res.getString(R.string.contacts),
-	                      res.getDrawable(R.drawable.ic_tab_contacts))
+	    spec = tabHost.newTabSpec("contacts").setIndicator(res.getString(R.string.tab_contacts),
+	                      res.getDrawable(R.drawable.tab_contacts))
 	                  .setContent(intent);
 	    tabHost.addTab(spec);
 
@@ -38,7 +38,5 @@ public class MainTabActivity extends TabActivity {
 	                      res.getDrawable(R.drawable.ic_tab_songs))
 	                  .setContent(intent);
 	    tabHost.addTab(spec);*/
-
-	    tabHost.setCurrentTab(1);
 	}	
 }

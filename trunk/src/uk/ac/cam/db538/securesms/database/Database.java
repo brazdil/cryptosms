@@ -67,6 +67,9 @@ public final class Database {
 		conv1.setPhoneNumber("+420605219051");
 		SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
 		keys1.setSimNumber("+123456789012");
+		keys1.setKeysSent(true);
+		keys1.setKeysConfirmed(true);
+		keys1.saveToFile();
 		conv1.saveToFile();
 		Conversation conv2 = Conversation.createConversation();
 		conv2.setPhoneNumber("+20104544366");

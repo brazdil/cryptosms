@@ -25,6 +25,7 @@ import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.database.SessionKeys;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 
 import android.util.AttributeSet;
@@ -38,12 +39,9 @@ import android.widget.TextView;
  * This class manages the view for given conversation.
  */
 public class TabContactsItem extends RelativeLayout {
-    private TextView mMessageView;
     private TextView mFromView;
-    private TextView mDateView;
-    private View mBeingSentView;
-    private View mWaitingForReplyView;
-    private View mKeysExchangedView;
+    private TextView mStatusView;
+    private ImageView mIconView;
     private ImageView mPresenceView;
     private QuickContactBadge mAvatarView;
 
@@ -68,11 +66,8 @@ public class TabContactsItem extends RelativeLayout {
         super.onFinishInflate();
 
         mFromView = (TextView) findViewById(R.id.contacts_from);
-        mMessageView = (TextView) findViewById(R.id.contacts_subject);
-        mDateView = (TextView) findViewById(R.id.contacts_date);
-        mBeingSentView = findViewById(R.id.contacts_being_sent);
-        mWaitingForReplyView = findViewById(R.id.contacts_waiting_for_reply);
-        mKeysExchangedView = findViewById(R.id.contacts_keys_exchanged);
+        mStatusView = (TextView) findViewById(R.id.contacts_status);
+        mIconView = (ImageView) findViewById(R.id.contacts_icon);
         mPresenceView = (ImageView) findViewById(R.id.contacts_presence);
         mAvatarView = (QuickContactBadge) findViewById(R.id.contacts_avatar);
     }
@@ -100,7 +95,7 @@ public class TabContactsItem extends RelativeLayout {
      */
     public void bind(String title, String explain) {
         mFromView.setText(title);
-        mMessageView.setText(explain);
+        mStatusView.setText(explain);
     }
 
 /*    private CharSequence formatMessage(ConversationListItemData ch) {
@@ -184,30 +179,34 @@ public class TabContactsItem extends RelativeLayout {
         String simNumber = Utils.getSimNumber(context);
     	setConversationHeader(conv);
     	
+    	Resources res = context.getResources();
+    	
 		try {
 			SessionKeys keys = conv.getSessionKeys(simNumber);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:
 	    		case BEING_SENT:
-	    			mBeingSentView.setVisibility(VISIBLE);
-	    			mMessageView.setText("Sending keys...");
+	    			mStatusView.setText(res.getString(R.string.item_contacts_sending_keys));
+	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_keys));
 	    			break;
 	    		case WAITING_FOR_REPLY:
-	    			mWaitingForReplyView.setVisibility(VISIBLE);
-	    			mMessageView.setText("Waiting for confirmation...");
+	    			mStatusView.setText(res.getString(R.string.item_contacts_waiting_for_reply));
+	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_waiting_for_reply));
 	    			break;
 	    		case KEYS_EXCHANGED:
-	    			mKeysExchangedView.setVisibility(VISIBLE);
-	    			mMessageView.setText("Encrypted connection");
+	    			mStatusView.setText(res.getString(R.string.item_contacts_keys_exchanged));
+	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_keys_exchanged));
 	    			break;
 	    		}
 	    	}
-	    	else
-	    		mMessageView.setText("No keys found");
-
-	        mDateView.setText("");
+	    	else {
+	    		mStatusView.setText(res.getString(R.string.item_contacts_keys_error));
+	    		mIconView.setImageDrawable(context.getResources().getDrawable(R.drawable.item_contacts_keys_error));
+	    	}
+	    	
 	        mFromView.setText(conv.getPhoneNumber());
+	        mIconView.setVisibility(VISIBLE);
 	        updateAvatarView();
 		} catch (DatabaseFileException e) {
 			// TODO Auto-generated catch block

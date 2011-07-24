@@ -41,8 +41,8 @@ public class TabContacts extends ListActivity {
         final LayoutInflater inflater = LayoutInflater.from(this);
         
         // the New contact header
-        TabRecentItem headerView = (TabRecentItem) inflater.inflate(R.layout.item_main_recent, listView, false);
-        headerView.bind(getString(R.string.new_contact), getString(R.string.create_new_contact));
+        TabContactsItem headerView = (TabContactsItem) inflater.inflate(R.layout.item_main_contacts, listView, false);
+        headerView.bind(getString(R.string.tab_contacts_header), getString(R.string.tab_contacts_header_small));
         listView.addHeaderView(headerView, null, true);
         
         try {
