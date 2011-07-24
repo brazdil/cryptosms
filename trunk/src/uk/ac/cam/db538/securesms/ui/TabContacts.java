@@ -8,6 +8,7 @@ import uk.ac.cam.db538.securesms.database.Conversation;
 import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.database.Header;
 import uk.ac.cam.db538.securesms.database.Conversation.ConversationUpdateListener;
+import uk.ac.cam.db538.securesms.utils.Common;
 import android.app.ListActivity;
 import android.content.Context;
 import android.os.Bundle;
@@ -22,7 +23,7 @@ public class TabContacts extends ListActivity {
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();;
 	
 	private void updateContacts(Context context) throws DatabaseFileException, IOException {
-		String simNumber = Utils.getSimNumber(context);
+		String simNumber = Common.getSimNumber(context);
 		mContacts.clear();
 		
 		Conversation conv = Header.getHeader().getFirstConversation();

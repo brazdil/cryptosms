@@ -1,9 +1,10 @@
-package uk.ac.cam.db538.securesms.ui;
+package uk.ac.cam.db538.securesms.utils;
 
 import android.content.Context;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 
-public class Utils {
+public class Common {
 	
 	/**
 	 * Returns the phone number of currently active SIM
@@ -16,5 +17,9 @@ public class Utils {
 
 //		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 //		return tMgr.getLine1Number();
+	}
+	
+	public static String formatPhoneNumber(String phoneNumber) {
+		return PhoneNumberUtils.stripSeparators(phoneNumber);
 	}
 }

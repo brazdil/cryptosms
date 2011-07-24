@@ -23,6 +23,8 @@ import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
 import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.database.SessionKeys;
+import uk.ac.cam.db538.securesms.utils.Common;
+import uk.ac.cam.db538.securesms.utils.Contact;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -150,12 +152,12 @@ public class TabContactsItem extends RelativeLayout {
         mAvatarView.setImageDrawable(avatarDrawable);
         mAvatarView.setVisibility(View.VISIBLE);*/
     	
-    	Drawable avatarDrawable;
-        avatarDrawable = sDefaultContactImage;
+    	/*Drawable avatarDrawable;
+        avatarDrawable = contact.getAvatar(mContext, sDefaultContactImage);
         //mAvatarView.assignContactUri(null);
         mAvatarView.assignContactFromPhone(mConversationHeader.getPhoneNumber(), true);
         mAvatarView.setImageDrawable(avatarDrawable);
-        mAvatarView.setVisibility(View.VISIBLE);
+        mAvatarView.setVisibility(View.VISIBLE);*/
     }
 
     /*
@@ -176,7 +178,7 @@ public class TabContactsItem extends RelativeLayout {
     }*/
 
     public final void bind(Context context, final Conversation conv) {
-        String simNumber = Utils.getSimNumber(context);
+        String simNumber = Common.getSimNumber(context);
     	setConversationHeader(conv);
     	
     	Resources res = context.getResources();
@@ -205,9 +207,19 @@ public class TabContactsItem extends RelativeLayout {
 	    		mIconView.setImageDrawable(context.getResources().getDrawable(R.drawable.item_contacts_keys_error));
 	    	}
 	    	
-	        mFromView.setText(conv.getPhoneNumber());
+	    	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
+	        mFromView.setText(contact.getName());
 	        mIconView.setVisibility(VISIBLE);
-	        updateAvatarView();
+
+	    	Drawable avatarDrawable = contact.getAvatar(context, sDefaultContactImage);
+            if (contact.existsInDatabase()) {
+                mAvatarView.assignContactUri(contact.getUri());
+            } else {
+                mAvatarView.assignContactFromPhone(conv.getPhoneNumber(), true);
+            }
+	        mAvatarView.setImageDrawable(avatarDrawable);
+	        mAvatarView.setVisibility(View.VISIBLE);
+	        
 		} catch (DatabaseFileException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
