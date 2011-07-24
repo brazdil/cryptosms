@@ -11,12 +11,10 @@ public class Utils {
 	 * @return
 	 */
 	public static String getSimNumber(Context context) {
-		TelephonyManager tMgr =(TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
-
 		// TODO: JUST FOR TESTING
-		if (tMgr.getLine1Number() == null)
-			return "+123456789012";
-		
-		return tMgr.getLine1Number();
+		return "+123456789012";
+
+//		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+//		return tMgr.getLine1Number();
 	}
 }
