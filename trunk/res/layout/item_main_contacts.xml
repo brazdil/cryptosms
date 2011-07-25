@@ -31,17 +31,6 @@
         android:layout_centerVertical="true"
         style="?android:attr/quickContactBadgeStyleWindowSmall" />
 
-    <ImageView
-        android:id="@+id/contacts_presence"
-        android:visibility="gone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="5dip"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:paddingBottom="20dip"
-         />
-
     <TextView 
         android:id="@+id/contacts_from"
         android:layout_width="wrap_content"
@@ -53,7 +42,6 @@
         android:layout_marginLeft="7dip"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/contacts_avatar"
-        android:layout_toLeftOf="@id/contacts_presence"
         android:layout_alignWithParentIfMissing="true"
         android:ellipsize="marquee"  />
 

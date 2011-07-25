@@ -26,11 +26,14 @@ import uk.ac.cam.db538.securesms.database.SessionKeys;
 import uk.ac.cam.db538.securesms.utils.Common;
 import uk.ac.cam.db538.securesms.utils.Contact;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.QuickContactBadge;
 import android.widget.ImageView;
@@ -44,7 +47,6 @@ public class TabContactsItem extends RelativeLayout {
     private TextView mFromView;
     private TextView mStatusView;
     private ImageView mIconView;
-    private ImageView mPresenceView;
     private QuickContactBadge mAvatarView;
 
     static private Drawable sDefaultContactImage;
@@ -70,25 +72,14 @@ public class TabContactsItem extends RelativeLayout {
         mFromView = (TextView) findViewById(R.id.contacts_from);
         mStatusView = (TextView) findViewById(R.id.contacts_status);
         mIconView = (ImageView) findViewById(R.id.contacts_icon);
-        mPresenceView = (ImageView) findViewById(R.id.contacts_presence);
         mAvatarView = (QuickContactBadge) findViewById(R.id.contacts_avatar);
     }
 
-    public void setPresenceIcon(int iconId) {
-        if (iconId == 0) {
-            mPresenceView.setVisibility(View.GONE);
-        } else {
-            mPresenceView.setImageResource(iconId);
-            mPresenceView.setVisibility(View.VISIBLE);
-        }
-    }
-    
     private void setConversationHeader(Conversation conv) {
     	mConversationHeader = conv;
     }
 
-    @SuppressWarnings("unused")
-	private Conversation getConversationHeader() {
+	public Conversation getConversationHeader() {
     	return mConversationHeader;
     }
 
@@ -130,54 +121,8 @@ public class TabContactsItem extends RelativeLayout {
         return buf;
     }*/
 
-    private void updateAvatarView() {
-/*    	
-        ConversationListItemData ch = mConversationHeader;
-
-        Drawable avatarDrawable;
-        if (ch.getContacts().size() == 1) {
-            Contact contact = ch.getContacts().get(0);
-            avatarDrawable = contact.getAvatar(mContext, sDefaultContactImage);
-
-            if (contact.existsInDatabase()) {
-                mAvatarView.assignContactUri(contact.getUri());
-            } else {
-                mAvatarView.assignContactFromPhone(contact.getNumber(), true);
-            }
-        } else {
-            // TODO get a multiple recipients asset (or do something else)
-            avatarDrawable = sDefaultContactImage;
-            mAvatarView.assignContactUri(null);
-        }
-        mAvatarView.setImageDrawable(avatarDrawable);
-        mAvatarView.setVisibility(View.VISIBLE);*/
-    	
-    	/*Drawable avatarDrawable;
-        avatarDrawable = contact.getAvatar(mContext, sDefaultContactImage);
-        //mAvatarView.assignContactUri(null);
-        mAvatarView.assignContactFromPhone(mConversationHeader.getPhoneNumber(), true);
-        mAvatarView.setImageDrawable(avatarDrawable);
-        mAvatarView.setVisibility(View.VISIBLE);*/
-    }
-
-    /*
-    private void updateFromView() {
-        ConversationListItemData ch = mConversationHeader;
-        ch.updateRecipients();
-        mFromView.setText(formatMessage(ch));
-        setPresenceIcon(ch.getContacts().getPresenceResId());
-        updateAvatarView();
-    }
-
-    public void onUpdate(Contact updated) {
-        mHandler.post(new Runnable() {
-            public void run() {
-                updateFromView();
-            }
-        });
-    }*/
-
-    public final void bind(Context context, final Conversation conv) {
+    public final void bind(final Conversation conv) {
+    	Context context = this.getContext();
         String simNumber = Common.getSimNumber(context);
     	setConversationHeader(conv);
     	
@@ -227,8 +172,5 @@ public class TabContactsItem extends RelativeLayout {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
-
-    public final void unbind() {
     }
 }

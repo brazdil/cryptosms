@@ -440,6 +440,19 @@
     <string name="tab_contacts">Contacts</string>
     <string name="tab_contacts_header">New contact</string>
     <string name="tab_contacts_header_small">Establish new secure connection</string>
+    <string name="conversation_type_to_compose">Type to compose</string>
+    <string name="conversation_send">Send</string>
+    <string name="contacts_type_home">Home</string>
+    <string name="contacts_type_work">Work</string>
+    <string name="contacts_type_mobile">Mobile</string>
+    <string name="contacts_pick_phone_number">Pick phone number</string>
+    <string name="contacts_no_phone_numbers">No phone numbers</string>
+    <string name="contacts_no_phone_numbers_details">The selected contact does not have any phone numbers assigned to it.</string>
+    <string name="ok">OK</string>
+    <string name="error_database">Storage file error</string><string name="error_io">Storage file error</string>
+    <string name="error_database_details">An error has occured while operating on the secure storage file:</string><string name="error_io_details">An error has occured while working with the file system:</string>
+    <string name="conversation_no_keys">Secure connection</string>
+    <string name="conversation_no_keys_details">A secure connection has not yet been established between this SIM card and the chosen phone number.</string>
 
 </resources>
 

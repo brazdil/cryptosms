@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
+import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -73,6 +74,29 @@ public class Conversation {
 		return conv;
 	}	
 	
+	/**
+	 * Returns an instance of Conversation class with given index in file.
+	 * @param phoneNumber		Contacts phone number
+	 */
+	public static Conversation getConversation(String phoneNumber) throws DatabaseFileException, IOException {
+		return getConversation(phoneNumber, true);
+	}
+
+	/**
+	 * Returns an instance of Conversation class with given index in file.
+	 * @param phoneNumber		Contacts phone number
+	 * @param lock		File lock allow
+	 */
+	public static Conversation getConversation(String phoneNumber, boolean lockAllow) throws DatabaseFileException, IOException {
+		Conversation conv = Header.getHeader(lockAllow).getFirstConversation(lockAllow);
+		while (conv != null) {
+			if (PhoneNumberUtils.compare(conv.getPhoneNumber(), phoneNumber))
+				return conv;
+			conv = conv.getNextConversation(lockAllow);
+		}
+		return null;
+	}
+
 	/**
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param index		Index in file
@@ -506,6 +530,25 @@ public class Conversation {
 		}
 		
 		return null;
+	}
+	
+	public boolean hasKeysExchanged(String simNumber) throws DatabaseFileException, IOException {
+		return hasKeysExchanged(simNumber, true);
+	}
+	
+	/**
+	 * Returns whether current SIM has session keys for this conversation
+	 * @param simNumber
+	 * @param lockAllow
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public boolean hasKeysExchanged(String simNumber, boolean lockAllow) throws DatabaseFileException, IOException {
+		SessionKeys keys = getSessionKeys(simNumber, lockAllow);
+		if (keys == null)
+			return false;
+		return keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED;
 	}
 
 	// GETTERS / SETTERS

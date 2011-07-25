@@ -24,5 +24,6 @@
     	</activity>
 		<activity android:name=".ui.TabRecent" />
 		<activity android:name=".ui.TabContacts" />
+		<activity android:name=".ui.ConversationActivity" />
     </application>
 </manifest>
