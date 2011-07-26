@@ -163,6 +163,10 @@ public final class Database {
 	private Database(String filename) throws IOException, DatabaseFileException {
 		mSingleton = this;
 		
+		File file = new File(filename);
+		if (file.exists())
+			file.delete();
+		
 		boolean exists = new File(filename).exists();
 		smsFile = new DatabaseFile(filename);
 		if (!exists) {
@@ -172,7 +176,8 @@ public final class Database {
 			Conversation conv1 = Conversation.createConversation();
 			conv1.setPhoneNumber("+420605219051");
 			SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
-			keys1.setSimNumber("+447879116797");
+			keys1.setSimNumber("89441000301641313004");
+			keys1.setSimSerial(true);
 			keys1.setKeysSent(true);
 			keys1.setKeysConfirmed(true);
 			keys1.saveToFile();
@@ -180,10 +185,17 @@ public final class Database {
 			Conversation conv2 = Conversation.createConversation();
 			conv2.setPhoneNumber("+20104544366");
 			SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
-			keys2.setSimNumber("+447879116797");
+			keys2.setSimNumber("89441000301641313004");
+			keys2.setSimSerial(true);
 			keys2.setKeysSent(true);
 			keys2.setKeysConfirmed(false);
 			keys2.saveToFile();
+			SessionKeys keys3 = SessionKeys.createSessionKeys(conv2);
+			keys3.setSimNumber("07879116797");
+			keys3.setSimSerial(false);
+			keys3.setKeysSent(false);
+			keys3.setKeysConfirmed(false);
+			keys3.saveToFile();
 			conv2.saveToFile();
 		}
 	}

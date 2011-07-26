@@ -2,7 +2,6 @@ package uk.ac.cam.db538.securesms.ui;
 
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.utils.Common;
-import uk.ac.cam.db538.securesms.utils.Common.OnSimStateListener;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -10,17 +9,13 @@ import android.os.Bundle;
 import android.widget.TabHost;
 
 public class MainTabActivity extends TabActivity {
-	
-	private static final int TAB_INDEX_RECENT = 0;
-	private static final int TAB_INDEX_CONTACTS = 1;
-	
 	private TabHost.TabSpec specRecent;
 	private TabHost.TabSpec specContacts;
 	
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.screen_main);
-
+	    
 	    Resources res = getResources(); 	// Resource object to get Drawables
 	    TabHost tabHost = getTabHost();  	// The activity TabHost
 	    Intent intent;  					// Reusable Intent for each tab
@@ -40,5 +35,11 @@ public class MainTabActivity extends TabActivity {
 	                      res.getDrawable(R.drawable.tab_contacts))
 	                  .setContent(intent);
 	    tabHost.addTab(specContacts);
+	}
+	
+	public void onStart() {
+		super.onStart();
+	    // just to show the possible error ASAP
+	    Common.checkSimPhoneNumberAvailable(this);
 	}
 }

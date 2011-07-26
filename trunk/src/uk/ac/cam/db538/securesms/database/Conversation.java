@@ -491,26 +491,14 @@ public class Conversation {
 	}
 
 	/**
-	 * Returns whether there are session keys assigned to this conversation for specified SIM number
-	 * @param simNumber
-	 * @param lockAllow		Allow the file to be locked
-	 * @return
-	 * @throws DatabaseFileException
-	 * @throws IOException
-	 */
-	public boolean hasAnySessionKeys(String simNumber, boolean lockAllow) throws DatabaseFileException, IOException {
-		return (getSessionKeys(simNumber, lockAllow) != null);
-	}
-
-	/**
 	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any
 	 * @param simNumber
 	 * @return
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(String simNumber) throws DatabaseFileException, IOException {
-		return getSessionKeys(simNumber, true);
+	public SessionKeys getSessionKeys(String simNumber, boolean isSerial) throws DatabaseFileException, IOException {
+		return getSessionKeys(simNumber, isSerial, true);
 	}
 
 	/**
@@ -521,34 +509,24 @@ public class Conversation {
 	 * @throws DatabaseFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(String simNumber, boolean lockAllow) throws DatabaseFileException, IOException {
+	public SessionKeys getSessionKeys(String simNumber, boolean isSerial, boolean lockAllow) throws DatabaseFileException, IOException {
 		SessionKeys keys = getFirstSessionKeys(lockAllow);
 		while (keys != null) {
-			if (PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
-				return keys;
+			if (isSerial) {
+				// serial number is saved in the simNumber
+				// if there is a serial number in the keys as well, compare these two
+				if (keys.getSimSerial() && simNumber.compareTo(keys.getSimNumber()) == 0)
+					return keys;
+			} else {
+				// SIM phone number is saved in the simNumber
+				// if there is a phone number in the keys as well, compare these two
+				if (!keys.getSimSerial() && PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
+					return keys;
+			}
 			keys = keys.getNextSessionKeys(lockAllow);
 		}
 		
 		return null;
-	}
-	
-	public boolean hasKeysExchanged(String simNumber) throws DatabaseFileException, IOException {
-		return hasKeysExchanged(simNumber, true);
-	}
-	
-	/**
-	 * Returns whether current SIM has session keys for this conversation
-	 * @param simNumber
-	 * @param lockAllow
-	 * @return
-	 * @throws DatabaseFileException
-	 * @throws IOException
-	 */
-	public boolean hasKeysExchanged(String simNumber, boolean lockAllow) throws DatabaseFileException, IOException {
-		SessionKeys keys = getSessionKeys(simNumber, lockAllow);
-		if (keys == null)
-			return false;
-		return keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED;
 	}
 
 	// GETTERS / SETTERS

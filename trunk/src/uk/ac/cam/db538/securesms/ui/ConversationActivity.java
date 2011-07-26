@@ -22,7 +22,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
@@ -36,8 +35,6 @@ public class ConversationActivity extends Activity {
     private QuickContactBadge mAvatarView;
     private Button mSendButton;
     private EditText mTextEditor;
-    private View mTopPanel;
-    private View mBottomPanel;
     
     private boolean errorNoKeysShown = false;
 
@@ -64,9 +61,6 @@ public class ConversationActivity extends Activity {
 	    mAvatarView = (QuickContactBadge) findViewById(R.id.conversation_avatar);
 	    mSendButton = (Button) findViewById(R.id.conversation_send_button);
 	    mTextEditor = (EditText) findViewById(R.id.conversation_embedded_text_editor);
-	    
-	    mTopPanel = findViewById(R.id.conversation_top_panel);
-	    mBottomPanel = findViewById(R.id.conversation_bottom_panel);
 	    
 	    mNameView.setText(mContact.getName());
 	    mPhoneNumberView.setText(mContact.getPhoneNumber());
@@ -100,13 +94,13 @@ public class ConversationActivity extends Activity {
 	
 	private void checkResources() {
 		// check for SIM availability
-		if (Common.checkSimNumberAvailable(this)) {
+		if (Common.checkSimPhoneNumberAvailable(this)) {
 		    Resources res = getResources();
 		    try {
 				mConversation = Conversation.getConversation(mContact.getPhoneNumber());
 		
 				// check keys availability
-		    	if (!mConversation.hasKeysExchanged(Common.getSimNumber(this))) {
+		    	if (!Common.hasKeysExchangedForSIM(this, mConversation)) {
 		    		if (!errorNoKeysShown) {
 						// secure connection has not been successfully established yet
 						new AlertDialog.Builder(this)

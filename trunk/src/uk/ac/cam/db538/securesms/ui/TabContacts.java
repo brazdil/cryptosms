@@ -20,9 +20,7 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
-import android.opengl.Visibility;
 import android.os.Bundle;
 import android.provider.ContactsContract.Data;
 import android.view.LayoutInflater;
@@ -31,8 +29,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TabHost;
-import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class TabContacts extends ListActivity {
@@ -41,16 +37,14 @@ public class TabContacts extends ListActivity {
 	
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();;
 	private TabContactsItem mNewContactView;
-	private TabContactsItem mNotAvailableView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
 	
 	private void updateContacts(Context context) throws DatabaseFileException, IOException {
-		String simNumber = Common.getSimNumber(context);
 		mContacts.clear();
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			if (conv.getSessionKeys(simNumber) != null)
+			if (Common.getSessionKeysForSIM(this, conv) != null)
 				mContacts.add(conv);
 			conv = conv.getNextConversation();
 		}
@@ -145,7 +139,7 @@ public class TabContacts extends ListActivity {
 				@Override
 				public void onItemClick(AdapterView<?> arg0, View arg1,	int arg2, long arg3) {
 					// check that the SIM is available
-					if (!Common.checkSimNumberAvailable(context))
+					if (!Common.checkSimPhoneNumberAvailable(context))
 						return;
 					
 					TabContactsItem item = (TabContactsItem) arg1;
@@ -153,7 +147,7 @@ public class TabContacts extends ListActivity {
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
 						try {
-							SessionKeys keys = conv.getSessionKeys(Common.getSimNumber(context));
+							SessionKeys keys = Common.getSessionKeysForSIM(context, conv);
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
 						} catch (DatabaseFileException ex) {
@@ -228,7 +222,7 @@ public class TabContacts extends ListActivity {
 	
 	private void checkResources() {
 		// check SIM availability
-    	if (Common.checkSimNumberAvailable(this)) {
+    	if (Common.checkSimPhoneNumberAvailable(this)) {
     		if (getListAdapter() == null)
     			setListAdapter(mAdapterContacts);
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));

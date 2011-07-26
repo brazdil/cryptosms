@@ -26,14 +26,11 @@ import uk.ac.cam.db538.securesms.database.SessionKeys;
 import uk.ac.cam.db538.securesms.utils.Common;
 import uk.ac.cam.db538.securesms.utils.Contact;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.QuickContactBadge;
 import android.widget.ImageView;
@@ -41,7 +38,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
- * This class manages the view for given conversation.
+ * This class manages the view for given contact.
  */
 public class TabContactsItem extends RelativeLayout {
     private TextView mFromView;
@@ -123,13 +120,12 @@ public class TabContactsItem extends RelativeLayout {
 
     public final void bind(final Conversation conv) {
     	Context context = this.getContext();
-        String simNumber = Common.getSimNumber(context);
     	setConversationHeader(conv);
     	
     	Resources res = context.getResources();
     	
 		try {
-			SessionKeys keys = conv.getSessionKeys(simNumber);
+			SessionKeys keys = Common.getSessionKeysForSIM(context, conv);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:

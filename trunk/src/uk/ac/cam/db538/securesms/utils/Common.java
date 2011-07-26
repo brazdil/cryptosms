@@ -3,7 +3,10 @@ package uk.ac.cam.db538.securesms.utils;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.database.Conversation;
 import uk.ac.cam.db538.securesms.database.DatabaseFileException;
+import uk.ac.cam.db538.securesms.database.SessionKeys;
+import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,7 +21,6 @@ import android.telephony.TelephonyManager;
 
 public class Common {
 	
-	private static boolean warningSIMError = false;
 	private static boolean warningSIMNotPresent = false;
 	
 	/**
@@ -26,41 +28,25 @@ public class Common {
 	 * @param context
 	 * @return
 	 */
-	public static boolean checkSimNumberAvailable(Context context) {
+	public static boolean checkSimPhoneNumberAvailable(Context context) {
 		Resources res = context.getResources();
-		String simNumber = getSimNumber(context);
+		String simNumber = getSimPhoneNumber(context);
 		if (simNumber == null) {
 			// no SIM present (possibly Airplane mode)
-			if (!warningSIMError) {
+			if (!warningSIMNotPresent) {
 				new AlertDialog.Builder(context)
 				.setTitle(res.getString(R.string.error_no_sim_available))
 				.setMessage(res.getString(R.string.error_no_sim_available_details))
 				.setPositiveButton(res.getString(R.string.ok), new DummyOnClickListener())
 				.show();
-				warningSIMError = true;
+				warningSIMNotPresent = true;
 			}
 			return false;
 		} else if (simNumber.length() == 0) {
 			// unknown number, but SIM present
-			if (warningSIMError) {
-				// user has already been notified, but didn't set it manually
-				return false;
-			} else {
-				new AlertDialog.Builder(context)
-				.setTitle(res.getString(R.string.error_no_sim_number))
-				.setMessage(res.getString(R.string.error_no_sim_number_details))
-				.setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
-				.setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						// TODO Take to settings
-					}
-				})
-				.show();
-				warningSIMError = true;
-				// return recursively;
-				return checkSimNumberAvailable(context);
-			}
+			// try to get its serial number
+			String simSerial = getSimSerialNumber(context);
+			return (simSerial != null && simSerial.length() > 0);
 		} else {
 			// everything is fine
 			return true;
@@ -72,7 +58,7 @@ public class Common {
 	 * @param context
 	 * @return
 	 */
-	public static String getSimNumber(Context context) {
+	public static String getSimPhoneNumber(Context context) {
 		// airplane mode
 		boolean airplaneMode = Settings.System.getInt(
 			      context.getContentResolver(), 
@@ -81,11 +67,110 @@ public class Common {
 			return null;
 		
 		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		String simNumber = tMgr.getLine1Number();
-		if (simNumber != null && simNumber.length() == 0)
-			return "+447879116797";
-		else
-			return simNumber;
+		return "+447879116797"; //tMgr.getLine1Number();
+	}
+	
+	/**
+	 * Returns the phone number of currently active SIM
+	 * @param context
+	 * @return
+	 */
+	public static String getSimSerialNumber(Context context) {
+		// airplane mode
+		boolean airplaneMode = Settings.System.getInt(
+			      context.getContentResolver(), 
+			      Settings.System.AIRPLANE_MODE_ON, 0) == 1;
+		if (airplaneMode)
+			return null;
+		
+		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+		return tMgr.getSimSerialNumber();
+	}
+
+	/**
+	 * Tries to find session keys for this particular SIM,
+	 * either by phone number of (if not available) by SIM's serial number
+	 * @param context
+	 * @param conv
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public static SessionKeys getSessionKeysForSIM(Context context, Conversation conv) throws DatabaseFileException, IOException { 
+		return getSessionKeysForSIM(context, conv, true);
+	}
+	
+	/**
+	 * Tries to find session keys for this particular SIM,
+	 * either by phone number of (if not available) by SIM's serial number
+	 * @param context
+	 * @param conv
+	 * @lockAllow		Allow to be locked
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public static SessionKeys getSessionKeysForSIM(Context context, Conversation conv, boolean lockAllow) throws DatabaseFileException, IOException {
+		String simNumber = Common.getSimPhoneNumber(context);
+		String simSerial = Common.getSimSerialNumber(context);
+		SessionKeys keysSerial = conv.getSessionKeys(simSerial, true, lockAllow);
+		if (simNumber == null || simNumber.length() == 0) {
+			// no phone number
+			return keysSerial;
+		} else {
+			// we know the phone number
+			SessionKeys keysNumber = conv.getSessionKeys(simNumber, false, lockAllow);
+
+			// ? exists both with serial and phone number ?
+			if (keysSerial != null) {
+				// update it to use phone number
+				keysSerial.setSimNumber(simNumber);
+				keysSerial.setSimSerial(false);
+				keysSerial.saveToFile(lockAllow);
+			}
+
+			if (keysNumber == null) {
+				// don't have one for phone number
+				// try by serial number
+				keysNumber = keysSerial;
+			} else if (keysSerial != null) {
+				// there are two entries
+				// choose the one with matching serial number
+				keysNumber.delete(lockAllow);
+				keysNumber = keysSerial;
+			}
+			return keysNumber;
+		}
+	}
+	
+	/**
+	 * Tries to find session keys for this SIM and if it succeeds, 
+	 * returns whether they have been successfully exchanged.
+	 * @param context
+	 * @param conv
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv) throws DatabaseFileException, IOException {
+		return hasKeysExchangedForSIM(context, conv, true);
+	}
+
+	/**
+	 * Tries to find session keys for this SIM and if it succeeds, 
+	 * returns whether they have been successfully exchanged.
+	 * @param context
+	 * @param conv
+	 * @param lockAllow		Allow storage file locks
+	 * @return
+	 * @throws DatabaseFileException
+	 * @throws IOException
+	 */
+	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv, boolean lockAllow) throws DatabaseFileException, IOException {
+		SessionKeys keys = getSessionKeysForSIM(context, conv, lockAllow);
+		if (keys == null)
+			return false;
+		return keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED;
 	}
 	
 	public static interface OnSimStateListener {

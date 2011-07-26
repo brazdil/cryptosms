@@ -98,7 +98,8 @@ public class SessionKeys {
 	private long mEntryIndex; // READ ONLY
 	private boolean mKeysSent;
 	private boolean mKeysConfirmed;
-	private String mSimNumber;
+	private boolean mSimSerial;
+	private String mSimNumber; // or serial (based on the flag)
 	private byte[] mSessionKey_Out;
 	private byte mLastID_Out;
 	private byte[] mSessionKey_In;
@@ -138,6 +139,7 @@ public class SessionKeys {
 			byte flags = dataPlain[OFFSET_FLAGS];
 			boolean keysSent = ((flags & (1 << 7)) == 0) ? false : true;
 			boolean keysConfirmed = ((flags & (1 << 6)) == 0) ? false : true;
+			boolean simSerial = ((flags & (1 << 5)) == 0) ? false : true;
 
 			byte[] dataSessionKey_Out = new byte[LENGTH_SESSIONKEY];
 			System.arraycopy(dataPlain, OFFSET_SESSIONKEY_OUTGOING, dataSessionKey_Out, 0, LENGTH_SESSIONKEY);
@@ -146,6 +148,7 @@ public class SessionKeys {
 			
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
+			setSimSerial(simSerial);
 			setSimNumber(Database.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER));
 			setSessionKey_Out(dataSessionKey_Out);
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
@@ -159,6 +162,7 @@ public class SessionKeys {
 			// default values
 			setKeysSent(false);
 			setKeysConfirmed(false);
+			setSimSerial(false);
 			setSimNumber("");
 			setSessionKey_Out(Encryption.generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_Out((byte) 0x00);
@@ -202,6 +206,8 @@ public class SessionKeys {
 			flags |= (byte) ((1 << 7) & 0xFF);
 		if (this.mKeysConfirmed)
 			flags |= (byte) ((1 << 6) & 0xFF);
+		if (this.mSimSerial)
+			flags |= (byte) ((1 << 5) & 0xFF);
 		keysBuffer.put(flags);
 		
 		// phone number
@@ -399,6 +405,14 @@ public class SessionKeys {
 
 	public void setKeysConfirmed(boolean keysConfirmed) {
 		mKeysConfirmed = keysConfirmed;
+	}
+
+	public boolean getSimSerial() {
+		return mSimSerial;
+	}
+
+	public void setSimSerial(boolean simSerial) {
+		mSimSerial = simSerial;
 	}
 
 	public String getSimNumber() {

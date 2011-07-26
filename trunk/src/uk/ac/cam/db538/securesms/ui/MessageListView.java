@@ -17,7 +17,6 @@
 package uk.ac.cam.db538.securesms.ui;
 
 import android.content.Context;
-import android.text.ClipboardManager;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.widget.ListView;
