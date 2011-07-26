@@ -438,8 +438,8 @@
     <string name="item_contacts_keys_error">Error! Encryption data not found</string>
     <string name="tab_recent">Recent</string>
     <string name="tab_contacts">Contacts</string>
-    <string name="tab_contacts_header">New contact</string>
-    <string name="tab_contacts_header_small">Establish new secure connection</string>
+    <string name="tab_contacts_new_contact">New contact</string>
+    <string name="tab_contacts_new_contact_details">Establish new secure connection</string>
     <string name="conversation_type_to_compose">Type to compose</string>
     <string name="conversation_send">Send</string>
     <string name="contacts_type_home">Home</string>
@@ -458,7 +458,9 @@
     <string name="error_no_sim_number">SIM number unavailable</string>
     <string name="error_no_sim_number_details">Unfortunately, Android was not able to determine the phone number of your current SIM card. Please set it manually or switch to read-only mode.</string>
     <string name="error_no_sim_available">No SIM available</string>
-    <string name="error_no_sim_available_details">No SIM card is present in the handset. You will only be able to read the history of conversations.</string>
+    <string name="error_no_sim_available_details">No SIM card is present in the handset or the Airplane mode is switched on. You will only be able to read the history of conversations.</string>
+    <string name="tab_contacts_not_available">Not available</string>
+    <string name="tab_contacts_not_available_details">Insert SIM or switch off the Airplane mode</string>
 
 </resources>
 

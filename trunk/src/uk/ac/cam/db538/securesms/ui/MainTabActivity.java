@@ -40,30 +40,5 @@ public class MainTabActivity extends TabActivity {
 	                      res.getDrawable(R.drawable.tab_contacts))
 	                  .setContent(intent);
 	    tabHost.addTab(specContacts);
-	    
-        // register for changes in SIM state
-        Common.registerSimStateListener(this, new OnSimStateListener() {
-			@Override
-			public void onChange() {
-				checkResources();
-			}
-		});
 	}
-	
-	private void checkResources() {
-		TabHost tabHost = getTabHost(); 
-
-		// check SIM availability
-    	if (Common.checkSimNumberAvailable(this)) {
-    	    tabHost.getTabWidget().getChildTabViewAt(TAB_INDEX_CONTACTS).setEnabled(true);
-    	} else {
-    	    tabHost.setCurrentTab(TAB_INDEX_RECENT);
-    	    tabHost.getTabWidget().getChildTabViewAt(TAB_INDEX_CONTACTS).setEnabled(false);
-    	}
-	}
-	
-    public void onResume() {
-    	super.onResume();
-    	checkResources();
-    }
 }

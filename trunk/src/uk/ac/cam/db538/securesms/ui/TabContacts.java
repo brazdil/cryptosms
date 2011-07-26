@@ -13,6 +13,7 @@ import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.securesms.utils.Common;
 import uk.ac.cam.db538.securesms.utils.Contact;
 import uk.ac.cam.db538.securesms.utils.DummyOnClickListener;
+import uk.ac.cam.db538.securesms.utils.Common.OnSimStateListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -21,6 +22,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.provider.ContactsContract.Data;
 import android.view.LayoutInflater;
@@ -29,6 +31,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TabHost;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -37,7 +40,9 @@ public class TabContacts extends ListActivity {
 	private static final int NEW_CONTACT = 1;
 	
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();;
-	private TabContactsItem mHeaderView;
+	private TabContactsItem mNewContactView;
+	private TabContactsItem mNotAvailableView;
+	private ArrayAdapter<Conversation> mAdapterContacts;
 	
 	private void updateContacts(Context context) throws DatabaseFileException, IOException {
 		String simNumber = Common.getSimNumber(context);
@@ -81,25 +86,31 @@ public class TabContacts extends ListActivity {
     	super.onCreate(savedInstanceState);
         setContentView(R.layout.screen_main_recent);
 
-        final Context context = getApplicationContext();
+        final Context context = this;
         final ListView listView = getListView();
         final LayoutInflater inflater = LayoutInflater.from(this);
         
         // set appearance of list view
-        //listView.setPinnedHeaderView(pinnedHeader);
 		listView.setFastScrollEnabled(true);
+		
+        // register for changes in SIM state
+        Common.registerSimStateListener(this, new OnSimStateListener() {
+			@Override
+			public void onChange() {
+				checkResources();
+			}
+		});
         
+
         // the New contact header
-		mHeaderView = (TabContactsItem) inflater.inflate(R.layout.item_main_contacts, listView, false);
-        mHeaderView.bind(getString(R.string.tab_contacts_header), getString(R.string.tab_contacts_header_small));
-        listView.addHeaderView(mHeaderView, null, true);
-        
+		mNewContactView = (TabContactsItem) inflater.inflate(R.layout.item_main_contacts, listView, false);
+        listView.addHeaderView(mNewContactView, null, true);
+       
         try {
         	// initialize the list of Contacts
         	updateContacts(getApplicationContext());
         	// create the adapter
         	final ArrayAdapter<Conversation> adapterContacts = new ArrayAdapter<Conversation>(this, R.layout.item_main_contacts, mContacts) {
-				
         		@Override
 				public View getView(int position, View convertView, ViewGroup parent) {
 					TabContactsItem row;
@@ -127,13 +138,17 @@ public class TabContacts extends ListActivity {
 				}
 			});
         	// set adapter
-			setListAdapter(adapterContacts);
+        	mAdapterContacts = adapterContacts;
+			setListAdapter(mAdapterContacts);
 			// specify what to do when clicked on items
 			listView.setOnItemClickListener(new OnItemClickListener() {
 				@Override
 				public void onItemClick(AdapterView<?> arg0, View arg1,	int arg2, long arg3) {
-					TabContactsItem item = (TabContactsItem) arg1;
+					// check that the SIM is available
+					if (!Common.checkSimNumberAvailable(context))
+						return;
 					
+					TabContactsItem item = (TabContactsItem) arg1;
 					Conversation conv;
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
@@ -148,7 +163,6 @@ public class TabContacts extends ListActivity {
 						}
 		    		} else {
 		    			// clicked on the header
-		    			
 		    			// pick a contact from PKI
 						Intent intent = new Intent("uk.ac.cam.PKI.getcontact");
 				        intent.putExtra("Criteria", "in_visible_group=1 AND " + Data.MIMETYPE + "='" + KEY_MIME + "'");
@@ -158,36 +172,13 @@ public class TabContacts extends ListActivity {
 		    		}
 				}
 			});
-		} catch (DatabaseFileException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (DatabaseFileException ex) {
+			Common.dialogDatabaseError(this, ex);
+		} catch (IOException ex) {
+			Common.dialogIOError(this, ex);
 		}
-
-        /*
-        listView.setOnCreateContextMenuListener(mConvListOnCreateContextMenuListener);
-        listView.setOnKeyListener(mThreadListKeyListener);
-
-        initListAdapter();
-
-        mTitle = getString(R.string.app_label);
-
-        mHandler = new Handler();
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean checkedMessageLimits = mPrefs.getBoolean(CHECKED_MESSAGE_LIMITS, false);
-        if (DEBUG) Log.v(TAG, "checkedMessageLimits: " + checkedMessageLimits);
-        if (!checkedMessageLimits || DEBUG) {
-            runOneTimeStorageLimitCheckForLegacyMessages();
-        }*/
     }
 
-    /*private void initListAdapter() {
-        mListAdapter = new ConversationListAdapter(this, null);
-        mListAdapter.setOnContentChangedListener(mContentChangedListener);
-        setListAdapter(mListAdapter);
-        getListView().setRecyclerListener(mListAdapter);
-    }*/
-    
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
@@ -232,5 +223,23 @@ public class TabContacts extends ListActivity {
     		}
     		break;
     	}
+    }
+
+	
+	private void checkResources() {
+		// check SIM availability
+    	if (Common.checkSimNumberAvailable(this)) {
+    		if (getListAdapter() == null)
+    			setListAdapter(mAdapterContacts);
+    		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
+    	} else {
+    		setListAdapter(null);
+            mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
+    	}
+	}
+	
+    public void onResume() {
+    	super.onResume();
+    	checkResources();
     }
 }
