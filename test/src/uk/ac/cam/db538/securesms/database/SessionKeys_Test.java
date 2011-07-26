@@ -19,6 +19,7 @@ public class SessionKeys_Test extends TestCase {
 
 	private boolean keysSent = true;
 	private boolean keysConfirmed = true;
+	private boolean simSerial = true;
 	private String simNumber = "+123456789012";
 	private byte[] sessionKey_Out = Encryption.generateRandomData(Encryption.KEY_LENGTH);
 	private byte lastID_Out = 0x12;
@@ -29,11 +30,12 @@ public class SessionKeys_Test extends TestCase {
 	private long indexNext = 248L;
 	private String simNumberLong = "+1234567890126549873sdfsat6ewrt987wet3df1g3s2g1e6r5t46wert4dfsgdfsg";
 	private String simNumberResult = "+1234567890126549873sdfsat6ewrt9";
-	private byte flags = (byte) 0xC0;
+	private byte flags = (byte) 0xE0;
 
 	private void setData(SessionKeys keys, boolean longer) {
 		keys.setKeysSent(keysSent);
 		keys.setKeysConfirmed(keysConfirmed);
+		keys.setSimSerial(simSerial);
 		keys.setSimNumber((longer) ? simNumberLong : simNumber);
 		keys.setSessionKey_Out(sessionKey_Out);
 		keys.setLastID_Out(lastID_Out);
@@ -47,6 +49,7 @@ public class SessionKeys_Test extends TestCase {
 	private void checkData(SessionKeys keys, boolean longer) {
 		assertEquals(keysSent, keys.getKeysSent());
 		assertEquals(keysConfirmed, keys.getKeysConfirmed());
+		assertEquals(simSerial, keys.getSimSerial());
 		assertEquals((longer) ? simNumberResult : simNumber, keys.getSimNumber());
 		CustomAsserts.assertArrayEquals(keys.getSessionKey_Out(), sessionKey_Out);
 		assertEquals(lastID_Out, keys.getLastID_Out());
