@@ -75,7 +75,6 @@ public class ConversationActivity extends Activity {
         
         // register for changes in SIM state
         SimCard.registerSimStateListener(this, new OnSimStateListener() {
-			@Override
 			public void onChange() {
 				checkResources();
 			}
@@ -108,10 +107,8 @@ public class ConversationActivity extends Activity {
 							.setMessage(res.getString(R.string.conversation_no_keys_details))
 							.setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
 							.setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
-								@Override
 								public void onClick(DialogInterface dialog, int which) {
-									// TODO Auto-generated method stub
-									
+									// TODO: Setup
 								}
 							})
 							.show();

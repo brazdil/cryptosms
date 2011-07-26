@@ -92,7 +92,6 @@ public class TabContacts extends ListActivity {
 		
         // register for changes in SIM state
         SimCard.registerSimStateListener(this, new OnSimStateListener() {
-			@Override
 			public void onChange() {
 				checkResources();
 			}
@@ -139,13 +138,12 @@ public class TabContacts extends ListActivity {
 			setListAdapter(mAdapterContacts);
 			// specify what to do when clicked on items
 			listView.setOnItemClickListener(new OnItemClickListener() {
-				@Override
-				public void onItemClick(AdapterView<?> arg0, View arg1,	int arg2, long arg3) {
+				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
 					// check that the SIM is available
 					if (!SimCard.checkSimPhoneNumberAvailable(context))
 						return;
 					
-					TabContactsItem item = (TabContactsItem) arg1;
+					TabContactsItem item = (TabContactsItem) view;
 					Conversation conv;
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
@@ -175,9 +173,7 @@ public class TabContacts extends ListActivity {
 	    					.setMessage(res.getString(R.string.error_pki_unavailable_details))
 	    					.setNegativeButton(res.getString(R.string.cancel), new DummyOnClickListener())
 	    					.setPositiveButton(res.getString(R.string.to_market), new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
+								public void onClick(DialogInterface dialog,	int which) {
 			    					Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=uk.ac.cam.PKI"));
 			    					try {
 			    						startActivity(market);
