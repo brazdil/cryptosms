@@ -1,7 +1,7 @@
 package uk.ac.cam.db538.securesms.ui;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.utils.Common;
+import uk.ac.cam.db538.securesms.simcard.SimCard;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -40,6 +40,6 @@ public class MainTabActivity extends TabActivity {
 	public void onStart() {
 		super.onStart();
 	    // just to show the possible error ASAP
-	    Common.checkSimPhoneNumberAvailable(this);
+	    SimCard.checkSimPhoneNumberAvailable(this);
 	}
 }

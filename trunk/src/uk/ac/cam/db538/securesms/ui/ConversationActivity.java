@@ -5,10 +5,10 @@ import java.io.IOException;
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
 import uk.ac.cam.db538.securesms.database.DatabaseFileException;
-import uk.ac.cam.db538.securesms.utils.Common;
-import uk.ac.cam.db538.securesms.utils.Contact;
-import uk.ac.cam.db538.securesms.utils.DummyOnClickListener;
-import uk.ac.cam.db538.securesms.utils.Common.OnSimStateListener;
+import uk.ac.cam.db538.securesms.simcard.Contact;
+import uk.ac.cam.db538.securesms.simcard.DummyOnClickListener;
+import uk.ac.cam.db538.securesms.simcard.SimCard;
+import uk.ac.cam.db538.securesms.simcard.SimCard.OnSimStateListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -74,7 +74,7 @@ public class ConversationActivity extends Activity {
         mAvatarView.setVisibility(View.VISIBLE);
         
         // register for changes in SIM state
-        Common.registerSimStateListener(this, new OnSimStateListener() {
+        SimCard.registerSimStateListener(this, new OnSimStateListener() {
 			@Override
 			public void onChange() {
 				checkResources();
@@ -94,13 +94,13 @@ public class ConversationActivity extends Activity {
 	
 	private void checkResources() {
 		// check for SIM availability
-		if (Common.checkSimPhoneNumberAvailable(this)) {
+		if (SimCard.checkSimPhoneNumberAvailable(this)) {
 		    Resources res = getResources();
 		    try {
 				mConversation = Conversation.getConversation(mContact.getPhoneNumber());
 		
 				// check keys availability
-		    	if (!Common.hasKeysExchangedForSIM(this, mConversation)) {
+		    	if (!SimCard.hasKeysExchangedForSIM(this, mConversation)) {
 		    		if (!errorNoKeysShown) {
 						// secure connection has not been successfully established yet
 						new AlertDialog.Builder(this)
@@ -123,10 +123,10 @@ public class ConversationActivity extends Activity {
 				} else
 					modeEnabled(true);
 			} catch (DatabaseFileException ex) {
-				Common.dialogDatabaseError(this, ex);
+				SimCard.dialogDatabaseError(this, ex);
 				this.finish();
 			} catch (IOException ex) {
-				Common.dialogIOError(this, ex);
+				SimCard.dialogIOError(this, ex);
 				this.finish();
 			}
 		} else

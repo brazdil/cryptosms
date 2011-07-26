@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.utils;
+package uk.ac.cam.db538.securesms.simcard;
 
 import java.io.IOException;
 
@@ -19,7 +19,7 @@ import android.provider.Settings;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.TelephonyManager;
 
-public class Common {
+public class SimCard {
 	
 	private static boolean warningSIMNotPresent = false;
 	
@@ -111,8 +111,8 @@ public class Common {
 	 * @throws IOException
 	 */
 	public static SessionKeys getSessionKeysForSIM(Context context, Conversation conv, boolean lockAllow) throws DatabaseFileException, IOException {
-		String simNumber = Common.getSimPhoneNumber(context);
-		String simSerial = Common.getSimSerialNumber(context);
+		String simNumber = SimCard.getSimPhoneNumber(context);
+		String simSerial = SimCard.getSimSerialNumber(context);
 		SessionKeys keysSerial = conv.getSessionKeys(simSerial, true, lockAllow);
 		if (simNumber == null || simNumber.length() == 0) {
 			// no phone number

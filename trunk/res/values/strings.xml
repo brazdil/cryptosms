@@ -452,7 +452,7 @@
     <string name="error_database">Storage file error</string><string name="error_io">Storage file error</string>
     <string name="error_database_details">An error has occured while operating on the secure storage file:</string><string name="error_io_details">An error has occured while working with the file system:</string>
     <string name="conversation_no_keys">Secure connection</string>
-    <string name="conversation_no_keys_details">A secure connection has not yet been established between the current SIM card and the chosen phone number. You can view the conversation history in read-only mode, but you have to set up secure connection if you want to send text messages.</string>
+    <string name="conversation_no_keys_details">A secure connection has not yet been established between the current SIM card and the chosen phone number. You can view the conversation history in read-only mode, but you have to set up a secure connection if you want to send text messages.</string>
     <string name="read_only">Read only</string>
     <string name="setup">Setup</string>
     <string name="error_no_sim_number">SIM number unavailable</string>
@@ -461,6 +461,12 @@
     <string name="error_no_sim_available_details">No SIM card is present in the handset or the Airplane mode is switched on. You will only be able to read the history of conversations.</string>
     <string name="tab_contacts_not_available">Not available</string>
     <string name="tab_contacts_not_available_details">Insert SIM or switch off the Airplane mode</string>
+    <string name="error_pki_unavailable">PKI unavailable</string>
+    <string name="error_pki_unavailable_details">To exchange the session keys using text messages, you need to have the Public Key Infrastructure project installed.</string>
+    <string name="cancel">Cancel</string>
+    <string name="to_market">Open Market</string>
+    <string name="error_market_unavailable">Android Market unavailable</string>
+    <string name="error_market_unavailable_details">An error occured while trying to open the Android Market. Try installing Public Key Infractructure manually.</string>
 
 </resources>
 

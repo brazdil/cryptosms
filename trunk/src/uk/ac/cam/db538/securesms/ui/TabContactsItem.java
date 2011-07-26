@@ -23,8 +23,8 @@ import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.database.Conversation;
 import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.database.SessionKeys;
-import uk.ac.cam.db538.securesms.utils.Common;
-import uk.ac.cam.db538.securesms.utils.Contact;
+import uk.ac.cam.db538.securesms.simcard.Contact;
+import uk.ac.cam.db538.securesms.simcard.SimCard;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -125,7 +125,7 @@ public class TabContactsItem extends RelativeLayout {
     	Resources res = context.getResources();
     	
 		try {
-			SessionKeys keys = Common.getSessionKeysForSIM(context, conv);
+			SessionKeys keys = SimCard.getSessionKeysForSIM(context, conv);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:

@@ -10,17 +10,19 @@ import uk.ac.cam.db538.securesms.database.Header;
 import uk.ac.cam.db538.securesms.database.SessionKeys;
 import uk.ac.cam.db538.securesms.database.Conversation.ConversationUpdateListener;
 import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
-import uk.ac.cam.db538.securesms.utils.Common;
-import uk.ac.cam.db538.securesms.utils.Contact;
-import uk.ac.cam.db538.securesms.utils.DummyOnClickListener;
-import uk.ac.cam.db538.securesms.utils.Common.OnSimStateListener;
+import uk.ac.cam.db538.securesms.simcard.SimCard;
+import uk.ac.cam.db538.securesms.simcard.Contact;
+import uk.ac.cam.db538.securesms.simcard.DummyOnClickListener;
+import uk.ac.cam.db538.securesms.simcard.SimCard.OnSimStateListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.Data;
 import android.view.LayoutInflater;
@@ -44,7 +46,7 @@ public class TabContacts extends ListActivity {
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			if (Common.getSessionKeysForSIM(this, conv) != null)
+			if (SimCard.getSessionKeysForSIM(this, conv) != null)
 				mContacts.add(conv);
 			conv = conv.getNextConversation();
 		}
@@ -70,9 +72,9 @@ public class TabContacts extends ListActivity {
 			// if we managed to get it, start the activity
 			startConversation(conv);
 		} catch (DatabaseFileException ex) {
-			Common.dialogDatabaseError(this, ex);
+			SimCard.dialogDatabaseError(this, ex);
 		} catch (IOException ex) {
-			Common.dialogIOError(this, ex);
+			SimCard.dialogIOError(this, ex);
 		}
 	}
 
@@ -81,6 +83,7 @@ public class TabContacts extends ListActivity {
         setContentView(R.layout.screen_main_recent);
 
         final Context context = this;
+        final Resources res = getResources();
         final ListView listView = getListView();
         final LayoutInflater inflater = LayoutInflater.from(this);
         
@@ -88,7 +91,7 @@ public class TabContacts extends ListActivity {
 		listView.setFastScrollEnabled(true);
 		
         // register for changes in SIM state
-        Common.registerSimStateListener(this, new OnSimStateListener() {
+        SimCard.registerSimStateListener(this, new OnSimStateListener() {
 			@Override
 			public void onChange() {
 				checkResources();
@@ -125,9 +128,9 @@ public class TabContacts extends ListActivity {
 						updateContacts(getApplicationContext());
 						adapterContacts.notifyDataSetChanged();
 					} catch (DatabaseFileException ex) {
-						Common.dialogDatabaseError(context, ex);
+						SimCard.dialogDatabaseError(context, ex);
 					} catch (IOException ex) {
-						Common.dialogIOError(context, ex);
+						SimCard.dialogIOError(context, ex);
 					}
 				}
 			});
@@ -139,7 +142,7 @@ public class TabContacts extends ListActivity {
 				@Override
 				public void onItemClick(AdapterView<?> arg0, View arg1,	int arg2, long arg3) {
 					// check that the SIM is available
-					if (!Common.checkSimPhoneNumberAvailable(context))
+					if (!SimCard.checkSimPhoneNumberAvailable(context))
 						return;
 					
 					TabContactsItem item = (TabContactsItem) arg1;
@@ -147,29 +150,57 @@ public class TabContacts extends ListActivity {
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
 						try {
-							SessionKeys keys = Common.getSessionKeysForSIM(context, conv);
+							SessionKeys keys = SimCard.getSessionKeysForSIM(context, conv);
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
 						} catch (DatabaseFileException ex) {
-							Common.dialogDatabaseError(context, ex);							// TODO Auto-generated catch block
+							SimCard.dialogDatabaseError(context, ex);							// TODO Auto-generated catch block
 						} catch (IOException ex) {
-							Common.dialogIOError(context, ex);
+							SimCard.dialogIOError(context, ex);
 						}
 		    		} else {
 		    			// clicked on the header
+		    			
 		    			// pick a contact from PKI
 						Intent intent = new Intent("uk.ac.cam.PKI.getcontact");
 				        intent.putExtra("Criteria", "in_visible_group=1 AND " + Data.MIMETYPE + "='" + KEY_MIME + "'");
 				        intent.putExtra("sort", "display_name COLLATE LOCALIZED ASC");
 						intent.putExtra("pick", true);
-						startActivityForResult(intent, NEW_CONTACT);
+						try {
+							startActivityForResult(intent, NEW_CONTACT);
+	    				} catch(ActivityNotFoundException e) {
+	    					// PKI not installed
+	    					new AlertDialog.Builder(context)
+	    					.setTitle(res.getString(R.string.error_pki_unavailable))
+	    					.setMessage(res.getString(R.string.error_pki_unavailable_details))
+	    					.setNegativeButton(res.getString(R.string.cancel), new DummyOnClickListener())
+	    					.setPositiveButton(res.getString(R.string.to_market), new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+			    					Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=uk.ac.cam.PKI"));
+			    					try {
+			    						startActivity(market);
+			    					} catch(ActivityNotFoundException e2) {
+			    						// doesn't have Market
+				    					new AlertDialog.Builder(context)
+				    						.setTitle(res.getString(R.string.error_market_unavailable))
+				    						.setMessage(res.getString(R.string.error_market_unavailable_details))
+				    						.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
+				    						.show();
+			    					}
+								}
+	    					})
+	    					.show();
+	    					
+	    				}
 		    		}
 				}
 			});
 		} catch (DatabaseFileException ex) {
-			Common.dialogDatabaseError(this, ex);
+			SimCard.dialogDatabaseError(this, ex);
 		} catch (IOException ex) {
-			Common.dialogIOError(this, ex);
+			SimCard.dialogIOError(this, ex);
 		}
     }
 
@@ -222,7 +253,7 @@ public class TabContacts extends ListActivity {
 	
 	private void checkResources() {
 		// check SIM availability
-    	if (Common.checkSimPhoneNumberAvailable(this)) {
+    	if (SimCard.checkSimPhoneNumberAvailable(this)) {
     		if (getListAdapter() == null)
     			setListAdapter(mAdapterContacts);
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
