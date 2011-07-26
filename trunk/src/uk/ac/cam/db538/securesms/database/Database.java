@@ -55,25 +55,7 @@ public final class Database {
 		if (mSingleton != null) 
 			return; //throw new DatabaseFileException("Database already initialized");
 		
-		//TODO: Just For Testing!!! 
-		File file = new File(filename);
-		if (file.exists())
-			file.delete();
-
 		new Database(filename);
-
-		//TODO: Just For Testing!!!
-		Conversation conv1 = Conversation.createConversation();
-		conv1.setPhoneNumber("+420605219051");
-		SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
-		keys1.setSimNumber("+123456789012");
-		keys1.setKeysSent(true);
-		keys1.setKeysConfirmed(true);
-		keys1.saveToFile();
-		conv1.saveToFile();
-		Conversation conv2 = Conversation.createConversation();
-		conv2.setPhoneNumber("+20104544366");
-		conv2.saveToFile();
 	}
 	
 	// LOW-LEVEL BIT MANIPULATION
@@ -183,8 +165,27 @@ public final class Database {
 		
 		boolean exists = new File(filename).exists();
 		smsFile = new DatabaseFile(filename);
-		if (!exists)
+		if (!exists) {
 			createFile();
+
+			//TODO: Just For Testing!!!
+			Conversation conv1 = Conversation.createConversation();
+			conv1.setPhoneNumber("+420605219051");
+			SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
+			keys1.setSimNumber("+447879116797");
+			keys1.setKeysSent(true);
+			keys1.setKeysConfirmed(true);
+			keys1.saveToFile();
+			conv1.saveToFile();
+			Conversation conv2 = Conversation.createConversation();
+			conv2.setPhoneNumber("+20104544366");
+			SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
+			keys2.setSimNumber("+447879116797");
+			keys2.setKeysSent(true);
+			keys2.setKeysConfirmed(false);
+			keys2.saveToFile();
+			conv2.saveToFile();
+		}
 	}
 	
 	/**

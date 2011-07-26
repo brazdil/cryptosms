@@ -8,6 +8,7 @@ import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.utils.Common;
 import uk.ac.cam.db538.securesms.utils.Contact;
 import uk.ac.cam.db538.securesms.utils.DummyOnClickListener;
+import uk.ac.cam.db538.securesms.utils.Common.OnSimStateListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -77,37 +78,69 @@ public class ConversationActivity extends Activity {
         }
         mAvatarView.setImageDrawable(avatarDrawable);
         mAvatarView.setVisibility(View.VISIBLE);
+        
+        // register for changes in SIM state
+        Common.registerSimStateListener(this, new OnSimStateListener() {
+			@Override
+			public void onChange() {
+				checkResources();
+			}
+		});
 	}
 	
-	public void onStart() {
-		super.onStart();
-	    Context context = this;
-	    Resources res = getResources();
-
-	    try {
-			mConversation = Conversation.getConversation(mContact.getPhoneNumber());
-			
-	    	if (!mConversation.hasKeysExchanged(Common.getSimNumber(context))) {
-	    		if (!errorNoKeysShown) {
-					// secure connection has not been successfully established yet
-					new AlertDialog.Builder(context)
-						.setTitle(res.getString(R.string.conversation_no_keys))
-						.setMessage(res.getString(R.string.conversation_no_keys_details))
-						.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
-						.show();
-					errorNoKeysShown = true;
-	    		}
-	    		
-				// disable the send button and text view
-				mSendButton.setEnabled(false);
-				mTextEditor.setEnabled(false);
+	private void modeEnabled(boolean value) {
+		Resources res = getResources();
+		
+		mSendButton.setEnabled(value);
+		mTextEditor.setEnabled(value);
+		mTextEditor.setHint((value) ? res.getString(R.string.conversation_type_to_compose) : null);
+		mTextEditor.setFocusable(value);
+		mTextEditor.setFocusableInTouchMode(value);
+	}
+	
+	private void checkResources() {
+		// check for SIM availability
+		if (Common.checkSimNumberAvailable(this)) {
+		    Resources res = getResources();
+		    try {
+				mConversation = Conversation.getConversation(mContact.getPhoneNumber());
+		
+				// check keys availability
+		    	if (!mConversation.hasKeysExchanged(Common.getSimNumber(this))) {
+		    		if (!errorNoKeysShown) {
+						// secure connection has not been successfully established yet
+						new AlertDialog.Builder(this)
+							.setTitle(res.getString(R.string.conversation_no_keys))
+							.setMessage(res.getString(R.string.conversation_no_keys_details))
+							.setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
+							.setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									// TODO Auto-generated method stub
+									
+								}
+							})
+							.show();
+						errorNoKeysShown = true;
+		    		}
+		    		
+					// set to disabled mode
+		    		modeEnabled(false);
+				} else
+					modeEnabled(true);
+			} catch (DatabaseFileException ex) {
+				Common.dialogDatabaseError(this, ex);
+				this.finish();
+			} catch (IOException ex) {
+				Common.dialogIOError(this, ex);
+				this.finish();
 			}
-		} catch (DatabaseFileException ex) {
-			Common.dialogDatabaseError(context, ex);
-			this.finish();
-		} catch (IOException ex) {
-			Common.dialogIOError(context, ex);
-			this.finish();
-		}
+		} else
+			modeEnabled(false);
+	}
+	
+	public void onResume() {
+		super.onResume();
+		checkResources();
 	}
 }

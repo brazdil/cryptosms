@@ -12,6 +12,7 @@ import uk.ac.cam.db538.securesms.database.Conversation.ConversationUpdateListene
 import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.securesms.utils.Common;
 import uk.ac.cam.db538.securesms.utils.Contact;
+import uk.ac.cam.db538.securesms.utils.DummyOnClickListener;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -36,6 +37,7 @@ public class TabContacts extends ListActivity {
 	private static final int NEW_CONTACT = 1;
 	
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();;
+	private TabContactsItem mHeaderView;
 	
 	private void updateContacts(Context context) throws DatabaseFileException, IOException {
 		String simNumber = Common.getSimNumber(context);
@@ -54,6 +56,26 @@ public class TabContacts extends ListActivity {
 		intent.putExtra("phoneNumber", conv.getPhoneNumber());
 		startActivity(intent);
 	}	
+	
+	private void startConversation(String phoneNumber) {
+    	// get the appropriate conversation
+    	Conversation conv;
+		try {
+			conv = Conversation.getConversation(phoneNumber);
+	    	if (conv == null) {
+	    		conv = Conversation.createConversation();
+	    		conv.setPhoneNumber(phoneNumber);
+	    		conv.saveToFile();
+	    	}
+			
+			// if we managed to get it, start the activity
+			startConversation(conv);
+		} catch (DatabaseFileException ex) {
+			Common.dialogDatabaseError(this, ex);
+		} catch (IOException ex) {
+			Common.dialogIOError(this, ex);
+		}
+	}
 
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -68,9 +90,9 @@ public class TabContacts extends ListActivity {
 		listView.setFastScrollEnabled(true);
         
         // the New contact header
-        TabContactsItem headerView = (TabContactsItem) inflater.inflate(R.layout.item_main_contacts, listView, false);
-        headerView.bind(getString(R.string.tab_contacts_header), getString(R.string.tab_contacts_header_small));
-        listView.addHeaderView(headerView, null, true);
+		mHeaderView = (TabContactsItem) inflater.inflate(R.layout.item_main_contacts, listView, false);
+        mHeaderView.bind(getString(R.string.tab_contacts_header), getString(R.string.tab_contacts_header_small));
+        listView.addHeaderView(mHeaderView, null, true);
         
         try {
         	// initialize the list of Contacts
@@ -181,52 +203,30 @@ public class TabContacts extends ListActivity {
     				final ArrayList<Contact.PhoneNumber> phoneNumbers = 
     					Contact.getPhoneNumbers(context, contactId);
 
-    				if (phoneNumbers.size() > 0) {
+    				if (phoneNumbers.size() > 1) {
         				final CharSequence[] items = new CharSequence[phoneNumbers.size()];
     					for (int i = 0; i < phoneNumbers.size(); ++i)
     						items[i] = phoneNumbers.get(i).toString();
 	
 	    				// display them in a dialog
-	    				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    				builder.setTitle(res.getString(R.string.contacts_pick_phone_number));
-	    				builder.setItems(items, new DialogInterface.OnClickListener() {
-	    				    public void onClick(DialogInterface dialog, int item) {
-	    				    	Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
-	    				    	
-	    				    	// get the appropriate conversation
-	    				    	Conversation conv;
-								try {
-									conv = Conversation.getConversation(phoneNumber.getPhoneNumber());
-		    				    	if (conv == null) {
-		    				    		conv = Conversation.createConversation();
-		    				    		conv.setPhoneNumber(phoneNumber.getPhoneNumber());
-		    				    		conv.saveToFile();
-		    				    	}
-									
-									// if we managed to get it, start the activity
-									startConversation(conv);
-								} catch (DatabaseFileException ex) {
-									Common.dialogDatabaseError(context, ex);
-								} catch (IOException ex) {
-									Common.dialogIOError(context, ex);
-								}
-	    				    }
-	    				});
-	    				AlertDialog alert = builder.create(); 
-	    				alert.show();
+	    				new AlertDialog.Builder(this)
+	    					.setTitle(res.getString(R.string.contacts_pick_phone_number))
+	    					.setItems(items, new DialogInterface.OnClickListener() {
+		    				    public void onClick(DialogInterface dialog, int item) {
+		    				    	Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
+		    				    	startConversation(phoneNumber.getPhoneNumber());
+		    				    }
+		    				})
+	    					.show();
+    				} else if (phoneNumbers.size() == 1) {
+    					startConversation(phoneNumbers.get(0).getPhoneNumber());
     				} else {
     					// no phone numbers assigned to the contact
-	    				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    				builder.setTitle(res.getString(R.string.contacts_no_phone_numbers));
-	    				builder.setMessage(res.getString(R.string.contacts_no_phone_numbers_details));
-	    				builder.setNeutralButton(res.getString(R.string.ok), new OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								// don't do anything
-							}
-						});
-	    				AlertDialog alert = builder.create(); 
-	    				alert.show();
+	    				new AlertDialog.Builder(this)
+	    					.setTitle(res.getString(R.string.contacts_no_phone_numbers))
+	    					.setMessage(res.getString(R.string.contacts_no_phone_numbers_details))
+	    					.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
+	    					.show();
     				}
     			}
     		}
