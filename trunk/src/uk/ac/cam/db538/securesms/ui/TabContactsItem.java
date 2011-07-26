@@ -129,9 +129,13 @@ public class TabContactsItem extends RelativeLayout {
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:
-	    		case BEING_SENT:
+	    		case SENDING_KEYS:
 	    			mStatusView.setText(res.getString(R.string.item_contacts_sending_keys));
-	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_keys));
+	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_something));
+	    			break;
+	    		case SENDING_CONFIRMATION:
+	    			mStatusView.setText(res.getString(R.string.item_contacts_sending_confirmation));
+	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_something));
 	    			break;
 	    		case WAITING_FOR_REPLY:
 	    			mStatusView.setText(res.getString(R.string.item_contacts_waiting_for_reply));

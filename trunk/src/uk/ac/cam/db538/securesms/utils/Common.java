@@ -67,7 +67,7 @@ public class Common {
 			return null;
 		
 		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		return "+447879116797"; //tMgr.getLine1Number();
+		return tMgr.getLine1Number(); //"+447879116797"
 	}
 	
 	/**

@@ -163,9 +163,9 @@ public final class Database {
 	private Database(String filename) throws IOException, DatabaseFileException {
 		mSingleton = this;
 		
-		File file = new File(filename);
+		/*File file = new File(filename);
 		if (file.exists())
-			file.delete();
+			file.delete();*/
 		
 		boolean exists = new File(filename).exists();
 		smsFile = new DatabaseFile(filename);
@@ -187,8 +187,8 @@ public final class Database {
 			SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
 			keys2.setSimNumber("89441000301641313004");
 			keys2.setSimSerial(true);
-			keys2.setKeysSent(true);
-			keys2.setKeysConfirmed(false);
+			keys2.setKeysSent(false);
+			keys2.setKeysConfirmed(true);
 			keys2.saveToFile();
 			SessionKeys keys3 = SessionKeys.createSessionKeys(conv2);
 			keys3.setSimNumber("07879116797");

@@ -434,7 +434,7 @@
     <string name="app_label">Secure SMS</string>
     <string name="item_contacts_sending_keys">Sending handshake...</string>
     <string name="item_contacts_waiting_for_reply">Waiting for confirmation...</string>
-    <string name="item_contacts_keys_exchanged">Encryption active</string>
+    <string name="item_contacts_keys_exchanged">Encryption active</string><string name="item_contacts_sending_confirmation">Accepting handshake...</string>
     <string name="item_contacts_keys_error">Error! Encryption data not found</string>
     <string name="tab_recent">Recent</string>
     <string name="tab_contacts">Contacts</string>

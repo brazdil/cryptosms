@@ -362,7 +362,8 @@ public class SessionKeys {
 	}
 
 	public enum SessionKeysStatus {
-		BEING_SENT,
+		SENDING_KEYS,
+		SENDING_CONFIRMATION,
 		WAITING_FOR_REPLY,
 		KEYS_EXCHANGED
 	}
@@ -381,8 +382,12 @@ public class SessionKeys {
 			else
 				return SessionKeysStatus.WAITING_FOR_REPLY;
 		}
-		else
-			return SessionKeysStatus.BEING_SENT;
+		else {
+			if (mKeysConfirmed)
+				return SessionKeysStatus.SENDING_CONFIRMATION;
+			else
+				return SessionKeysStatus.SENDING_KEYS;
+		}
 	}
 	
 	// GETTERS / SETTERS
