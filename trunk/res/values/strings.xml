@@ -456,7 +456,7 @@
     <string name="read_only">Read only</string>
     <string name="setup">Setup</string>
     <string name="error_no_sim_number">SIM number unavailable</string>
-    <string name="error_no_sim_number_details">Unfortunately, Android was not able to determine the phone number of your current SIM card. Please set it manually or switch to read-only mode.</string>
+    <string name="error_no_sim_number_details">Unfortunately, Android was not able to determine the phone number of your current SIM card. This tends to happen with new SIM cards, e.g. after changing the carrier. Do you want to import existing encrypted sessions to this SIM card?</string>
     <string name="error_no_sim_available">No SIM available</string>
     <string name="error_no_sim_available_details">No SIM card is present in the handset or the Airplane mode is switched on. You will only be able to read the history of conversations.</string>
     <string name="tab_contacts_not_available">Not available</string>
@@ -467,6 +467,10 @@
     <string name="to_market">Open Market</string>
     <string name="error_market_unavailable">Android Market unavailable</string>
     <string name="error_market_unavailable_details">An error occured while trying to open the Android Market. Try installing Public Key Infractructure manually.</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+    <string name="error_no_sim_number_import">Select the phone number of this SIM</string>
+    <string name="error_no_sim_number_import_none">None of these</string>
 
 </resources>
 

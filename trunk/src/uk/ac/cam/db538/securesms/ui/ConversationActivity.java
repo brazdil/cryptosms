@@ -93,11 +93,11 @@ public class ConversationActivity extends Activity {
 	
 	private void checkResources() {
 		// check for SIM availability
-		if (SimCard.checkSimPhoneNumberAvailable(this)) {
-		    Resources res = getResources();
-		    try {
+	    try {
+			if (SimCard.checkSimPhoneNumberAvailable(this)) {
+			    Resources res = getResources();
 				mConversation = Conversation.getConversation(mContact.getPhoneNumber());
-		
+
 				// check keys availability
 		    	if (!SimCard.hasKeysExchangedForSIM(this, mConversation)) {
 		    		if (!errorNoKeysShown) {
@@ -119,15 +119,15 @@ public class ConversationActivity extends Activity {
 		    		modeEnabled(false);
 				} else
 					modeEnabled(true);
-			} catch (DatabaseFileException ex) {
-				SimCard.dialogDatabaseError(this, ex);
-				this.finish();
-			} catch (IOException ex) {
-				SimCard.dialogIOError(this, ex);
-				this.finish();
-			}
-		} else
-			modeEnabled(false);
+			} else
+				modeEnabled(false);
+		} catch (DatabaseFileException ex) {
+			SimCard.dialogDatabaseError(this, ex);
+			this.finish();
+		} catch (IOException ex) {
+			SimCard.dialogIOError(this, ex);
+			this.finish();
+		}
 	}
 	
 	public void onResume() {

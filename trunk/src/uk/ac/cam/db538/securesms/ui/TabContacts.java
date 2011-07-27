@@ -140,8 +140,16 @@ public class TabContacts extends ListActivity {
 			listView.setOnItemClickListener(new OnItemClickListener() {
 				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
 					// check that the SIM is available
-					if (!SimCard.checkSimPhoneNumberAvailable(context))
+					try {
+						if (!SimCard.checkSimPhoneNumberAvailable(context))
+							return;
+					} catch (DatabaseFileException ex) {
+						SimCard.dialogDatabaseError(context, ex);
 						return;
+					} catch (IOException ex) {
+						SimCard.dialogIOError(context, ex);
+						return;
+					}
 					
 					TabContactsItem item = (TabContactsItem) view;
 					Conversation conv;
@@ -249,14 +257,20 @@ public class TabContacts extends ListActivity {
 	
 	private void checkResources() {
 		// check SIM availability
-    	if (SimCard.checkSimPhoneNumberAvailable(this)) {
-    		if (getListAdapter() == null)
-    			setListAdapter(mAdapterContacts);
-    		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
-    	} else {
-    		setListAdapter(null);
-            mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
-    	}
+		try {
+	    	if (SimCard.checkSimPhoneNumberAvailable(this)) {
+	    		if (getListAdapter() == null)
+	    			setListAdapter(mAdapterContacts);
+	    		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
+	    	} else {
+	    		setListAdapter(null);
+	            mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
+	    	}
+		} catch (DatabaseFileException ex) {
+			SimCard.dialogDatabaseError(this, ex);
+		} catch (IOException ex) {
+			SimCard.dialogIOError(this, ex);
+		}
 	}
 	
     public void onResume() {

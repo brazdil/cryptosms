@@ -387,9 +387,9 @@ public class Message {
 				this.setIndexMessageParts(0L);
 			this.saveToFile(false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			Database.getDatabase().unlockFile(lockAllow);	
 		}
@@ -455,9 +455,9 @@ public class Message {
 			// make this instance invalid
 			this.mEntryIndex = -1L;
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			db.unlockFile(lockAllow);
 		}

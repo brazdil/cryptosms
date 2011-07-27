@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
-import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -328,9 +327,9 @@ public class Conversation {
 			this.setIndexSessionKeys(keys.getEntryIndex());
 			this.saveToFile(false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			Database.getDatabase().unlockFile(lockAllow);	
 		}
@@ -369,9 +368,9 @@ public class Conversation {
 			this.setIndexMessages(msg.getEntryIndex());
 			this.saveToFile(false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			Database.getDatabase().unlockFile(lockAllow);	
 		}
@@ -482,9 +481,9 @@ public class Conversation {
 		// make this instance invalid
 		this.mEntryIndex = -1L;
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			db.unlockFile(lockAllow);
 		}
@@ -515,12 +514,12 @@ public class Conversation {
 			if (isSerial) {
 				// serial number is saved in the simNumber
 				// if there is a serial number in the keys as well, compare these two
-				if (keys.getSimSerial() && simNumber.compareTo(keys.getSimNumber()) == 0)
+				if (keys.usesSimSerial() && simNumber.compareTo(keys.getSimNumber()) == 0)
 					return keys;
 			} else {
 				// SIM phone number is saved in the simNumber
 				// if there is a phone number in the keys as well, compare these two
-				if (!keys.getSimSerial() && PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
+				if (!keys.usesSimSerial() && PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
 					return keys;
 			}
 			keys = keys.getNextSessionKeys(lockAllow);

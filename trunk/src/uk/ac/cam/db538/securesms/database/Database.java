@@ -163,9 +163,9 @@ public final class Database {
 	private Database(String filename) throws IOException, DatabaseFileException {
 		mSingleton = this;
 		
-		/*File file = new File(filename);
+		File file = new File(filename);
 		if (file.exists())
-			file.delete();*/
+			file.delete();
 		
 		boolean exists = new File(filename).exists();
 		smsFile = new DatabaseFile(filename);
@@ -179,13 +179,25 @@ public final class Database {
 			keys1.setSimNumber("89441000301641313004");
 			keys1.setSimSerial(true);
 			keys1.setKeysSent(true);
-			keys1.setKeysConfirmed(true);
+			keys1.setKeysConfirmed(false);
 			keys1.saveToFile();
+			SessionKeys keys4 = SessionKeys.createSessionKeys(conv1);
+			keys4.setSimNumber("07879116797");
+			keys4.setSimSerial(false);
+			keys4.setKeysSent(true);
+			keys4.setKeysConfirmed(true);
+			keys4.saveToFile();
+			SessionKeys keys5 = SessionKeys.createSessionKeys(conv1);
+			keys5.setSimNumber("07572306095");
+			keys5.setSimSerial(false);
+			keys5.setKeysSent(true);
+			keys5.setKeysConfirmed(true);
+			keys5.saveToFile();
 			conv1.saveToFile();
 			Conversation conv2 = Conversation.createConversation();
 			conv2.setPhoneNumber("+20104544366");
 			SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
-			keys2.setSimNumber("89441000301641313004");
+			keys2.setSimNumber("89441000301641313002");
 			keys2.setSimSerial(true);
 			keys2.setKeysSent(false);
 			keys2.setKeysConfirmed(true);
@@ -216,9 +228,9 @@ public final class Database {
 			// add some empty entries
 			Empty.addEmptyEntries(countFreeEntries, false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			unlockFile();
 		}
@@ -299,7 +311,7 @@ public final class Database {
 			smsFile.mFile.seek(offset);
 			smsFile.mFile.read(data);
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			unlockFile(lock);
 		}
@@ -337,7 +349,7 @@ public final class Database {
 			smsFile.mFile.seek(offset);
 			smsFile.mFile.write(data);
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			unlockFile(lock);
 		}

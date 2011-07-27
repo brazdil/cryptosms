@@ -253,9 +253,9 @@ public class Header {
 			this.setIndexConversations(conv.getEntryIndex());
 			this.saveToFile(false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			Database.getDatabase().unlockFile(lockAllow);	
 		}
@@ -288,9 +288,9 @@ public class Header {
 			this.setIndexEmpty(empty.getEntryIndex());
 			this.saveToFile(false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			Database.getDatabase().unlockFile(lockAllow);	
 		}

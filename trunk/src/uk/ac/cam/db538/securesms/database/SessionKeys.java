@@ -353,9 +353,9 @@ public class SessionKeys {
 			// make this instance invalid
 			this.mEntryIndex = -1L;
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			db.unlockFile(lockAllow);
 		}
@@ -412,7 +412,7 @@ public class SessionKeys {
 		mKeysConfirmed = keysConfirmed;
 	}
 
-	public boolean getSimSerial() {
+	public boolean usesSimSerial() {
 		return mSimSerial;
 	}
 

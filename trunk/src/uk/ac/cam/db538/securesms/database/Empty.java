@@ -172,9 +172,9 @@ class Empty {
 			// save header
 			header.saveToFile(false);
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			db.unlockFile(lockAllow);
 		}
@@ -207,9 +207,9 @@ class Empty {
 				Empty.createEmpty(false);
 			}
 		} catch (DatabaseFileException ex) {
-			throw new DatabaseFileException(ex.getMessage());
+			throw ex;
 		} catch (IOException ex) {
-			throw new IOException(ex.getMessage());
+			throw ex;
 		} finally {
 			db.unlockFile(lockAllow);
 		}

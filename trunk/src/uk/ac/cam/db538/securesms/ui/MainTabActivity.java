@@ -1,6 +1,9 @@
 package uk.ac.cam.db538.securesms.ui;
 
+import java.io.IOException;
+
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.database.DatabaseFileException;
 import uk.ac.cam.db538.securesms.simcard.SimCard;
 import android.app.TabActivity;
 import android.content.Intent;
@@ -40,6 +43,14 @@ public class MainTabActivity extends TabActivity {
 	public void onStart() {
 		super.onStart();
 	    // just to show the possible error ASAP
-	    SimCard.checkSimPhoneNumberAvailable(this);
+		try {
+			SimCard.checkSimPhoneNumberAvailable(this);
+		} catch (DatabaseFileException ex) {
+			SimCard.dialogDatabaseError(this, ex);
+			this.finish();
+		} catch (IOException ex) {
+			SimCard.dialogIOError(this, ex);
+			this.finish();
+		}
 	}
 }
