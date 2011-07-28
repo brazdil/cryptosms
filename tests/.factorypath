@@ -1,0 +1,7 @@
+<factorypath>
+    <factorypathentry kind="PLUGIN" id="org.eclipse.jst.ws.annotations.core" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="WKSPJAR" id="/Secure SMS Test/lib/AndroidMockGenerator.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="ANDROID_RUNTIME" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="VARJAR" id="APP_UNDER_TEST" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="WKSPJAR" id="/Secure SMS Test/lib/android_framework_mocks.jar" enabled="true" runInBatchMode="false"/>
+</factorypath>
