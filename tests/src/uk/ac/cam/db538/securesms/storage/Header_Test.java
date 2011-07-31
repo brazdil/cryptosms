@@ -1,9 +1,12 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.Header;
 import junit.framework.TestCase;
 
 public class Header_Test extends TestCase {
@@ -17,7 +20,7 @@ public class Header_Test extends TestCase {
 		super.tearDown();
 	}
 
-	public void testConstruction() throws DatabaseFileException, IOException {
+	public void testConstruction() throws StorageFileException, IOException {
 		// create a header
 		Header header = Header.createHeader();
 		header.setVersion(12);
@@ -34,7 +37,7 @@ public class Header_Test extends TestCase {
 		assertEquals(header.getIndexConversations(), 15L);
 	}
 	
-	public void testIndices() throws DatabaseFileException, IOException {
+	public void testIndices() throws StorageFileException, IOException {
 		// INDICES OUT OF BOUNDS
 		Header header = Header.createHeader();
 		
@@ -72,7 +75,7 @@ public class Header_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws DatabaseFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException {
 		long indexFree = 25L;
 		long indexConversation = 13L;
 		int version = 32;
@@ -83,10 +86,10 @@ public class Header_Test extends TestCase {
 		header.setVersion(version);
 		header.saveToFile();
 		
-		byte[] dataAll = Database.getDatabase().getEntry(0);
+		byte[] dataAll = Storage.getDatabase().getEntry(0);
 		
 		// chunk length
-		assertEquals(dataAll.length, Database.CHUNK_SIZE);
+		assertEquals(dataAll.length, Storage.CHUNK_SIZE);
 		
 		// plain header
 		assertEquals(dataAll[0], (byte) 0x53); // S
@@ -95,27 +98,27 @@ public class Header_Test extends TestCase {
 		assertEquals(dataAll[3], (byte) version); // Version
 		
 		// decrypt the encoded part
-		ByteBuffer buf = ByteBuffer.allocate(Database.CHUNK_SIZE - 4);
-		buf.put(dataAll, 4, Database.CHUNK_SIZE - 4);
+		ByteBuffer buf = ByteBuffer.allocate(Storage.CHUNK_SIZE - 4);
+		buf.put(dataAll, 4, Storage.CHUNK_SIZE - 4);
 		byte[] dataPlain = Encryption.decryptSymmetric(buf.array(), Encryption.retreiveEncryptionKey());
 		
 		// check the indices
-		assertEquals(Database.getInt(dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
-		assertEquals(Database.getInt(dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
+		assertEquals(Storage.getInt(dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
+		assertEquals(Storage.getInt(dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
 	}
 
-	public void testParseData() throws IOException, DatabaseFileException {
+	public void testParseData() throws IOException, StorageFileException {
 		long indexFree = 25L;
 		long indexConversation = 13L;
 		int version = 17;
 		
-		byte[] dataPlain = new byte[Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD];
-		System.arraycopy(Database.getBytes(indexFree), 0, dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
-		System.arraycopy(Database.getBytes(indexConversation), 0, dataPlain, Database.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
+		byte[] dataPlain = new byte[Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD];
+		System.arraycopy(Storage.getBytes(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
+		System.arraycopy(Storage.getBytes(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
 		
-		byte[] dataAll = new byte[Database.CHUNK_SIZE];
-		System.arraycopy(dataEncrypted, 0, dataAll, 4, Database.CHUNK_SIZE - 4);
+		byte[] dataAll = new byte[Storage.CHUNK_SIZE];
+		System.arraycopy(dataEncrypted, 0, dataAll, 4, Storage.CHUNK_SIZE - 4);
 
 		// wrong header (SMS)
 		dataAll[0] = 0x53; // S
@@ -123,17 +126,17 @@ public class Header_Test extends TestCase {
 		dataAll[2] = 0x53; // S
 		try {
 			// inject it in the file
-			Database.getDatabase().setEntry(0, dataAll);
+			Storage.getDatabase().setEntry(0, dataAll);
 			Header.forceClearCache();
 			Header.getHeader();
 			assertTrue(false);
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 		}
 
 		// fixed, version set
 		dataAll[1] = 0x4D; // M
 		dataAll[3] = (byte) version;
-		Database.getDatabase().setEntry(0, dataAll);
+		Storage.getDatabase().setEntry(0, dataAll);
 		Header.forceClearCache();
 		Header header = null;
 		try {
@@ -141,7 +144,7 @@ public class Header_Test extends TestCase {
 			assertEquals(indexFree, header.getIndexEmpty());
 			assertEquals(indexConversation, header.getIndexConversations());
 			assertEquals(version, header.getVersion());
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			assertTrue(false);
 		}
 	}

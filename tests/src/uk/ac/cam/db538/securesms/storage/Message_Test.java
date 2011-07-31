@@ -1,9 +1,13 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import android.text.format.Time;
-import uk.ac.cam.db538.securesms.database.Message.MessageType;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.Message;
+import uk.ac.cam.db538.securesms.storage.Message.MessageType;
 import junit.framework.TestCase;
 
 public class Message_Test extends TestCase {
@@ -53,7 +57,7 @@ public class Message_Test extends TestCase {
 		assertEquals(msg.getIndexNext(), indexNext);
 	}
 	
-	public void testConstruction() throws DatabaseFileException, IOException {
+	public void testConstruction() throws StorageFileException, IOException {
 		// create a Message entry
 		Conversation conv = Conversation.createConversation();
 		Message msg = Message.createMessage(conv);
@@ -72,7 +76,7 @@ public class Message_Test extends TestCase {
 		checkData(msg);
 	}
 	
-	public void testIndices() throws DatabaseFileException, IOException {
+	public void testIndices() throws StorageFileException, IOException {
 		// INDICES OUT OF BOUNDS
 		Conversation conv = Conversation.createConversation();
 		Message msg = Message.createMessage(conv);
@@ -117,7 +121,7 @@ public class Message_Test extends TestCase {
 		}
 	}
 	
-	public void testCreateData() throws DatabaseFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException {
 		// set data
 		Conversation conv = Conversation.createConversation();
 		Message msg = Message.createMessage(conv);
@@ -131,26 +135,26 @@ public class Message_Test extends TestCase {
 		flags |= (messageType == MessageType.OUTGOING) ? 0x20 : 0x00;
 		
 		// get the generated data
-		byte[] dataEncrypted = Database.getDatabase().getEntry(msg.getEntryIndex());
+		byte[] dataEncrypted = Storage.getDatabase().getEntry(msg.getEntryIndex());
 		
 		// chunk length
-		assertEquals(dataEncrypted.length, Database.CHUNK_SIZE);
+		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
 		
 		// decrypt the encoded part
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		
 		// check the data
 		assertEquals(dataPlain[0], flags);
-		Time time = new Time(); time.parse3339(Database.fromLatin(dataPlain, 1, 29));
+		Time time = new Time(); time.parse3339(Storage.fromLatin(dataPlain, 1, 29));
 		assertEquals(Time.compare(time, timeStamp), 0);
-		assertEquals(Database.fromLatin(dataPlain, 30, 140), messageBody);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16), indexParent);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexMessageParts);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+		assertEquals(Storage.fromLatin(dataPlain, 30, 140), messageBody);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexParent);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessageParts);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 	
-	public void testParseData() throws DatabaseFileException, IOException {
+	public void testParseData() throws StorageFileException, IOException {
 		Conversation conv = Conversation.createConversation();
 		Message msg = Message.createMessage(conv);
 		long index = msg.getEntryIndex();
@@ -162,20 +166,20 @@ public class Message_Test extends TestCase {
 		flags |= (messageType == MessageType.OUTGOING) ? 0x20 : 0x00;
 	
 		// create plain data
-		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
+		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Database.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 1, 29);
-		System.arraycopy(Database.toLatin(messageBody, 140), 0, dataPlain, 30, 140);
-		System.arraycopy(Database.getBytes(indexParent), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16, 4);
-		System.arraycopy(Database.getBytes(indexMessageParts), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(Storage.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 1, 29);
+		System.arraycopy(Storage.toLatin(messageBody, 140), 0, dataPlain, 30, 140);
+		System.arraycopy(Storage.getBytes(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
+		System.arraycopy(Storage.getBytes(indexMessageParts), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
 	
 		// inject it in the file
-		Database.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getDatabase().setEntry(index, dataEncrypted);
 
 		// have it parsed
 		Message.forceClearCache();

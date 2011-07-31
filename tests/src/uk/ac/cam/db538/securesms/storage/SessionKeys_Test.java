@@ -1,9 +1,13 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import junit.framework.TestCase;
 
 public class SessionKeys_Test extends TestCase {
@@ -60,7 +64,7 @@ public class SessionKeys_Test extends TestCase {
 		assertEquals(indexNext, keys.getIndexNext());
 	}
 	
-	public void testConstruction() throws DatabaseFileException, IOException {
+	public void testConstruction() throws StorageFileException, IOException {
 		Conversation conv = Conversation.createConversation();
 		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		
@@ -77,7 +81,7 @@ public class SessionKeys_Test extends TestCase {
 		checkData(keys, false);
 	}
 			
-	public void testIndices() throws DatabaseFileException, IOException {
+	public void testIndices() throws StorageFileException, IOException {
 		// INDICES OUT OF BOUNDS
 		Conversation conv = Conversation.createConversation();
 		SessionKeys keys = SessionKeys.createSessionKeys(conv);
@@ -95,55 +99,55 @@ public class SessionKeys_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws DatabaseFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException {
 		Conversation conv = Conversation.createConversation();
 		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		setData(keys, true);
 		keys.saveToFile();
 		
 		// get the generated data
-		byte[] dataEncrypted = Database.getDatabase().getEntry(keys.getEntryIndex());
+		byte[] dataEncrypted = Storage.getDatabase().getEntry(keys.getEntryIndex());
 		
 		// chunk length
-		assertEquals(dataEncrypted.length, Database.CHUNK_SIZE);
+		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
 		
 		// decrypt the encoded part
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		
 		// check the data
 		assertEquals(flags, dataPlain[0]);
-		assertEquals(Database.fromLatin(dataPlain, 1, 32), simNumberResult);
+		assertEquals(Storage.fromLatin(dataPlain, 1, 32), simNumberResult);
 		CustomAsserts.assertArrayEquals(dataPlain, 33, sessionKey_Out, 0, 32);
 		assertEquals(lastID_Out, dataPlain[65]);
 		CustomAsserts.assertArrayEquals(dataPlain, 66, sessionKey_In, 0, 32);
 		assertEquals(lastID_In, dataPlain[98]);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexParent);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);		
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexParent);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);		
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
-	public void testParseData() throws DatabaseFileException, IOException {
+	public void testParseData() throws StorageFileException, IOException {
 		Conversation conv = Conversation.createConversation();
 		SessionKeys keys = SessionKeys.createSessionKeys(conv);
 		long index = keys.getEntryIndex();
 		
 		// create plain data
-		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
+		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Database.toLatin(simNumber, 32), 0, dataPlain, 1, 32);
+		System.arraycopy(Storage.toLatin(simNumber, 32), 0, dataPlain, 1, 32);
 		System.arraycopy(sessionKey_Out, 0, dataPlain, 33, 32);
 		dataPlain[65] = lastID_Out;
 		System.arraycopy(sessionKey_In, 0, dataPlain, 66, 32);
 		dataPlain[98] = lastID_In;
-		System.arraycopy(Database.getBytes(indexParent), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(Storage.getBytes(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
 
 		// inject it into the file
-		Database.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getDatabase().setEntry(index, dataEncrypted);
 		
 		// have it parsed
 		SessionKeys.forceClearCache();

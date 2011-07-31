@@ -1,8 +1,11 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.Empty;
 import junit.framework.TestCase;
 
 public class Empty_Test extends TestCase {
@@ -16,7 +19,7 @@ public class Empty_Test extends TestCase {
 		super.tearDown();
 	}
 
-	public void testConstruction() throws DatabaseFileException, IOException {
+	public void testConstruction() throws StorageFileException, IOException {
 		// create a free entry
 		Empty free = Empty.createEmpty();
 
@@ -33,7 +36,7 @@ public class Empty_Test extends TestCase {
 		assertEquals(free.getIndexNext(), 15L);
 	}
 	
-	public void testIndices() throws DatabaseFileException, IOException {
+	public void testIndices() throws StorageFileException, IOException {
 		// INDICES OUT OF BOUNDS
 		
 		Empty free = Empty.createEmpty() ;
@@ -50,38 +53,38 @@ public class Empty_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws DatabaseFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException {
 		long indexNext = 36L;
 		
 		Empty free = Empty.createEmpty() ;
 		free.setIndexNext(indexNext);
 		free.saveToFile();
 
-		byte[] dataEncrypted = Database.getDatabase().getEntry(free.getEntryIndex());
+		byte[] dataEncrypted = Storage.getDatabase().getEntry(free.getEntryIndex());
 		
 		// chunk length
-		assertEquals(dataEncrypted.length, Database.CHUNK_SIZE);
+		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
 		
 		// decrypt the encoded part
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		
 		// check the indices
-		assertEquals(Database.getInt(dataPlain, Database.CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD - 4), indexNext);
+		assertEquals(Storage.getInt(dataPlain, Storage.CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD - 4), indexNext);
 	}
 
-	public void testParseData() throws DatabaseFileException, IOException {
+	public void testParseData() throws StorageFileException, IOException {
 		long indexNext = 25L;
 		
 		Empty free = Empty.createEmpty();
 		long index = free.getEntryIndex();
 		
 		// create plain data
-		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
-		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
+		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it and insert it in the file
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
-		Database.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getDatabase().setEntry(index, dataEncrypted);
 		
 		// have it parsed
 		Empty.forceClearCache();
@@ -100,7 +103,7 @@ public class Empty_Test extends TestCase {
 
 			// check structure
 			assertTrue(Common.checkStructure());
-		} catch (DatabaseFileException e) {
+		} catch (StorageFileException e) {
 			assertTrue(e.getMessage(), false);
 		} catch (IOException e) {
 			assertTrue(e.getMessage(), false);

@@ -1,14 +1,21 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.File;
 import java.io.IOException;
 
-import uk.ac.cam.db538.securesms.database.Database;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.Empty;
+import uk.ac.cam.db538.securesms.storage.Header;
+import uk.ac.cam.db538.securesms.storage.Message;
+import uk.ac.cam.db538.securesms.storage.MessagePart;
+import uk.ac.cam.db538.securesms.storage.SessionKeys;
 
 public class Common {
 	public static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
 
-	public static void clearFile() throws IOException, DatabaseFileException {
+	public static void clearFile() throws IOException, StorageFileException {
 		File file = new File(TESTING_FILE);
 		if (file.exists())
 			file.delete();
@@ -22,11 +29,11 @@ public class Common {
 		MessagePart.forceClearCache();
 		
 		// free the singleton
-		Database.freeSingleton();
-		Database.initSingleton(TESTING_FILE);
+		Storage.freeSingleton();
+		Storage.initSingleton(TESTING_FILE);
 	}
 
-	public static boolean checkStructure() throws DatabaseFileException, IOException {
+	public static boolean checkStructure() throws StorageFileException, IOException {
 		boolean visitedAll = true;
 		boolean corruptedPointers = false;
 		boolean multiplePointers = false;
@@ -40,7 +47,7 @@ public class Common {
 		MessagePart.forceClearCache();
 		
 		// initialize
-		Database db = Database.getDatabase();
+		Storage db = Storage.getDatabase();
 		int countEntries = (int) db.getEntriesCount();
 		boolean[] visitedEntries = new boolean[countEntries];
 		for (int i = 0; i < countEntries; ++i)

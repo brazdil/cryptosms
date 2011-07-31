@@ -1,9 +1,17 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.Empty;
+import uk.ac.cam.db538.securesms.storage.Header;
+import uk.ac.cam.db538.securesms.storage.Message;
+import uk.ac.cam.db538.securesms.storage.MessagePart;
+import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import android.text.format.Time;
 import junit.framework.TestCase;
 
@@ -48,7 +56,7 @@ public class Conversation_Test extends TestCase {
 		super.tearDown();
 	}
 	
-	public void testConstruction() throws DatabaseFileException, IOException {
+	public void testConstruction() throws StorageFileException, IOException {
 		Conversation conv = Conversation.createConversation();
 		assertTrue(Common.checkStructure());
 
@@ -62,7 +70,7 @@ public class Conversation_Test extends TestCase {
 		checkData(conv, false);
 	}
 	
-	public void testDelete() throws DatabaseFileException, IOException {
+	public void testDelete() throws StorageFileException, IOException {
 		for (int i = 0; i < 5; i++)
 		{
 			Conversation conv = Conversation.createConversation();
@@ -107,7 +115,7 @@ public class Conversation_Test extends TestCase {
 		}
 	}
 
-	public void testIndices() throws DatabaseFileException, IOException {
+	public void testIndices() throws StorageFileException, IOException {
 		// INDEX OUT OF BOUNDS
 		Conversation conv = Conversation.createConversation();
 		
@@ -188,7 +196,7 @@ public class Conversation_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws DatabaseFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException {
 		byte flags = 0;
 
 		Conversation conv = Conversation.createConversation() ;
@@ -196,44 +204,44 @@ public class Conversation_Test extends TestCase {
 		conv.saveToFile();
 		
 		// get the generated data
-		byte[] dataEncrypted = Database.getDatabase().getEntry(conv.getEntryIndex()); 
+		byte[] dataEncrypted = Storage.getDatabase().getEntry(conv.getEntryIndex()); 
 		
 		// chunk length
-		assertEquals(dataEncrypted.length, Database.CHUNK_SIZE);
+		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
 		
 		// decrypt the encoded part
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		
 		// check the data
 		assertEquals(flags, dataPlain[0]);
-		assertEquals(phoneNumberResult, Database.fromLatin(dataPlain, 1, 32));
-		Time time = new Time(); time.parse3339(Database.fromLatin(dataPlain, 33, 29));
+		assertEquals(phoneNumberResult, Storage.fromLatin(dataPlain, 1, 32));
+		Time time = new Time(); time.parse3339(Storage.fromLatin(dataPlain, 33, 29));
 		assertEquals(Time.compare(time, timeStamp), 0);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16), indexSessionKeys);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
-		assertEquals(Database.getInt(dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexSessionKeys);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
+		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
-	public void testParseData() throws DatabaseFileException, IOException {
+	public void testParseData() throws StorageFileException, IOException {
 		byte flags = 0;
 		
 		Conversation conv = Conversation.createConversation();
 		long index = conv.getEntryIndex();
 
 		// create plain data
-		byte[] dataPlain = new byte[Database.ENCRYPTED_ENTRY_SIZE];
+		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Database.toLatin(phoneNumber, 32), 0, dataPlain, 1, 32);
-		System.arraycopy(Database.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 33, 29);
-		System.arraycopy(Database.getBytes(indexSessionKeys), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 16, 4);
-		System.arraycopy(Database.getBytes(indexMessages), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(Database.getBytes(indexPrev), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(Database.getBytes(indexNext), 0, dataPlain, Database.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(Storage.toLatin(phoneNumber, 32), 0, dataPlain, 1, 32);
+		System.arraycopy(Storage.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 33, 29);
+		System.arraycopy(Storage.getBytes(indexSessionKeys), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
+		System.arraycopy(Storage.getBytes(indexMessages), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it and inject it into the file
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
-		Database.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getDatabase().setEntry(index, dataEncrypted);
 
 		// have it parsed
 		Conversation.forceClearCache();
@@ -243,14 +251,14 @@ public class Conversation_Test extends TestCase {
 		checkData(conv, false);
 	}
 	
-	public void testCreateConversation() throws DatabaseFileException, IOException {
+	public void testCreateConversation() throws StorageFileException, IOException {
 		// check that it takes only one entry
 		int countEmpty = Empty.getEmptyEntriesCount();
-		for (int i = 0; i < Database.ALIGN_SIZE / Database.CHUNK_SIZE * 5; ++i)
+		for (int i = 0; i < Storage.ALIGN_SIZE / Storage.CHUNK_SIZE * 5; ++i)
 		{
 			Conversation.createConversation();
 			if (countEmpty == 0)
-				assertEquals(Database.ALIGN_SIZE / Database.CHUNK_SIZE - 1, (countEmpty = Empty.getEmptyEntriesCount()));
+				assertEquals(Storage.ALIGN_SIZE / Storage.CHUNK_SIZE - 1, (countEmpty = Empty.getEmptyEntriesCount()));
 			else
 				assertEquals(countEmpty - 1, (countEmpty = Empty.getEmptyEntriesCount()));
 		}
