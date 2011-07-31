@@ -4,16 +4,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.database.Conversation;
-import uk.ac.cam.db538.securesms.database.DatabaseFileException;
-import uk.ac.cam.db538.securesms.database.Header;
-import uk.ac.cam.db538.securesms.database.SessionKeys;
-import uk.ac.cam.db538.securesms.database.Conversation.ConversationUpdateListener;
-import uk.ac.cam.db538.securesms.database.SessionKeys.SessionKeysStatus;
-import uk.ac.cam.db538.securesms.simcard.SimCard;
-import uk.ac.cam.db538.securesms.simcard.Contact;
-import uk.ac.cam.db538.securesms.simcard.DummyOnClickListener;
-import uk.ac.cam.db538.securesms.simcard.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.securesms.data.Contact;
+import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
+import uk.ac.cam.db538.securesms.data.SimCard;
+import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.securesms.data.Utils;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.Header;
+import uk.ac.cam.db538.securesms.storage.SessionKeys;
+import uk.ac.cam.db538.securesms.storage.Conversation.ConversationUpdateListener;
+import uk.ac.cam.db538.securesms.storage.SessionKeys.SessionKeysStatus;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -41,12 +42,12 @@ public class TabContacts extends ListActivity {
 	private TabContactsItem mNewContactView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
 	
-	private void updateContacts(Context context) throws DatabaseFileException, IOException {
+	private void updateContacts(Context context) throws StorageFileException, IOException {
 		mContacts.clear();
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			if (SimCard.getSessionKeysForSIM(this, conv) != null)
+			if (Utils.getSessionKeysForSIM(this, conv) != null)
 				mContacts.add(conv);
 			conv = conv.getNextConversation();
 		}
@@ -71,10 +72,10 @@ public class TabContacts extends ListActivity {
 			
 			// if we managed to get it, start the activity
 			startConversation(conv);
-		} catch (DatabaseFileException ex) {
-			SimCard.dialogDatabaseError(this, ex);
+		} catch (StorageFileException ex) {
+			Utils.dialogDatabaseError(this, ex);
 		} catch (IOException ex) {
-			SimCard.dialogIOError(this, ex);
+			Utils.dialogIOError(this, ex);
 		}
 	}
 
@@ -126,10 +127,10 @@ public class TabContacts extends ListActivity {
 					try {
 						updateContacts(getApplicationContext());
 						adapterContacts.notifyDataSetChanged();
-					} catch (DatabaseFileException ex) {
-						SimCard.dialogDatabaseError(context, ex);
+					} catch (StorageFileException ex) {
+						Utils.dialogDatabaseError(context, ex);
 					} catch (IOException ex) {
-						SimCard.dialogIOError(context, ex);
+						Utils.dialogIOError(context, ex);
 					}
 				}
 			});
@@ -141,13 +142,13 @@ public class TabContacts extends ListActivity {
 				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
 					// check that the SIM is available
 					try {
-						if (!SimCard.checkSimPhoneNumberAvailable(context))
+						if (!Utils.checkSimPhoneNumberAvailable(context))
 							return;
-					} catch (DatabaseFileException ex) {
-						SimCard.dialogDatabaseError(context, ex);
+					} catch (StorageFileException ex) {
+						Utils.dialogDatabaseError(context, ex);
 						return;
 					} catch (IOException ex) {
-						SimCard.dialogIOError(context, ex);
+						Utils.dialogIOError(context, ex);
 						return;
 					}
 					
@@ -156,13 +157,13 @@ public class TabContacts extends ListActivity {
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
 						try {
-							SessionKeys keys = SimCard.getSessionKeysForSIM(context, conv);
+							SessionKeys keys = Utils.getSessionKeysForSIM(context, conv);
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
-						} catch (DatabaseFileException ex) {
-							SimCard.dialogDatabaseError(context, ex);							// TODO Auto-generated catch block
+						} catch (StorageFileException ex) {
+							Utils.dialogDatabaseError(context, ex);							// TODO Auto-generated catch block
 						} catch (IOException ex) {
-							SimCard.dialogIOError(context, ex);
+							Utils.dialogIOError(context, ex);
 						}
 		    		} else {
 		    			// clicked on the header
@@ -201,10 +202,10 @@ public class TabContacts extends ListActivity {
 		    		}
 				}
 			});
-		} catch (DatabaseFileException ex) {
-			SimCard.dialogDatabaseError(this, ex);
+		} catch (StorageFileException ex) {
+			Utils.dialogDatabaseError(this, ex);
 		} catch (IOException ex) {
-			SimCard.dialogIOError(this, ex);
+			Utils.dialogIOError(this, ex);
 		}
     }
 
@@ -258,7 +259,7 @@ public class TabContacts extends ListActivity {
 	private void checkResources() {
 		// check SIM availability
 		try {
-	    	if (SimCard.checkSimPhoneNumberAvailable(this)) {
+	    	if (Utils.checkSimPhoneNumberAvailable(this)) {
 	    		if (getListAdapter() == null)
 	    			setListAdapter(mAdapterContacts);
 	    		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
@@ -266,10 +267,10 @@ public class TabContacts extends ListActivity {
 	    		setListAdapter(null);
 	            mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
 	    	}
-		} catch (DatabaseFileException ex) {
-			SimCard.dialogDatabaseError(this, ex);
+		} catch (StorageFileException ex) {
+			Utils.dialogDatabaseError(this, ex);
 		} catch (IOException ex) {
-			SimCard.dialogIOError(this, ex);
+			Utils.dialogIOError(this, ex);
 		}
 	}
 	

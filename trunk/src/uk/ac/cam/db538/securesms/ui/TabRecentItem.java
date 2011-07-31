@@ -18,7 +18,7 @@
 package uk.ac.cam.db538.securesms.ui;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.database.Conversation;
+import uk.ac.cam.db538.securesms.storage.Conversation;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;

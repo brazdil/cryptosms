@@ -3,8 +3,8 @@ package uk.ac.cam.db538.securesms.ui;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.database.Database;
-import uk.ac.cam.db538.securesms.database.DatabaseFileException;
+import uk.ac.cam.db538.securesms.storage.Storage;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import android.app.ListActivity;
 import android.os.Bundle;
 
@@ -15,10 +15,10 @@ public class TabRecent extends ListActivity {
         setContentView(R.layout.screen_main_recent);
         
         try {
-			Database.initSingleton(this);
+			Storage.initSingleton(this);
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (DatabaseFileException e) {
+		} catch (StorageFileException e) {
 			e.printStackTrace();
 		}
         

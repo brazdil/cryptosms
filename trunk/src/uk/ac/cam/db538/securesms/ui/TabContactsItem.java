@@ -20,11 +20,11 @@ package uk.ac.cam.db538.securesms.ui;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.database.Conversation;
-import uk.ac.cam.db538.securesms.database.DatabaseFileException;
-import uk.ac.cam.db538.securesms.database.SessionKeys;
-import uk.ac.cam.db538.securesms.simcard.Contact;
-import uk.ac.cam.db538.securesms.simcard.SimCard;
+import uk.ac.cam.db538.securesms.data.Contact;
+import uk.ac.cam.db538.securesms.data.Utils;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.SessionKeys;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -125,7 +125,7 @@ public class TabContactsItem extends RelativeLayout {
     	Resources res = context.getResources();
     	
 		try {
-			SessionKeys keys = SimCard.getSessionKeysForSIM(context, conv);
+			SessionKeys keys = Utils.getSessionKeysForSIM(context, conv);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:
@@ -165,7 +165,7 @@ public class TabContactsItem extends RelativeLayout {
 	        mAvatarView.setImageDrawable(avatarDrawable);
 	        mAvatarView.setVisibility(View.VISIBLE);
 	        
-		} catch (DatabaseFileException e) {
+		} catch (StorageFileException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {

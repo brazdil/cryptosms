@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,12 +11,12 @@ import java.nio.channels.FileLock;
  * @author David Brazdil
  *
  */
-class DatabaseFile {
+class StorageFile {
 	RandomAccessFile mFile;
 	FileLock mLock;
 
 	
-	DatabaseFile(String filename) throws IOException {
+	StorageFile(String filename) throws IOException {
 		String directory = new File(filename).getParent();
 		new File(directory).mkdirs();
 		mFile = new RandomAccessFile(filename, "rw");

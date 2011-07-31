@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,7 +24,7 @@ class MessagePart {
 
 	private static final int OFFSET_RANDOMDATA = OFFSET_MESSAGEBODY + LENGTH_MESSAGEBODY;
 
-	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
@@ -47,10 +47,10 @@ class MessagePart {
 	/**
 	 * Replaces an empty entry with new MessagePart
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	static MessagePart createMessagePart() throws DatabaseFileException, IOException {
+	static MessagePart createMessagePart() throws StorageFileException, IOException {
 		return createMessagePart(true);
 	}
 	
@@ -58,10 +58,10 @@ class MessagePart {
 	 * Replaces an empty entry with new MessagePart
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	static MessagePart createMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+	static MessagePart createMessagePart(boolean lockAllow) throws StorageFileException, IOException {
 		return new MessagePart(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
 
@@ -69,7 +69,7 @@ class MessagePart {
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
-	static MessagePart getMessagePart(long index) throws DatabaseFileException, IOException {
+	static MessagePart getMessagePart(long index) throws StorageFileException, IOException {
 		return getMessagePart(index, true);
 	}
 	
@@ -78,7 +78,7 @@ class MessagePart {
 	 * @param index			Index in file
 	 * @param lockAllow		File lock allow
 	 */
-	static MessagePart getMessagePart(long index, boolean lockAllow) throws DatabaseFileException, IOException {
+	static MessagePart getMessagePart(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
@@ -106,10 +106,10 @@ class MessagePart {
 	 * Constructor
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private MessagePart(long index, boolean readFromFile) throws DatabaseFileException, IOException {
+	private MessagePart(long index, boolean readFromFile) throws StorageFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
@@ -118,24 +118,24 @@ class MessagePart {
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @param lockAllow		Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private MessagePart(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
+	private MessagePart(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Database.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
 			byte flags = dataPlain[OFFSET_FLAGS];
 			boolean deliveredPart = ((flags & (1 << 7)) == 0) ? false : true;
 			
 			setDeliveredPart(deliveredPart);
-			setMessageBody(Database.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
-			setIndexParent(Database.getInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
+			setMessageBody(Storage.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
+			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -157,21 +157,21 @@ class MessagePart {
 	
 	/**
 	 * Save contents of the class to the storage file
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void saveToFile() throws DatabaseFileException, IOException {
+	void saveToFile() throws StorageFileException, IOException {
 		saveToFile(true);
 	}
 	
 	/**
 	 * Save contents of the class to the storage file
 	 * @param lockAllow		Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void saveToFile(boolean lock) throws DatabaseFileException, IOException {
-		ByteBuffer msgBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
+	void saveToFile(boolean lock) throws StorageFileException, IOException {
+		ByteBuffer msgBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
 		byte flags = 0;
@@ -180,27 +180,27 @@ class MessagePart {
 		msgBuffer.put(flags);
 		
 		// message body
-		msgBuffer.put(Database.toLatin(this.mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(Storage.toLatin(this.mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		msgBuffer.put(Database.getBytes(this.mIndexParent));
-		msgBuffer.put(Database.getBytes(this.mIndexPrev));
-		msgBuffer.put(Database.getBytes(this.mIndexNext));
+		msgBuffer.put(Storage.getBytes(this.mIndexParent));
+		msgBuffer.put(Storage.getBytes(this.mIndexPrev));
+		msgBuffer.put(Storage.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
-		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
 	 * Returns Message that is a parent to this MessagePart in the data structure
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	Message getParent() throws DatabaseFileException, IOException {
+	Message getParent() throws StorageFileException, IOException {
 		return getParent(true);
 	}
 	
@@ -208,20 +208,20 @@ class MessagePart {
 	 * Returns Message that is a parent to this MessagePart in the data structure
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	Message getParent(boolean lockAllow) throws DatabaseFileException, IOException {
+	Message getParent(boolean lockAllow) throws StorageFileException, IOException {
 		return Message.getMessage(mIndexParent, lockAllow);
 	}
 
 	/**
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getPreviousMessagePart() throws DatabaseFileException, IOException {
+	MessagePart getPreviousMessagePart() throws StorageFileException, IOException {
 		return getPreviousMessagePart(true);
 	}
 	
@@ -229,20 +229,20 @@ class MessagePart {
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getPreviousMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+	MessagePart getPreviousMessagePart(boolean lockAllow) throws StorageFileException, IOException {
 		return MessagePart.getMessagePart(mIndexPrev, lockAllow);
 	}
 	
 	/**
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getNextMessagePart() throws DatabaseFileException, IOException {
+	MessagePart getNextMessagePart() throws StorageFileException, IOException {
 		return getNextMessagePart(true);
 	}
 	
@@ -250,19 +250,19 @@ class MessagePart {
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getNextMessagePart(boolean lockAllow) throws DatabaseFileException, IOException {
+	MessagePart getNextMessagePart(boolean lockAllow) throws StorageFileException, IOException {
 		return getMessagePart(mIndexNext, lockAllow);
 	}
 
 	/**
 	 * Replace the file space with Empty entry
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	void delete() throws IOException, DatabaseFileException {
+	void delete() throws IOException, StorageFileException {
 		delete(true);
 	}
 	
@@ -270,10 +270,10 @@ class MessagePart {
 	 * Replace the file space with Empty entry
 	 * @param lockAllow		Allow the file to be locked
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	void delete(boolean lockAllow) throws IOException, DatabaseFileException {
-		Database db = Database.getDatabase();
+	void delete(boolean lockAllow) throws IOException, StorageFileException {
+		Storage db = Storage.getDatabase();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -309,7 +309,7 @@ class MessagePart {
 			
 			// make this instance invalid
 			this.mEntryIndex = -1L;
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;

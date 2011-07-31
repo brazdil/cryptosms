@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,7 +29,7 @@ public class SessionKeys {
 	
 	private static final int OFFSET_RANDOMDATA = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
 
-	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
@@ -52,7 +52,7 @@ public class SessionKeys {
 	/**
 	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 */
-	static SessionKeys createSessionKeys(Conversation parent) throws DatabaseFileException, IOException {
+	static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException, IOException {
 		return createSessionKeys(parent, true);
 	}
 	
@@ -60,7 +60,7 @@ public class SessionKeys {
 	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 * @param lock		File lock allow
 	 */
-	static SessionKeys createSessionKeys(Conversation parent, boolean lockAllow) throws DatabaseFileException, IOException {
+	static SessionKeys createSessionKeys(Conversation parent, boolean lockAllow) throws StorageFileException, IOException {
 		SessionKeys keys = new SessionKeys(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 		parent.attachSessionKeys(keys, lockAllow);
 		return keys;
@@ -70,7 +70,7 @@ public class SessionKeys {
 	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file  
 	 * @param index		Index in file
 	 */
-	static SessionKeys getSessionKeys(long index) throws DatabaseFileException, IOException {
+	static SessionKeys getSessionKeys(long index) throws StorageFileException, IOException {
 		return getSessionKeys(index, true);
 	}
 	
@@ -79,7 +79,7 @@ public class SessionKeys {
 	 * @param index		Index in file
 	 * @param lock		File lock allow
 	 */
-	static SessionKeys getSessionKeys(long index, boolean lockAllow) throws DatabaseFileException, IOException {
+	static SessionKeys getSessionKeys(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
@@ -114,10 +114,10 @@ public class SessionKeys {
 	 * Constructor
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private SessionKeys(long index, boolean readFromFile) throws DatabaseFileException, IOException {
+	private SessionKeys(long index, boolean readFromFile) throws StorageFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
@@ -126,14 +126,14 @@ public class SessionKeys {
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @param lockAllow		Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private SessionKeys(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
+	private SessionKeys(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Database.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 
 			byte flags = dataPlain[OFFSET_FLAGS];
@@ -149,14 +149,14 @@ public class SessionKeys {
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
 			setSimSerial(simSerial);
-			setSimNumber(Database.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER));
+			setSimNumber(Storage.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER));
 			setSessionKey_Out(dataSessionKey_Out);
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
-			setIndexParent(Database.getInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -184,21 +184,21 @@ public class SessionKeys {
 
 	/**
 	 * Saves contents of the class to the storage file
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void saveToFile() throws DatabaseFileException, IOException {
+	public void saveToFile() throws StorageFileException, IOException {
 		saveToFile(true);
 	}
 	
 	/**
 	 * Saves contents of the class to the storage file
 	 * @param lockAllow		Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
-		ByteBuffer keysBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
+	public void saveToFile(boolean lock) throws StorageFileException, IOException {
+		ByteBuffer keysBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
 		byte flags = 0;
@@ -211,7 +211,7 @@ public class SessionKeys {
 		keysBuffer.put(flags);
 		
 		// phone number
-		keysBuffer.put(Database.toLatin(this.mSimNumber, LENGTH_SIMNUMBER));
+		keysBuffer.put(Storage.toLatin(this.mSimNumber, LENGTH_SIMNUMBER));
 		
 		// session keys and last IDs
 		keysBuffer.put(this.mSessionKey_Out);
@@ -223,21 +223,21 @@ public class SessionKeys {
 		keysBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		keysBuffer.put(Database.getBytes(this.mIndexParent));
-		keysBuffer.put(Database.getBytes(this.mIndexPrev));
-		keysBuffer.put(Database.getBytes(this.mIndexNext));
+		keysBuffer.put(Storage.getBytes(this.mIndexParent));
+		keysBuffer.put(Storage.getBytes(this.mIndexPrev));
+		keysBuffer.put(Storage.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(keysBuffer.array(), Encryption.retreiveEncryptionKey());
-		Database.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
 	 * Returns an instance of the Conversation class that is the parent of this SessionKeys in the data structure
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getParent() throws DatabaseFileException, IOException {
+	public Conversation getParent() throws StorageFileException, IOException {
 		return getParent(true);
 	}
 	
@@ -245,10 +245,10 @@ public class SessionKeys {
 	 * Returns an instance of the Conversation class that is the parent of this SessionKeys in the data structure
 	 * @param lockAllow		Allow file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getParent(boolean lockAllow) throws DatabaseFileException, IOException {
+	public Conversation getParent(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexParent == 0)
 			return null;
 		return Conversation.getConversation(mIndexParent, lockAllow);
@@ -257,10 +257,10 @@ public class SessionKeys {
 	/**
 	 * Returns an instance of the predecessor in the list of session keys for parent conversation
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getPreviousSessionKeys() throws DatabaseFileException, IOException {
+	public SessionKeys getPreviousSessionKeys() throws StorageFileException, IOException {
 		return getPreviousSessionKeys(true);
 	}
 	
@@ -268,10 +268,10 @@ public class SessionKeys {
 	 * Returns an instance of the predecessor in the list of session keys for parent conversation
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getPreviousSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+	public SessionKeys getPreviousSessionKeys(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexPrev == 0)
 			return null;
 		return getSessionKeys(mIndexPrev, lockAllow);
@@ -280,10 +280,10 @@ public class SessionKeys {
 	/**
 	 * Returns an instance of the successor in the list of session keys for parent conversation
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getNextSessionKeys() throws DatabaseFileException, IOException {
+	public SessionKeys getNextSessionKeys() throws StorageFileException, IOException {
 		return getNextSessionKeys(true);
 	}
 	
@@ -291,10 +291,10 @@ public class SessionKeys {
 	 * Returns an instance of the predecessor in the list of session keys for parent conversation
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getNextSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+	public SessionKeys getNextSessionKeys(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexNext == 0)
 			return null;
 		return getSessionKeys(mIndexNext, lockAllow);
@@ -302,21 +302,21 @@ public class SessionKeys {
 	
 	/**
 	 * Delete Message and all the MessageParts it controls
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void delete() throws DatabaseFileException, IOException {
+	public void delete() throws StorageFileException, IOException {
 		delete(true);
 	}
 	
 	/**
 	 * Delete Message and all the MessageParts it controls
 	 * @param lockAllow 	Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
-		Database db = Database.getDatabase();
+	public void delete(boolean lockAllow) throws StorageFileException, IOException {
+		Storage db = Storage.getDatabase();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -352,7 +352,7 @@ public class SessionKeys {
 			
 			// make this instance invalid
 			this.mEntryIndex = -1L;
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
@@ -372,7 +372,7 @@ public class SessionKeys {
 	 * Returns the status of session keys exchange 
 	 * @param simNumber
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
 	public SessionKeysStatus getStatus() {

@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 /**
  * 
@@ -7,10 +7,10 @@ package uk.ac.cam.db538.securesms.database;
  * @author David Brazdil
  *
  */
-public class DatabaseFileException extends Exception {
+public class StorageFileException extends Exception {
 	private static final long serialVersionUID = -7100685462486843982L;
 
-	public DatabaseFileException(String message) {
+	public StorageFileException(String message) {
 		super(message);
 	}
 }

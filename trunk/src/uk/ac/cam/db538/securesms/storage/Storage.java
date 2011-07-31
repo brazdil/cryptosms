@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
 
-public final class Database {
+public final class Storage {
 	private static final String FILE_NAME = "data.db";
 	
 	private static final String CHARSET_LATIN = "ISO-8859-1";
@@ -19,17 +19,17 @@ public final class Database {
 	
 	// SINGLETON STUFF
 	
-	private static Database mSingleton = null;
+	private static Storage mSingleton = null;
 	
 	/**
 	 * Returns the instance of the Database singleton class.
 	 * Singleton has to be initialised beforehand with the initSingleton method.   
 	 * @return instance of Database class
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	public static Database getDatabase() throws DatabaseFileException {
+	public static Storage getDatabase() throws StorageFileException {
 		if (mSingleton == null) 
-			throw new DatabaseFileException("Database not initialized yet");
+			throw new StorageFileException("Database not initialized yet");
 		return mSingleton;
 	}
 	
@@ -37,9 +37,9 @@ public final class Database {
 	 * Initialises the Database singleton automatically based on the environment settings supplied by application context. 
 	 * @param context		Application context. Used to get the path of a folder for package data.
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	public static void initSingleton(Context context) throws IOException, DatabaseFileException {
+	public static void initSingleton(Context context) throws IOException, StorageFileException {
 		String filename = context.getFilesDir().getAbsolutePath() + "/" + FILE_NAME;
 
 		initSingleton(filename);
@@ -49,13 +49,13 @@ public final class Database {
 	 * Initialises the Database singleton to use a specified file as the secure storage.
 	 * @param filename 		Path to the secure storage file.
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	public static void initSingleton(String filename) throws IOException, DatabaseFileException {
+	public static void initSingleton(String filename) throws IOException, StorageFileException {
 		if (mSingleton != null) 
 			return; //throw new DatabaseFileException("Database already initialized");
 		
-		new Database(filename);
+		new Storage(filename);
 	}
 	
 	// LOW-LEVEL BIT MANIPULATION
@@ -152,15 +152,15 @@ public final class Database {
 
 	// FILE MANIPULATION
 	
-	private DatabaseFile smsFile;
+	private StorageFile smsFile;
 
 	/**
 	 * Constructor
 	 * @param filename
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	private Database(String filename) throws IOException, DatabaseFileException {
+	private Storage(String filename) throws IOException, StorageFileException {
 		mSingleton = this;
 		
 		File file = new File(filename);
@@ -168,7 +168,7 @@ public final class Database {
 			file.delete();
 		
 		boolean exists = new File(filename).exists();
-		smsFile = new DatabaseFile(filename);
+		smsFile = new StorageFile(filename);
 		if (!exists) {
 			createFile();
 
@@ -216,9 +216,9 @@ public final class Database {
 	 * Creates empty file when there isn't any
 	 * @throws FileNotFoundException
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	private synchronized void createFile() throws IOException, DatabaseFileException {
+	private synchronized void createFile() throws IOException, StorageFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
 		
 		lockFile();
@@ -227,7 +227,7 @@ public final class Database {
 			Header.createHeader(false);
 			// add some empty entries
 			Empty.addEmptyEntries(countFreeEntries, false);
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
@@ -285,10 +285,10 @@ public final class Database {
 	 * Reads data from specified entry index the file
 	 * @param index
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	byte[] getEntry(long index) throws DatabaseFileException, IOException {
+	byte[] getEntry(long index) throws StorageFileException, IOException {
 		return getEntry(index, true);
 	}
 
@@ -297,13 +297,13 @@ public final class Database {
 	 * @param index
 	 * @param lock
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	synchronized byte[] getEntry(long index, boolean lock) throws DatabaseFileException, IOException {
+	synchronized byte[] getEntry(long index, boolean lock) throws StorageFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		if (offset > smsFile.mFile.length() - CHUNK_SIZE)
-			throw new DatabaseFileException("Index in history file out of bounds");
+			throw new StorageFileException("Index in history file out of bounds");
 		
 		lockFile(lock);
 		byte[] data = new byte[CHUNK_SIZE];
@@ -323,10 +323,10 @@ public final class Database {
 	 * Saves data to specified entry index the file
 	 * @param index
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void setEntry(long index, byte[] data) throws DatabaseFileException, IOException {
+	void setEntry(long index, byte[] data) throws StorageFileException, IOException {
 		setEntry(index, data, true);
 	}
 
@@ -335,14 +335,14 @@ public final class Database {
 	 * @param index
 	 * @param lock
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	synchronized void setEntry(long index, byte[] data, boolean lock) throws DatabaseFileException, IOException {
+	synchronized void setEntry(long index, byte[] data, boolean lock) throws StorageFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		long fileSize = smsFile.mFile.length();
 		if (offset > fileSize)
-			throw new DatabaseFileException("Index in history file out of bounds");
+			throw new StorageFileException("Index in history file out of bounds");
 
 		lockFile(lock);
 		try {

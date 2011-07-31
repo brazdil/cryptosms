@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -19,7 +19,7 @@ public class Header {
 	
 	// FILE FORMAT
 	private static final int LENGTH_PLAIN_HEADER = 4;
-	private static final int LENGTH_ENCRYPTED_HEADER = Database.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
+	private static final int LENGTH_ENCRYPTED_HEADER = Storage.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
 	private static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
 
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
@@ -40,11 +40,11 @@ public class Header {
 	 * Returns an instance of Header class. Locks the file if necessary
 	 * @return
 	 * @throws IOException 
-	 * @throws DatabaseFileException 
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException 
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public static Header getHeader() throws DatabaseFileException, IOException {
+	public static Header getHeader() throws StorageFileException, IOException {
 		return getHeader(true);
 	}
 	
@@ -52,10 +52,10 @@ public class Header {
 	 * Returns an instance of Header class
 	 * @param lockAllow 		Lock the file if necessary
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public static Header getHeader(boolean lockAllow) throws DatabaseFileException, IOException {
+	public static Header getHeader(boolean lockAllow) throws StorageFileException, IOException {
 		if (cacheHeader == null) 
 			cacheHeader = new Header(true, lockAllow);
 		return cacheHeader;
@@ -65,9 +65,9 @@ public class Header {
 	 * Only to be called from within Database.createFile()
 	 * Forces the header to be created with default values and written to the file.
 	 * @throws IOException 
-	 * @throws DatabaseFileException 
+	 * @throws StorageFileException 
 	 */
-	static Header createHeader() throws DatabaseFileException, IOException {
+	static Header createHeader() throws StorageFileException, IOException {
 		return createHeader(true);
 	}
 
@@ -76,9 +76,9 @@ public class Header {
 	 * Forces the header to be created with default values and written to the file.
 	 * @param lockAllow 		Lock the file if necessary
 	 * @throws IOException 
-	 * @throws DatabaseFileException 
+	 * @throws StorageFileException 
 	 */
-	static Header createHeader(boolean lockAllow) throws DatabaseFileException, IOException {
+	static Header createHeader(boolean lockAllow) throws StorageFileException, IOException {
 		cacheHeader = new Header(false, lockAllow);
 		return cacheHeader;
 	}
@@ -91,10 +91,10 @@ public class Header {
 	/**
 	 * Constructor
 	 * @param readFromFile	Does this entry already exist in the file?
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private Header(boolean readFromDisk) throws DatabaseFileException, IOException {
+	private Header(boolean readFromDisk) throws StorageFileException, IOException {
 		this(readFromDisk, true);
 	}
 	
@@ -102,20 +102,20 @@ public class Header {
 	 * Constructor
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @param lockAllow		Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private Header(boolean readFromDisk, boolean lockAllow) throws DatabaseFileException, IOException {
+	private Header(boolean readFromDisk, boolean lockAllow) throws StorageFileException, IOException {
 		if (readFromDisk) {
 			// read bytes from file
-			byte[] dataAll = Database.getDatabase().getEntry(INDEX_HEADER, lockAllow);
+			byte[] dataAll = Storage.getDatabase().getEntry(INDEX_HEADER, lockAllow);
 			
 			// check the first three bytes, looking for SMS in ASCII
 			if (dataAll[0] != (byte) 0x53 ||
 			    dataAll[1] != (byte) 0x4D ||
 			    dataAll[2] != (byte) 0x53
 			   )
-				throw new DatabaseFileException("Not an SMS history file");
+				throw new StorageFileException("Not an SMS history file");
 			
 			// get the version
 			int version = 0 | (dataAll[3] & 0xFF);
@@ -127,8 +127,8 @@ public class Header {
 			
 			// set fields
 			setVersion(version);
-			setIndexEmpty(Database.getInt(dataPlain, OFFSET_FREEINDEX));
-			setIndexConversations(Database.getInt(dataPlain, OFFSET_CONVINDEX));
+			setIndexEmpty(Storage.getInt(dataPlain, OFFSET_FREEINDEX));
+			setIndexConversations(Storage.getInt(dataPlain, OFFSET_CONVINDEX));
 		}
 		else {
 			// default values			
@@ -142,42 +142,42 @@ public class Header {
 
 	/**
 	 * Save data to the storage file
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void saveToFile() throws DatabaseFileException, IOException {
+	public void saveToFile() throws StorageFileException, IOException {
 		saveToFile(true);
 	}
 	
 	/**
 	 * Save data to the storage file
 	 * @param lock		Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
+	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
-		headerBuffer.put(Database.getBytes(this.getIndexEmpty())); 
-		headerBuffer.put(Database.getBytes(this.getIndexConversations()));
+		headerBuffer.put(Storage.getBytes(this.getIndexEmpty())); 
+		headerBuffer.put(Storage.getBytes(this.getIndexConversations()));
 		
-		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(Database.CHUNK_SIZE);
+		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(Storage.CHUNK_SIZE);
 		headerBufferEncrypted.put((byte) 0x53); // S
 		headerBufferEncrypted.put((byte) 0x4D); // M
 		headerBufferEncrypted.put((byte) 0x53); // S
 		headerBufferEncrypted.put((byte) (this.getVersion() & 0xFF)); // version
 		headerBufferEncrypted.put(Encryption.encryptSymmetric(headerBuffer.array(), Encryption.retreiveEncryptionKey()));
 		
-		Database.getDatabase().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
+		Storage.getDatabase().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
 	}
 	
 	/**
 	 * Return instance of the first object in the empty-entry stack
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Empty getFirstEmpty() throws DatabaseFileException, IOException {
+	public Empty getFirstEmpty() throws StorageFileException, IOException {
 		return getFirstEmpty(true);
 	}
 
@@ -186,9 +186,9 @@ public class Header {
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
 	 * @throws IOException 
-	 * @throws DatabaseFileException 
+	 * @throws StorageFileException 
 	 */
-	public Empty getFirstEmpty(boolean lockAllow) throws DatabaseFileException, IOException {
+	public Empty getFirstEmpty(boolean lockAllow) throws StorageFileException, IOException {
 		if (this.mIndexEmpty == 0)
 			return null;
 		else
@@ -198,10 +198,10 @@ public class Header {
 	/**
 	 * Return instance of the first object in the conversations linked list
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getFirstConversation() throws DatabaseFileException, IOException {
+	public Conversation getFirstConversation() throws StorageFileException, IOException {
 		return getFirstConversation(true);
 	}
 	
@@ -209,10 +209,10 @@ public class Header {
 	 * Return instance of the first object in the conversations linked list
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getFirstConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+	public Conversation getFirstConversation(boolean lockAllow) throws StorageFileException, IOException {
 		if (this.mIndexConversations == 0) 
 			return null;
 		else
@@ -223,9 +223,9 @@ public class Header {
 	 * Insert new element into the linked list of conversations
 	 * @param conv
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	void attachConversation(Conversation conv) throws IOException, DatabaseFileException {
+	void attachConversation(Conversation conv) throws IOException, StorageFileException {
 		attachConversation(conv, true);
 	}
 	
@@ -234,10 +234,10 @@ public class Header {
 	 * @param lockAllow		Allow the file to be locked
 	 * @param conv
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	void attachConversation(Conversation conv, boolean lockAllow) throws IOException, DatabaseFileException {
-		Database.getDatabase().lockFile(lockAllow);
+	void attachConversation(Conversation conv, boolean lockAllow) throws IOException, StorageFileException {
+		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexConversations();
 			if (indexFirstInStack != 0) {
@@ -252,12 +252,12 @@ public class Header {
 			
 			this.setIndexConversations(conv.getEntryIndex());
 			this.saveToFile(false);
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Database.getDatabase().unlockFile(lockAllow);	
+			Storage.getDatabase().unlockFile(lockAllow);	
 		}
 	}
 
@@ -265,9 +265,9 @@ public class Header {
 	 * Insert new element into the stack of empty entries
 	 * @param conv
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	void attachEmpty(Empty empty) throws IOException, DatabaseFileException {
+	void attachEmpty(Empty empty) throws IOException, StorageFileException {
 		attachEmpty(empty, true);
 	}
 	
@@ -276,10 +276,10 @@ public class Header {
 	 * @param lockAllow		Allow the file to be locked
 	 * @param conv
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	void attachEmpty(Empty empty, boolean lockAllow) throws IOException, DatabaseFileException {
-		Database.getDatabase().lockFile(lockAllow);
+	void attachEmpty(Empty empty, boolean lockAllow) throws IOException, StorageFileException {
+		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexEmpty();
 			empty.setIndexNext(indexFirstInStack);
@@ -287,12 +287,12 @@ public class Header {
 			
 			this.setIndexEmpty(empty.getEntryIndex());
 			this.saveToFile(false);
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Database.getDatabase().unlockFile(lockAllow);	
+			Storage.getDatabase().unlockFile(lockAllow);	
 		}
 	}
 

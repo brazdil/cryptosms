@@ -3,12 +3,13 @@ package uk.ac.cam.db538.securesms.ui;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.database.Conversation;
-import uk.ac.cam.db538.securesms.database.DatabaseFileException;
-import uk.ac.cam.db538.securesms.simcard.Contact;
-import uk.ac.cam.db538.securesms.simcard.DummyOnClickListener;
-import uk.ac.cam.db538.securesms.simcard.SimCard;
-import uk.ac.cam.db538.securesms.simcard.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.securesms.data.Contact;
+import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
+import uk.ac.cam.db538.securesms.data.SimCard;
+import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.securesms.data.Utils;
+import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -94,12 +95,12 @@ public class ConversationActivity extends Activity {
 	private void checkResources() {
 		// check for SIM availability
 	    try {
-			if (SimCard.checkSimPhoneNumberAvailable(this)) {
+			if (Utils.checkSimPhoneNumberAvailable(this)) {
 			    Resources res = getResources();
 				mConversation = Conversation.getConversation(mContact.getPhoneNumber());
 
 				// check keys availability
-		    	if (!SimCard.hasKeysExchangedForSIM(this, mConversation)) {
+		    	if (!Utils.hasKeysExchangedForSIM(this, mConversation)) {
 		    		if (!errorNoKeysShown) {
 						// secure connection has not been successfully established yet
 						new AlertDialog.Builder(this)
@@ -121,11 +122,11 @@ public class ConversationActivity extends Activity {
 					modeEnabled(true);
 			} else
 				modeEnabled(false);
-		} catch (DatabaseFileException ex) {
-			SimCard.dialogDatabaseError(this, ex);
+		} catch (StorageFileException ex) {
+			Utils.dialogDatabaseError(this, ex);
 			this.finish();
 		} catch (IOException ex) {
-			SimCard.dialogIOError(this, ex);
+			Utils.dialogIOError(this, ex);
 			this.finish();
 		}
 	}

@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.simcard;
+package uk.ac.cam.db538.securesms.data;
 
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;

@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.simcard;
+package uk.ac.cam.db538.securesms.data;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -115,7 +115,7 @@ public class Contact {
      * @return a Contact containing the caller id info corresponding to the number.
      */
     public static Contact getContact(Context context, String phoneNumber) {
-        phoneNumber = SimCard.formatPhoneNumber(phoneNumber);
+        phoneNumber = Utils.formatPhoneNumber(phoneNumber);
         
         // check whether it is already in the cache
     	for (Contact contact : mCacheContact)

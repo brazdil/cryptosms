@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.database;
+package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,7 +28,7 @@ public class Conversation {
 	
 	private static final int OFFSET_RANDOMDATA = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
 
-	private static final int OFFSET_NEXTINDEX = Database.ENCRYPTED_ENTRY_SIZE - 4;
+	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_MSGSINDEX = OFFSET_PREVINDEX - 4;
 	private static final int OFFSET_KEYSINDEX = OFFSET_MSGSINDEX - 4;
@@ -53,9 +53,9 @@ public class Conversation {
 	 * Returns instance of a new Conversation created in one of the empty spaces in file.
 	 * @return
 	 * @throws IOException 
-	 * @throws DatabaseFileException 
+	 * @throws StorageFileException 
 	 */
-	public static Conversation createConversation() throws DatabaseFileException, IOException {
+	public static Conversation createConversation() throws StorageFileException, IOException {
 		return createConversation(true);
 	}
 
@@ -64,9 +64,9 @@ public class Conversation {
 	 * @lockAllow		Allow to lock the file
 	 * @return
 	 * @throws IOException 
-	 * @throws DatabaseFileException 
+	 * @throws StorageFileException 
 	 */
-	public static Conversation createConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+	public static Conversation createConversation(boolean lockAllow) throws StorageFileException, IOException {
 		// create a new one
 		Conversation conv = new Conversation(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 		Header.getHeader(lockAllow).attachConversation(conv, lockAllow);
@@ -77,7 +77,7 @@ public class Conversation {
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param phoneNumber		Contacts phone number
 	 */
-	public static Conversation getConversation(String phoneNumber) throws DatabaseFileException, IOException {
+	public static Conversation getConversation(String phoneNumber) throws StorageFileException, IOException {
 		return getConversation(phoneNumber, true);
 	}
 
@@ -86,7 +86,7 @@ public class Conversation {
 	 * @param phoneNumber		Contacts phone number
 	 * @param lock		File lock allow
 	 */
-	public static Conversation getConversation(String phoneNumber, boolean lockAllow) throws DatabaseFileException, IOException {
+	public static Conversation getConversation(String phoneNumber, boolean lockAllow) throws StorageFileException, IOException {
 		Conversation conv = Header.getHeader(lockAllow).getFirstConversation(lockAllow);
 		while (conv != null) {
 			if (PhoneNumberUtils.compare(conv.getPhoneNumber(), phoneNumber))
@@ -100,7 +100,7 @@ public class Conversation {
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param index		Index in file
 	 */
-	static Conversation getConversation(long index) throws DatabaseFileException, IOException {
+	static Conversation getConversation(long index) throws StorageFileException, IOException {
 		return getConversation(index, true);
 	}
 	
@@ -109,7 +109,7 @@ public class Conversation {
 	 * @param index		Index in file
 	 * @param lock		File lock allow
 	 */
-	static Conversation getConversation(long index, boolean lockAllow) throws DatabaseFileException, IOException {
+	static Conversation getConversation(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
@@ -127,9 +127,9 @@ public class Conversation {
 	/** 
 	 * Explicitly requests each conversation in the file to be loaded to memory
 	 * @throws IOException
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 */
-	public static void cacheAllConversations() throws IOException, DatabaseFileException {
+	public static void cacheAllConversations() throws IOException, StorageFileException {
 		Conversation convCurrent = Header.getHeader(false).getFirstConversation();
 		while (convCurrent != null) 
 			convCurrent = convCurrent.getNextConversation();
@@ -146,26 +146,26 @@ public class Conversation {
 	
 	// CONSTRUCTORS
 	
-	private Conversation(long index, boolean readFromFile) throws DatabaseFileException, IOException {
+	private Conversation(long index, boolean readFromFile) throws StorageFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
-	private Conversation(long index, boolean readFromFile, boolean lockAllow) throws DatabaseFileException, IOException {
+	private Conversation(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Database.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
 			Time timeStamp = new Time();
-			timeStamp.parse3339(Database.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
+			timeStamp.parse3339(Storage.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
 
-			setPhoneNumber(Database.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
+			setPhoneNumber(Storage.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
 			setTimeStamp(timeStamp);
-			setIndexSessionKeys(Database.getInt(dataPlain, OFFSET_KEYSINDEX));
-			setIndexMessages(Database.getInt(dataPlain, OFFSET_MSGSINDEX));
-			setIndexPrev(Database.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Database.getInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexSessionKeys(Storage.getInt(dataPlain, OFFSET_KEYSINDEX));
+			setIndexMessages(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
+			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -193,49 +193,49 @@ public class Conversation {
 	/**
 	 * Saves data to the storage file.
 	 */
-	public void saveToFile() throws DatabaseFileException, IOException {
+	public void saveToFile() throws StorageFileException, IOException {
 		saveToFile(true);
 	}
 	
 	/**
 	 * Saves data to the storage file.
 	 * @param lock			Allow the file to be locked.
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void saveToFile(boolean lock) throws DatabaseFileException, IOException {
-		ByteBuffer convBuffer = ByteBuffer.allocate(Database.ENCRYPTED_ENTRY_SIZE);
+	public void saveToFile(boolean lock) throws StorageFileException, IOException {
+		ByteBuffer convBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
 		byte flags = 0;
 		convBuffer.put(flags);
 		
 		// phone number
-		convBuffer.put(Database.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
+		convBuffer.put(Storage.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
 		
 		// time stamp
-		convBuffer.put(Database.toLatin(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
+		convBuffer.put(Storage.toLatin(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
 
 		// random data
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		convBuffer.put(Database.getBytes(this.mIndexSessionKeys)); 
-		convBuffer.put(Database.getBytes(this.mIndexMessages)); 
-		convBuffer.put(Database.getBytes(this.mIndexPrev));
-		convBuffer.put(Database.getBytes(this.mIndexNext));
+		convBuffer.put(Storage.getBytes(this.mIndexSessionKeys)); 
+		convBuffer.put(Storage.getBytes(this.mIndexMessages)); 
+		convBuffer.put(Storage.getBytes(this.mIndexPrev));
+		convBuffer.put(Storage.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
-		Database.getDatabase().setEntry(this.mEntryIndex, dataEncrypted, lock);
+		Storage.getDatabase().setEntry(this.mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
 	 * Returns previous instance of Conversation in the double-linked list or null if this is the first.
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getPreviousConversation() throws DatabaseFileException, IOException {
+	public Conversation getPreviousConversation() throws StorageFileException, IOException {
 		return getPreviousConversation(true);
 	}
 	
@@ -243,20 +243,20 @@ public class Conversation {
 	 * Returns previous instance of Conversation in the double-linked list or null if this is the first.
 	 * @param lockAllow		Allow storage file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getPreviousConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+	public Conversation getPreviousConversation(boolean lockAllow) throws StorageFileException, IOException {
 		return Conversation.getConversation(mIndexPrev, lockAllow);
 	}
 
 	/**
 	 * Returns next instance of Conversation in the double-linked list or null if this is the last.
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getNextConversation() throws DatabaseFileException, IOException {
+	public Conversation getNextConversation() throws StorageFileException, IOException {
 		return getNextConversation(true);
 	}
 	
@@ -264,20 +264,20 @@ public class Conversation {
 	 * Returns next instance of Conversation in the double-linked list or null if this is the last.
 	 * @param lockAllow		Allow storage file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Conversation getNextConversation(boolean lockAllow) throws DatabaseFileException, IOException {
+	public Conversation getNextConversation(boolean lockAllow) throws StorageFileException, IOException {
 		return Conversation.getConversation(mIndexNext, lockAllow);
 	}
 
 	/**
 	 * Returns first SessionKeys object in the stored linked list, or null if there isn't any.
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getFirstSessionKeys() throws DatabaseFileException, IOException {
+	public SessionKeys getFirstSessionKeys() throws StorageFileException, IOException {
 		return getFirstSessionKeys(true);
 	}
 	
@@ -285,10 +285,10 @@ public class Conversation {
 	 * Returns first SessionKeys object in the stored linked list, or null if there isn't any.
 	 * @param lockAllow		Allow the file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getFirstSessionKeys(boolean lockAllow) throws DatabaseFileException, IOException {
+	public SessionKeys getFirstSessionKeys(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexSessionKeys == 0)
 			return null;
 		return SessionKeys.getSessionKeys(mIndexSessionKeys, lockAllow);
@@ -297,10 +297,10 @@ public class Conversation {
 	/**
 	 * Attach new SessionKeys object to the conversation.
 	 * @param keys
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachSessionKeys(SessionKeys keys) throws DatabaseFileException, IOException {
+	public void attachSessionKeys(SessionKeys keys) throws StorageFileException, IOException {
 		attachSessionKeys(keys, true);
 	}
 
@@ -308,11 +308,11 @@ public class Conversation {
 	 * Attach new SessionKeys object to the conversation.
 	 * @param lockAllow		Allow the file to be locked
 	 * @param keys
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws DatabaseFileException, IOException {
-		Database.getDatabase().lockFile(lockAllow);
+	public void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws StorageFileException, IOException {
+		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexSessionKeys();
 			if (indexFirstInStack != 0) {
@@ -326,22 +326,22 @@ public class Conversation {
 			keys.saveToFile(false);
 			this.setIndexSessionKeys(keys.getEntryIndex());
 			this.saveToFile(false);
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Database.getDatabase().unlockFile(lockAllow);	
+			Storage.getDatabase().unlockFile(lockAllow);	
 		}
 	}
 
 	/**
 	 * Attach new Message object to the conversation 
 	 * @param msg
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachMessage(Message msg) throws DatabaseFileException, IOException {
+	public void attachMessage(Message msg) throws StorageFileException, IOException {
 		attachMessage(msg, true);
 	}
 
@@ -349,11 +349,11 @@ public class Conversation {
 	 * Attach new Message object to the conversation
 	 * @param lockAllow		Allow the file to be locked 
 	 * @param msg
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachMessage(Message msg, boolean lockAllow) throws DatabaseFileException, IOException {
-		Database.getDatabase().lockFile(lockAllow);
+	public void attachMessage(Message msg, boolean lockAllow) throws StorageFileException, IOException {
+		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexMessages();
 			if (indexFirstInStack != 0) {
@@ -367,32 +367,32 @@ public class Conversation {
 			msg.saveToFile(false);
 			this.setIndexMessages(msg.getEntryIndex());
 			this.saveToFile(false);
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Database.getDatabase().unlockFile(lockAllow);	
+			Storage.getDatabase().unlockFile(lockAllow);	
 		}
 	}
 	
 	/**
 	 * Get the first Message object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getFirstMessage() throws DatabaseFileException, IOException {
+	public Message getFirstMessage() throws StorageFileException, IOException {
 		return getFirstMessage(true);
 	}
 	
 	/**
 	 * Get the first Message object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getFirstMessage(boolean lockAllow) throws DatabaseFileException, IOException {
+	public Message getFirstMessage(boolean lockAllow) throws StorageFileException, IOException {
 		return Message.getMessage(mIndexMessages, lockAllow);
 	}
 	
@@ -400,10 +400,10 @@ public class Conversation {
 	 * Get the first Message object in the linked listed attached to this conversation, or null if there isn't any
 	 * @param lockAllow		Allow the file to be locked 
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public ArrayList<Message> getMessages(boolean lockAllow) throws DatabaseFileException, IOException {
+	public ArrayList<Message> getMessages(boolean lockAllow) throws StorageFileException, IOException {
 		ArrayList<Message> list = new ArrayList<Message>();
 		Message msg = getFirstMessage(lockAllow);
 		while (msg != null) {
@@ -415,21 +415,21 @@ public class Conversation {
 
 	/**
 	 * Delete Message and all the MessageParts it controls
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void delete() throws DatabaseFileException, IOException {
+	public void delete() throws StorageFileException, IOException {
 		delete(true);
 	}
 	
 	/**
 	 * Delete Message and all the MessageParts it controls
 	 * @param lockAllow 	Allow the file to be locked
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void delete(boolean lockAllow) throws DatabaseFileException, IOException {
-		Database db = Database.getDatabase();
+	public void delete(boolean lockAllow) throws StorageFileException, IOException {
+		Storage db = Storage.getDatabase();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -480,7 +480,7 @@ public class Conversation {
 		
 		// make this instance invalid
 		this.mEntryIndex = -1L;
-		} catch (DatabaseFileException ex) {
+		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
 			throw ex;
@@ -493,10 +493,10 @@ public class Conversation {
 	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any
 	 * @param simNumber
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(String simNumber, boolean isSerial) throws DatabaseFileException, IOException {
+	public SessionKeys getSessionKeys(String simNumber, boolean isSerial) throws StorageFileException, IOException {
 		return getSessionKeys(simNumber, isSerial, true);
 	}
 
@@ -505,10 +505,10 @@ public class Conversation {
 	 * @param simNumber
 	 * @param lockAllow		Allow file to be locked
 	 * @return
-	 * @throws DatabaseFileException
+	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(String simNumber, boolean isSerial, boolean lockAllow) throws DatabaseFileException, IOException {
+	public SessionKeys getSessionKeys(String simNumber, boolean isSerial, boolean lockAllow) throws StorageFileException, IOException {
 		SessionKeys keys = getFirstSessionKeys(lockAllow);
 		while (keys != null) {
 			if (isSerial) {
