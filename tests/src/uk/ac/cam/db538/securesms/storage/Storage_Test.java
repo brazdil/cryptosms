@@ -7,13 +7,13 @@ import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
-public class Database_Test extends TestCase {
+public class Storage_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		// delete the file before each test
-		Common.clearFile();
+		Common.clearStorageFile();
 	}
 
 	protected void tearDown() throws Exception {

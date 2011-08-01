@@ -14,7 +14,7 @@ public class Message_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		Common.clearFile();
+		Common.clearStorageFile();
 		
 		timeStamp.setToNow();
 	}
@@ -26,6 +26,7 @@ public class Message_Test extends TestCase {
 	private boolean deliveredPart = true;
 	private boolean deliveredAll = true;
 	private MessageType messageType = MessageType.OUTGOING;
+	private boolean unread = true;
 	private Time timeStamp = new Time(); 
 	private String messageBody = "Testing body";
 	private long indexParent = 127L;
@@ -37,6 +38,7 @@ public class Message_Test extends TestCase {
 		msg.setDeliveredPart(deliveredPart);
 		msg.setDeliveredAll(deliveredAll);
 		msg.setMessageType(messageType);
+		msg.setUnread(unread);
 		msg.setTimeStamp(timeStamp);
 		msg.setMessageBody(messageBody);
 		msg.setIndexParent(indexParent);
@@ -49,6 +51,7 @@ public class Message_Test extends TestCase {
 		assertEquals(msg.getDeliveredPart(), deliveredPart);
 		assertEquals(msg.getDeliveredAll(), deliveredAll);
 		assertEquals(msg.getMessageType(), messageType);
+		assertEquals(msg.getUnread(), unread);
 		assertEquals(Time.compare(msg.getTimeStamp(), timeStamp), 0);
 		assertEquals(msg.getMessageBody(), messageBody);
 		assertEquals(msg.getIndexParent(), indexParent);
@@ -133,6 +136,7 @@ public class Message_Test extends TestCase {
 		flags |= (deliveredPart) ? 0x80 : 0x00;
 		flags |= (deliveredAll) ? 0x40 : 0x00;
 		flags |= (messageType == MessageType.OUTGOING) ? 0x20 : 0x00;
+		flags |= (unread) ? 0x10 : 0x00;
 		
 		// get the generated data
 		byte[] dataEncrypted = Storage.getDatabase().getEntry(msg.getEntryIndex());
@@ -164,6 +168,7 @@ public class Message_Test extends TestCase {
 		flags |= (deliveredPart) ? 0x80 : 0x00;
 		flags |= (deliveredAll) ? 0x40 : 0x00;
 		flags |= (messageType == MessageType.OUTGOING) ? 0x20 : 0x00;
+		flags |= (unread) ? 0x10 : 0x00;
 	
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
@@ -189,6 +194,7 @@ public class Message_Test extends TestCase {
 		assertEquals(deliveredPart, msg.getDeliveredPart());
 		assertEquals(deliveredAll, msg.getDeliveredAll());
 		assertEquals(messageType, msg.getMessageType());
+		assertEquals(unread, msg.getUnread());
 		assertEquals(Time.compare(timeStamp, msg.getTimeStamp()), 0);
 		assertEquals(messageBody, msg.getMessageBody());
 		assertEquals(indexParent, msg.getIndexParent());

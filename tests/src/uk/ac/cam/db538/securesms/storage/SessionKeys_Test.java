@@ -8,13 +8,14 @@ import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
+import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import junit.framework.TestCase;
 
 public class SessionKeys_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		Common.clearFile();
+		Common.clearStorageFile();
 	}
 
 	protected void tearDown() throws Exception {
@@ -39,8 +40,7 @@ public class SessionKeys_Test extends TestCase {
 	private void setData(SessionKeys keys, boolean longer) {
 		keys.setKeysSent(keysSent);
 		keys.setKeysConfirmed(keysConfirmed);
-		keys.setSimSerial(simSerial);
-		keys.setSimNumber((longer) ? simNumberLong : simNumber);
+		keys.setSimNumber(new SimNumber((longer) ? simNumberLong : simNumber, simSerial));
 		keys.setSessionKey_Out(sessionKey_Out);
 		keys.setLastID_Out(lastID_Out);
 		keys.setSessionKey_In(sessionKey_In);
@@ -53,8 +53,8 @@ public class SessionKeys_Test extends TestCase {
 	private void checkData(SessionKeys keys, boolean longer) {
 		assertEquals(keysSent, keys.getKeysSent());
 		assertEquals(keysConfirmed, keys.getKeysConfirmed());
-		assertEquals(simSerial, keys.usesSimSerial());
-		assertEquals((longer) ? simNumberResult : simNumber, keys.getSimNumber());
+		assertEquals(simSerial, keys.getSimNumber().isSerial());
+		assertEquals((longer) ? simNumberResult : simNumber, keys.getSimNumber().getNumber());
 		CustomAsserts.assertArrayEquals(keys.getSessionKey_Out(), sessionKey_Out);
 		assertEquals(lastID_Out, keys.getLastID_Out());
 		CustomAsserts.assertArrayEquals(keys.getSessionKey_In(), sessionKey_In);

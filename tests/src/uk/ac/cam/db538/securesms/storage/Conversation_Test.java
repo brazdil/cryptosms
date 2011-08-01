@@ -47,7 +47,7 @@ public class Conversation_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		Common.clearFile();
+		Common.clearStorageFile();
 		
 		timeStamp.set(12, 24, 5, 8, 2, 1985);
 	}

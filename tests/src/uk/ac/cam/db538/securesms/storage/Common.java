@@ -15,7 +15,7 @@ import uk.ac.cam.db538.securesms.storage.SessionKeys;
 public class Common {
 	public static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
 
-	public static void clearFile() throws IOException, StorageFileException {
+	public static void clearStorageFile() throws IOException, StorageFileException {
 		File file = new File(TESTING_FILE);
 		if (file.exists())
 			file.delete();

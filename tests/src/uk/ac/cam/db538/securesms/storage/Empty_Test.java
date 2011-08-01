@@ -12,7 +12,7 @@ public class Empty_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		Common.clearFile();
+		Common.clearStorageFile();
 	}
 
 	protected void tearDown() throws Exception {
