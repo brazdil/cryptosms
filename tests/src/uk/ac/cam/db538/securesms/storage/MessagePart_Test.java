@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
@@ -104,7 +105,7 @@ public class MessagePart_Test extends TestCase {
 		
 		// check the data
 		assertEquals(dataPlain[0], flags);
-		assertEquals(Storage.fromLatin(dataPlain, 1, 140), messageBody);
+		assertEquals(Charset.fromLatin(dataPlain, 1, 140), messageBody);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
@@ -119,7 +120,7 @@ public class MessagePart_Test extends TestCase {
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Storage.toLatin(messageBody, 140), 0, dataPlain, 1, 140);
+		System.arraycopy(Charset.toLatin(messageBody, 140), 0, dataPlain, 1, 140);
 		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it

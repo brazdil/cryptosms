@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.File;
 import java.io.IOException;
 import junit.framework.TestCase;
+import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -87,26 +88,26 @@ public class Storage_Test extends TestCase {
 		// should trim after 5 bytes
 		String strABCDE = "ABCDEFG";
 		byte[] byteABCDE = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x44, (byte) 0x45 };
-		CustomAsserts.assertArrayEquals(Storage.toLatin(strABCDE, 5), byteABCDE);
+		CustomAsserts.assertArrayEquals(Charset.toLatin(strABCDE, 5), byteABCDE);
 
 		// check only first four bytes - fifth is random
 		String strABC = "ABC";
 		byte[] byteABC = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x00, (byte) 0x00 };
-		CustomAsserts.assertArrayEquals(Storage.toLatin(strABC, 5), 0, byteABC, 4);
+		CustomAsserts.assertArrayEquals(Charset.toLatin(strABC, 5), 0, byteABC, 4);
 	}
 
 	public void testFromLatin() {
 		// simple
 		byte[] byteABC = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x00, (byte) 0x00 };
-		assertEquals(Storage.fromLatin(byteABC), "ABC");
+		assertEquals(Charset.fromLatin(byteABC), "ABC");
 
 		// with offset
 		byte[] byteABC2 = new byte[] { (byte) 0x00, (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x00, (byte) 0x00 };
-		assertEquals(Storage.fromLatin(byteABC2, 1, 5), "ABC");
+		assertEquals(Charset.fromLatin(byteABC2, 1, 5), "ABC");
 		
 		// full
 		byte[] byteABCDE = new byte[] { (byte) 0x41, (byte) 0x42, (byte) 0x43, (byte) 0x44, (byte) 0x45 };
-		assertEquals(Storage.fromLatin(byteABCDE), "ABCDE");
+		assertEquals(Charset.fromLatin(byteABCDE), "ABCDE");
 	}
 
 	public void testCreateFile() {
