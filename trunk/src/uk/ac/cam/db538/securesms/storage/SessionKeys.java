@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import android.telephony.PhoneNumberUtils;
 
+import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -203,7 +204,7 @@ public class SessionKeys {
 			
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
-			setSimNumber(new SimNumber(Storage.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
+			setSimNumber(new SimNumber(Charset.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
 			setSessionKey_Out(dataSessionKey_Out);
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
@@ -264,7 +265,7 @@ public class SessionKeys {
 		keysBuffer.put(flags);
 		
 		// phone number
-		keysBuffer.put(Storage.toLatin(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
+		keysBuffer.put(Charset.toLatin(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
 		
 		// session keys and last IDs
 		keysBuffer.put(this.mSessionKey_Out);

@@ -3,8 +3,6 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import android.content.Context;
@@ -12,7 +10,6 @@ import android.content.Context;
 public final class Storage {
 	private static final String FILE_NAME = "storage.db";
 	
-	private static final String CHARSET_LATIN = "ISO-8859-1";
 	static final int CHUNK_SIZE = 256;
 	static final int ALIGN_SIZE = 256 * 32; // 8KB
 	static final int ENCRYPTED_ENTRY_SIZE = CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD;
@@ -94,60 +91,6 @@ public final class Storage {
 		result[2] = (byte) ((integer >> 8) & 0xFF);
 		result[3] = (byte) (integer & 0xFF);
 		return result;
-	}
-
-	/**
-	 * Turns a string into an ASCII series of bytes. 
-	 * @param text				Encoded string
-	 * @param bufferLength		Maximum size of the resulting array
-	 * @return
-	 */
-	static byte[] toLatin(String text, int bufferLength) {
-		ByteBuffer buffer = ByteBuffer.allocate(bufferLength);
-
-		byte[] latin = null;
-		try {
-			latin = text.getBytes(CHARSET_LATIN);
-		} catch (UnsupportedEncodingException e) {
-		}
-		
-		if (latin.length < bufferLength) {
-			buffer.put(latin);
-			buffer.put((byte) 0x00);
-			buffer.put(Encryption.generateRandomData(bufferLength - latin.length - 1));
-		}
-		else
-			buffer.put(latin, 0, bufferLength);
-		
-		return buffer.array();		
-	}
-	
-	/**
-	 * Takes a byte array with ASCII characters in it, and turns it into a string
-	 * @param latinData		Data to be processed
-	 * @return
-	 */
-	static String fromLatin(byte[] latinData) {
-		return fromLatin(latinData, 0, latinData.length);
-	}
-	
-	/**
-	 * Takes a byte array with ASCII characters in it, and turns it into a string
-	 * @param latinData		Data to be processed
-	 * @param offset		Offset in the array
-	 * @param len			Length of data
-	 * @return
-	 */
-	static String fromLatin(byte[] latinData, int offset, int len) {
-		int length = 0;
-		while (length < len && latinData[offset + length] != 0)
-			++length;
-		
-		try {
-			return new String(latinData, offset, Math.min(len, length), CHARSET_LATIN);
-		} catch (UnsupportedEncodingException ex) {
-			return null;
-		}		
 	}
 
 	// FILE MANIPULATION

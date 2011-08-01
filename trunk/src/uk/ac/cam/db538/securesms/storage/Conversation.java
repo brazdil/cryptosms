@@ -8,6 +8,7 @@ import android.content.Context;
 import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
+import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
@@ -23,7 +24,6 @@ public class Conversation implements Comparable<Conversation> {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_PHONENUMBER = 32;
-	private static final int LENGTH_TIMESTAMP = 29;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_PHONENUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
@@ -158,7 +158,7 @@ public class Conversation implements Comparable<Conversation> {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
-			setPhoneNumber(Storage.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
+			setPhoneNumber(Charset.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
 			setIndexSessionKeys(Storage.getInt(dataPlain, OFFSET_KEYSINDEX));
 			setIndexMessages(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
 			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
@@ -207,7 +207,7 @@ public class Conversation implements Comparable<Conversation> {
 		convBuffer.put(flags);
 		
 		// phone number
-		convBuffer.put(Storage.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
+		convBuffer.put(Charset.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
 		
 		// random data
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));

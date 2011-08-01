@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -132,7 +133,7 @@ class MessagePart {
 			boolean deliveredPart = ((flags & (1 << 7)) == 0) ? false : true;
 			
 			setDeliveredPart(deliveredPart);
-			setMessageBody(Storage.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
+			setMessageBody(Charset.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
 			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
@@ -180,7 +181,7 @@ class MessagePart {
 		msgBuffer.put(flags);
 		
 		// message body
-		msgBuffer.put(Storage.toLatin(this.mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(Charset.toLatin(this.mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
