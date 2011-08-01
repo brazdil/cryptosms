@@ -136,7 +136,7 @@ public class Charset {
 	 * @return
 	 */
 	public static byte[] toUtf8(String text, int bufferLength) {
-		return toBytes(text, bufferLength, CHARSET_ASCII);
+		return toBytes(text, bufferLength, CHARSET_UTF8);
 	}
 	
 	/**
