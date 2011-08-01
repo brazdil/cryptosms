@@ -19,7 +19,7 @@ import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
  * @author David Brazdil
  *
  */
-public class Conversation {
+public class Conversation implements Comparable<Conversation> {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_PHONENUMBER = 32;
@@ -27,9 +27,8 @@ public class Conversation {
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_PHONENUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
-	private static final int OFFSET_TIMESTAMP = OFFSET_PHONENUMBER + LENGTH_PHONENUMBER;
 	
-	private static final int OFFSET_RANDOMDATA = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
+	private static final int OFFSET_RANDOMDATA = OFFSET_PHONENUMBER + LENGTH_PHONENUMBER;
 
 	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
@@ -141,7 +140,6 @@ public class Conversation {
 	// INTERNAL FIELDS
 	private long mEntryIndex; // READ ONLY
 	private String mPhoneNumber;
-	private Time mTimeStamp;
 	private long mIndexSessionKeys;
 	private long mIndexMessages;
 	private long mIndexPrev;
@@ -160,11 +158,7 @@ public class Conversation {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
-			Time timeStamp = new Time();
-			timeStamp.parse3339(Storage.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
-
 			setPhoneNumber(Storage.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
-			setTimeStamp(timeStamp);
 			setIndexSessionKeys(Storage.getInt(dataPlain, OFFSET_KEYSINDEX));
 			setIndexMessages(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
 			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
@@ -176,7 +170,6 @@ public class Conversation {
 			timeStamp.setToNow();
 			
 			setPhoneNumber("");
-			setTimeStamp(timeStamp);
 			setIndexSessionKeys(0L);
 			setIndexMessages(0L);
 			setIndexPrev(0L);
@@ -216,9 +209,6 @@ public class Conversation {
 		// phone number
 		convBuffer.put(Storage.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
 		
-		// time stamp
-		convBuffer.put(Storage.toLatin(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
-
 		// random data
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
@@ -303,7 +293,7 @@ public class Conversation {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachSessionKeys(SessionKeys keys) throws StorageFileException, IOException {
+	void attachSessionKeys(SessionKeys keys) throws StorageFileException, IOException {
 		attachSessionKeys(keys, true);
 	}
 
@@ -314,7 +304,7 @@ public class Conversation {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws StorageFileException, IOException {
+	void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws StorageFileException, IOException {
 		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexSessionKeys();
@@ -344,7 +334,7 @@ public class Conversation {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachMessage(Message msg) throws StorageFileException, IOException {
+	void attachMessage(Message msg) throws StorageFileException, IOException {
 		attachMessage(msg, true);
 	}
 
@@ -355,7 +345,7 @@ public class Conversation {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public void attachMessage(Message msg, boolean lockAllow) throws StorageFileException, IOException {
+	void attachMessage(Message msg, boolean lockAllow) throws StorageFileException, IOException {
 		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexMessages();
@@ -662,6 +652,64 @@ public class Conversation {
 		}
 		return result;
 	}
+	
+	public Time getTimeStamp() {
+		Message firstMessage = null;
+		try {
+			firstMessage = getFirstMessage();
+		} catch (StorageFileException e) {
+		} catch (IOException e) {
+		}
+		
+		if (firstMessage != null)
+			return firstMessage.getTimeStamp();
+		else
+			return new Time();
+	}
+
+	/**
+	 * Returns time in a nice way
+	 * @return
+	 */
+	public String getFormattedTime() {
+		return getTimeStamp().format("%H:%M");
+	}
+	
+	/**
+	 * Returns whether this conversation should be marked unread
+	 * @return
+	 */
+	public boolean getMarkedUnread() {
+		Message firstMessage = null;
+		try {
+			firstMessage = getFirstMessage();
+		} catch (StorageFileException e) {
+		} catch (IOException e) {
+		}
+		
+		if (firstMessage != null)
+			return firstMessage.getUnread();
+		else
+			return false;
+	}
+
+	/**
+	 * Returns formatted preview of the last message in conversation
+	 * @return
+	 */
+	public String getPreview() {
+		Message firstMessage = null;
+		try {
+			firstMessage = getFirstMessage();
+		} catch (StorageFileException e) {
+		} catch (IOException e) {
+		}
+		
+		if (firstMessage != null)
+			return firstMessage.getMessageBody();
+		else
+			return new String();
+	}
 
 	// STATIC FUNCTIONS
 
@@ -755,14 +803,6 @@ public class Conversation {
 		this.mPhoneNumber = phoneNumber;
 	}
 
-	public Time getTimeStamp() {
-		return mTimeStamp;
-	}
-
-	public void setTimeStamp(Time timeStamp) {
-		this.mTimeStamp = timeStamp;
-	}
-
 	long getIndexSessionKeys() {
 		return mIndexSessionKeys;
 	}
@@ -822,5 +862,14 @@ public class Conversation {
 	
 	public static void addUpdateListener(ConversationUpdateListener listener) {
 		mGlobalListeners.add(listener);
+	}
+
+	@Override
+	public int compareTo(Conversation another) {
+		try {
+			return Time.compare(this.getTimeStamp(), another.getTimeStamp());
+		} catch (Exception e) {
+			return 0;
+		}
 	}
 }

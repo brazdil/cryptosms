@@ -7,11 +7,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.encryption.Encryption;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import android.content.Context;
 
 public final class Storage {
-	private static final String FILE_NAME = "data.db";
+	private static final String FILE_NAME = "storage.db";
 	
 	private static final String CHARSET_LATIN = "ISO-8859-1";
 	static final int CHUNK_SIZE = 256;
@@ -164,46 +163,10 @@ public final class Storage {
 	private Storage(String filename) throws IOException, StorageFileException {
 		mSingleton = this;
 		
-		File file = new File(filename);
-		if (file.exists())
-			file.delete();
-		
 		boolean exists = new File(filename).exists();
 		smsFile = new StorageFile(filename);
-		if (!exists) {
+		if (!exists)
 			createFile();
-
-			//TODO: Just For Testing!!!
-			Conversation conv1 = Conversation.createConversation();
-			conv1.setPhoneNumber("+420605219051");
-			SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
-			keys1.setSimNumber(new SimNumber("89441000301641313004", true));
-			keys1.setKeysSent(true);
-			keys1.setKeysConfirmed(false);
-			keys1.saveToFile();
-			SessionKeys keys4 = SessionKeys.createSessionKeys(conv1);
-			keys4.setSimNumber(new SimNumber("07879116797", false));
-			keys4.setKeysSent(true);
-			keys4.setKeysConfirmed(true);
-			keys4.saveToFile();
-			SessionKeys keys5 = SessionKeys.createSessionKeys(conv1);
-			keys5.setSimNumber(new SimNumber("07572306095", false));
-			keys5.setKeysSent(true);
-			keys5.setKeysConfirmed(true);
-			keys5.saveToFile();
-			Conversation conv2 = Conversation.createConversation();
-			conv2.setPhoneNumber("+20104544366");
-			SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
-			keys2.setSimNumber(new SimNumber("89441000301641313002", true));
-			keys2.setKeysSent(false);
-			keys2.setKeysConfirmed(true);
-			keys2.saveToFile();
-			SessionKeys keys3 = SessionKeys.createSessionKeys(conv2);
-			keys3.setSimNumber(new SimNumber("07879116797", false));
-			keys3.setKeysSent(false);
-			keys3.setKeysConfirmed(false);
-			keys3.saveToFile();
-		}
 	}
 	
 	/**

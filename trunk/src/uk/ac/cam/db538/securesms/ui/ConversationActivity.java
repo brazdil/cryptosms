@@ -27,6 +27,9 @@ import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 public class ConversationActivity extends Activity {
+	public static final String OPTION_PHONE_NUMBER = "phoneNumber";
+	public static final String OPTION_OFFER_KEYS_SETUP = "createKeys";
+	
 	static private Drawable sDefaultContactImage = null;
 
 	private Contact mContact;
@@ -37,7 +40,7 @@ public class ConversationActivity extends Activity {
     private Button mSendButton;
     private EditText mTextEditor;
     
-    private boolean errorNoKeysShown = false;
+    private boolean errorNoKeysShow;
 
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -46,7 +49,7 @@ public class ConversationActivity extends Activity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        Context context = getApplicationContext();
+        Context context = this;
 	    Resources res = getResources();
 	    
         if (sDefaultContactImage == null) {
@@ -55,7 +58,8 @@ public class ConversationActivity extends Activity {
 
         Intent intent = getIntent();
 	    Bundle bundle = intent.getExtras();
-	    String phoneNumber = bundle.getString("phoneNumber");
+	    String phoneNumber = bundle.getString(OPTION_PHONE_NUMBER);
+	    errorNoKeysShow = bundle.getBoolean(OPTION_OFFER_KEYS_SETUP, true);
 	    mContact = Contact.getContact(context, phoneNumber);
 	    mNameView = (TextView) findViewById(R.id.conversation_name);
 	    mPhoneNumberView = (TextView) findViewById(R.id.conversation_phone_number);
@@ -101,7 +105,7 @@ public class ConversationActivity extends Activity {
 
 				// check keys availability
 		    	if (!Utils.hasKeysExchangedForSIM(this, mConversation)) {
-		    		if (!errorNoKeysShown) {
+		    		if (errorNoKeysShow) {
 						// secure connection has not been successfully established yet
 						new AlertDialog.Builder(this)
 							.setTitle(res.getString(R.string.conversation_no_keys))
@@ -113,7 +117,7 @@ public class ConversationActivity extends Activity {
 								}
 							})
 							.show();
-						errorNoKeysShown = true;
+						errorNoKeysShow = false;
 		    		}
 		    		
 					// set to disabled mode

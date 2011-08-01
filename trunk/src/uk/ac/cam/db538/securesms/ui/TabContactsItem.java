@@ -21,7 +21,6 @@ import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.data.Contact;
-import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
@@ -88,42 +87,12 @@ public class TabContactsItem extends RelativeLayout {
         mStatusView.setText(explain);
     }
 
-/*    private CharSequence formatMessage(ConversationListItemData ch) {
-        final int size = android.R.style.TextAppearance_Small;
-        final int color = android.R.styleable.Theme_textColorSecondary;
-        String from = ch.getFrom();
-
-        SpannableStringBuilder buf = new SpannableStringBuilder(from);
-
-        if (ch.getMessageCount() > 1) {
-            buf.append(" (" + ch.getMessageCount() + ") ");
-        }
-
-        int before = buf.length();
-        if (ch.hasDraft()) {
-            buf.append(" ");
-            buf.append(mContext.getResources().getString(R.string.has_draft));
-            buf.setSpan(new TextAppearanceSpan(mContext, size, color), before,
-                    buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-            buf.setSpan(new ForegroundColorSpan(
-                    mContext.getResources().getColor(R.drawable.text_color_red)),
-                    before, buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-
-        // Unread messages are shown in bold
-        if (!ch.isRead()) {
-            buf.setSpan(STYLE_BOLD, 0, buf.length(),
-                    Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-        return buf;
-    }*/
-
-    public final void bind(final Conversation conv) {
+    public final void bind(Conversation conv) {
     	Context context = this.getContext();
     	setConversationHeader(conv);
     	
     	Resources res = context.getResources();
-    	
+
 		try {
 			SessionKeys keys = conv.getSessionKeysForSIM(context);
 	    	if (keys != null) {

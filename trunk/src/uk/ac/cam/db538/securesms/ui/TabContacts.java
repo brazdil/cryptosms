@@ -42,7 +42,7 @@ public class TabContacts extends ListActivity {
 	private TabContactsItem mNewContactView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
 	
-	private void updateContacts(Context context) throws StorageFileException, IOException {
+	private void updateContacts() throws StorageFileException, IOException {
 		mContacts.clear();
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
@@ -55,7 +55,7 @@ public class TabContacts extends ListActivity {
 	
 	private void startConversation(Conversation conv) {
 		Intent intent = new Intent(TabContacts.this, ConversationActivity.class);
-		intent.putExtra("phoneNumber", conv.getPhoneNumber());
+		intent.putExtra(ConversationActivity.OPTION_PHONE_NUMBER, conv.getPhoneNumber());
 		startActivity(intent);
 	}	
 	
@@ -105,7 +105,7 @@ public class TabContacts extends ListActivity {
        
         try {
         	// initialize the list of Contacts
-        	updateContacts(getApplicationContext());
+        	updateContacts();
         	// create the adapter
         	final ArrayAdapter<Conversation> adapterContacts = new ArrayAdapter<Conversation>(this, R.layout.item_main_contacts, mContacts) {
         		@Override
@@ -125,7 +125,7 @@ public class TabContacts extends ListActivity {
         	Conversation.addUpdateListener(new ConversationUpdateListener() {
 				public void onUpdate() {
 					try {
-						updateContacts(getApplicationContext());
+						updateContacts();
 						adapterContacts.notifyDataSetChanged();
 					} catch (StorageFileException ex) {
 						Utils.dialogDatabaseError(context, ex);
@@ -254,7 +254,6 @@ public class TabContacts extends ListActivity {
     		break;
     	}
     }
-
 	
 	private void checkResources() {
 		// check SIM availability

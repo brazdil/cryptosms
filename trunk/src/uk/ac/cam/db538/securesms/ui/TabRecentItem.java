@@ -18,15 +18,16 @@
 package uk.ac.cam.db538.securesms.ui;
 
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.data.Contact;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.QuickContactBadge;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -37,9 +38,8 @@ public class TabRecentItem extends RelativeLayout {
     private TextView mSubjectView;
     private TextView mFromView;
     private TextView mDateView;
-    private View mAttachmentView;
+    private View mDeliveryPendingView;
     private View mErrorIndicator;
-    private ImageView mPresenceView;
     private QuickContactBadge mAvatarView;
 
     static private Drawable sDefaultContactImage;
@@ -64,38 +64,18 @@ public class TabRecentItem extends RelativeLayout {
 
         mFromView = (TextView) findViewById(R.id.recent_from);
         mSubjectView = (TextView) findViewById(R.id.recent_subject);
-
         mDateView = (TextView) findViewById(R.id.recent_date);
-        mAttachmentView = findViewById(R.id.recent_attachment);
+        mDeliveryPendingView = findViewById(R.id.recent_attachment);
         mErrorIndicator = findViewById(R.id.recent_error);
-        mPresenceView = (ImageView) findViewById(R.id.recent_presence);
         mAvatarView = (QuickContactBadge) findViewById(R.id.recent_avatar);
     }
 
-    public void setPresenceIcon(int iconId) {
-        if (iconId == 0) {
-            mPresenceView.setVisibility(View.GONE);
-        } else {
-            mPresenceView.setImageResource(iconId);
-            mPresenceView.setVisibility(View.VISIBLE);
-        }
-    }
-    
     private void setConversationHeader(Conversation conv) {
     	mConversationHeader = conv;
     }
 
-    @SuppressWarnings("unused")
-	private Conversation getConversationHeader() {
+	public Conversation getConversationHeader() {
     	return mConversationHeader;
-    }
-
-    /**
-     * Only used for header binding.
-     */
-    public void bind(String title, String explain) {
-        mFromView.setText(title);
-        mSubjectView.setText(explain);
     }
 
 /*    private CharSequence formatMessage(ConversationListItemData ch) {
@@ -128,94 +108,48 @@ public class TabRecentItem extends RelativeLayout {
         return buf;
     }*/
 
-    private void updateAvatarView() {
-/*    	
-        ConversationListItemData ch = mConversationHeader;
 
-        Drawable avatarDrawable;
-        if (ch.getContacts().size() == 1) {
-            Contact contact = ch.getContacts().get(0);
-            avatarDrawable = contact.getAvatar(mContext, sDefaultContactImage);
-
-            if (contact.existsInDatabase()) {
-                mAvatarView.assignContactUri(contact.getUri());
-            } else {
-                mAvatarView.assignContactFromPhone(contact.getNumber(), true);
-            }
-        } else {
-            avatarDrawable = sDefaultContactImage;
-            mAvatarView.assignContactUri(null);
-        }
-        mAvatarView.setImageDrawable(avatarDrawable);
-        mAvatarView.setVisibility(View.VISIBLE);*/
-    	
-    	Drawable avatarDrawable;
-        avatarDrawable = sDefaultContactImage;
-        //mAvatarView.assignContactUri(null);
-        mAvatarView.assignContactFromPhone(mConversationHeader.getPhoneNumber(), true);
-        mAvatarView.setImageDrawable(avatarDrawable);
-        mAvatarView.setVisibility(View.VISIBLE);
-    }
-
-    /*
-    private void updateFromView() {
-        ConversationListItemData ch = mConversationHeader;
-        ch.updateRecipients();
-        mFromView.setText(formatMessage(ch));
-        setPresenceIcon(ch.getContacts().getPresenceResId());
-        updateAvatarView();
-    }
-
-    public void onUpdate(Contact updated) {
-        mHandler.post(new Runnable() {
-            public void run() {
-                updateFromView();
-            }
-        });
-    }*/
-
-    public final void bind(Context context, final Conversation conv) {
+    public final void bind(final Conversation conv) {
+    	Context context = this.getContext();
+    	Resources res = context.getResources();
         setConversationHeader(conv);
+        
+        boolean hasError = false; 
+        boolean hasNoEncryption = false;
 
-        Drawable background = context.getResources().getDrawable(R.drawable.conversation_item_background_unread);
-        		/*ch.isRead()?
-        		context.getResources().getDrawable(R.drawable.conversation_item_background_read) :
-                mContext.getResources().getDrawable(R.drawable.conversation_item_background_unread);*/
-        setBackgroundDrawable(background);
+        setBackgroundDrawable(
+        	(conv.getMarkedUnread()) ?
+        		res.getDrawable(R.drawable.conversation_item_background_unread) :
+        		res.getDrawable(R.drawable.conversation_item_background_read)
+        );
 
-        LayoutParams attachmentLayout = (LayoutParams)mAttachmentView.getLayoutParams();
-        boolean hasError = true; //ch.hasError();
-        // When there's an error icon, the attachment icon is left of the error icon.
-        // When there is not an error icon, the attachment icon is left of the date text.
-        // As far as I know, there's no way to specify that relationship in xml.
+        LayoutParams attachmentLayout = (LayoutParams)mDeliveryPendingView.getLayoutParams();
         if (hasError) {
             attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.recent_error);
         } else {
             attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.recent_date);
         }
 
-        boolean hasAttachment = true; //ch.hasAttachment();
-        mAttachmentView.setVisibility(hasAttachment ? VISIBLE : GONE);
-
-        // Date
-        mDateView.setText(conv.getTimeStamp().format("%H:%M"));
-
-        // From
-        mFromView.setText("David Brazdil");
-
-        // Subject
-        mSubjectView.setText("Keys exchanged");
         LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
-        // We have to make the subject left of whatever optional items are shown on the right.
-        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasAttachment ? R.id.recent_attachment :
+        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasNoEncryption ? R.id.recent_attachment :
             (hasError ? R.id.recent_error : R.id.recent_date));
 
-        // Transmission error indicator
         mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
 
-        updateAvatarView();
-    }
+        mDeliveryPendingView.setVisibility(hasNoEncryption ? VISIBLE : GONE);
+        mDateView.setText(conv.getFormattedTime());
 
-    public final void unbind() {
+    	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
+        mFromView.setText(contact.getName());
+        mSubjectView.setText(conv.getPreview());
+
+    	Drawable avatarDrawable = contact.getAvatar(context, sDefaultContactImage);
+        if (contact.existsInDatabase()) {
+            mAvatarView.assignContactUri(contact.getUri());
+        } else {
+            mAvatarView.assignContactFromPhone(conv.getPhoneNumber(), true);
+        }
+        mAvatarView.setImageDrawable(avatarDrawable);
+        mAvatarView.setVisibility(View.VISIBLE);
     }
 }

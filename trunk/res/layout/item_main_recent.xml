@@ -21,7 +21,7 @@
 <uk.ac.cam.db538.securesms.ui.TabRecentItem xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="@drawable/conversation_item_background_unread"
+    android:background="@drawable/conversation_item_background_read"
     android:paddingRight="10dip">
 
     <android.widget.QuickContactBadge
@@ -30,17 +30,6 @@
         android:layout_marginLeft="7dip"
         android:layout_centerVertical="true"
         style="?android:attr/quickContactBadgeStyleWindowSmall" />
-
-    <ImageView
-        android:id="@+id/recent_presence"
-        android:visibility="gone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="5dip"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:paddingBottom="20dip"
-         />
 
     <TextView android:id="@+id/recent_from"
         android:layout_width="wrap_content"
@@ -52,7 +41,6 @@
         android:layout_marginLeft="7dip"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@id/recent_avatar"
-        android:layout_toLeftOf="@id/recent_presence"
         android:layout_alignWithParentIfMissing="true"
         android:ellipsize="marquee"  />
 

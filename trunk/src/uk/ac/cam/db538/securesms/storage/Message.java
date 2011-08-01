@@ -110,6 +110,7 @@ public class Message {
 	private boolean mDeliveredPart;
 	private boolean mDeliveredAll;
 	private MessageType mMessageType;
+	private boolean mUnread;
 	private Time mTimeStamp;
 	private String mMessageBody;
 	private long mIndexParent;
@@ -150,6 +151,7 @@ public class Message {
 			boolean deliveredPart = ((flags & (1 << 7)) == 0) ? false : true;
 			boolean deliveredAll = ((flags & (1 << 6)) == 0) ? false : true;
 			boolean messageOutgoing = ((flags & (1 << 5)) == 0) ? false : true;
+			boolean unread = ((flags & (1 << 4)) == 0) ? false : true;
 			
 			Time timeStamp = new Time();
 			timeStamp.parse3339(Storage.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
@@ -157,6 +159,7 @@ public class Message {
 			setDeliveredPart(deliveredPart);
 			setDeliveredAll(deliveredAll);
 			setMessageType((messageOutgoing) ? MessageType.OUTGOING : MessageType.INCOMING);
+			setUnread(unread);
 			setTimeStamp(timeStamp);
 			setMessageBody(Storage.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
 			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
@@ -172,6 +175,7 @@ public class Message {
 			setDeliveredPart(false);
 			setDeliveredAll(false);
 			setMessageType(MessageType.OUTGOING);
+			setUnread(false);
 			setTimeStamp(timeStamp);
 			setMessageBody("");
 			setIndexParent(0L);
@@ -215,6 +219,8 @@ public class Message {
 			flags |= (byte) ((1 << 6) & 0xFF);
 		if (this.mMessageType == MessageType.OUTGOING)
 			flags |= (byte) ((1 << 5) & 0xFF);
+		if (this.mUnread)
+			flags |= (byte) ((1 << 4) & 0xFF);
 		msgBuffer.put(flags);
 		
 		// time stamp
@@ -491,6 +497,14 @@ public class Message {
 
 	public MessageType getMessageType() {
 		return mMessageType;
+	}
+
+	public void setUnread(boolean unread) {
+		this.mUnread = unread;
+	}
+
+	public boolean getUnread() {
+		return mUnread;
 	}
 
 	public void setMessageBody(String messageBody) {
