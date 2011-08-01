@@ -12,7 +12,6 @@ import uk.ac.cam.db538.securesms.storage.Header;
 import uk.ac.cam.db538.securesms.storage.Message;
 import uk.ac.cam.db538.securesms.storage.MessagePart;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import android.text.format.Time;
 import junit.framework.TestCase;
 
 public class Conversation_Test extends TestCase {
@@ -21,7 +20,6 @@ public class Conversation_Test extends TestCase {
 	private String phoneNumber = "+447896512369";
 	private String phoneNumberLong = "+1234567890126549873sdfsat6ewrt987wet3df1g3s2g1e6r5t46wert4dfsgdfsg";
 	private String phoneNumberResult = "+1234567890126549873sdfsat6ewrt9";
-	private Time timeStamp = new Time();
 	private long indexSessionKeys = 122L;
 	private long indexMessages = 120L;
 	private long indexPrev = 12L;
@@ -29,7 +27,6 @@ public class Conversation_Test extends TestCase {
 
 	private void setData(Conversation conv, boolean longPhoneNumber) {
 		conv.setPhoneNumber((longPhoneNumber) ? phoneNumberLong : phoneNumber);
-		conv.setTimeStamp(timeStamp);
 		conv.setIndexSessionKeys(indexSessionKeys);
 		conv.setIndexMessages(indexMessages);
 		conv.setIndexPrev(indexPrev);
@@ -38,7 +35,6 @@ public class Conversation_Test extends TestCase {
 	
 	private void checkData(Conversation conv, boolean longPhoneNumber) {
 		assertEquals(conv.getPhoneNumber(), (longPhoneNumber) ? phoneNumberResult : phoneNumber);
-		assertEquals(Time.compare(timeStamp, conv.getTimeStamp()), 0);
 		assertEquals(conv.getIndexSessionKeys(), indexSessionKeys);
 		assertEquals(conv.getIndexMessages(), indexMessages);
 		assertEquals(conv.getIndexPrev(), indexPrev);
@@ -48,8 +44,6 @@ public class Conversation_Test extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		Common.clearStorageFile();
-		
-		timeStamp.set(12, 24, 5, 8, 2, 1985);
 	}
 
 	protected void tearDown() throws Exception {
@@ -215,8 +209,6 @@ public class Conversation_Test extends TestCase {
 		// check the data
 		assertEquals(flags, dataPlain[0]);
 		assertEquals(phoneNumberResult, Storage.fromLatin(dataPlain, 1, 32));
-		Time time = new Time(); time.parse3339(Storage.fromLatin(dataPlain, 33, 29));
-		assertEquals(Time.compare(time, timeStamp), 0);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexSessionKeys);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
@@ -233,7 +225,6 @@ public class Conversation_Test extends TestCase {
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
 		System.arraycopy(Storage.toLatin(phoneNumber, 32), 0, dataPlain, 1, 32);
-		System.arraycopy(Storage.toLatin(timeStamp.format3339(false), 29), 0, dataPlain, 33, 29);
 		System.arraycopy(Storage.getBytes(indexSessionKeys), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
 		System.arraycopy(Storage.getBytes(indexMessages), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
 		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
