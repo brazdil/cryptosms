@@ -10,6 +10,11 @@ public class Charset {
 	private static final String CHARSET_LATIN = "ISO-8859-1";
 	private static final String CHARSET_UTF8 = "UTF-8";
 
+	/**
+	 * Checks whether each character in String is representable by 7-bit ASCII
+	 * @param text
+	 * @return
+	 */
 	public static boolean isConvertableToAscii(String text) {
 		for (int i = 0; i < text.length(); ++i)
 			if (text.charAt(i) > 127)
