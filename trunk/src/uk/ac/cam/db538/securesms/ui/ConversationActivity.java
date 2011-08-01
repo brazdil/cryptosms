@@ -75,7 +75,7 @@ public class ConversationActivity extends Activity {
         mAvatarView.setVisibility(View.VISIBLE);
         
         // register for changes in SIM state
-        SimCard.registerSimStateListener(this, new OnSimStateListener() {
+        SimCard.getSingleton().registerSimStateListener(this, new OnSimStateListener() {
 			public void onChange() {
 				checkResources();
 			}

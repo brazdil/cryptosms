@@ -471,6 +471,8 @@
     <string name="yes">Yes</string>
     <string name="error_no_sim_number_import">Select the phone number of this SIM</string>
     <string name="error_no_sim_number_import_none">None of these</string>
+    <string name="later">Later</string>
+    <string name="never">Never</string>
 
 </resources>
 

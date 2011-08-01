@@ -52,7 +52,7 @@ public class SessionKeys {
 	/**
 	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 */
-	static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException, IOException {
+	public static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException, IOException {
 		return createSessionKeys(parent, true);
 	}
 	
@@ -60,7 +60,7 @@ public class SessionKeys {
 	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 * @param lock		File lock allow
 	 */
-	static SessionKeys createSessionKeys(Conversation parent, boolean lockAllow) throws StorageFileException, IOException {
+	public static SessionKeys createSessionKeys(Conversation parent, boolean lockAllow) throws StorageFileException, IOException {
 		SessionKeys keys = new SessionKeys(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 		parent.attachSessionKeys(keys, lockAllow);
 		return keys;
@@ -98,7 +98,7 @@ public class SessionKeys {
 	private long mEntryIndex; // READ ONLY
 	private boolean mKeysSent;
 	private boolean mKeysConfirmed;
-	private boolean mSimSerial;
+	private boolean mHasSerial;
 	private String mSimNumber; // or serial (based on the flag)
 	private byte[] mSessionKey_Out;
 	private byte mLastID_Out;
@@ -148,7 +148,7 @@ public class SessionKeys {
 			
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
-			setSimSerial(simSerial);
+			setHasSerial(simSerial);
 			setSimNumber(Storage.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER));
 			setSessionKey_Out(dataSessionKey_Out);
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
@@ -162,7 +162,7 @@ public class SessionKeys {
 			// default values
 			setKeysSent(false);
 			setKeysConfirmed(false);
-			setSimSerial(false);
+			setHasSerial(false);
 			setSimNumber("");
 			setSessionKey_Out(Encryption.generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_Out((byte) 0x00);
@@ -206,7 +206,7 @@ public class SessionKeys {
 			flags |= (byte) ((1 << 7) & 0xFF);
 		if (this.mKeysConfirmed)
 			flags |= (byte) ((1 << 6) & 0xFF);
-		if (this.mSimSerial)
+		if (this.mHasSerial)
 			flags |= (byte) ((1 << 5) & 0xFF);
 		keysBuffer.put(flags);
 		
@@ -412,12 +412,12 @@ public class SessionKeys {
 		mKeysConfirmed = keysConfirmed;
 	}
 
-	public boolean usesSimSerial() {
-		return mSimSerial;
+	public boolean getHasSerial() {
+		return mHasSerial;
 	}
 
-	public void setSimSerial(boolean simSerial) {
-		mSimSerial = simSerial;
+	public void setHasSerial(boolean simSerial) {
+		mHasSerial = simSerial;
 	}
 
 	public String getSimNumber() {

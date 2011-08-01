@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms.data;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.securesms.Preferences;
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Header;
@@ -13,12 +14,17 @@ import uk.ac.cam.db538.securesms.storage.SessionKeys.SessionKeysStatus;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
 import android.telephony.PhoneNumberUtils;
 
 public class Utils {
+	
+	private static final String PREFS_IMPORT_NEVER = "IMPORT_NEVER";
+	private static boolean mImportShown = false;
+	private static boolean warningSIMNotPresent = false;
 
 	private static void changeAllSessionKeysFromSerialToPhoneNumber(String serial, String phoneNumber, boolean lockAllow) throws StorageFileException, IOException {
 		Storage.getDatabase().lockFile(lockAllow);
@@ -29,7 +35,7 @@ public class Utils {
 				SessionKeys temp, keys = conv.getFirstSessionKeys(false);
 				while (keys != null) {
 					temp = keys.getNextSessionKeys(false);
-					if (keys.usesSimSerial() == false && PhoneNumberUtils.compare(keys.getSimNumber(), phoneNumber))
+					if (keys.getHasSerial() == false && PhoneNumberUtils.compare(keys.getSimNumber(), phoneNumber))
 						keys.delete(false);
 					keys = temp;
 				}
@@ -37,8 +43,8 @@ public class Utils {
 				// update the rest
 				keys = conv.getFirstSessionKeys(false);
 				while (keys != null) {
-					if (keys.usesSimSerial() == true && keys.getSimNumber().compareTo(serial) == 0) {
-						keys.setSimSerial(false);
+					if (keys.getHasSerial() == true && keys.getSimNumber().compareTo(serial) == 0) {
+						keys.setHasSerial(false);
 						keys.setSimNumber(phoneNumber);
 						keys.saveToFile(false);
 					}
@@ -64,7 +70,7 @@ public class Utils {
 				SessionKeys temp, keys = conv.getFirstSessionKeys(false);
 				while (keys != null) {
 					temp = keys.getNextSessionKeys(false);
-					if (keys.usesSimSerial() == true && keys.getSimNumber().compareTo(serial) == 0)
+					if (keys.getHasSerial() == true && keys.getSimNumber().compareTo(serial) == 0)
 						keys.delete(false);
 					keys = temp;
 				}
@@ -72,8 +78,8 @@ public class Utils {
 				// then update the others
 				keys = conv.getFirstSessionKeys(false);
 				while (keys != null) {
-					if (keys.usesSimSerial() == false && PhoneNumberUtils.compare(keys.getSimNumber(), phoneNumber)) {
-						keys.setSimSerial(true);
+					if (keys.getHasSerial() == false && PhoneNumberUtils.compare(keys.getSimNumber(), phoneNumber)) {
+						keys.setHasSerial(true);
 						keys.setSimNumber(serial);
 						keys.saveToFile(false);
 					}
@@ -89,19 +95,6 @@ public class Utils {
 			Storage.getDatabase().unlockFile(lockAllow);
 		}
 	}
-
-	/**
-	 * Tries to find session keys for this particular SIM,
-	 * either by phone number of (if not available) by SIM's serial number
-	 * @param context
-	 * @param conv
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public static SessionKeys getSessionKeysForSIM(Context context, Conversation conv) throws StorageFileException, IOException { 
-		return getSessionKeysForSIM(context, conv, true);
-	}
 	
 	private static ArrayList<String> getAllSimNumbersStored(boolean lockAllow) throws StorageFileException, IOException {
 		ArrayList<String> phoneNumbers = new ArrayList<String>();
@@ -110,7 +103,7 @@ public class Utils {
 		while (conv != null) {
 			SessionKeys keys = conv.getFirstSessionKeys(lockAllow);
 			while (keys != null) {
-				if (keys.usesSimSerial() == false) {
+				if (keys.getHasSerial() == false) {
 					boolean found = false;
 					for (String n : phoneNumbers)
 						if (PhoneNumberUtils.compare(keys.getSimNumber(), n))
@@ -126,11 +119,20 @@ public class Utils {
 		return phoneNumbers;
 	}
 	
-	// TODO: move this to proper saved settings
-	private static boolean mImportShown = false;
-	private static boolean mImportDeclined = false;
-	private static boolean warningSIMNotPresent = false;
-	
+
+	/**
+	 * Tries to find session keys for this particular SIM,
+	 * either by phone number of (if not available) by SIM's serial number
+	 * @param context
+	 * @param conv
+	 * @return
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	public static SessionKeys getSessionKeysForSIM(Context context, Conversation conv) throws StorageFileException, IOException { 
+		return getSessionKeysForSIM(context, conv, true);
+	}
+
 	/**
 	 * Tries to find session keys for this particular SIM,
 	 * either by phone number or (if not available) by SIM's serial number
@@ -144,8 +146,8 @@ public class Utils {
 	public static SessionKeys getSessionKeysForSIM(final Context context, Conversation conv, boolean lockAllow) throws StorageFileException, IOException {
 		Storage.getDatabase().lockFile(lockAllow);
 		try {
-			final String simNumber = SimCard.getSimPhoneNumber(context);
-			final String simSerial = SimCard.getSimSerialNumber(context);
+			final String simNumber = SimCard.getSingleton().getSimPhoneNumber(context);
+			final String simSerial = SimCard.getSingleton().getSimSerialNumber(context);
 			SessionKeys keysSerial = conv.getSessionKeys(simSerial, true, false);
 			if (simNumber == null || simNumber.length() == 0) {
 				// no phone number
@@ -230,7 +232,7 @@ public class Utils {
 	 */
 	public static boolean checkSimPhoneNumberAvailable(final Context context, boolean lockAllow) throws IOException, StorageFileException {
 		final Resources res = context.getResources();
-		String simNumber = SimCard.getSimPhoneNumber(context);
+		String simNumber = SimCard.getSingleton().getSimPhoneNumber(context);
 		if (simNumber == null) {
 			// no SIM present (possibly Airplane mode)
 			if (!warningSIMNotPresent) {
@@ -245,68 +247,62 @@ public class Utils {
 		} else if (simNumber.length() == 0) {
 			// unknown number, but SIM present
 			// try to get its serial number
-			final String simSerial = SimCard.getSimSerialNumber(context);
+			final String simSerial = SimCard.getSingleton().getSimSerialNumber(context);
 
 			Storage.getDatabase().lockFile(lockAllow);
 			try {
 				// offer import
-				// make list of phone numbers that have session keys
-				final ArrayList<String> phoneNumbers = getAllSimNumbersStored(false);
-				// are there any?
-				if (phoneNumbers.size() > 0 && !mImportShown && !mImportDeclined) {
-					mImportShown = true;						
-					// give user an option to choose
-					new AlertDialog.Builder(context)
-						.setTitle(res.getString(R.string.error_no_sim_number))
-						.setMessage(res.getString(R.string.error_no_sim_number_details))
-	    				.setOnCancelListener(new OnCancelListener() {
-							@Override
-							public void onCancel(DialogInterface dialog) {
-					    		mImportDeclined = true;
-							}
-						})
-						.setNegativeButton(res.getString(R.string.no), new OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,	int which) {
-								mImportDeclined = true;
-							}
-						})
-						.setPositiveButton(res.getString(R.string.yes), new OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								String[] numbers = new String[phoneNumbers.size() + 1];
-								numbers = phoneNumbers.toArray(numbers);
-								numbers[phoneNumbers.size()] = res.getString(R.string.error_no_sim_number_import_none);
-								
-								// display them in a dialog
-			    				new AlertDialog.Builder(context)
-			    					.setTitle(res.getString(R.string.error_no_sim_number_import))
-			    					.setItems(numbers, new DialogInterface.OnClickListener() {
-				    				    public void onClick(DialogInterface dialog, int item) {
-				    				    	if (item < phoneNumbers.size()) {
-												try {
-													Utils.changeAllSessionKeysFromPhoneNumberToSerial(phoneNumbers.get(item), simSerial, false);
-												} catch (StorageFileException e) {
-													// TODO Auto-generated catch block
-													e.printStackTrace();
-												} catch (IOException e) {
-													// TODO Auto-generated catch block
-													e.printStackTrace();
-												}
-				    				    	} else
-				    				    		mImportDeclined = true;
-				    				    }
-				    				})
-				    				.setOnCancelListener(new OnCancelListener() {
-										@Override
-										public void onCancel(DialogInterface dialog) {
-			    				    		mImportDeclined = true;
-										}
-									})
-			    					.show();
-							}
-						})
-						.show();
+				// check preferences
+				String declinedSim = Preferences.getSingleton().getPreferences().getString(PREFS_IMPORT_NEVER, null);
+				if (!mImportShown && (declinedSim == null || simSerial.compareTo(declinedSim) != 0)) {
+					// make list of phone numbers that have session keys
+					final ArrayList<String> phoneNumbers = getAllSimNumbersStored(false);
+					// are there any?
+					if (phoneNumbers.size() > 0) {
+						mImportShown = true;				
+						// give user an option to choose
+						new AlertDialog.Builder(context)
+							.setTitle(res.getString(R.string.error_no_sim_number))
+							.setMessage(res.getString(R.string.error_no_sim_number_details))
+							.setNegativeButton(res.getString(R.string.never), new OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,	int which) {
+									SharedPreferences.Editor editor = Preferences.getSingleton().getPreferences().edit();
+									editor.putString(PREFS_IMPORT_NEVER, simSerial);
+									editor.commit();
+								}
+							})
+							.setNeutralButton(res.getString(R.string.later), new DummyOnClickListener())
+							.setPositiveButton(res.getString(R.string.yes), new OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									String[] numbers = new String[phoneNumbers.size() + 1];
+									numbers = phoneNumbers.toArray(numbers);
+									numbers[phoneNumbers.size()] = res.getString(R.string.error_no_sim_number_import_none);
+									
+									// display them in a dialog
+				    				new AlertDialog.Builder(context)
+				    					.setTitle(res.getString(R.string.error_no_sim_number_import))
+				    					.setItems(numbers, new DialogInterface.OnClickListener() {
+					    				    public void onClick(DialogInterface dialog, int item) {
+					    				    	if (item < phoneNumbers.size()) {
+													try {
+														Utils.changeAllSessionKeysFromPhoneNumberToSerial(phoneNumbers.get(item), simSerial, false);
+													} catch (StorageFileException e) {
+														// TODO Auto-generated catch block
+														e.printStackTrace();
+													} catch (IOException e) {
+														// TODO Auto-generated catch block
+														e.printStackTrace();
+													}
+					    				    	}
+					    				    }
+					    				})
+				    					.show();
+								}
+							})
+							.show();
+					}
 				}
 			} catch (StorageFileException ex) {
 				throw ex;

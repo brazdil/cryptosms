@@ -92,7 +92,7 @@ public class TabContacts extends ListActivity {
 		listView.setFastScrollEnabled(true);
 		
         // register for changes in SIM state
-        SimCard.registerSimStateListener(this, new OnSimStateListener() {
+        SimCard.getSingleton().registerSimStateListener(this, new OnSimStateListener() {
 			public void onChange() {
 				checkResources();
 			}

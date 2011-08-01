@@ -13,16 +13,8 @@ public class TabRecent extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen_main_recent);
-        
-        try {
-			Storage.initSingleton(this);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (StorageFileException e) {
-			e.printStackTrace();
-		}
-        
-		/*        ListView listView = getListView();
+
+        /*        ListView listView = getListView();
         LayoutInflater inflater = LayoutInflater.from(this);
         
         // the New Message header

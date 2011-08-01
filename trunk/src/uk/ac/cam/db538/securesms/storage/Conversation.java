@@ -514,12 +514,12 @@ public class Conversation {
 			if (isSerial) {
 				// serial number is saved in the simNumber
 				// if there is a serial number in the keys as well, compare these two
-				if (keys.usesSimSerial() && simNumber.compareTo(keys.getSimNumber()) == 0)
+				if (keys.getHasSerial() && simNumber.compareTo(keys.getSimNumber()) == 0)
 					return keys;
 			} else {
 				// SIM phone number is saved in the simNumber
 				// if there is a phone number in the keys as well, compare these two
-				if (!keys.usesSimSerial() && PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
+				if (!keys.getHasSerial() && PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
 					return keys;
 			}
 			keys = keys.getNextSessionKeys(lockAllow);
