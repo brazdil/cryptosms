@@ -167,8 +167,6 @@ public class Contact {
      * Load the avatar data from the cursor into memory.  Don't decode the data
      * until someone calls for it (see getAvatar).  Hang onto the raw data so that
      * we can compare it when the data is reloaded.
-     * TODO: consider comparing a checksum so that we don't have to hang onto
-     * the raw bytes after the image is decoded.
      */
     private static byte[] loadAvatarData(Context context, Contact entry) {
         byte [] data = null;

@@ -143,7 +143,6 @@ public class TabRecentItem extends RelativeLayout {
                 mAvatarView.assignContactFromPhone(contact.getNumber(), true);
             }
         } else {
-            // TODO get a multiple recipients asset (or do something else)
             avatarDrawable = sDefaultContactImage;
             mAvatarView.assignContactUri(null);
         }

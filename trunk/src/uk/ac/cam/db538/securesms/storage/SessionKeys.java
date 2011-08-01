@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import android.telephony.PhoneNumberUtils;
+
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -34,6 +36,60 @@ public class SessionKeys {
 	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
 	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;	
+	
+	public static class SimNumber {
+		private boolean mSerial;
+		private String mNumber;
+		
+		public SimNumber() {
+			setNumber("");
+			setSerial(false);
+		}
+		
+		public SimNumber(String number, boolean serial) {
+			setNumber(number);
+			setSerial(serial);
+		}
+		
+		public void setSerial(boolean serial) {
+			this.mSerial = serial;
+		}
+		
+		public boolean isSerial() {
+			return mSerial;
+		}
+		
+		public void setNumber(String number) {
+			this.mNumber = number;
+		}
+		
+		public String getNumber() {
+			return mNumber;
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if (o == null)
+				return false;
+			
+			try {
+				SimNumber another = (SimNumber) o;
+				if (this.mSerial == another.mSerial) {
+					if (this.mSerial)
+						return (this.mNumber.compareTo(another.mNumber) == 0);
+					else
+						return PhoneNumberUtils.compare(this.mNumber, another.mNumber);
+				}
+			} catch (Exception e) {
+			}
+			return false;
+		}
+		
+		@Override
+		public String toString() {
+			return mNumber;
+		}
+	}
 	
 	// STATIC
 	
@@ -98,8 +154,7 @@ public class SessionKeys {
 	private long mEntryIndex; // READ ONLY
 	private boolean mKeysSent;
 	private boolean mKeysConfirmed;
-	private boolean mHasSerial;
-	private String mSimNumber; // or serial (based on the flag)
+	private SimNumber mSimNumber;
 	private byte[] mSessionKey_Out;
 	private byte mLastID_Out;
 	private byte[] mSessionKey_In;
@@ -148,8 +203,7 @@ public class SessionKeys {
 			
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
-			setHasSerial(simSerial);
-			setSimNumber(Storage.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER));
+			setSimNumber(new SimNumber(Storage.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
 			setSessionKey_Out(dataSessionKey_Out);
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
@@ -162,8 +216,7 @@ public class SessionKeys {
 			// default values
 			setKeysSent(false);
 			setKeysConfirmed(false);
-			setHasSerial(false);
-			setSimNumber("");
+			setSimNumber(new SimNumber());
 			setSessionKey_Out(Encryption.generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_Out((byte) 0x00);
 			setSessionKey_In(Encryption.generateRandomData(Encryption.KEY_LENGTH));
@@ -206,12 +259,12 @@ public class SessionKeys {
 			flags |= (byte) ((1 << 7) & 0xFF);
 		if (this.mKeysConfirmed)
 			flags |= (byte) ((1 << 6) & 0xFF);
-		if (this.mHasSerial)
+		if (this.mSimNumber.isSerial())
 			flags |= (byte) ((1 << 5) & 0xFF);
 		keysBuffer.put(flags);
 		
 		// phone number
-		keysBuffer.put(Storage.toLatin(this.mSimNumber, LENGTH_SIMNUMBER));
+		keysBuffer.put(Storage.toLatin(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
 		
 		// session keys and last IDs
 		keysBuffer.put(this.mSessionKey_Out);
@@ -412,19 +465,11 @@ public class SessionKeys {
 		mKeysConfirmed = keysConfirmed;
 	}
 
-	public boolean getHasSerial() {
-		return mHasSerial;
-	}
-
-	public void setHasSerial(boolean simSerial) {
-		mHasSerial = simSerial;
-	}
-
-	public String getSimNumber() {
+	public SimNumber getSimNumber() {
 		return mSimNumber;
 	}
 
-	public void setSimNumber(String simNumber) {
+	public void setSimNumber(SimNumber simNumber) {
 		this.mSimNumber = simNumber;
 	}
 

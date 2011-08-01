@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import android.content.Context;
 import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
+import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 
 /**
  * 
@@ -433,53 +436,53 @@ public class Conversation {
 		
 		db.lockFile(lockAllow);
 		try {
-		Conversation prev = this.getPreviousConversation(false);
-		Conversation next = this.getNextConversation(false); 
-
-		if (prev != null) {
-			// this is not the first Conversation in the list
-			// update the previous one
-			prev.setIndexNext(this.getIndexNext());
-			prev.saveToFile(false);
-		} else {
-			// this IS the first Conversation in the list
-			// update parent
-			Header header = Header.getHeader(false);
-			header.setIndexConversations(this.getIndexNext());
-			header.saveToFile(false);
-		}
-		
-		// update next one
-		if (next != null) {
-			next.setIndexPrev(this.getIndexPrev());
-			next.saveToFile(false);
-		}
-		
-		// delete all of the SessionKeys
-		SessionKeys keys = getFirstSessionKeys(false);
-		while (keys != null) {
-			keys.delete(false);
-			keys = getFirstSessionKeys(false);
-		}
-		
-		// delete all of the Messages
-		Message msg = getFirstMessage(false);
-		while (msg != null) {
-			msg.delete(false);
-			msg = getFirstMessage(false);
-		}
-
-		// delete this message
-		Empty.replaceWithEmpty(mEntryIndex, false);
-		
-		// remove from cache
-		synchronized (cacheConversation) {
-			cacheConversation.remove(this);
-		}
-		notifyUpdate();
-		
-		// make this instance invalid
-		this.mEntryIndex = -1L;
+			Conversation prev = this.getPreviousConversation(false);
+			Conversation next = this.getNextConversation(false); 
+	
+			if (prev != null) {
+				// this is not the first Conversation in the list
+				// update the previous one
+				prev.setIndexNext(this.getIndexNext());
+				prev.saveToFile(false);
+			} else {
+				// this IS the first Conversation in the list
+				// update parent
+				Header header = Header.getHeader(false);
+				header.setIndexConversations(this.getIndexNext());
+				header.saveToFile(false);
+			}
+			
+			// update next one
+			if (next != null) {
+				next.setIndexPrev(this.getIndexPrev());
+				next.saveToFile(false);
+			}
+			
+			// delete all of the SessionKeys
+			SessionKeys keys = getFirstSessionKeys(false);
+			while (keys != null) {
+				keys.delete(false);
+				keys = getFirstSessionKeys(false);
+			}
+			
+			// delete all of the Messages
+			Message msg = getFirstMessage(false);
+			while (msg != null) {
+				msg.delete(false);
+				msg = getFirstMessage(false);
+			}
+	
+			// delete this message
+			Empty.replaceWithEmpty(mEntryIndex, false);
+			
+			// remove from cache
+			synchronized (cacheConversation) {
+				cacheConversation.remove(this);
+			}
+			notifyUpdate();
+			
+			// make this instance invalid
+			this.mEntryIndex = -1L;
 		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
@@ -496,8 +499,8 @@ public class Conversation {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(String simNumber, boolean isSerial) throws StorageFileException, IOException {
-		return getSessionKeys(simNumber, isSerial, true);
+	public SessionKeys getSessionKeys(SimNumber simNumber) throws StorageFileException, IOException {
+		return getSessionKeys(simNumber, true);
 	}
 
 	/**
@@ -508,24 +511,235 @@ public class Conversation {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(String simNumber, boolean isSerial, boolean lockAllow) throws StorageFileException, IOException {
+	public SessionKeys getSessionKeys(SimNumber simNumber, boolean lockAllow) throws StorageFileException, IOException {
 		SessionKeys keys = getFirstSessionKeys(lockAllow);
 		while (keys != null) {
-			if (isSerial) {
-				// serial number is saved in the simNumber
-				// if there is a serial number in the keys as well, compare these two
-				if (keys.getHasSerial() && simNumber.compareTo(keys.getSimNumber()) == 0)
-					return keys;
-			} else {
-				// SIM phone number is saved in the simNumber
-				// if there is a phone number in the keys as well, compare these two
-				if (!keys.getHasSerial() && PhoneNumberUtils.compare(keys.getSimNumber(), simNumber))
-					return keys;
-			}
+			if (simNumber.equals(keys.getSimNumber()))
+				return keys;
 			keys = keys.getNextSessionKeys(lockAllow);
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Goes through all the assigned session keys.
+	 * If there is a session key with SIM number of the param original,
+	 * its SIM number is replaced for the one in param replacement and
+	 * all the other keys matching the param replacement are deleted.
+	 * If there isn't one matching param original, nothing happens.
+	 * @param original
+	 * @param replacement
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	public void replaceSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException, IOException {
+		replaceSessionKeys(original, replacement, true);
+	}
+		
+	/**
+	 * Goes through all the assigned session keys.
+	 * If there is a session key with SIM number of the param original,
+	 * its SIM number is replaced for the one in param replacement and
+	 * all the other keys matching the param replacement are deleted.
+	 * If there isn't one matching param original, nothing happens.
+	 * @param original
+	 * @param replacement
+	 * @param lockAllow
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	public void replaceSessionKeys(SimNumber original, SimNumber replacement, boolean lockAllow) throws StorageFileException, IOException {
+		if (original.equals(replacement))
+			// no point in continuing
+			return;
+		
+		Storage db = Storage.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			boolean canBeReplaced = false;
+			boolean sthToDelete = false;
+			SessionKeys keys = this.getFirstSessionKeys(false);
+			while (keys != null) {
+				// go through all the assigned keys
+				// look for ones matching the param original
+				if (keys.getSimNumber().equals(original))
+					// so SIM number of this key should be replaced
+					canBeReplaced = true;
+				if (keys.getSimNumber().equals(replacement))
+					// this matches the new SIM number
+					// will be deleted if sth is replaced
+					sthToDelete = true;
+				keys = keys.getNextSessionKeys(false);
+			}
+
+			if (canBeReplaced) {
+				if (sthToDelete) {
+					keys = this.getFirstSessionKeys(false);
+					while (keys != null) {
+						if (keys.getSimNumber().equals(replacement))
+							keys.delete(false);
+						keys = keys.getNextSessionKeys(false);
+					}
+				}
+				
+				boolean found = false;
+				keys = this.getFirstSessionKeys(false);
+				while (keys != null) {
+					if (keys.getSimNumber().equals(original)) {
+						// if this is the first key matching original,
+						// its SIM number will be replaced
+						// otherwise deleted because it's redundant
+						if (found)
+							keys.delete(false);
+						else {
+							keys.setSimNumber(replacement);
+							keys.saveToFile(false);
+							found = true;
+						}
+					}
+					keys = keys.getNextSessionKeys(false);
+				}
+			}
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
+	
+	/**
+	 * Tries to find session keys for this particular SIM,
+	 * either by phone number of (if not available) by SIM's serial number
+	 * @param context
+	 * @return
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	public SessionKeys getSessionKeysForSIM(Context context) throws StorageFileException, IOException { 
+		return getSessionKeysForSIM(context, true);
+	}
+
+	/**
+	 * Tries to find session keys for this particular SIM,
+	 * either by phone number or (if not available) by SIM's serial number
+	 * @param context
+	 * @lockAllow		Allow to be locked
+	 * @return
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	public SessionKeys getSessionKeysForSIM(final Context context, boolean lockAllow) throws StorageFileException, IOException {
+		SessionKeys result = null;
+		
+		Storage.getDatabase().lockFile(lockAllow);
+		try {
+			String simPhoneNumberString = SimCard.getSingleton().getSimPhoneNumber(context);
+			String simSerialString = SimCard.getSingleton().getSimSerialNumber(context);
+			SimNumber simSerial = new SimNumber(simSerialString, true);
+			SessionKeys keysSerial = this.getSessionKeys(simSerial, false);
+			
+			if (simPhoneNumberString == null || simPhoneNumberString.length() == 0) {
+				// no phone number, return keys for serial number or null
+				result = keysSerial; 
+			} else {
+				SimNumber simPhoneNumber = new SimNumber(simPhoneNumberString, false);
+				// try assigning all the (possible) keys assigned to 
+				// SIM serial to the phone number
+				if (keysSerial != null)
+					changeAllSessionKeys(simSerial, simPhoneNumber, false);
+				result = this.getSessionKeys(simPhoneNumber, false);
+			}
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			Storage.getDatabase().unlockFile(lockAllow);
+		}
+		return result;
+	}
+
+	// STATIC FUNCTIONS
+
+	/**
+	 * Calls replaceSessionKeys on all the conversations.
+	 * Calls an update of listeners afterwards.
+	 */
+	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement, boolean lockAllow) throws StorageFileException, IOException {
+		Storage.getDatabase().lockFile(lockAllow);
+		try {
+			Conversation conv = Header.getHeader(false).getFirstConversation(false);
+			while (conv != null) {
+				conv.replaceSessionKeys(original, replacement, false);
+				conv = conv.getNextConversation(false);
+			}
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			Storage.getDatabase().unlockFile(lockAllow);
+		}
+		notifyUpdate();
+	}
+	
+	/**
+	 * Returns all SIM numbers stored with session keys of all conversations
+	 * @param lockAllow
+	 * @return
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	public static ArrayList<SimNumber> getAllSimNumbersStored(boolean lockAllow) throws StorageFileException, IOException {
+		ArrayList<SimNumber> simNumbers = new ArrayList<SimNumber>();
+		
+		Conversation conv = Header.getHeader(lockAllow).getFirstConversation(lockAllow);
+		while (conv != null) {
+			SessionKeys keys = conv.getFirstSessionKeys(lockAllow);
+			while (keys != null) {
+				boolean found = false;
+				for (SimNumber n : simNumbers)
+					if (keys.getSimNumber().equals(n))
+						found = true;
+				if (!found)
+					simNumbers.add(keys.getSimNumber());
+				keys = keys.getNextSessionKeys(lockAllow);
+			}
+			conv = conv.getNextConversation(lockAllow);			
+		}
+		
+		return simNumbers;
+	}
+
+	/**
+	 * Filters list of SIM numbers, looking only for phone numbers
+	 * @param simNumbers
+	 * @return
+	 */
+	public static ArrayList<SimNumber> filterOnlyPhoneNumbers(ArrayList<SimNumber> simNumbers) {
+		ArrayList<SimNumber> phoneNumbers = new ArrayList<SimNumber>();
+		for (SimNumber n : simNumbers)
+			if (n.isSerial() == false)
+				phoneNumbers.add(n);
+		return phoneNumbers;
+	}
+
+	/**
+	 * Filters list of SIM numbers, removing specified one
+	 * @param simNumbers
+	 * @param filter
+	 * @return
+	 */
+	public static ArrayList<SimNumber> filterOutNumber(ArrayList<SimNumber> simNumbers, SimNumber filter) {
+		ArrayList<SimNumber> numbers = new ArrayList<SimNumber>();
+		for (SimNumber n : simNumbers)
+			if (!n.equals(filter))
+				numbers.add(n);
+		return numbers;
 	}
 
 	// GETTERS / SETTERS

@@ -469,10 +469,13 @@
     <string name="error_market_unavailable_details">An error occured while trying to open the Android Market. Try installing Public Key Infractructure manually.</string>
     <string name="no">No</string>
     <string name="yes">Yes</string>
-    <string name="error_no_sim_number_import">Select the phone number of this SIM</string>
-    <string name="error_no_sim_number_import_none">None of these</string>
+    <string name="error_no_sim_number_import">Select the phone number you want to move to current SIM</string>
+    <string name="error_no_sim_number_import_none">Cancel</string>
     <string name="later">Later</string>
     <string name="never">Never</string>
+    <string name="menu_move_sessions">Move sessions</string>
+    <string name="menu_move_sessions_none">None available</string>
+    <string name="menu_move_sessions_none_details">No transferable sessions were found in the database.</string>
 
 </resources>
 

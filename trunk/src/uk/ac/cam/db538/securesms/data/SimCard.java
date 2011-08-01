@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.securesms.data;
 
+import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -53,6 +54,20 @@ public class SimCard {
 	
 	/**
 	 * Returns the phone number of currently active SIM
+	 * wrapped in the SimNumber class
+	 * @param context
+	 * @return
+	 */
+	public SimNumber getSimPhoneNumberWrapped(Context context) {
+		String phoneNumber = getSimPhoneNumber(context);
+		if (phoneNumber == null)
+			return null;
+		else
+			return new SimNumber(phoneNumber, false);
+	}
+
+	/**
+	 * Returns the phone number of currently active SIM
 	 * @param context
 	 * @return
 	 */
@@ -62,6 +77,20 @@ public class SimCard {
 		
 		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 		return tMgr.getSimSerialNumber();
+	}
+
+	/**
+	 * Returns the serial number of currently active SIM
+	 * wrapped in the SimNumber class
+	 * @param context
+	 * @return
+	 */
+	public SimNumber getSimSerialNumberWrapped(Context context) {
+		String serialNumber = getSimSerialNumber(context);
+		if (serialNumber == null)
+			return null;
+		else
+			return new SimNumber(serialNumber, true);
 	}
 	
 	public static interface OnSimStateListener {

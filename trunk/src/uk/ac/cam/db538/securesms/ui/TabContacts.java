@@ -47,7 +47,7 @@ public class TabContacts extends ListActivity {
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			if (Utils.getSessionKeysForSIM(this, conv) != null)
+			if (conv.getSessionKeysForSIM(this) != null)
 				mContacts.add(conv);
 			conv = conv.getNextConversation();
 		}
@@ -157,7 +157,7 @@ public class TabContacts extends ListActivity {
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
 						try {
-							SessionKeys keys = Utils.getSessionKeysForSIM(context, conv);
+							SessionKeys keys = conv.getSessionKeysForSIM(context);
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
 						} catch (StorageFileException ex) {

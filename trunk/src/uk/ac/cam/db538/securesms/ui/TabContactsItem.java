@@ -125,7 +125,7 @@ public class TabContactsItem extends RelativeLayout {
     	Resources res = context.getResources();
     	
 		try {
-			SessionKeys keys = Utils.getSessionKeysForSIM(context, conv);
+			SessionKeys keys = conv.getSessionKeysForSIM(context);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:

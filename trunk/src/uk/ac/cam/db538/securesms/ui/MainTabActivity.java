@@ -6,14 +6,20 @@ import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import android.app.TabActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.TabHost;
 
 public class MainTabActivity extends TabActivity {
 	private TabHost.TabSpec specRecent;
 	private TabHost.TabSpec specContacts;
+	
+	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 	
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -52,5 +58,23 @@ public class MainTabActivity extends TabActivity {
 			Utils.dialogIOError(this, ex);
 			this.finish();
 		}
+	}
+	
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		
+		final Context context = this;
+		Resources res = this.getResources();
+		
+		int idGroup = 0;
+		MenuItem menuMoveSessions = menu.add(idGroup, MENU_MOVE_SESSIONS, Menu.NONE, res.getString(R.string.menu_move_sessions));
+		menuMoveSessions.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				Utils.moveSessionKeys(context);
+				return true;
+			}
+		});
+		return true;
 	}
 }
