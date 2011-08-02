@@ -68,7 +68,11 @@ public class MyApplication extends Application {
 			keys3.setKeysConfirmed(false);
 			keys3.saveToFile();
 		} catch (Exception ex) {
-			
 		}
+		
+		String text = "Lorem ip"; //sum dolor sit amet, consectetur adipiscing elit. Vivamus id diam et leo egestas volutpat. Curabitur aliquam mattis iaculis. Nulla quis tortor sem metus.";
+		int origLength = text.length();
+		byte[] textAscii = Charset.toAscii(text);
+		String text2 = Charset.fromAscii(textAscii);
 	}
 }

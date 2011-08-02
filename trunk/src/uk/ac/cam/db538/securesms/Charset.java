@@ -99,6 +99,11 @@ public class Charset {
 		return fromBytes(latinData, offset, len, CHARSET_LATIN);
 	}
 
+	public static byte[] toAscii(String text) {
+		int len = text.length();
+		return toAscii(text, 7 * len / 8 + ((len % 8 == 0) ? 0 : 1));
+	}
+
 	/**
 	 * Turns a string into an 7-bit ASCII series of bytes. 
 	 * @param text				Encoded string
@@ -106,7 +111,30 @@ public class Charset {
 	 * @return
 	 */
 	public static byte[] toAscii(String text, int bufferLength) {
-		return toBytes(text, bufferLength, CHARSET_ASCII);
+		int bigLength = 8 * bufferLength / 7 + ((bufferLength % 7 == 0) ? 0 : 1);
+		
+		byte[] asciiData = toBytes(text, bigLength + 1, CHARSET_ASCII); // +1 is for the ending zero
+		byte[] compressedData = new byte[bufferLength];
+		
+		for (int i = 0; i < bufferLength; ++i)
+			compressedData[i] = (byte) 0x00;
+		
+		int posCompressed = 0;
+		int start = 7;
+		for (int i = 0; i < bigLength; ++i) {
+			if (start == 7) {
+				// only position where space is left after the filling
+				compressedData[posCompressed] = (byte) (asciiData[i] << 1);
+				start = 0;
+			} else {
+				compressedData[posCompressed++] |= (byte) (asciiData[i] >> (6 - start));
+				if (start != 6)
+					compressedData[posCompressed] |= (byte) (asciiData[i] << (2 + start));
+				++start;
+			}
+		}
+		
+		return compressedData;		
 	}
 	
 	/**
@@ -125,8 +153,31 @@ public class Charset {
 	 * @param len			Length of data
 	 * @return
 	 */
-	public static String fromAscii(byte[] asciiData, int offset, int len) {
-		return fromBytes(asciiData, offset, len, CHARSET_ASCII);
+	public static String fromAscii(byte[] compressedData, int offset, int len) {
+		int bufferLength = len;
+		int bigLength = 8 * bufferLength / 7 + ((bufferLength % 7 == 0) ? 0 : 1);
+		byte[] asciiData = new byte[bigLength + 1];  // +1 is for the ending zero
+		
+		for (int i = 0; i < bigLength + 1; ++i)
+			asciiData[i] = (byte) 0x00;
+
+		int posCompressed = 0;
+		int start = 7;
+		for (int i = 0; i < bigLength; ++i) {
+			if (start == 7) {
+				// only position where all the data fit in one byte
+				asciiData[i] = (byte) (((int) compressedData[offset + posCompressed] & 0xFF) >> 1);
+				start = 0;
+			} else {
+				// TODO: Needs to mask out bits that belong to a neighbouring character!!!
+				asciiData[i] |= (byte) (((int) compressedData[offset + posCompressed++] & 0xFF) << (6 - start));
+				if (start != 6)
+					asciiData[i] |= (byte) (((int) compressedData[offset + posCompressed] & 0xFF) >> (2 + start));
+				++start;
+			}
+		}
+		
+		return fromBytes(asciiData, 0, bigLength + 1, CHARSET_ASCII);
 	}
 
 	/**
