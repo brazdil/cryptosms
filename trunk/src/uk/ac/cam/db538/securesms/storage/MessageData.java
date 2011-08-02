@@ -16,7 +16,7 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
  * @author David Brazdil
  *
  */
-public class Message {
+public class MessageData {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_TIMESTAMP = 29;
@@ -42,39 +42,39 @@ public class Message {
 	
 	// STATIC
 	
-	private static ArrayList<Message> cacheMessage = new ArrayList<Message>();
+	private static ArrayList<MessageData> cacheMessageData = new ArrayList<MessageData>();
 	
 	/**
 	 * Removes all instances from the list of cached objects.
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		synchronized (cacheMessage) {
-			cacheMessage = new ArrayList<Message>();
+		synchronized (cacheMessageData) {
+			cacheMessageData = new ArrayList<MessageData>();
 		}
 	}
 
 	/**
-	 * Returns an instance of a new Message entry in the storage file.
+	 * Returns an instance of a new MessageData entry in the storage file.
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public static Message createMessage(Conversation parent) throws StorageFileException, IOException {
-		return createMessage(parent, true);
+	public static MessageData createMessageData(Conversation parent) throws StorageFileException, IOException {
+		return createMessageData(parent, true);
 	}
 	
 	/**
-	 * Returns an instance of a new Message entry in the storage file.
+	 * Returns an instance of a new MessageData entry in the storage file.
 	 * @param lockAllow		Allow file to be locked
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public static Message createMessage(Conversation parent, boolean lockAllow) throws StorageFileException, IOException {
+	public static MessageData createMessageData(Conversation parent, boolean lockAllow) throws StorageFileException, IOException {
 		// create a new one
-		Message msg = new Message(Empty.getEmptyIndex(lockAllow), false, lockAllow);
-		parent.attachMessage(msg, lockAllow);
+		MessageData msg = new MessageData(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+		parent.attachMessageData(msg, lockAllow);
 		return msg;
 	}
 
@@ -82,8 +82,8 @@ public class Message {
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
-	static Message getMessage(long index) throws StorageFileException, IOException {
-		return getMessage(index, true);
+	static MessageData getMessageData(long index) throws StorageFileException, IOException {
+		return getMessageData(index, true);
 	}
 	
 	/**
@@ -91,19 +91,19 @@ public class Message {
 	 * @param index		Index in file
 	 * @param lock		File lock allow
 	 */
-	static Message getMessage(long index, boolean lockAllow) throws StorageFileException, IOException {
+	static MessageData getMessageData(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
 		// try looking it up
-		synchronized (cacheMessage) {
-			for (Message empty: cacheMessage)
+		synchronized (cacheMessageData) {
+			for (MessageData empty: cacheMessageData)
 				if (empty.getEntryIndex() == index)
 					return empty; 
 		}
 		
 		// create a new one
-		return new Message(index, true, lockAllow);
+		return new MessageData(index, true, lockAllow);
 	}
 	
 	// INTERNAL FIELDS
@@ -129,7 +129,7 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private Message(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private MessageData(long index, boolean readFromFile) throws StorageFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
@@ -141,7 +141,7 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private Message(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
+	private MessageData(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -187,8 +187,8 @@ public class Message {
 			saveToFile(lockAllow);
 		}
 		
-		synchronized (cacheMessage) {
-			cacheMessage.add(this);
+		synchronized (cacheMessageData) {
+			cacheMessageData.add(this);
 		}
 	}
 
@@ -272,8 +272,8 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getPreviousMessage() throws StorageFileException, IOException {
-		return getPreviousMessage(true);
+	public MessageData getPreviousMessageData() throws StorageFileException, IOException {
+		return getPreviousMessageData(true);
 	}
 	
 	/**
@@ -283,10 +283,10 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getPreviousMessage(boolean lockAllow) throws StorageFileException, IOException {
+	public MessageData getPreviousMessageData(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexPrev == 0)
 			return null;
-		return Message.getMessage(mIndexPrev, lockAllow);
+		return MessageData.getMessageData(mIndexPrev, lockAllow);
 	}
 
 	/**
@@ -295,8 +295,8 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getNextMessage() throws StorageFileException, IOException {
-		return getNextMessage(true);
+	public MessageData getNextMessageData() throws StorageFileException, IOException {
+		return getNextMessageData(true);
 	}
 	
 	/**
@@ -306,10 +306,10 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getNextMessage(boolean lockAllow) throws StorageFileException, IOException {
+	public MessageData getNextMessageData(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexNext == 0)
 			return null;
-		return Message.getMessage(mIndexNext, lockAllow);
+		return MessageData.getMessageData(mIndexNext, lockAllow);
 	}
 	
 	/**
@@ -319,8 +319,8 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getFirstMessagePart() throws StorageFileException, IOException {
-		return getFirstMessagePart(true);
+	MessageDataPart getFirstMessageDataPart() throws StorageFileException, IOException {
+		return getFirstMessageDataPart(true);
 	}
 	
 	/**
@@ -331,10 +331,10 @@ public class Message {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getFirstMessagePart(boolean lockAllow) throws StorageFileException, IOException {
+	MessageDataPart getFirstMessageDataPart(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexMessageParts == 0)
 			return null;
-		return MessagePart.getMessagePart(mIndexMessageParts, lockAllow);
+		return MessageDataPart.getMessageDataPart(mIndexMessageParts, lockAllow);
 	}
 	
 	/**
@@ -343,8 +343,8 @@ public class Message {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	void assignMessageParts(ArrayList<MessagePart> list) throws IOException, StorageFileException {
-		assignMessageParts(list, true);
+	void assignMessageDataParts(ArrayList<MessageDataPart> list) throws IOException, StorageFileException {
+		assignMessageDataParts(list, true);
 	}
 	
 	/**
@@ -354,20 +354,20 @@ public class Message {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	void assignMessageParts(ArrayList<MessagePart> list, boolean lockAllow) throws IOException, StorageFileException {
+	void assignMessageDataParts(ArrayList<MessageDataPart> list, boolean lockAllow) throws IOException, StorageFileException {
 		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			// delete all previous message parts
 			long indexFirstInStack = getIndexMessageParts();
 			while (indexFirstInStack != 0) {
-				MessagePart msgPart = MessagePart.getMessagePart(indexFirstInStack, false);
+				MessageDataPart msgPart = MessageDataPart.getMessageDataPart(indexFirstInStack, false);
 				indexFirstInStack = msgPart.getIndexNext();
 				msgPart.delete(false);
 			}
 
 			// add new ones
 			for (int i = 0; i < list.size(); ++i) {
-				MessagePart msgPart = list.get(i);
+				MessageDataPart msgPart = list.get(i);
 				
 				// parent
 				msgPart.setIndexParent(this.mEntryIndex);
@@ -422,8 +422,8 @@ public class Message {
 		
 		db.lockFile(lockAllow);
 		try {
-			Message prev = this.getPreviousMessage(false);
-			Message next = this.getNextMessage(false); 
+			MessageData prev = this.getPreviousMessageData(false);
+			MessageData next = this.getNextMessageData(false); 
 	
 			if (prev != null) {
 				// this is not the first message in the list
@@ -445,18 +445,18 @@ public class Message {
 			}
 			
 			// delete all of the MessageParts
-			MessagePart part = getFirstMessagePart(false);
+			MessageDataPart part = getFirstMessageDataPart(false);
 			while (part != null) {
 				part.delete(false);
-				part = getFirstMessagePart(false);
+				part = getFirstMessageDataPart(false);
 			}
 			
 			// delete this message
 			Empty.replaceWithEmpty(mEntryIndex, false);
 			
 			// remove from cache
-			synchronized (cacheMessage) {
-				cacheMessage.remove(this);
+			synchronized (cacheMessageData) {
+				cacheMessageData.remove(this);
 			}
 			
 			// make this instance invalid

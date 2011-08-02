@@ -3,7 +3,7 @@ package uk.ac.cam.db538.securesms;
 import java.io.File;
 
 import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.Message;
+import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
@@ -52,7 +52,7 @@ public class MyApplication extends Application {
 			keys5.setKeysConfirmed(true);
 			keys5.saveToFile();
 			Conversation conv2 = Conversation.createConversation();
-			Message msg2 = Message.createMessage(conv2);
+			MessageData msg2 = MessageData.createMessageData(conv2);
 			msg2.setMessageBody("You're a jerk!");
 			msg2.setUnread(false);
 			msg2.saveToFile();

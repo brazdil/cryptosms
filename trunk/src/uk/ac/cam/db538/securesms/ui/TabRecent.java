@@ -32,7 +32,7 @@ public class TabRecent extends ListActivity {
 
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			if (conv.getFirstMessage() != null)
+			if (conv.getFirstMessageData() != null)
 				mRecent.add(conv);
 			conv = conv.getNextConversation();
 		}

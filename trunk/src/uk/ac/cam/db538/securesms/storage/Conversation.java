@@ -329,28 +329,28 @@ public class Conversation implements Comparable<Conversation> {
 	}
 
 	/**
-	 * Attach new Message object to the conversation 
+	 * Attach new MessageData object to the conversation 
 	 * @param msg
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void attachMessage(Message msg) throws StorageFileException, IOException {
-		attachMessage(msg, true);
+	void attachMessageData(MessageData msg) throws StorageFileException, IOException {
+		attachMessageData(msg, true);
 	}
 
 	/**
-	 * Attach new Message object to the conversation
+	 * Attach new MessageData object to the conversation
 	 * @param lockAllow		Allow the file to be locked 
 	 * @param msg
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void attachMessage(Message msg, boolean lockAllow) throws StorageFileException, IOException {
+	void attachMessageData(MessageData msg, boolean lockAllow) throws StorageFileException, IOException {
 		Storage.getDatabase().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexMessages();
 			if (indexFirstInStack != 0) {
-				Message firstInStack = Message.getMessage(indexFirstInStack);
+				MessageData firstInStack = MessageData.getMessageData(indexFirstInStack);
 				firstInStack.setIndexPrev(msg.getEntryIndex());
 				firstInStack.saveToFile(false);
 			}
@@ -370,44 +370,44 @@ public class Conversation implements Comparable<Conversation> {
 	}
 	
 	/**
-	 * Get the first Message object in the linked listed attached to this conversation, or null if there isn't any
+	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getFirstMessage() throws StorageFileException, IOException {
-		return getFirstMessage(true);
+	public MessageData getFirstMessageData() throws StorageFileException, IOException {
+		return getFirstMessageData(true);
 	}
 	
 	/**
-	 * Get the first Message object in the linked listed attached to this conversation, or null if there isn't any
+	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public Message getFirstMessage(boolean lockAllow) throws StorageFileException, IOException {
-		return Message.getMessage(mIndexMessages, lockAllow);
+	public MessageData getFirstMessageData(boolean lockAllow) throws StorageFileException, IOException {
+		return MessageData.getMessageData(mIndexMessages, lockAllow);
 	}
 	
 	/**
-	 * Get the first Message object in the linked listed attached to this conversation, or null if there isn't any
+	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
 	 * @param lockAllow		Allow the file to be locked 
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public ArrayList<Message> getMessages(boolean lockAllow) throws StorageFileException, IOException {
-		ArrayList<Message> list = new ArrayList<Message>();
-		Message msg = getFirstMessage(lockAllow);
+	public ArrayList<MessageData> getMessages(boolean lockAllow) throws StorageFileException, IOException {
+		ArrayList<MessageData> list = new ArrayList<MessageData>();
+		MessageData msg = getFirstMessageData(lockAllow);
 		while (msg != null) {
 			list.add(msg);
-			msg = msg.getNextMessage(lockAllow);
+			msg = msg.getNextMessageData(lockAllow);
 		}
 		return list;
 	}
 
 	/**
-	 * Delete Message and all the MessageParts it controls
+	 * Delete MessageData and all the MessageDataParts it controls
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
@@ -416,7 +416,7 @@ public class Conversation implements Comparable<Conversation> {
 	}
 	
 	/**
-	 * Delete Message and all the MessageParts it controls
+	 * Delete MessageData and all the MessageDataParts it controls
 	 * @param lockAllow 	Allow the file to be locked
 	 * @throws StorageFileException
 	 * @throws IOException
@@ -455,14 +455,14 @@ public class Conversation implements Comparable<Conversation> {
 				keys = getFirstSessionKeys(false);
 			}
 			
-			// delete all of the Messages
-			Message msg = getFirstMessage(false);
+			// delete all of the MessageDatas
+			MessageData msg = getFirstMessageData(false);
 			while (msg != null) {
 				msg.delete(false);
-				msg = getFirstMessage(false);
+				msg = getFirstMessageData(false);
 			}
 	
-			// delete this message
+			// delete this conversation
 			Empty.replaceWithEmpty(mEntryIndex, false);
 			
 			// remove from cache
@@ -654,9 +654,9 @@ public class Conversation implements Comparable<Conversation> {
 	}
 	
 	public Time getTimeStamp() {
-		Message firstMessage = null;
+		MessageData firstMessage = null;
 		try {
-			firstMessage = getFirstMessage();
+			firstMessage = getFirstMessageData();
 		} catch (StorageFileException e) {
 		} catch (IOException e) {
 		}
@@ -680,9 +680,9 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 */
 	public boolean getMarkedUnread() {
-		Message firstMessage = null;
+		MessageData firstMessage = null;
 		try {
-			firstMessage = getFirstMessage();
+			firstMessage = getFirstMessageData();
 		} catch (StorageFileException e) {
 		} catch (IOException e) {
 		}
@@ -698,15 +698,15 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 */
 	public String getPreview() {
-		Message firstMessage = null;
+		MessageData firstMessageData = null;
 		try {
-			firstMessage = getFirstMessage();
+			firstMessageData = getFirstMessageData();
 		} catch (StorageFileException e) {
 		} catch (IOException e) {
 		}
 		
-		if (firstMessage != null)
-			return firstMessage.getMessageBody();
+		if (firstMessageData != null)
+			return firstMessageData.getMessageBody();
 		else
 			return new String();
 	}

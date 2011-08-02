@@ -15,7 +15,7 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
  * @author David Brazdil
  *
  */
-class MessagePart {
+class MessageDataPart {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_MESSAGEBODY = 140;
@@ -33,15 +33,15 @@ class MessagePart {
 	
 	// STATIC
 	
-	private static ArrayList<MessagePart> cacheMessagePart = new ArrayList<MessagePart>();
+	private static ArrayList<MessageDataPart> cacheMessageDataPart = new ArrayList<MessageDataPart>();
 	
 	/**
 	 * Removes all instances from the list of cached objects.
 	 * Be sure you don't use the instances afterwards.
 	 */
 	public static void forceClearCache() {
-		synchronized (cacheMessagePart) {
-			cacheMessagePart = new ArrayList<MessagePart>();
+		synchronized (cacheMessageDataPart) {
+			cacheMessageDataPart = new ArrayList<MessageDataPart>();
 		}
 	}
 	
@@ -51,8 +51,8 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	static MessagePart createMessagePart() throws StorageFileException, IOException {
-		return createMessagePart(true);
+	static MessageDataPart createMessageDataPart() throws StorageFileException, IOException {
+		return createMessageDataPart(true);
 	}
 	
 	/**
@@ -62,16 +62,16 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	static MessagePart createMessagePart(boolean lockAllow) throws StorageFileException, IOException {
-		return new MessagePart(Empty.getEmptyIndex(lockAllow), false, lockAllow);
+	static MessageDataPart createMessageDataPart(boolean lockAllow) throws StorageFileException, IOException {
+		return new MessageDataPart(Empty.getEmptyIndex(lockAllow), false, lockAllow);
 	}
 
 	/**
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
-	static MessagePart getMessagePart(long index) throws StorageFileException, IOException {
-		return getMessagePart(index, true);
+	static MessageDataPart getMessageDataPart(long index) throws StorageFileException, IOException {
+		return getMessageDataPart(index, true);
 	}
 	
 	/**
@@ -79,18 +79,18 @@ class MessagePart {
 	 * @param index			Index in file
 	 * @param lockAllow		File lock allow
 	 */
-	static MessagePart getMessagePart(long index, boolean lockAllow) throws StorageFileException, IOException {
+	static MessageDataPart getMessageDataPart(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
 		// try looking it up
-		synchronized (cacheMessagePart) {
-			for (MessagePart msgPart: cacheMessagePart)
+		synchronized (cacheMessageDataPart) {
+			for (MessageDataPart msgPart: cacheMessageDataPart)
 				if (msgPart.getEntryIndex() == index)
 					return msgPart; 
 		}
 		// create a new one
-		return new MessagePart(index, true, lockAllow);
+		return new MessageDataPart(index, true, lockAllow);
 	}
 	
 	// INTERNAL FIELDS
@@ -110,7 +110,7 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private MessagePart(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private MessageDataPart(long index, boolean readFromFile) throws StorageFileException, IOException {
 		this(index, readFromFile, true);
 	}
 	
@@ -122,7 +122,7 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	private MessagePart(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
+	private MessageDataPart(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -149,8 +149,8 @@ class MessagePart {
 			saveToFile(lockAllow);
 		}
 
-		synchronized (cacheMessagePart) {
-			cacheMessagePart.add(this);
+		synchronized (cacheMessageDataPart) {
+			cacheMessageDataPart.add(this);
 		}
 	}
 
@@ -201,7 +201,7 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	Message getParent() throws StorageFileException, IOException {
+	MessageData getParent() throws StorageFileException, IOException {
 		return getParent(true);
 	}
 	
@@ -212,8 +212,8 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	Message getParent(boolean lockAllow) throws StorageFileException, IOException {
-		return Message.getMessage(mIndexParent, lockAllow);
+	MessageData getParent(boolean lockAllow) throws StorageFileException, IOException {
+		return MessageData.getMessageData(mIndexParent, lockAllow);
 	}
 
 	/**
@@ -222,8 +222,8 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getPreviousMessagePart() throws StorageFileException, IOException {
-		return getPreviousMessagePart(true);
+	MessageDataPart getPreviousMessageDataPart() throws StorageFileException, IOException {
+		return getPreviousMessageDataPart(true);
 	}
 	
 	/**
@@ -233,8 +233,8 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getPreviousMessagePart(boolean lockAllow) throws StorageFileException, IOException {
-		return MessagePart.getMessagePart(mIndexPrev, lockAllow);
+	MessageDataPart getPreviousMessageDataPart(boolean lockAllow) throws StorageFileException, IOException {
+		return MessageDataPart.getMessageDataPart(mIndexPrev, lockAllow);
 	}
 	
 	/**
@@ -243,8 +243,8 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getNextMessagePart() throws StorageFileException, IOException {
-		return getNextMessagePart(true);
+	MessageDataPart getNextMessageDataPart() throws StorageFileException, IOException {
+		return getNextMessageDataPart(true);
 	}
 	
 	/**
@@ -254,8 +254,8 @@ class MessagePart {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	MessagePart getNextMessagePart(boolean lockAllow) throws StorageFileException, IOException {
-		return getMessagePart(mIndexNext, lockAllow);
+	MessageDataPart getNextMessageDataPart(boolean lockAllow) throws StorageFileException, IOException {
+		return getMessageDataPart(mIndexNext, lockAllow);
 	}
 
 	/**
@@ -278,8 +278,8 @@ class MessagePart {
 		
 		db.lockFile(lockAllow);
 		try {
-			MessagePart prev = this.getPreviousMessagePart(false);
-			MessagePart next = this.getNextMessagePart(false); 
+			MessageDataPart prev = this.getPreviousMessageDataPart(false);
+			MessageDataPart next = this.getNextMessageDataPart(false); 
 	
 			if (prev != null) {
 				// this is not the first message part in the list
@@ -289,7 +289,7 @@ class MessagePart {
 			} else {
 				// this IS the first message part in the list
 				// update parent
-				Message parent = this.getParent(false);
+				MessageData parent = this.getParent(false);
 				parent.setIndexMessageParts(this.getIndexNext());
 				parent.saveToFile(false);
 			}
@@ -304,8 +304,8 @@ class MessagePart {
 			Empty.replaceWithEmpty(mEntryIndex, false);
 					
 			// remove from cache
-			synchronized (cacheMessagePart) {
-				cacheMessagePart.remove(this);
+			synchronized (cacheMessageDataPart) {
+				cacheMessageDataPart.remove(this);
 			}
 			
 			// make this instance invalid
