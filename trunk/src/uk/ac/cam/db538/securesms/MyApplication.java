@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.securesms;
 
 import java.io.File;
+import java.util.zip.DataFormatException;
 
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Message;
@@ -69,10 +70,5 @@ public class MyApplication extends Application {
 			keys3.saveToFile();
 		} catch (Exception ex) {
 		}
-		
-		String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus id diam et leo egestas volutpat. Curabitur aliquam mattis iaculis. Nulla quis tortor sem metus.";
-		int origLength = text.length();
-		byte[] textAscii = Charset.toAscii(text);
-		String text2 = Charset.fromAscii(textAscii);
 	}
 }

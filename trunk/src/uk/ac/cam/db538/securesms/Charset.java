@@ -72,6 +72,15 @@ public class Charset {
 	/**
 	 * Turns a string into an 8-bit ASCII series of bytes. 
 	 * @param text				Encoded string
+	 * @return
+	 */
+	public static byte[] toLatin(String text) {
+		return toLatin(text, text.length());
+	}
+
+	/**
+	 * Turns a string into an 8-bit ASCII series of bytes. 
+	 * @param text				Encoded string
 	 * @param bufferLength		Maximum size of the resulting array
 	 * @return
 	 */
@@ -99,6 +108,11 @@ public class Charset {
 		return fromBytes(latinData, offset, len, CHARSET_LATIN);
 	}
 
+	/**
+	 * Turns a string into an 7-bit ASCII series of bytes. 
+	 * @param text				Encoded string
+	 * @return
+	 */
 	public static byte[] toAscii(String text) {
 		int len = text.length();
 		return toAscii(text, 7 * len / 8 + ((len % 8 == 0) ? 0 : 1));
