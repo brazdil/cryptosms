@@ -7,8 +7,6 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 public class Charset {
 	private static final String CHARSET_ASCII = "US-ASCII";
-	private static final String CHARSET_LATIN = "ISO-8859-1";
-	private static final String CHARSET_UTF8 = "UTF-8";
 
 	/**
 	 * Checks whether each character in String is representable by 7-bit ASCII

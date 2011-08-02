@@ -3,12 +3,10 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.zip.DataFormatException;
 
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
-import uk.ac.cam.db538.securesms.Compression;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -46,6 +44,7 @@ public class Message {
 		ASCII7,
 		UNICODE
 	}
+	
 	
 	// STATIC
 	
