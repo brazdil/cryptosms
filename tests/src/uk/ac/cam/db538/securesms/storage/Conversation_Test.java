@@ -209,7 +209,7 @@ public class Conversation_Test extends TestCase {
 		
 		// check the data
 		assertEquals(flags, dataPlain[0]);
-		assertEquals(phoneNumberResult, Charset.fromLatin(dataPlain, 1, 32));
+		assertEquals(phoneNumberResult, Charset.fromAscii8(dataPlain, 1, 32));
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexSessionKeys);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
@@ -225,7 +225,7 @@ public class Conversation_Test extends TestCase {
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Charset.toLatin(phoneNumber, 32), 0, dataPlain, 1, 32);
+		System.arraycopy(Charset.toAscii8(phoneNumber, 32), 0, dataPlain, 1, 32);
 		System.arraycopy(Storage.getBytes(indexSessionKeys), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
 		System.arraycopy(Storage.getBytes(indexMessages), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
 		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);

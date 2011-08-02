@@ -105,7 +105,7 @@ public class MessagePart_Test extends TestCase {
 		
 		// check the data
 		assertEquals(dataPlain[0], flags);
-		assertEquals(Charset.fromLatin(dataPlain, 1, 140), messageBody);
+		assertEquals(Charset.fromAscii8(dataPlain, 1, 140), messageBody);
 		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
@@ -120,7 +120,7 @@ public class MessagePart_Test extends TestCase {
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Charset.toLatin(messageBody, 140), 0, dataPlain, 1, 140);
+		System.arraycopy(Charset.toAscii8(messageBody, 140), 0, dataPlain, 1, 140);
 		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it

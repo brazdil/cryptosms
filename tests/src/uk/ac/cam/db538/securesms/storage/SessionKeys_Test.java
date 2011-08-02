@@ -117,7 +117,7 @@ public class SessionKeys_Test extends TestCase {
 		
 		// check the data
 		assertEquals(flags, dataPlain[0]);
-		assertEquals(Charset.fromLatin(dataPlain, 1, 32), simNumberResult);
+		assertEquals(Charset.fromAscii8(dataPlain, 1, 32), simNumberResult);
 		CustomAsserts.assertArrayEquals(dataPlain, 33, sessionKey_Out, 0, 32);
 		assertEquals(lastID_Out, dataPlain[65]);
 		CustomAsserts.assertArrayEquals(dataPlain, 66, sessionKey_In, 0, 32);
@@ -135,7 +135,7 @@ public class SessionKeys_Test extends TestCase {
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Charset.toLatin(simNumber, 32), 0, dataPlain, 1, 32);
+		System.arraycopy(Charset.toAscii8(simNumber, 32), 0, dataPlain, 1, 32);
 		System.arraycopy(sessionKey_Out, 0, dataPlain, 33, 32);
 		dataPlain[65] = lastID_Out;
 		System.arraycopy(sessionKey_In, 0, dataPlain, 66, 32);
