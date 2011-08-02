@@ -53,7 +53,7 @@ public class MyApplication extends Application {
 			keys5.saveToFile();
 			Conversation conv2 = Conversation.createConversation();
 			MessageData msg2 = MessageData.createMessageData(conv2);
-			msg2.setMessageBody("You're a jerk!");
+			//msg2.setMessageBody("You're a jerk!");
 			msg2.setUnread(false);
 			msg2.saveToFile();
 			conv2.setPhoneNumber("+20104544366");

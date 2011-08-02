@@ -20,11 +20,13 @@ public class MessageData {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_TIMESTAMP = 29;
+	private static final int LENGTH_MESSAGEBODYLEN = 2;
 	private static final int LENGTH_MESSAGEBODY = 140;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_TIMESTAMP = OFFSET_FLAGS + LENGTH_FLAGS;
-	private static final int OFFSET_MESSAGEBODY = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
+	private static final int OFFSET_MESSAGEBODYLEN = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
+	private static final int OFFSET_MESSAGEBODY = OFFSET_MESSAGEBODYLEN + LENGTH_MESSAGEBODYLEN;
 
 	private static final int OFFSET_RANDOMDATA = OFFSET_MESSAGEBODY + LENGTH_MESSAGEBODY;
 
@@ -112,8 +114,11 @@ public class MessageData {
 	private boolean mDeliveredAll;
 	private MessageType mMessageType;
 	private boolean mUnread;
+	private boolean mCompressed;
+	private boolean mAscii;
+	
 	private Time mTimeStamp;
-	private String mMessageBody;
+	private byte[] mMessageBody;
 	private long mIndexParent;
 	private long mIndexMessageParts;
 	private long mIndexPrev ;
@@ -153,6 +158,8 @@ public class MessageData {
 			boolean deliveredAll = ((flags & (1 << 6)) == 0) ? false : true;
 			boolean messageOutgoing = ((flags & (1 << 5)) == 0) ? false : true;
 			boolean unread = ((flags & (1 << 4)) == 0) ? false : true;
+			boolean compressed = ((flags & (1 << 3)) == 0) ? false : true;
+			boolean ascii = ((flags & (1 << 2)) == 0) ? false : true;
 			
 			Time timeStamp = new Time();
 			timeStamp.parse3339(Charset.fromAscii8(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
@@ -161,12 +168,15 @@ public class MessageData {
 			setDeliveredAll(deliveredAll);
 			setMessageType((messageOutgoing) ? MessageType.OUTGOING : MessageType.INCOMING);
 			setUnread(unread);
+			setCompressed(compressed);
+			setAscii(ascii);
 			setTimeStamp(timeStamp);
-			setMessageBody(Charset.fromAscii8(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
-			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexMessageParts(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
-			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
+			int messageBodyLength = Math.min(LENGTH_MESSAGEBODY, Storage.getShort(dataPlain, OFFSET_MESSAGEBODYLEN));
+			setMessageBody(Storage.cutData(dataPlain, OFFSET_MESSAGEBODY, messageBodyLength));
+			setIndexParent(Storage.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexMessageParts(Storage.getUnsignedInt(dataPlain, OFFSET_MSGSINDEX));
+			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -177,8 +187,10 @@ public class MessageData {
 			setDeliveredAll(false);
 			setMessageType(MessageType.OUTGOING);
 			setUnread(false);
+			setCompressed(false);
+			setAscii(true);
 			setTimeStamp(timeStamp);
-			setMessageBody("");
+			setMessageBody(new byte[0]);
 			setIndexParent(0L);
 			setIndexMessageParts(0L);
 			setIndexPrev(0L);
@@ -222,13 +234,18 @@ public class MessageData {
 			flags |= (byte) ((1 << 5) & 0xFF);
 		if (this.mUnread)
 			flags |= (byte) ((1 << 4) & 0xFF);
+		if (this.mCompressed)
+			flags |= (byte) ((1 << 3) & 0xFF);
+		if (this.mAscii)
+			flags |= (byte) ((1 << 2) & 0xFF);
 		msgBuffer.put(flags);
 		
 		// time stamp
 		msgBuffer.put(Charset.toAscii8(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
 
 		// message body
-		msgBuffer.put(Charset.toAscii8(this.mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(Storage.getBytes((short) this.mMessageBody.length));
+		msgBuffer.put(Storage.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
@@ -472,6 +489,50 @@ public class MessageData {
 	
 	// MESSAGE HIGH LEVEL
 	
+	public byte[] getAssignedData() throws StorageFileException, IOException {
+		return getAssignedData(true);
+	}
+	
+	public byte[] getAssignedData(boolean lockAllow) throws StorageFileException, IOException {
+		Storage db = Storage.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			// count the total length
+			int length = getMessageBody().length;
+			MessageDataPart part = getFirstMessageDataPart(false);
+			while (part != null) {
+				length += part.getMessageBody().length;
+				part = part.getNextMessageDataPart(false);
+			}
+			
+			byte[] result = new byte[length], data;
+			int pos = 0, len;
+			
+			// copy all the data together
+			data = getMessageBody();
+			len = data.length;
+			System.arraycopy(data, 0, result, pos, len);
+			pos += len;
+			
+			part = getFirstMessageDataPart(false);
+			while (part != null) {
+				data = part.getMessageBody();
+				len = data.length;
+				System.arraycopy(data, 0, result, pos, len);
+				pos += len;
+				part = part.getNextMessageDataPart(false);
+			}
+			
+			return result;
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
 
 	// GETTERS / SETTERS
 	
@@ -511,11 +572,27 @@ public class MessageData {
 		return mUnread;
 	}
 
-	public void setMessageBody(String messageBody) {
+	public void setCompressed(boolean compressed) {
+		this.mCompressed = compressed;
+	}
+
+	public boolean getCompressed() {
+		return mCompressed;
+	}
+
+	public void setAscii(boolean ascii) {
+		this.mAscii = ascii;
+	}
+
+	public boolean getAscii() {
+		return mAscii;
+	}
+
+	void setMessageBody(byte[] messageBody) {
 		this.mMessageBody = messageBody;
 	}
 
-	public String getMessageBody() {
+	byte[] getMessageBody() {
 		return mMessageBody;
 	}
 

@@ -263,7 +263,7 @@ class Empty {
 		if (readFromFile) {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values

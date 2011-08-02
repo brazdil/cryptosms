@@ -159,10 +159,10 @@ public class Conversation implements Comparable<Conversation> {
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
 			setPhoneNumber(Charset.fromAscii8(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
-			setIndexSessionKeys(Storage.getInt(dataPlain, OFFSET_KEYSINDEX));
-			setIndexMessages(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
-			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexSessionKeys(Storage.getUnsignedInt(dataPlain, OFFSET_KEYSINDEX));
+			setIndexMessages(Storage.getUnsignedInt(dataPlain, OFFSET_MSGSINDEX));
+			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -706,7 +706,8 @@ public class Conversation implements Comparable<Conversation> {
 		}
 		
 		if (firstMessageData != null)
-			return firstMessageData.getMessageBody();
+			// TODO: FIX!!!
+			return "SHIT!!!"; //firstMessageData.getMessageBody();
 		else
 			return new String();
 	}

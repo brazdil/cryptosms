@@ -127,8 +127,8 @@ public class Header {
 			
 			// set fields
 			setVersion(version);
-			setIndexEmpty(Storage.getInt(dataPlain, OFFSET_FREEINDEX));
-			setIndexConversations(Storage.getInt(dataPlain, OFFSET_CONVINDEX));
+			setIndexEmpty(Storage.getUnsignedInt(dataPlain, OFFSET_FREEINDEX));
+			setIndexConversations(Storage.getUnsignedInt(dataPlain, OFFSET_CONVINDEX));
 		}
 		else {
 			// default values			

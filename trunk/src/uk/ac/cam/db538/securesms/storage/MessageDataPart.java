@@ -18,10 +18,12 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
 class MessageDataPart {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
+	private static final int LENGTH_MESSAGEBODYLEN = 2;
 	private static final int LENGTH_MESSAGEBODY = 140;
 
 	private static final int OFFSET_FLAGS = 0;
-	private static final int OFFSET_MESSAGEBODY = OFFSET_FLAGS + LENGTH_FLAGS;
+	private static final int OFFSET_MESSAGEBODYLEN = OFFSET_FLAGS + LENGTH_FLAGS;
+	private static final int OFFSET_MESSAGEBODY = OFFSET_MESSAGEBODYLEN + LENGTH_MESSAGEBODYLEN;
 
 	private static final int OFFSET_RANDOMDATA = OFFSET_MESSAGEBODY + LENGTH_MESSAGEBODY;
 
@@ -96,7 +98,7 @@ class MessageDataPart {
 	// INTERNAL FIELDS
 	private long mEntryIndex; // READ ONLY
 	private boolean mDeliveredPart;
-	private String mMessageBody;
+	private byte[] mMessageBody;
 	private long mIndexParent;
 	private long mIndexPrev;
 	private long mIndexNext;
@@ -133,15 +135,16 @@ class MessageDataPart {
 			boolean deliveredPart = ((flags & (1 << 7)) == 0) ? false : true;
 			
 			setDeliveredPart(deliveredPart);
-			setMessageBody(Charset.fromAscii8(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
-			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
+			int messageBodyLength = Math.min(LENGTH_MESSAGEBODY, Storage.getShort(dataPlain, OFFSET_MESSAGEBODYLEN));
+			setMessageBody(Storage.cutData(dataPlain, OFFSET_MESSAGEBODY, messageBodyLength));
+			setIndexParent(Storage.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
 			setDeliveredPart(false);
-			setMessageBody("");
+			setMessageBody(new byte[0]);
 			setIndexParent(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);
@@ -181,7 +184,8 @@ class MessageDataPart {
 		msgBuffer.put(flags);
 		
 		// message body
-		msgBuffer.put(Charset.toAscii8(this.mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(Storage.getBytes((short) this.mMessageBody.length));
+		msgBuffer.put(Storage.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
@@ -333,11 +337,11 @@ class MessageDataPart {
 		return mDeliveredPart;
 	}
 
-	void setMessageBody(String messageBody) {
+	void setMessageBody(byte[] messageBody) {
 		this.mMessageBody = messageBody;
 	}
 
-	String getMessageBody() {
+	byte[] getMessageBody() {
 		return mMessageBody;
 	}
 

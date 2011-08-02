@@ -209,9 +209,9 @@ public class SessionKeys {
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
-			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexParent(Storage.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
