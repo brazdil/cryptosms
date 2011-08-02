@@ -133,7 +133,7 @@ class MessagePart {
 			boolean deliveredPart = ((flags & (1 << 7)) == 0) ? false : true;
 			
 			setDeliveredPart(deliveredPart);
-			setMessageBody(Charset.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
+			setMessageBody(Charset.fromAscii8(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
 			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(Storage.getInt(dataPlain, OFFSET_NEXTINDEX));
@@ -181,7 +181,7 @@ class MessagePart {
 		msgBuffer.put(flags);
 		
 		// message body
-		msgBuffer.put(Charset.toLatin(this.mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(Charset.toAscii8(this.mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));

@@ -158,7 +158,7 @@ public class Conversation implements Comparable<Conversation> {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
-			setPhoneNumber(Charset.fromLatin(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
+			setPhoneNumber(Charset.fromAscii8(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
 			setIndexSessionKeys(Storage.getInt(dataPlain, OFFSET_KEYSINDEX));
 			setIndexMessages(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
 			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
@@ -207,7 +207,7 @@ public class Conversation implements Comparable<Conversation> {
 		convBuffer.put(flags);
 		
 		// phone number
-		convBuffer.put(Charset.toLatin(this.mPhoneNumber, LENGTH_PHONENUMBER));
+		convBuffer.put(Charset.toAscii8(this.mPhoneNumber, LENGTH_PHONENUMBER));
 		
 		// random data
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));

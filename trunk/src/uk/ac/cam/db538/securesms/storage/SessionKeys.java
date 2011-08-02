@@ -204,7 +204,7 @@ public class SessionKeys {
 			
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
-			setSimNumber(new SimNumber(Charset.fromLatin(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
+			setSimNumber(new SimNumber(Charset.fromAscii8(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
 			setSessionKey_Out(dataSessionKey_Out);
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
@@ -265,7 +265,7 @@ public class SessionKeys {
 		keysBuffer.put(flags);
 		
 		// phone number
-		keysBuffer.put(Charset.toLatin(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
+		keysBuffer.put(Charset.toAscii8(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
 		
 		// session keys and last IDs
 		keysBuffer.put(this.mSessionKey_Out);

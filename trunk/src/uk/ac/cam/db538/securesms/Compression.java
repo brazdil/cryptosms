@@ -52,13 +52,13 @@ public class Compression {
     	return bos.toByteArray();	
     }
 
-    public static byte[] decompressZ(byte[] plainData) throws DataFormatException {
+    public static byte[] decompressZ(byte[] compressedData) throws DataFormatException {
     	byte[] buffer = new byte[1024];
     	int bytesDecompressed;
     	Inflater inflater = new Inflater();
-    	ByteArrayOutputStream bos = new ByteArrayOutputStream(plainData.length);
+    	ByteArrayOutputStream bos = new ByteArrayOutputStream(compressedData.length);
     	
-    	inflater.setInput(plainData);
+    	inflater.setInput(compressedData);
     	while(!inflater.finished()) {
     		bytesDecompressed = inflater.inflate(buffer);
     		bos.write(buffer, 0, bytesDecompressed);

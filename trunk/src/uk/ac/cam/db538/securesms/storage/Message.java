@@ -3,10 +3,12 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.zip.DataFormatException;
 
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.Compression;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -38,6 +40,11 @@ public class Message {
 	public enum MessageType {
 		INCOMING,
 		OUTGOING
+	}
+	
+	public enum MessageCharset {
+		ASCII7,
+		UNICODE
 	}
 	
 	// STATIC
@@ -155,14 +162,14 @@ public class Message {
 			boolean unread = ((flags & (1 << 4)) == 0) ? false : true;
 			
 			Time timeStamp = new Time();
-			timeStamp.parse3339(Charset.fromLatin(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
+			timeStamp.parse3339(Charset.fromAscii8(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
 
 			setDeliveredPart(deliveredPart);
 			setDeliveredAll(deliveredAll);
 			setMessageType((messageOutgoing) ? MessageType.OUTGOING : MessageType.INCOMING);
 			setUnread(unread);
 			setTimeStamp(timeStamp);
-			setMessageBody(Charset.fromLatin(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
+			setMessageBody(Charset.fromAscii8(dataPlain, OFFSET_MESSAGEBODY, LENGTH_MESSAGEBODY));
 			setIndexParent(Storage.getInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexMessageParts(Storage.getInt(dataPlain, OFFSET_MSGSINDEX));
 			setIndexPrev(Storage.getInt(dataPlain, OFFSET_PREVINDEX));
@@ -225,10 +232,10 @@ public class Message {
 		msgBuffer.put(flags);
 		
 		// time stamp
-		msgBuffer.put(Charset.toLatin(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
+		msgBuffer.put(Charset.toAscii8(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
 
 		// message body
-		msgBuffer.put(Charset.toLatin(this.mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(Charset.toAscii8(this.mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
