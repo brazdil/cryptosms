@@ -70,7 +70,7 @@ public class MyApplication extends Application {
 		} catch (Exception ex) {
 		}
 		
-		String text = "Lorem ip"; //sum dolor sit amet, consectetur adipiscing elit. Vivamus id diam et leo egestas volutpat. Curabitur aliquam mattis iaculis. Nulla quis tortor sem metus.";
+		String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus id diam et leo egestas volutpat. Curabitur aliquam mattis iaculis. Nulla quis tortor sem metus.";
 		int origLength = text.length();
 		byte[] textAscii = Charset.toAscii(text);
 		String text2 = Charset.fromAscii(textAscii);
