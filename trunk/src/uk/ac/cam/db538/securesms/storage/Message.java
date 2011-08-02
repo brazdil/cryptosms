@@ -40,12 +40,6 @@ public class Message {
 		OUTGOING
 	}
 	
-	public enum MessageCharset {
-		ASCII7,
-		UNICODE
-	}
-	
-	
 	// STATIC
 	
 	private static ArrayList<Message> cacheMessage = new ArrayList<Message>();

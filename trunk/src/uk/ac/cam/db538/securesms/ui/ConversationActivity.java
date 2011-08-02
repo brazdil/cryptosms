@@ -10,7 +10,7 @@ import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.data.MessageData;
+import uk.ac.cam.db538.securesms.data.CompressedText;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -100,7 +100,7 @@ public class ConversationActivity extends Activity {
 			@Override
 			public void afterTextChanged(Editable s) {
 				String text = s.toString();
-				MessageData msg = new MessageData(text);
+				CompressedText msg = CompressedText.createFromString(text);
 				mSendButton.setText(new Integer(msg.getLength()).toString() + " x " + text.length());
 			}
 		});
