@@ -59,12 +59,12 @@ public class LowLevel_Test extends TestCase {
 		
 		expected = new byte[] { (byte) 0x84, (byte) 0xD2, (byte) 0xC3, (byte) 0x6E };
 		number = 2228405102L;
-		result = LowLevel.getBytes(number);
+		result = LowLevel.getBytesUnsignedInt(number);
 		CustomAsserts.assertArrayEquals(expected, result);
 		
 		expected = new byte[] { (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF };
 		number = 4294967295L;
-		result = LowLevel.getBytes(number);
+		result = LowLevel.getBytesUnsignedInt(number);
 		CustomAsserts.assertArrayEquals(expected, result);
 	}
 

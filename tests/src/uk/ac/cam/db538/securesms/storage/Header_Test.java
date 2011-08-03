@@ -114,8 +114,8 @@ public class Header_Test extends TestCase {
 		int version = 17;
 		
 		byte[] dataPlain = new byte[Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD];
-		System.arraycopy(LowLevel.getBytes(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
-		System.arraycopy(LowLevel.getBytes(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
 		
 		byte[] dataAll = new byte[Storage.CHUNK_SIZE];

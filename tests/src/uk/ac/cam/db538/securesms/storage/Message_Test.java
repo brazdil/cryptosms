@@ -303,7 +303,7 @@ public class Message_Test extends TestCase {
 		assertEquals(dataPlain[0], flags);
 		Time time = new Time(); time.parse3339(Charset.fromAscii8(dataPlain, 1, 29));
 		assertEquals(Time.compare(time, timeStamp), 0);
-		assertEquals(LowLevel.getShort(dataPlain, 30), messageBodyLength);
+		assertEquals(LowLevel.getUnsignedShort(dataPlain, 30), messageBodyLength);
 		CustomAsserts.assertArrayEquals(LowLevel.cutData(dataPlain, 32, messageBodyLength), messageBodyData);
 		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexParent);
 		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessageParts);
@@ -329,12 +329,12 @@ public class Message_Test extends TestCase {
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
 		System.arraycopy(Charset.toAscii8(timeStamp.format3339(false), 29), 0, dataPlain, 1, 29);
-		System.arraycopy(LowLevel.getBytes(messageBodyLength), 0, dataPlain, 30, 2);
+		System.arraycopy(LowLevel.getBytesUnsignedShort(messageBodyLength), 0, dataPlain, 30, 2);
 		System.arraycopy(LowLevel.wrapData(messageBodyData, 140), 0, dataPlain, 32, 140);
-		System.arraycopy(LowLevel.getBytes(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
-		System.arraycopy(LowLevel.getBytes(indexMessageParts), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(LowLevel.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(LowLevel.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexMessageParts), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());

@@ -3,7 +3,6 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
@@ -110,7 +109,7 @@ public class MessagePart_Test extends TestCase {
 		
 		// check the data
 		assertEquals(dataPlain[0], flags);
-		assertEquals(LowLevel.getShort(dataPlain, 1), messageBodyLength);
+		assertEquals(LowLevel.getUnsignedShort(dataPlain, 1), messageBodyLength);
 		CustomAsserts.assertArrayEquals(LowLevel.cutData(dataPlain, 3, messageBodyLength), messageBodyData);
 		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
@@ -126,9 +125,9 @@ public class MessagePart_Test extends TestCase {
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(LowLevel.getBytes(messageBodyLength), 0, dataPlain, 1, 2);
+		System.arraycopy(LowLevel.getBytesUnsignedShort(messageBodyLength), 0, dataPlain, 1, 2);
 		System.arraycopy(LowLevel.wrapData(messageBodyData, 140), 0, dataPlain, 3, 140);
-		System.arraycopy(LowLevel.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());

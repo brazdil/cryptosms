@@ -3,9 +3,6 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.File;
 import java.io.IOException;
 import junit.framework.TestCase;
-import uk.ac.cam.db538.securesms.Charset;
-import uk.ac.cam.db538.securesms.CustomAsserts;
-import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 

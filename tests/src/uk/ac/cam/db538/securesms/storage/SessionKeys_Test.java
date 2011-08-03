@@ -44,7 +44,7 @@ public class SessionKeys_Test extends TestCase {
 		keys.setKeysConfirmed(keysConfirmed);
 		keys.setSimNumber(new SimNumber((longer) ? simNumberLong : simNumber, simSerial));
 		keys.setSessionKey_Out(sessionKey_Out);
-		keys.setLastID_Out(lastID_Out);
+		keys.setNextID_Out(lastID_Out);
 		keys.setSessionKey_In(sessionKey_In);
 		keys.setLastID_In(lastID_In);
 		keys.setIndexParent(indexParent);
@@ -58,7 +58,7 @@ public class SessionKeys_Test extends TestCase {
 		assertEquals(simSerial, keys.getSimNumber().isSerial());
 		assertEquals((longer) ? simNumberResult : simNumber, keys.getSimNumber().getNumber());
 		CustomAsserts.assertArrayEquals(keys.getSessionKey_Out(), sessionKey_Out);
-		assertEquals(lastID_Out, keys.getLastID_Out());
+		assertEquals(lastID_Out, keys.getNextID_Out());
 		CustomAsserts.assertArrayEquals(keys.getSessionKey_In(), sessionKey_In);
 		assertEquals(lastID_In, keys.getLastID_In());
 		assertEquals(indexParent, keys.getIndexParent());
@@ -141,9 +141,9 @@ public class SessionKeys_Test extends TestCase {
 		dataPlain[65] = lastID_Out;
 		System.arraycopy(sessionKey_In, 0, dataPlain, 66, 32);
 		dataPlain[98] = lastID_In;
-		System.arraycopy(LowLevel.getBytes(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(LowLevel.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(LowLevel.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
