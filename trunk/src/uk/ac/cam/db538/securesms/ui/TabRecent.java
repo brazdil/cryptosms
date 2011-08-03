@@ -49,7 +49,7 @@ public class TabRecent extends ListActivity {
 	
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-        setContentView(R.layout.screen_main_recent);
+        setContentView(R.layout.screen_main_listtab);
 
         final Context context = this;
         final ListView listView = getListView();
