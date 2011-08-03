@@ -146,9 +146,9 @@ public class Message_Test extends TestCase {
 		msg = MessageData.getMessageData(index); // because checkStructure clears cache
 		msg.setNumberOfParts(5);
 		assertTrue(Common.checkStructure());
-		assertNotNull(msg.getAssignedData(4));
+		assertNotNull(msg.getPartData(4));
 		try {
-			msg.getAssignedData(5);
+			msg.getPartData(5);
 			fail("Should not reach here!");
 		} catch (IndexOutOfBoundsException e) {
 		}
@@ -156,12 +156,12 @@ public class Message_Test extends TestCase {
 		msg = MessageData.getMessageData(index);
 		msg.setNumberOfParts(7);
 		assertTrue(Common.checkStructure());
-		assertNotNull(msg.getAssignedData(2));
-		assertNotNull(msg.getAssignedData(3));
-		assertNotNull(msg.getAssignedData(4));
-		assertNotNull(msg.getAssignedData(6));
+		assertNotNull(msg.getPartData(2));
+		assertNotNull(msg.getPartData(3));
+		assertNotNull(msg.getPartData(4));
+		assertNotNull(msg.getPartData(6));
 		try {
-			msg.getAssignedData(7);
+			msg.getPartData(7);
 			fail("Should not reach here!");
 		} catch (IndexOutOfBoundsException e) {
 		}
@@ -169,12 +169,12 @@ public class Message_Test extends TestCase {
 		msg = MessageData.getMessageData(index);
 		msg.setNumberOfParts(4);
 		assertTrue(Common.checkStructure());
-		assertNotNull(msg.getAssignedData(0));
-		assertNotNull(msg.getAssignedData(1));
-		assertNotNull(msg.getAssignedData(2));
-		assertNotNull(msg.getAssignedData(3));
+		assertNotNull(msg.getPartData(0));
+		assertNotNull(msg.getPartData(1));
+		assertNotNull(msg.getPartData(2));
+		assertNotNull(msg.getPartData(3));
 		try {
-			msg.getAssignedData(4);
+			msg.getPartData(4);
 			fail("Should not reach here!");
 		} catch (IndexOutOfBoundsException e) {
 		}
@@ -183,7 +183,7 @@ public class Message_Test extends TestCase {
 		msg.setNumberOfParts(1);
 		assertTrue(Common.checkStructure());
 		try {
-			msg.getAssignedData(1);
+			msg.getPartData(1);
 			fail("Should not reach here!");
 		} catch (IndexOutOfBoundsException e) {
 		}
@@ -196,25 +196,25 @@ public class Message_Test extends TestCase {
 		
 		// indices out of bounds
 		try {
-			msg.getAssignedData(-1);
+			msg.getPartData(-1);
 			fail("Should not reach here");
 		} catch (IndexOutOfBoundsException e) {
 		}
 
 		try {
-			msg.getAssignedData(3);
+			msg.getPartData(3);
 			fail("Should not reach here");
 		} catch (IndexOutOfBoundsException e) {
 		}
 
 		try {
-			msg.setAssignedData(-1, new byte[4]);
+			msg.setPartData(-1, new byte[4]);
 			fail("Should not reach here");
 		} catch (IndexOutOfBoundsException e) {
 		}
 
 		try {
-			msg.setAssignedData(3, new byte[4]);
+			msg.setPartData(3, new byte[4]);
 			fail("Should not reach here");
 		} catch (IndexOutOfBoundsException e) {
 		}
@@ -248,15 +248,15 @@ public class Message_Test extends TestCase {
 		byte[] data = Encryption.generateRandomData(280);
 		byte[] dataCut = LowLevel.cutData(data, 0, 140);
 		
-		msg.setAssignedData(2, data);
-		assertEquals(0, msg.getAssignedData(0).length);
-		assertEquals(0, msg.getAssignedData(1).length);
-		CustomAsserts.assertArrayEquals(msg.getAssignedData(2), dataCut);
+		msg.setPartData(2, data);
+		assertEquals(0, msg.getPartData(0).length);
+		assertEquals(0, msg.getPartData(1).length);
+		CustomAsserts.assertArrayEquals(msg.getPartData(2), dataCut);
 		
-		msg.setAssignedData(0, data);
-		CustomAsserts.assertArrayEquals(msg.getAssignedData(0), dataCut);
-		assertEquals(0, msg.getAssignedData(1).length);
-		CustomAsserts.assertArrayEquals(msg.getAssignedData(2), dataCut);
+		msg.setPartData(0, data);
+		CustomAsserts.assertArrayEquals(msg.getPartData(0), dataCut);
+		assertEquals(0, msg.getPartData(1).length);
+		CustomAsserts.assertArrayEquals(msg.getPartData(2), dataCut);
 
 		msg.setPartDelivered(1, true);
 		assertEquals(false, msg.getPartDelivered(0));
