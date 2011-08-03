@@ -136,6 +136,43 @@ public class Message_Test extends TestCase {
 		}
 	}
 	
+	public void testSetNumberOfParts() throws StorageFileException, IOException {
+		// set data
+		Conversation conv = Conversation.createConversation();
+		MessageData msg = MessageData.createMessageData(conv);
+		long index = msg.getEntryIndex();
+		assertTrue(Common.checkStructure());
+		
+		msg = MessageData.getMessageData(index); // because checkStructure clears cache
+		msg.setNumberOfParts(5);
+		assertTrue(Common.checkStructure());
+		assertNotNull(msg.getAssignedData(4));
+		assertNull(msg.getAssignedData(5));
+		
+		msg = MessageData.getMessageData(index);
+		msg.setNumberOfParts(7);
+		assertTrue(Common.checkStructure());
+		assertNotNull(msg.getAssignedData(2));
+		assertNotNull(msg.getAssignedData(3));
+		assertNotNull(msg.getAssignedData(4));
+		assertNotNull(msg.getAssignedData(6));
+		assertNull(msg.getAssignedData(7));
+
+		msg = MessageData.getMessageData(index);
+		msg.setNumberOfParts(4);
+		assertTrue(Common.checkStructure());
+		assertNotNull(msg.getAssignedData(0));
+		assertNotNull(msg.getAssignedData(1));
+		assertNotNull(msg.getAssignedData(2));
+		assertNotNull(msg.getAssignedData(3));
+		assertNull(msg.getAssignedData(4));
+
+		msg = MessageData.getMessageData(index);
+		msg.setNumberOfParts(1);
+		assertTrue(Common.checkStructure());
+		assertNull(msg.getAssignedData(1));
+	}
+	
 	public void testCreateData() throws StorageFileException, IOException {
 		// set data
 		Conversation conv = Conversation.createConversation();
