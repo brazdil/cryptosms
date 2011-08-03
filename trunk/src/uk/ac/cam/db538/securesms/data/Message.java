@@ -18,16 +18,20 @@ public class Message {
     	byte[] temp;
     	ArrayList<byte[]> data = new ArrayList<byte[]>();
     	
-		while ((temp = mStorage.getAssignedData(index++)) != null) {
-			length += temp.length;
-			data.add(temp);
-		}
+    	try {
+			while ((temp = mStorage.getAssignedData(index++)) != null) {
+				length += temp.length;
+				data.add(temp);
+			}
+    	} catch (IndexOutOfBoundsException e) {
+    		// ends this way
+    	}
 		
 		temp = new byte[length];
 		index = 0;
 		for (byte[] part : data) {
-			System.arraycopy(part, 0, temp, index, temp.length);
-			index += temp.length;
+			System.arraycopy(part, 0, temp, index, part.length);
+			index += part.length;
 		}
 		
 		return temp;

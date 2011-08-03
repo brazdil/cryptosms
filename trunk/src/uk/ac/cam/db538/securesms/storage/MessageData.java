@@ -490,10 +490,16 @@ public class MessageData {
 	
 	// MESSAGE HIGH LEVEL
 	
+	/**
+	 * Returns the data assigned to message part at given index
+	 */
 	public byte[] getAssignedData(int index) throws StorageFileException, IOException {
 		return getAssignedData(index, true);
 	}
 	
+	/**
+	 * Returns the data assigned to message part at given index
+	 */
 	public byte[] getAssignedData(int index, boolean lockAllow) throws StorageFileException, IOException {
 		Storage db = Storage.getDatabase();
 		
@@ -510,7 +516,7 @@ public class MessageData {
 					part = part.getNextMessageDataPart(false);
 				}
 			}
-			return null;
+			throw new IndexOutOfBoundsException();
 		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
@@ -520,10 +526,24 @@ public class MessageData {
 		}
 	}
 	
+	/**
+	 * Adds/removes message parts so that there is exactly given number of them
+	 * (There is always at least one)
+	 * @param count
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
 	public void setNumberOfParts(int count) throws IOException, StorageFileException {
 		setNumberOfParts(count, true);
 	}
 	
+	/**
+	 * Adds/removes message parts so that there is exactly given number of them
+	 * (There is always at least one)
+	 * @param count
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
 	public void setNumberOfParts(int count, boolean lockAllow) throws IOException, StorageFileException {
 		Storage db = Storage.getDatabase();
 		
@@ -583,6 +603,163 @@ public class MessageData {
 			db.unlockFile(lockAllow);
 		}
 	}
+	
+	/**
+	 * Returns message part of given index (only for indices > 0)
+	 * @param index
+	 * @param lockAllow
+	 * @return
+	 * @throws StorageFileException
+	 * @throws IOException
+	 */
+	private MessageDataPart getMessageDataPart(int index, boolean lockAllow) throws StorageFileException, IOException {
+		Storage db = Storage.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			if (index <= 0)
+				throw new IndexOutOfBoundsException();
+			else {
+				--index; // for the first part
+				MessageDataPart part = this.getFirstMessageDataPart(false);
+				while (part != null && index > 0) {
+					part = part.getNextMessageDataPart(false);
+					index--;
+				}
+				
+				if (part != null)
+					return part;
+				else
+					throw new IndexOutOfBoundsException();
+			}
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
+	
+	/**
+	 * Sets data to given message part
+	 * @param index
+	 * @param data
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
+	public void setAssignedData(int index, byte[] data) throws IOException, StorageFileException {
+		setAssignedData(index, data, true);
+	}
+
+	/**
+	 * Sets data to given message part
+	 * @param index
+	 * @param data
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
+	public void setAssignedData(int index, byte[] data, boolean lockAllow) throws IOException, StorageFileException {
+		Storage db = Storage.getDatabase();
+		
+		// if it's too long, just cut it
+		if (data.length > LENGTH_MESSAGEBODY)
+			data = LowLevel.cutData(data, 0, LENGTH_MESSAGEBODY);
+		
+		db.lockFile(lockAllow);
+		try {
+			if (index == 0) {
+				this.setMessageBody(data);
+				this.saveToFile(false);
+			} else {
+				MessageDataPart part = getMessageDataPart(index, false);
+				part.setMessageBody(data);
+				part.saveToFile(false);
+			}
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
+
+	/**
+	 * Returns whether given message part was delivered
+	 * @param index
+	 * @return
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
+	public boolean getPartDelivered(int index) throws IOException, StorageFileException {
+		return getPartDelivered(index, true);
+	}
+	
+	/**
+	 * Returns whether given message part was delivered
+	 * @param index
+	 * @return
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
+	public boolean getPartDelivered(int index, boolean lockAllow) throws IOException, StorageFileException {
+		Storage db = Storage.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			if (index == 0)
+				return this.getDeliveredPart();
+			else
+				return getMessageDataPart(index, false).getDeliveredPart();
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
+
+	/**
+	 * Sets whether given message part was delivered
+	 * @param index
+	 * @return
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
+	public void setPartDelivered(int index, boolean delivered) throws IOException, StorageFileException {
+		setPartDelivered(index, delivered, true);
+	}
+	
+	/**
+	 * Sets whether given message part was delivered
+	 * @param index
+	 * @return
+	 * @throws IOException
+	 * @throws StorageFileException
+	 */
+	public void setPartDelivered(int index, boolean delivered, boolean lockAllow) throws IOException, StorageFileException {
+		Storage db = Storage.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			if (index == 0) {
+				this.setDeliveredPart(delivered);
+				this.saveToFile(false);
+			} else {
+				MessageDataPart part = getMessageDataPart(index, false);
+				part.setDeliveredPart(delivered);
+				part.saveToFile(false);
+			}
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
 
 	// GETTERS / SETTERS
 	
@@ -594,11 +771,11 @@ public class MessageData {
 		this.mDeliveredPart = deliveredPart;
 	}
 
-	public boolean getDeliveredPart() {
+	boolean getDeliveredPart() {
 		return mDeliveredPart;
 	}
 
-	public void setDeliveredAll(boolean deliveredAll) {
+	void setDeliveredAll(boolean deliveredAll) {
 		this.mDeliveredAll = deliveredAll;
 	}
 
