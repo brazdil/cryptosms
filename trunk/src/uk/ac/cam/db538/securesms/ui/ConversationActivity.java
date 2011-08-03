@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -42,6 +43,7 @@ public class ConversationActivity extends Activity {
     private QuickContactBadge mAvatarView;
     private Button mSendButton;
     private EditText mTextEditor;
+    private TextView mRemainsView;
     
     private boolean errorNoKeysShow;
 
@@ -69,6 +71,7 @@ public class ConversationActivity extends Activity {
 	    mAvatarView = (QuickContactBadge) findViewById(R.id.conversation_avatar);
 	    mSendButton = (Button) findViewById(R.id.conversation_send_button);
 	    mTextEditor = (EditText) findViewById(R.id.conversation_embedded_text_editor);
+	    mRemainsView = (TextView) findViewById(R.id.conversation_text_counter);
 	    
 	    mNameView.setText(mContact.getName());
 	    mPhoneNumberView.setText(mContact.getPhoneNumber());
@@ -101,7 +104,8 @@ public class ConversationActivity extends Activity {
 			public void afterTextChanged(Editable s) {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
-				mSendButton.setText(new Integer(msg.getLength()).toString() + " x " + text.length());
+				mRemainsView.setText(new Integer(msg.getLength()).toString() + " x " + text.length());
+				mRemainsView.setVisibility(View.VISIBLE);
 			}
 		});
 	}
