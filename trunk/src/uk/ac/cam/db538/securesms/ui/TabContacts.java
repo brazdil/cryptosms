@@ -161,7 +161,7 @@ public class TabContacts extends ListActivity {
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
 						} catch (StorageFileException ex) {
-							Utils.dialogDatabaseError(context, ex);							// TODO Auto-generated catch block
+							Utils.dialogDatabaseError(context, ex);
 						} catch (IOException ex) {
 							Utils.dialogIOError(context, ex);
 						}
@@ -170,7 +170,8 @@ public class TabContacts extends ListActivity {
 		    			
 		    			// pick a contact from PKI
 						Intent intent = new Intent("uk.ac.cam.PKI.getcontact");
-				        intent.putExtra("Criteria", "in_visible_group=1 AND " + Data.MIMETYPE + "='" + KEY_MIME + "'");
+				        intent.putExtra("Contact Criteria", "in_visible_group=1");
+				        intent.putExtra("Key Criteria", "contact_id IN (SELECT contact_id FROM keys GROUP BY contact_id HAVING COUNT(key_name)>0)");
 				        intent.putExtra("sort", "display_name COLLATE LOCALIZED ASC");
 						intent.putExtra("pick", true);
 						try {

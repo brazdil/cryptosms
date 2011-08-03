@@ -96,8 +96,11 @@ public class LowLevel {
 	 * @return
 	 */
 	public static byte[] cutData(byte[] data, int offset, int length) {
-		byte[] result = new byte[length];
-		System.arraycopy(data, offset, result, 0, length);
-		return result;
+		if (length > 0) {
+			byte[] result = new byte[length];
+			System.arraycopy(data, offset, result, 0, length);
+			return result;
+		} else
+			return new byte[0];
 	}
 }

@@ -8,8 +8,7 @@ import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
-public class TextMessage implements Message {
-	// RENAME!!!
+public class TextMessage extends Message {
 	private static final int LENGTH_FIRST_MESSAGE = 140;
 	private static final int LENGTH_FIRST_HEADER = 1;
 	private static final int LENGTH_FIRST_ID = 1;
@@ -29,12 +28,12 @@ public class TextMessage implements Message {
 	private MessageData	mStorage;
 		
 	public TextMessage(MessageData storage) {
-		mStorage = storage;
+		super(storage);
 	}
 	
 	public CompressedText getText() throws StorageFileException, IOException, DataFormatException {
 		return CompressedText.decode(
-			mStorage.getAssignedData(),
+			getData(),
 			mStorage.getAscii() ? TextCharset.ASCII7 : TextCharset.UNICODE,
 			mStorage.getCompressed()
 		);

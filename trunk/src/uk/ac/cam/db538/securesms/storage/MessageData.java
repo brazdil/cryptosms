@@ -490,42 +490,91 @@ public class MessageData {
 	
 	// MESSAGE HIGH LEVEL
 	
-	public byte[] getAssignedData() throws StorageFileException, IOException {
-		return getAssignedData(true);
+	public byte[] getAssignedData(int index) throws StorageFileException, IOException {
+		return getAssignedData(index, true);
 	}
 	
-	public byte[] getAssignedData(boolean lockAllow) throws StorageFileException, IOException {
+	public byte[] getAssignedData(int index, boolean lockAllow) throws StorageFileException, IOException {
 		Storage db = Storage.getDatabase();
 		
 		db.lockFile(lockAllow);
 		try {
-			// count the total length
-			int length = getMessageBody().length;
-			MessageDataPart part = getFirstMessageDataPart(false);
-			while (part != null) {
-				length += part.getMessageBody().length;
+			if (index == 0) 
+				return this.getMessageBody();
+			else {
+				--index;
+				MessageDataPart part = getFirstMessageDataPart(false);
+				while (part != null) {
+					if (index-- == 0)
+						return part.getMessageBody();
+					part = part.getNextMessageDataPart(false);
+				}
+			}
+			return null;
+		} catch (StorageFileException ex) {
+			throw ex;
+		} catch (IOException ex) {
+			throw ex;
+		} finally {
+			db.unlockFile(lockAllow);
+		}
+	}
+	
+	public void setNumberOfParts(int count) throws IOException, StorageFileException {
+		setNumberOfParts(count, true);
+	}
+	
+	public void setNumberOfParts(int count, boolean lockAllow) throws IOException, StorageFileException {
+		Storage db = Storage.getDatabase();
+		
+		db.lockFile(lockAllow);
+		try {
+			--count; // count the first part
+			
+			MessageDataPart temp = null, part = getFirstMessageDataPart(false);
+			while (count > 0 && part != null) {
+				part.setMessageBody(new byte[0]);
+				part.setDeliveredPart(false);
+				part.saveToFile(false);
+				
+				--count;
+				temp = part;
 				part = part.getNextMessageDataPart(false);
 			}
 			
-			byte[] result = new byte[length], data;
-			int pos = 0, len;
-			
-			// copy all the data together
-			data = getMessageBody();
-			len = data.length;
-			System.arraycopy(data, 0, result, pos, len);
-			pos += len;
-			
-			part = getFirstMessageDataPart(false);
-			while (part != null) {
-				data = part.getMessageBody();
-				len = data.length;
-				System.arraycopy(data, 0, result, pos, len);
-				pos += len;
-				part = part.getNextMessageDataPart(false);
+			if (count > 0 && part == null) {
+				// we need to add more
+				while (count-- > 0) {
+					part = MessageDataPart.createMessageDataPart(false);
+					// parent
+					part.setIndexParent(this.mEntryIndex);
+					// pointers
+					if (temp == null) {
+						// this is the first one in list
+						part.setIndexPrev(0L);
+						this.setIndexMessageParts(part.getEntryIndex());
+						this.saveToFile(false);
+					}
+					else {
+						part.setIndexPrev(temp.getEntryIndex());
+						temp.setIndexNext(part.getEntryIndex());
+						temp.saveToFile(false);
+					}
+					part.setIndexNext(0);
+					// save and move to next
+					if (count <= 0) // otherwise will be saved in the next run
+						part.saveToFile(false);
+					temp = part;
+				}
+				
+			} else if (count <= 0 && part != null) {
+				// we need to remove some
+				while (part != null) {
+					temp = part.getNextMessageDataPart(false);
+					part.delete(false);
+					part = temp;
+				}
 			}
-			
-			return result;
 		} catch (StorageFileException ex) {
 			throw ex;
 		} catch (IOException ex) {
