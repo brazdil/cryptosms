@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.CustomAsserts;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
@@ -122,9 +123,9 @@ public class SessionKeys_Test extends TestCase {
 		assertEquals(lastID_Out, dataPlain[65]);
 		CustomAsserts.assertArrayEquals(dataPlain, 66, sessionKey_In, 0, 32);
 		assertEquals(lastID_In, dataPlain[98]);
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexParent);
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);		
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexParent);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);		
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
 	public void testParseData() throws StorageFileException, IOException {
@@ -140,9 +141,9 @@ public class SessionKeys_Test extends TestCase {
 		dataPlain[65] = lastID_Out;
 		System.arraycopy(sessionKey_In, 0, dataPlain, 66, 32);
 		dataPlain[98] = lastID_In;
-		System.arraycopy(Storage.getBytes(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(LowLevel.getBytes(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(LowLevel.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(LowLevel.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());

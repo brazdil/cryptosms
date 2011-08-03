@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.Empty;
 import uk.ac.cam.db538.securesms.storage.Header;
-import uk.ac.cam.db538.securesms.storage.Message;
-import uk.ac.cam.db538.securesms.storage.MessagePart;
+import uk.ac.cam.db538.securesms.storage.MessageData;
+import uk.ac.cam.db538.securesms.storage.MessageDataPart;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import junit.framework.TestCase;
 
@@ -72,28 +73,28 @@ public class Conversation_Test extends TestCase {
 			
 			for (int j = 0; j < 10; ++j)
 			{
-				Message msg = Message.createMessage(conv);
+				MessageData msg = MessageData.createMessageData(conv);
 				{
-					MessagePart part1 = MessagePart.createMessagePart();
-					MessagePart part2 = MessagePart.createMessagePart();
-					MessagePart part3 = MessagePart.createMessagePart();
-					MessagePart part4 = MessagePart.createMessagePart();
-					MessagePart part5 = MessagePart.createMessagePart();
+					MessageDataPart part1 = MessageDataPart.createMessageDataPart();
+					MessageDataPart part2 = MessageDataPart.createMessageDataPart();
+					MessageDataPart part3 = MessageDataPart.createMessageDataPart();
+					MessageDataPart part4 = MessageDataPart.createMessageDataPart();
+					MessageDataPart part5 = MessageDataPart.createMessageDataPart();
 					
-					ArrayList<MessagePart> list1 = new ArrayList<MessagePart>();
-					ArrayList<MessagePart> list2 = new ArrayList<MessagePart>();
+					ArrayList<MessageDataPart> list1 = new ArrayList<MessageDataPart>();
+					ArrayList<MessageDataPart> list2 = new ArrayList<MessageDataPart>();
 					
 					list1.add(part1);
 					list1.add(part2);
 					list1.add(part3);
-					msg.assignMessageParts(list1);
-					assertSame(msg.getFirstMessagePart(), part1);
+					msg.assignMessageDataParts(list1);
+					assertSame(msg.getFirstMessageDataPart(), part1);
 					
 					list2.add(part4);
 					list2.add(part5);
-					msg.assignMessageParts(list2);
+					msg.assignMessageDataParts(list2);
 					
-					assertSame(msg.getFirstMessagePart(), part4);
+					assertSame(msg.getFirstMessageDataPart(), part4);
 				}
 			}
 			
@@ -210,10 +211,10 @@ public class Conversation_Test extends TestCase {
 		// check the data
 		assertEquals(flags, dataPlain[0]);
 		assertEquals(phoneNumberResult, Charset.fromAscii8(dataPlain, 1, 32));
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexSessionKeys);
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
-		assertEquals(Storage.getInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexSessionKeys);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12), indexMessages);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8), indexPrev);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 
 	public void testParseData() throws StorageFileException, IOException {
@@ -226,10 +227,10 @@ public class Conversation_Test extends TestCase {
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
 		System.arraycopy(Charset.toAscii8(phoneNumber, 32), 0, dataPlain, 1, 32);
-		System.arraycopy(Storage.getBytes(indexSessionKeys), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
-		System.arraycopy(Storage.getBytes(indexMessages), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
-		System.arraycopy(Storage.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
-		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(LowLevel.getBytes(indexSessionKeys), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
+		System.arraycopy(LowLevel.getBytes(indexMessages), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 12, 4);
+		System.arraycopy(LowLevel.getBytes(indexPrev), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 8, 4);
+		System.arraycopy(LowLevel.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it and inject it into the file
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());

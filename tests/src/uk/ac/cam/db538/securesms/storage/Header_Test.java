@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -103,8 +104,8 @@ public class Header_Test extends TestCase {
 		byte[] dataPlain = Encryption.decryptSymmetric(buf.array(), Encryption.retreiveEncryptionKey());
 		
 		// check the indices
-		assertEquals(Storage.getInt(dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
-		assertEquals(Storage.getInt(dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
 	}
 
 	public void testParseData() throws IOException, StorageFileException {
@@ -113,8 +114,8 @@ public class Header_Test extends TestCase {
 		int version = 17;
 		
 		byte[] dataPlain = new byte[Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD];
-		System.arraycopy(Storage.getBytes(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
-		System.arraycopy(Storage.getBytes(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
+		System.arraycopy(LowLevel.getBytes(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
+		System.arraycopy(LowLevel.getBytes(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 4 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
 		
 		byte[] dataAll = new byte[Storage.CHUNK_SIZE];

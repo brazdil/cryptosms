@@ -8,8 +8,8 @@ import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.Empty;
 import uk.ac.cam.db538.securesms.storage.Header;
-import uk.ac.cam.db538.securesms.storage.Message;
-import uk.ac.cam.db538.securesms.storage.MessagePart;
+import uk.ac.cam.db538.securesms.storage.MessageData;
+import uk.ac.cam.db538.securesms.storage.MessageDataPart;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 
 public class Common {
@@ -25,8 +25,8 @@ public class Common {
 		Empty.forceClearCache();
 		Conversation.forceClearCache();
 		SessionKeys.forceClearCache();
-		Message.forceClearCache();
-		MessagePart.forceClearCache();
+		MessageData.forceClearCache();
+		MessageDataPart.forceClearCache();
 		
 		// free the singleton
 		Storage.freeSingleton();
@@ -43,8 +43,8 @@ public class Common {
 		Empty.forceClearCache();
 		Conversation.forceClearCache();
 		SessionKeys.forceClearCache();
-		Message.forceClearCache();
-		MessagePart.forceClearCache();
+		MessageData.forceClearCache();
+		MessageDataPart.forceClearCache();
 		
 		// initialize
 		Storage db = Storage.getDatabase();
@@ -102,7 +102,7 @@ public class Common {
 			}
 			
 			// message
-			Message msg = conv.getFirstMessage();
+			MessageData msg = conv.getFirstMessageData();
 			long msgPrevious = 0L;
 			while (msg != null) {
 				if (visitedEntries[(int) msg.getEntryIndex()])
@@ -120,7 +120,7 @@ public class Common {
 					corruptedPointers = true;
 				
 				// message parts
-				MessagePart part = msg.getFirstMessagePart();
+				MessageDataPart part = msg.getFirstMessageDataPart();
 				long partPrevious = 0L;
 				while (part != null) {
 					if (visitedEntries[(int) part.getEntryIndex()])
@@ -136,12 +136,12 @@ public class Common {
 						corruptedPointers = true;
 
 					partPrevious = part.getEntryIndex();
-					part = part.getNextMessagePart();
+					part = part.getNextMessageDataPart();
 				}
 				
 				// next
 				msgPrevious = msg.getEntryIndex();
-				msg = msg.getNextMessage();
+				msg = msg.getNextMessageData();
 			}
 
 			// next

@@ -2,6 +2,7 @@ package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -69,7 +70,7 @@ public class Empty_Test extends TestCase {
 		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 		
 		// check the indices
-		assertEquals(Storage.getInt(dataPlain, Storage.CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD - 4), indexNext);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD - 4), indexNext);
 	}
 
 	public void testParseData() throws StorageFileException, IOException {
@@ -80,7 +81,7 @@ public class Empty_Test extends TestCase {
 		
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
-		System.arraycopy(Storage.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
+		System.arraycopy(LowLevel.getBytes(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it and insert it in the file
 		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
