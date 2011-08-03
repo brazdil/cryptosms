@@ -7,19 +7,37 @@ import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 public class Message {
-    protected MessageData	mStorage;
+	public static final int LENGTH_MESSAGE = 140;
+
+	public static class MessageException extends Exception {
+		private static final long serialVersionUID = 4922446456153260918L;
+		
+		public MessageException() {
+			super();
+		}
+
+		public MessageException(String message) {
+			super(message);
+		}
+	}
+	
+	protected MessageData	mStorage;
     
     public Message(MessageData storage) {
 		mStorage = storage;
 	}
+    
+    public MessageData getStorage() {
+    	return mStorage;
+    }
 	
-    protected byte[] getData() throws StorageFileException, IOException {
+    public byte[] getStoredData() throws StorageFileException, IOException {
     	int index = 0, length = 0;
     	byte[] temp;
     	ArrayList<byte[]> data = new ArrayList<byte[]>();
     	
     	try {
-			while ((temp = mStorage.getAssignedData(index++)) != null) {
+			while ((temp = mStorage.getPartData(index++)) != null) {
 				length += temp.length;
 				data.add(temp);
 			}

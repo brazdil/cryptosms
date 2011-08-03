@@ -7,7 +7,7 @@ import uk.ac.cam.db538.securesms.Compression;
 
 public class CompressedText {
 	public enum TextCharset {
-		ASCII7,
+		ASCII,
 		UNICODE
 	}
 	
@@ -21,9 +21,10 @@ public class CompressedText {
 	
 	public static CompressedText createFromString(String text) {
 		CompressedText msg = new CompressedText();
+		msg.mString = text;
 		
 		if (Charset.isConvertableToAscii(text)) {
-			msg.mCharset = TextCharset.ASCII7;
+			msg.mCharset = TextCharset.ASCII;
 			
 			byte[] dataCompressed = Compression.compressZ(Charset.toAscii8(text)); 
 
@@ -60,7 +61,7 @@ public class CompressedText {
 		
 		if (msg.mCompression)
 			data = Compression.decompressZ(data);
-		if (msg.mCharset == TextCharset.ASCII7)
+		if (msg.mCharset == TextCharset.ASCII)
 			msg.mString = Charset.fromAscii8(data);
 		else
 			msg.mString = Charset.fromUnicode(data);
@@ -78,5 +79,25 @@ public class CompressedText {
 	
 	public String getMessage() {
 		return mString;
+	}
+	
+	public boolean isCompressed() {
+		return mCompression;
+	}
+	
+	public TextCharset getCharset() {
+		return mCharset;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		try {
+			CompressedText another = (CompressedText) o;
+			return (this.mCharset == another.mCharset && 
+					this.mCompression == another.mCompression &&
+					this.mString.compareTo(another.mString) == 0);
+		} catch (Exception e) {
+			return false;
+		}
 	}
 }

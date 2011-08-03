@@ -8,6 +8,7 @@ import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.data.LowLevel;
+import uk.ac.cam.db538.securesms.data.Message;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -22,7 +23,7 @@ public class MessageData {
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_TIMESTAMP = 29;
 	private static final int LENGTH_MESSAGEBODYLEN = 2;
-	private static final int LENGTH_MESSAGEBODY = 140;
+	private static final int LENGTH_MESSAGEBODY = Message.LENGTH_MESSAGE;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_TIMESTAMP = OFFSET_FLAGS + LENGTH_FLAGS;
@@ -493,14 +494,14 @@ public class MessageData {
 	/**
 	 * Returns the data assigned to message part at given index
 	 */
-	public byte[] getAssignedData(int index) throws StorageFileException, IOException {
-		return getAssignedData(index, true);
+	public byte[] getPartData(int index) throws StorageFileException, IOException {
+		return getPartData(index, true);
 	}
 	
 	/**
 	 * Returns the data assigned to message part at given index
 	 */
-	public byte[] getAssignedData(int index, boolean lockAllow) throws StorageFileException, IOException {
+	public byte[] getPartData(int index, boolean lockAllow) throws StorageFileException, IOException {
 		Storage db = Storage.getDatabase();
 		
 		db.lockFile(lockAllow);
@@ -648,8 +649,8 @@ public class MessageData {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public void setAssignedData(int index, byte[] data) throws IOException, StorageFileException {
-		setAssignedData(index, data, true);
+	public void setPartData(int index, byte[] data) throws IOException, StorageFileException {
+		setPartData(index, data, true);
 	}
 
 	/**
@@ -659,7 +660,7 @@ public class MessageData {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public void setAssignedData(int index, byte[] data, boolean lockAllow) throws IOException, StorageFileException {
+	public void setPartData(int index, byte[] data, boolean lockAllow) throws IOException, StorageFileException {
 		Storage db = Storage.getDatabase();
 		
 		// if it's too long, just cut it

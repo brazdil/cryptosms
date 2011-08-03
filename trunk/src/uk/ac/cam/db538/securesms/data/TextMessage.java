@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.zip.DataFormatException;
 
 import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
+import uk.ac.cam.db538.securesms.data.Message.MessageException;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 public class TextMessage extends Message {
-	private static final int LENGTH_FIRST_MESSAGE = 140;
 	private static final int LENGTH_FIRST_HEADER = 1;
 	private static final int LENGTH_FIRST_ID = 1;
 	private static final int LENGTH_FIRST_DATALENGTH = 2;
@@ -23,35 +23,74 @@ public class TextMessage extends Message {
 	private static final int OFFSET_FIRST_MAC = OFFSET_FIRST_IV + LENGTH_FIRST_IV;
 	private static final int OFFSET_FIRST_MESSAGEBODY = OFFSET_FIRST_MAC + LENGTH_FIRST_MAC;
 	
-	private static final int LENGTH_FIRST_MESSAGEBODY = LENGTH_FIRST_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
+	private static final int LENGTH_FIRST_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
 	
-	private MessageData	mStorage;
-		
+	private static final int LENGTH_NEXT_HEADER = 1;
+	private static final int LENGTH_NEXT_ID = 1;
+	private static final int LENGTH_NEXT_INDEX = 1;
+	
+	private static final int OFFSET_NEXT_HEADER = 0;
+	private static final int OFFSET_NEXT_ID = OFFSET_NEXT_HEADER + LENGTH_NEXT_HEADER;
+	private static final int OFFSET_NEXT_INDEX = OFFSET_NEXT_ID + LENGTH_NEXT_ID;
+	private static final int OFFSET_NEXT_MESSAGEBODY = OFFSET_NEXT_INDEX + LENGTH_NEXT_INDEX;
+	
+	private static final int LENGTH_NEXT_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_NEXT_MESSAGEBODY;
+
 	public TextMessage(MessageData storage) {
 		super(storage);
 	}
 	
 	public CompressedText getText() throws StorageFileException, IOException, DataFormatException {
 		return CompressedText.decode(
-			getData(),
-			mStorage.getAscii() ? TextCharset.ASCII7 : TextCharset.UNICODE,
+			getStoredData(),
+			mStorage.getAscii() ? TextCharset.ASCII : TextCharset.UNICODE,
 			mStorage.getCompressed()
 		);
 	}
 	
-	public void setText(CompressedText text) {
+	public void setText(CompressedText text) throws IOException, StorageFileException, MessageException {
 		byte[] data = text.getData();
 
-		int pos = 0;
+		// initialise
+		int pos = 0, index = 0, len;
 		int remains = data.length;
-		
-		int lenFirst = Math.min(remains, LENGTH_FIRST_MESSAGEBODY);
-		byte[] dataFirst = LowLevel.cutData(data, pos, lenFirst);
-		
-		//ArrayList<MessageDataPart> parts = new ArrayList<MessageDataPart>();
-		
+		mStorage.setAscii(text.getCharset() == TextCharset.ASCII);
+		mStorage.setCompressed(text.isCompressed());
+		mStorage.setNumberOfParts(this.computeNumberOfMessageParts(text));
+		// save
+		while (remains > 0) {
+			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_MESSAGEBODY : LENGTH_NEXT_MESSAGEBODY);
+			mStorage.setPartData(index++, LowLevel.cutData(data, pos, len));
+			pos += len;
+			remains -= len;
+		}
+		mStorage.saveToFile();
 	}
 	
+	/**
+	 * Returns the number of messages necessary to send the assigned message
+	 * @return
+	 * @throws DataFormatException 
+	 * @throws IOException 
+	 * @throws StorageFileException 
+	 * @throws MessageException 
+	 */
+	public int computeNumberOfMessageParts() throws StorageFileException, IOException, DataFormatException, MessageException {
+		return computeNumberOfMessageParts(getText());
+	}
+	
+	private int computeNumberOfMessageParts(CompressedText text) throws MessageException {
+		int count = 1; 
+		int remains = text.getData().length - LENGTH_FIRST_MESSAGEBODY;
+		while (remains > 0) {
+			count++;
+			remains -= LENGTH_NEXT_MESSAGEBODY;
+		}
+		if (count > 255)
+			throw new MessageException("Message too long!");
+		return count;
+	}
+
 	public MessageData getStorage() {
 		return mStorage;
 	}
