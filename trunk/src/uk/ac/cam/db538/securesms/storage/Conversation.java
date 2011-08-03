@@ -9,6 +9,7 @@ import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
@@ -159,10 +160,10 @@ public class Conversation implements Comparable<Conversation> {
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
 			
 			setPhoneNumber(Charset.fromAscii8(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
-			setIndexSessionKeys(Storage.getUnsignedInt(dataPlain, OFFSET_KEYSINDEX));
-			setIndexMessages(Storage.getUnsignedInt(dataPlain, OFFSET_MSGSINDEX));
-			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexSessionKeys(LowLevel.getUnsignedInt(dataPlain, OFFSET_KEYSINDEX));
+			setIndexMessages(LowLevel.getUnsignedInt(dataPlain, OFFSET_MSGSINDEX));
+			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -213,10 +214,10 @@ public class Conversation implements Comparable<Conversation> {
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		convBuffer.put(Storage.getBytes(this.mIndexSessionKeys)); 
-		convBuffer.put(Storage.getBytes(this.mIndexMessages)); 
-		convBuffer.put(Storage.getBytes(this.mIndexPrev));
-		convBuffer.put(Storage.getBytes(this.mIndexNext));
+		convBuffer.put(LowLevel.getBytes(this.mIndexSessionKeys)); 
+		convBuffer.put(LowLevel.getBytes(this.mIndexMessages)); 
+		convBuffer.put(LowLevel.getBytes(this.mIndexPrev));
+		convBuffer.put(LowLevel.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(this.mEntryIndex, dataEncrypted, lock);

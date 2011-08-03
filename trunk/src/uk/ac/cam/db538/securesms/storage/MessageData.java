@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -171,12 +172,12 @@ public class MessageData {
 			setCompressed(compressed);
 			setAscii(ascii);
 			setTimeStamp(timeStamp);
-			int messageBodyLength = Math.min(LENGTH_MESSAGEBODY, Storage.getShort(dataPlain, OFFSET_MESSAGEBODYLEN));
-			setMessageBody(Storage.cutData(dataPlain, OFFSET_MESSAGEBODY, messageBodyLength));
-			setIndexParent(Storage.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexMessageParts(Storage.getUnsignedInt(dataPlain, OFFSET_MSGSINDEX));
-			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
+			int messageBodyLength = Math.min(LENGTH_MESSAGEBODY, LowLevel.getShort(dataPlain, OFFSET_MESSAGEBODYLEN));
+			setMessageBody(LowLevel.cutData(dataPlain, OFFSET_MESSAGEBODY, messageBodyLength));
+			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexMessageParts(LowLevel.getUnsignedInt(dataPlain, OFFSET_MSGSINDEX));
+			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -244,17 +245,17 @@ public class MessageData {
 		msgBuffer.put(Charset.toAscii8(this.mTimeStamp.format3339(false), LENGTH_TIMESTAMP));
 
 		// message body
-		msgBuffer.put(Storage.getBytes((short) this.mMessageBody.length));
-		msgBuffer.put(Storage.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(LowLevel.getBytes((short) this.mMessageBody.length));
+		msgBuffer.put(LowLevel.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		msgBuffer.put(Storage.getBytes(this.mIndexParent)); 
-		msgBuffer.put(Storage.getBytes(this.mIndexMessageParts)); 
-		msgBuffer.put(Storage.getBytes(this.mIndexPrev));
-		msgBuffer.put(Storage.getBytes(this.mIndexNext));
+		msgBuffer.put(LowLevel.getBytes(this.mIndexParent)); 
+		msgBuffer.put(LowLevel.getBytes(this.mIndexMessageParts)); 
+		msgBuffer.put(LowLevel.getBytes(this.mIndexPrev));
+		msgBuffer.put(LowLevel.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -263,7 +264,7 @@ class Empty {
 		if (readFromFile) {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -297,7 +298,7 @@ class Empty {
 	public void saveToFile(boolean lockAllow) throws StorageFileException, IOException {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		entryBuffer.put(Encryption.generateRandomData(OFFSET_NEXTINDEX));
-		entryBuffer.put(Storage.getBytes(this.mIndexNext));
+		entryBuffer.put(LowLevel.getBytes(this.mIndexNext));
 		byte[] dataEncrypted = Encryption.encryptSymmetric(entryBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lockAllow);
 	}

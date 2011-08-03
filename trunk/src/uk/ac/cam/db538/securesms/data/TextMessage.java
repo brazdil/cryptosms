@@ -11,20 +11,20 @@ import uk.ac.cam.db538.securesms.storage.StorageFileException;
 public class TextMessage implements Message {
 	// RENAME!!!
 	private static final int LENGTH_FIRST_MESSAGE = 140;
-	private static final int LENGTH_HEADER = 1;
-	private static final int LENGTH_ID = 1;
-	private static final int LENGTH_DATALENGTH = 2;
-	private static final int LENGTH_IV = Encryption.KEY_LENGTH;
-	private static final int LENGTH_MAC = Encryption.KEY_LENGTH;
+	private static final int LENGTH_FIRST_HEADER = 1;
+	private static final int LENGTH_FIRST_ID = 1;
+	private static final int LENGTH_FIRST_DATALENGTH = 2;
+	private static final int LENGTH_FIRST_IV = Encryption.KEY_LENGTH;
+	private static final int LENGTH_FIRST_MAC = Encryption.KEY_LENGTH;
 	
-	private static final int OFFSET_HEADER = 0;
-	private static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
-	private static final int OFFSET_DATALENGTH = OFFSET_ID + LENGTH_ID;
-	private static final int OFFSET_IV = OFFSET_DATALENGTH + LENGTH_DATALENGTH;
-	private static final int OFFSET_MAC = OFFSET_IV + LENGTH_IV;
-	private static final int OFFSET_MESSAGEBODY = OFFSET_MAC + LENGTH_MAC;
+	private static final int OFFSET_FIRST_HEADER = 0;
+	private static final int OFFSET_FIRST_ID = OFFSET_FIRST_HEADER + LENGTH_FIRST_HEADER;
+	private static final int OFFSET_FIRST_DATALENGTH = OFFSET_FIRST_ID + LENGTH_FIRST_ID;
+	private static final int OFFSET_FIRST_IV = OFFSET_FIRST_DATALENGTH + LENGTH_FIRST_DATALENGTH;
+	private static final int OFFSET_FIRST_MAC = OFFSET_FIRST_IV + LENGTH_FIRST_IV;
+	private static final int OFFSET_FIRST_MESSAGEBODY = OFFSET_FIRST_MAC + LENGTH_FIRST_MAC;
 	
-	private static final int LENGTH_MESSAGEBODY = LENGTH_FIRST_MESSAGE - OFFSET_MESSAGEBODY;
+	private static final int LENGTH_FIRST_MESSAGEBODY = LENGTH_FIRST_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
 	
 	private MessageData	mStorage;
 		
@@ -41,10 +41,16 @@ public class TextMessage implements Message {
 	}
 	
 	public void setText(CompressedText text) {
-		int remains = text.getLength();
+		byte[] data = text.getData();
+
+		int pos = 0;
+		int remains = data.length;
 		
-		//int lenFirst = Math.min(remains, )
-		//byte[] dataFirst = new b		
+		int lenFirst = Math.min(remains, LENGTH_FIRST_MESSAGEBODY);
+		byte[] dataFirst = LowLevel.cutData(data, pos, lenFirst);
+		
+		//ArrayList<MessageDataPart> parts = new ArrayList<MessageDataPart>();
+		
 	}
 	
 	public MessageData getStorage() {

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -135,11 +135,11 @@ class MessageDataPart {
 			boolean deliveredPart = ((flags & (1 << 7)) == 0) ? false : true;
 			
 			setDeliveredPart(deliveredPart);
-			int messageBodyLength = Math.min(LENGTH_MESSAGEBODY, Storage.getShort(dataPlain, OFFSET_MESSAGEBODYLEN));
-			setMessageBody(Storage.cutData(dataPlain, OFFSET_MESSAGEBODY, messageBodyLength));
-			setIndexParent(Storage.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
+			int messageBodyLength = Math.min(LENGTH_MESSAGEBODY, LowLevel.getShort(dataPlain, OFFSET_MESSAGEBODYLEN));
+			setMessageBody(LowLevel.cutData(dataPlain, OFFSET_MESSAGEBODY, messageBodyLength));
+			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -184,16 +184,16 @@ class MessageDataPart {
 		msgBuffer.put(flags);
 		
 		// message body
-		msgBuffer.put(Storage.getBytes((short) this.mMessageBody.length));
-		msgBuffer.put(Storage.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
+		msgBuffer.put(LowLevel.getBytes((short) this.mMessageBody.length));
+		msgBuffer.put(LowLevel.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
 		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		msgBuffer.put(Storage.getBytes(this.mIndexParent));
-		msgBuffer.put(Storage.getBytes(this.mIndexPrev));
-		msgBuffer.put(Storage.getBytes(this.mIndexNext));
+		msgBuffer.put(LowLevel.getBytes(this.mIndexParent));
+		msgBuffer.put(LowLevel.getBytes(this.mIndexPrev));
+		msgBuffer.put(LowLevel.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);

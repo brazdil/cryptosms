@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import android.telephony.PhoneNumberUtils;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -209,9 +210,9 @@ public class SessionKeys {
 			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
-			setIndexParent(Storage.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
-			setIndexPrev(Storage.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
-			setIndexNext(Storage.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
+			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
+			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
+			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {
 			// default values
@@ -277,9 +278,9 @@ public class SessionKeys {
 		keysBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		keysBuffer.put(Storage.getBytes(this.mIndexParent));
-		keysBuffer.put(Storage.getBytes(this.mIndexPrev));
-		keysBuffer.put(Storage.getBytes(this.mIndexNext));
+		keysBuffer.put(LowLevel.getBytes(this.mIndexParent));
+		keysBuffer.put(LowLevel.getBytes(this.mIndexPrev));
+		keysBuffer.put(LowLevel.getBytes(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(keysBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);

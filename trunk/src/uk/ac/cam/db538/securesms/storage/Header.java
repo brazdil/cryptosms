@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
@@ -127,8 +128,8 @@ public class Header {
 			
 			// set fields
 			setVersion(version);
-			setIndexEmpty(Storage.getUnsignedInt(dataPlain, OFFSET_FREEINDEX));
-			setIndexConversations(Storage.getUnsignedInt(dataPlain, OFFSET_CONVINDEX));
+			setIndexEmpty(LowLevel.getUnsignedInt(dataPlain, OFFSET_FREEINDEX));
+			setIndexConversations(LowLevel.getUnsignedInt(dataPlain, OFFSET_CONVINDEX));
 		}
 		else {
 			// default values			
@@ -158,8 +159,8 @@ public class Header {
 	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
-		headerBuffer.put(Storage.getBytes(this.getIndexEmpty())); 
-		headerBuffer.put(Storage.getBytes(this.getIndexConversations()));
+		headerBuffer.put(LowLevel.getBytes(this.getIndexEmpty())); 
+		headerBuffer.put(LowLevel.getBytes(this.getIndexConversations()));
 		
 		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(Storage.CHUNK_SIZE);
 		headerBufferEncrypted.put((byte) 0x53); // S
