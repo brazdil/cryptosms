@@ -23,7 +23,7 @@ public class TextMessage extends Message {
 	private static final int OFFSET_FIRST_MAC = OFFSET_FIRST_IV + LENGTH_FIRST_IV;
 	private static final int OFFSET_FIRST_MESSAGEBODY = OFFSET_FIRST_MAC + LENGTH_FIRST_MAC;
 	
-	private static final int LENGTH_FIRST_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
+	public static final int LENGTH_FIRST_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
 	
 	private static final int LENGTH_NEXT_HEADER = 1;
 	private static final int LENGTH_NEXT_ID = 1;
@@ -34,7 +34,7 @@ public class TextMessage extends Message {
 	private static final int OFFSET_NEXT_INDEX = OFFSET_NEXT_ID + LENGTH_NEXT_ID;
 	private static final int OFFSET_NEXT_MESSAGEBODY = OFFSET_NEXT_INDEX + LENGTH_NEXT_INDEX;
 	
-	private static final int LENGTH_NEXT_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_NEXT_MESSAGEBODY;
+	public static final int LENGTH_NEXT_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_NEXT_MESSAGEBODY;
 
 	public TextMessage(MessageData storage) {
 		super(storage);
@@ -79,7 +79,15 @@ public class TextMessage extends Message {
 		return computeNumberOfMessageParts(getText());
 	}
 	
-	private int computeNumberOfMessageParts(CompressedText text) throws MessageException {
+	/**
+	 * Returns the number of messages necessary to send the given text
+	 * @return
+	 * @throws DataFormatException 
+	 * @throws IOException 
+	 * @throws StorageFileException 
+	 * @throws MessageException 
+	 */
+	public static int computeNumberOfMessageParts(CompressedText text) throws MessageException {
 		int count = 1; 
 		int remains = text.getData().length - LENGTH_FIRST_MESSAGEBODY;
 		while (remains > 0) {
@@ -90,8 +98,16 @@ public class TextMessage extends Message {
 			throw new MessageException("Message too long!");
 		return count;
 	}
-
-	public MessageData getStorage() {
-		return mStorage;
+	
+	/**
+	 * Returns how many bytes are left till another message part will be necessary
+	 * @param text
+	 * @return
+	 */
+	public static int remainingBytesInLastMessagePart(CompressedText text) {
+		int len = text.getLength() - LENGTH_FIRST_MESSAGEBODY;
+		while (len > 0)
+			len -= LENGTH_NEXT_MESSAGEBODY;
+		return -len;
 	}
 }

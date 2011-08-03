@@ -6,6 +6,8 @@ import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.data.Contact;
 import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
 import uk.ac.cam.db538.securesms.data.SimCard;
+import uk.ac.cam.db538.securesms.data.TextMessage;
+import uk.ac.cam.db538.securesms.data.Message.MessageException;
 import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
@@ -104,7 +106,12 @@ public class ConversationActivity extends Activity {
 			public void afterTextChanged(Editable s) {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
-				mRemainsView.setText(new Integer(msg.getLength()).toString() + " x " + text.length());
+				try {
+					mRemainsView.setText(TextMessage.remainingBytesInLastMessagePart(msg) + " (" + TextMessage.computeNumberOfMessageParts(msg) + ")");
+					mSendButton.setEnabled(true);
+				} catch (MessageException e) {
+					mSendButton.setEnabled(false);
+				}
 				mRemainsView.setVisibility(View.VISIBLE);
 			}
 		});
