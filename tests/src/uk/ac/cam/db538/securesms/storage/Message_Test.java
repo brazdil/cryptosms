@@ -147,7 +147,11 @@ public class Message_Test extends TestCase {
 		msg.setNumberOfParts(5);
 		assertTrue(Common.checkStructure());
 		assertNotNull(msg.getAssignedData(4));
-		assertNull(msg.getAssignedData(5));
+		try {
+			msg.getAssignedData(5);
+			fail("Should not reach here!");
+		} catch (IndexOutOfBoundsException e) {
+		}
 		
 		msg = MessageData.getMessageData(index);
 		msg.setNumberOfParts(7);
@@ -156,7 +160,11 @@ public class Message_Test extends TestCase {
 		assertNotNull(msg.getAssignedData(3));
 		assertNotNull(msg.getAssignedData(4));
 		assertNotNull(msg.getAssignedData(6));
-		assertNull(msg.getAssignedData(7));
+		try {
+			msg.getAssignedData(7);
+			fail("Should not reach here!");
+		} catch (IndexOutOfBoundsException e) {
+		}
 
 		msg = MessageData.getMessageData(index);
 		msg.setNumberOfParts(4);
@@ -165,12 +173,105 @@ public class Message_Test extends TestCase {
 		assertNotNull(msg.getAssignedData(1));
 		assertNotNull(msg.getAssignedData(2));
 		assertNotNull(msg.getAssignedData(3));
-		assertNull(msg.getAssignedData(4));
+		try {
+			msg.getAssignedData(4);
+			fail("Should not reach here!");
+		} catch (IndexOutOfBoundsException e) {
+		}
 
 		msg = MessageData.getMessageData(index);
 		msg.setNumberOfParts(1);
 		assertTrue(Common.checkStructure());
-		assertNull(msg.getAssignedData(1));
+		try {
+			msg.getAssignedData(1);
+			fail("Should not reach here!");
+		} catch (IndexOutOfBoundsException e) {
+		}
+	}
+	
+	public void testSettingGettingPartData() throws StorageFileException, IOException {
+		Conversation conv = Conversation.createConversation();
+		MessageData msg = MessageData.createMessageData(conv);
+		msg.setNumberOfParts(3);
+		
+		// indices out of bounds
+		try {
+			msg.getAssignedData(-1);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.getAssignedData(3);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.setAssignedData(-1, new byte[4]);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.setAssignedData(3, new byte[4]);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.getPartDelivered(-1);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.getPartDelivered(3);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.setPartDelivered(-1, false);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+
+		try {
+			msg.setPartDelivered(3, false);
+			fail("Should not reach here");
+		} catch (IndexOutOfBoundsException e) {
+		}
+		
+		// setting/getting
+		
+		byte[] data = Encryption.generateRandomData(280);
+		byte[] dataCut = LowLevel.cutData(data, 0, 140);
+		
+		msg.setAssignedData(2, data);
+		assertEquals(0, msg.getAssignedData(0).length);
+		assertEquals(0, msg.getAssignedData(1).length);
+		CustomAsserts.assertArrayEquals(msg.getAssignedData(2), dataCut);
+		
+		msg.setAssignedData(0, data);
+		CustomAsserts.assertArrayEquals(msg.getAssignedData(0), dataCut);
+		assertEquals(0, msg.getAssignedData(1).length);
+		CustomAsserts.assertArrayEquals(msg.getAssignedData(2), dataCut);
+
+		msg.setPartDelivered(1, true);
+		assertEquals(false, msg.getPartDelivered(0));
+		assertEquals(true, msg.getPartDelivered(1));
+		assertEquals(false, msg.getPartDelivered(2));
+
+		msg.setPartDelivered(0, true);
+		assertEquals(true, msg.getPartDelivered(0));
+		assertEquals(true, msg.getPartDelivered(1));
+		assertEquals(false, msg.getPartDelivered(2));
+
+		msg.setPartDelivered(1, false);
+		assertEquals(true, msg.getPartDelivered(0));
+		assertEquals(false, msg.getPartDelivered(1));
+		assertEquals(false, msg.getPartDelivered(2));
 	}
 	
 	public void testCreateData() throws StorageFileException, IOException {
