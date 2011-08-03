@@ -219,6 +219,12 @@ public final class Storage {
 
 	// FOR TESTING ONLY
 	static void freeSingleton() {
+		if (mSingleton != null)
+			try {
+				mSingleton.smsFile.mLock.release();
+				mSingleton.smsFile.mFile.close();
+			} catch (Exception e) {
+			}
 		mSingleton = null;
 	}
 }
