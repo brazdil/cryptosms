@@ -298,7 +298,7 @@ class Empty {
 	public void saveToFile(boolean lockAllow) throws StorageFileException, IOException {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		entryBuffer.put(Encryption.generateRandomData(OFFSET_NEXTINDEX));
-		entryBuffer.put(LowLevel.getBytes(this.mIndexNext));
+		entryBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
 		byte[] dataEncrypted = Encryption.encryptSymmetric(entryBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lockAllow);
 	}

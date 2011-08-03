@@ -214,10 +214,10 @@ public class Conversation implements Comparable<Conversation> {
 		convBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		convBuffer.put(LowLevel.getBytes(this.mIndexSessionKeys)); 
-		convBuffer.put(LowLevel.getBytes(this.mIndexMessages)); 
-		convBuffer.put(LowLevel.getBytes(this.mIndexPrev));
-		convBuffer.put(LowLevel.getBytes(this.mIndexNext));
+		convBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexSessionKeys)); 
+		convBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexMessages)); 
+		convBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexPrev));
+		convBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(convBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(this.mEntryIndex, dataEncrypted, lock);

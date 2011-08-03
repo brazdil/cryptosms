@@ -27,8 +27,8 @@ public class SessionKeys {
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_SIMNUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
 	private static final int OFFSET_SESSIONKEY_OUTGOING = OFFSET_SIMNUMBER + LENGTH_SIMNUMBER;
-	private static final int OFFSET_LASTID_OUTGOING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
-	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_LASTID_OUTGOING + LENGTH_LASTID;
+	private static final int OFFSET_NEXTID_OUTGOING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
+	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_NEXTID_OUTGOING + LENGTH_LASTID;
 	private static final int OFFSET_LASTID_INCOMING = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
 	
 	private static final int OFFSET_RANDOMDATA = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
@@ -158,7 +158,7 @@ public class SessionKeys {
 	private boolean mKeysConfirmed;
 	private SimNumber mSimNumber;
 	private byte[] mSessionKey_Out;
-	private byte mLastID_Out;
+	private byte mNextID_Out;
 	private byte[] mSessionKey_In;
 	private byte mLastID_In;
 	private long mIndexParent;
@@ -207,7 +207,7 @@ public class SessionKeys {
 			setKeysConfirmed(keysConfirmed);
 			setSimNumber(new SimNumber(Charset.fromAscii8(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
 			setSessionKey_Out(dataSessionKey_Out);
-			setLastID_Out(dataPlain[OFFSET_LASTID_OUTGOING]);
+			setNextID_Out(dataPlain[OFFSET_NEXTID_OUTGOING]);
 			setSessionKey_In(dataSessionKey_In);
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
 			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
@@ -220,7 +220,7 @@ public class SessionKeys {
 			setKeysConfirmed(false);
 			setSimNumber(new SimNumber());
 			setSessionKey_Out(Encryption.generateRandomData(Encryption.KEY_LENGTH));
-			setLastID_Out((byte) 0x00);
+			setNextID_Out((byte) 0x00);
 			setSessionKey_In(Encryption.generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_In((byte) 0x00);
 			setIndexParent(0L);
@@ -270,7 +270,7 @@ public class SessionKeys {
 		
 		// session keys and last IDs
 		keysBuffer.put(this.mSessionKey_Out);
-		keysBuffer.put((byte) this.mLastID_Out);
+		keysBuffer.put((byte) this.mNextID_Out);
 		keysBuffer.put(this.mSessionKey_In);
 		keysBuffer.put((byte) this.mLastID_In);
 		
@@ -278,9 +278,9 @@ public class SessionKeys {
 		keysBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
-		keysBuffer.put(LowLevel.getBytes(this.mIndexParent));
-		keysBuffer.put(LowLevel.getBytes(this.mIndexPrev));
-		keysBuffer.put(LowLevel.getBytes(this.mIndexNext));
+		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexParent));
+		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexPrev));
+		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
 		
 		byte[] dataEncrypted = Encryption.encryptSymmetric(keysBuffer.array(), Encryption.retreiveEncryptionKey());
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
@@ -491,12 +491,12 @@ public class SessionKeys {
 		mSessionKey_In = sessionKeyIn;
 	}
 	
-	public byte getLastID_Out() {
-		return mLastID_Out;
+	public byte getNextID_Out() {
+		return mNextID_Out;
 	}
 	
-	public void setLastID_Out(byte lastID_Out) {
-		mLastID_Out = lastID_Out;
+	public void setNextID_Out(byte nextID_Out) {
+		mNextID_Out = nextID_Out;
 	}
 
 	public byte getLastID_In() {

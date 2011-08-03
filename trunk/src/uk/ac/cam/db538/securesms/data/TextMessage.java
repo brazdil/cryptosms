@@ -1,12 +1,17 @@
 package uk.ac.cam.db538.securesms.data;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.zip.DataFormatException;
+
+import android.content.Context;
 
 import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
 import uk.ac.cam.db538.securesms.data.Message.MessageException;
 import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.MessageData;
+import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 public class TextMessage extends Message {
@@ -56,7 +61,7 @@ public class TextMessage extends Message {
 		int remains = data.length;
 		mStorage.setAscii(text.getCharset() == TextCharset.ASCII);
 		mStorage.setCompressed(text.isCompressed());
-		mStorage.setNumberOfParts(this.computeNumberOfMessageParts(text));
+		mStorage.setNumberOfParts(TextMessage.computeNumberOfMessageParts(text));
 		// save
 		while (remains > 0) {
 			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_MESSAGEBODY : LENGTH_NEXT_MESSAGEBODY);
@@ -65,6 +70,51 @@ public class TextMessage extends Message {
 			remains -= len;
 		}
 		mStorage.saveToFile();
+	}
+	
+	/**
+	 * Returns data ready to be sent via SMS
+	 * @return
+	 * @throws IOException 
+	 * @throws StorageFileException 
+	 * @throws MessageException 
+	 */
+	public ArrayList<byte[]> getSMSData(Context context) throws StorageFileException, IOException, MessageException {
+		ArrayList<byte[]> list = new ArrayList<byte[]>();
+		ByteBuffer buf = ByteBuffer.allocate(LENGTH_MESSAGE);
+		int index = 0;
+		
+		SessionKeys keys =  mStorage.getParent().getSessionKeysForSIM(context);
+		if (keys == null)
+			throw new MessageException("No keys found");
+
+		// first message (always)
+		byte header = MESSAGE_FIRST;
+		if (mStorage.getAscii())
+			header |= (byte) 0x20;
+		if (mStorage.getCompressed())
+			header |= (byte) 0x10;
+		buf.put(header);
+		buf.put((byte)(keys.getNextID_Out()));
+		buf.put(LowLevel.getBytesUnsignedShort(getStoredDataLength()));
+		buf.put(Encryption.encryptSymmetric(mStorage.getPartData(index), keys.getSessionKey_Out()));
+		list.add(buf.array());
+		
+		header = MESSAGE_NEXT;
+		try {
+			while (true) {
+				buf.clear();
+				++index;
+				buf.put(header);
+				buf.put((byte)index);
+				buf.put(Encryption.encryptSymmetric(mStorage.getPartData(index), keys.getSessionKey_Out()));
+				list.add(buf.array());
+			}
+		} catch (IndexOutOfBoundsException e) {
+			// end
+		}
+		
+		return list;
 	}
 	
 	/**

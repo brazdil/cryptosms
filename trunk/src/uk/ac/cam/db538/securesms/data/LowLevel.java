@@ -32,27 +32,27 @@ public class LowLevel {
 	/**
 	 * Expects two bytes and returns a short
 	 */
-	public static short getShort(byte[] data) {
-		return getShort(data, 0);
+	public static int getUnsignedShort(byte[] data) {
+		return getUnsignedShort(data, 0);
 	}
 
 	/**
 	 * Expects two bytes and returns a short
 	 */
-	public static short getShort(byte[] data, int offset) {
+	public static int getUnsignedShort(byte[] data, int offset) {
 		if (offset > data.length - 2)
 			throw new IndexOutOfBoundsException();
 
 		int result = data[offset] & 0xFF;
 		result <<= 8;
 		result |= (data[offset + 1] & 0xFF);
-		return (short) result;
+		return result;
 	}
 
 	/**
 	 * Expects an unsigned integer stored in the 4 low bytes of a long and returns an array of 4 bytes that represent them.
 	 */
-	public static byte[] getBytes(long integer) {
+	public static byte[] getBytesUnsignedInt(long integer) {
 		byte[] result = new byte[4];
 		result[0] = (byte) ((integer >> 24) & 0xFF);
 		result[1] = (byte) ((integer >> 16) & 0xFF);
@@ -64,7 +64,7 @@ public class LowLevel {
 	/**
 	 * Expects a short and returns an array of 2 bytes that represents it.
 	 */
-	public static byte[] getBytes(short integer) {
+	public static byte[] getBytesUnsignedShort(int integer) {
 		byte[] result = new byte[2];
 		result[0] = (byte) ((integer >> 8) & 0xFF);
 		result[1] = (byte) (integer & 0xFF);

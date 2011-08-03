@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract.Data;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +34,6 @@ import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
 
 public class TabContacts extends ListActivity {
-	private static final String KEY_MIME = "vnd.android.cursor.item/PKI_KEY";
 	private static final int NEW_CONTACT = 1;
 	
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();;

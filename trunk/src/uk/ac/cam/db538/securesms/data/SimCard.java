@@ -29,11 +29,13 @@ public class SimCard {
 	 * @param context
 	 * @return
 	 */
-	public boolean getAirplaneMode(Context context) {
+	public boolean getAirplaneMode(Context context) throws UnsupportedOperationException {
 		try {
 			return (Settings.System.getInt(
 					context.getContentResolver(), 
 					Settings.System.AIRPLANE_MODE_ON, 0) == 1);
+		} catch (UnsupportedOperationException ex) {
+			throw ex;
 		} catch (Exception ex) {
 			return true;
 		}
@@ -45,11 +47,16 @@ public class SimCard {
 	 * @return
 	 */
 	public String getSimPhoneNumber(Context context) {
-		if (getAirplaneMode(context))
-			return null;
-		
-		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		return tMgr.getLine1Number(); //"+447879116797"
+		try {
+			if (getAirplaneMode(context))
+				return null;
+			
+			TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			return tMgr.getLine1Number(); //"+447879116797"
+		} catch (UnsupportedOperationException ex) {
+			// TESTING MODE
+			return "+441234567890";
+		}
 	}
 	
 	/**
@@ -59,11 +66,11 @@ public class SimCard {
 	 * @return
 	 */
 	public SimNumber getSimPhoneNumberWrapped(Context context) {
-		String phoneNumber = getSimPhoneNumber(context);
-		if (phoneNumber == null)
-			return null;
-		else
-			return new SimNumber(phoneNumber, false);
+			String phoneNumber = getSimPhoneNumber(context);
+			if (phoneNumber == null)
+				return null;
+			else
+				return new SimNumber(phoneNumber, false);
 	}
 
 	/**
@@ -72,11 +79,16 @@ public class SimCard {
 	 * @return
 	 */
 	public String getSimSerialNumber(Context context) {
-		if (getAirplaneMode(context))
-			return null;
-		
-		TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		return tMgr.getSimSerialNumber();
+		try {
+			if (getAirplaneMode(context))
+				return null;
+			
+			TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			return tMgr.getSimSerialNumber();
+		} catch (UnsupportedOperationException ex) {
+			// TESTING MODE
+			return "12345678901234567890";
+		}
 	}
 
 	/**

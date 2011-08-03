@@ -3,10 +3,12 @@ package uk.ac.cam.db538.securesms.data;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import android.content.Context;
+
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
-public class Message {
+public abstract class Message {
 	public static final int LENGTH_MESSAGE = 140;
 
 	public static class MessageException extends Exception {
@@ -21,6 +23,11 @@ public class Message {
 		}
 	}
 	
+	protected static final byte KEY_EXCHANGE_FIRST = (byte) 0x00;
+	protected static final byte KEY_EXCHANGE_NEXT = (byte) 0x40;
+	protected static final byte MESSAGE_FIRST = (byte) 0x80;
+	protected static final byte MESSAGE_NEXT = (byte) 0xC0;
+	
 	protected MessageData	mStorage;
     
     public Message(MessageData storage) {
@@ -29,6 +36,18 @@ public class Message {
     
     public MessageData getStorage() {
     	return mStorage;
+    }
+    
+    public int getStoredDataLength() throws StorageFileException, IOException {
+    	int index = 0, length = 0;
+    	byte[] temp;
+    	try {
+			while ((temp = mStorage.getPartData(index++)) != null)
+				length += temp.length;
+    	} catch (IndexOutOfBoundsException e) {
+    		// ends this way
+    	}
+    	return length;
     }
 	
     public byte[] getStoredData() throws StorageFileException, IOException {
@@ -54,5 +73,6 @@ public class Message {
 		
 		return temp;
     }
-                   
+          
+    public abstract ArrayList<byte[]> getSMSData(Context context) throws StorageFileException, IOException, MessageException;
 }

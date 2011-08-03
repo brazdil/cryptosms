@@ -159,8 +159,8 @@ public class Header {
 	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
-		headerBuffer.put(LowLevel.getBytes(this.getIndexEmpty())); 
-		headerBuffer.put(LowLevel.getBytes(this.getIndexConversations()));
+		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexEmpty())); 
+		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexConversations()));
 		
 		ByteBuffer headerBufferEncrypted = ByteBuffer.allocate(Storage.CHUNK_SIZE);
 		headerBufferEncrypted.put((byte) 0x53); // S
