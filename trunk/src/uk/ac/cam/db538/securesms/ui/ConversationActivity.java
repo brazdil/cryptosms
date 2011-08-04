@@ -8,6 +8,7 @@ import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
 import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.data.TextMessage;
 import uk.ac.cam.db538.securesms.data.Message.MessageException;
+import uk.ac.cam.db538.securesms.data.Message.MessageSentListener;
 import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
@@ -16,6 +17,7 @@ import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.data.CompressedText;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -86,7 +88,10 @@ public class ConversationActivity extends Activity {
 	    mTextEditor = (EditText) findViewById(R.id.conversation_embedded_text_editor);
 	    mRemainsView = (TextView) findViewById(R.id.conversation_text_counter);
 	    
-	    mNameView.setText(mContact.getName());
+	    if (mContact.getName().length() > 0)
+	    	mNameView.setText(mContact.getName());
+	    else
+	    	mNameView.setText(mContact.getPhoneNumber());
 	    mPhoneNumberView.setText(mContact.getPhoneNumber());
 	    Drawable avatarDrawable = mContact.getAvatar(context, sDefaultContactImage);
         if (mContact.existsInDatabase()) {
@@ -132,9 +137,32 @@ public class ConversationActivity extends Activity {
 			public void onClick(View v) {
 				if (mConversation != null) {
 					try {
+						// start the progress bar
+						final ProgressDialog pd = new ProgressDialog(context);
+						pd.setMessage(res.getString(R.string.conversation_sending));
+						pd.show();
+						
+						// create message
 						TextMessage msg = new TextMessage(MessageData.createMessageData(mConversation));
 						msg.setText(CompressedText.createFromString(mTextEditor.getText().toString()));
-						msg.sendSMS(mContact.getPhoneNumber(), context);
+						// send it
+						msg.sendSMS(mContact.getPhoneNumber(), context, new MessageSentListener() {
+							@Override
+							public void onMessageSent() {
+								pd.cancel();
+								mTextEditor.setText("");
+							}
+							
+							@Override
+							public void onError() {
+								pd.cancel();
+								new AlertDialog.Builder(context)
+								.setTitle(res.getString(R.string.error_sms_service))
+								.setMessage(res.getString(R.string.error_sms_service_details))
+								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
+								.show();
+							}
+						});
 					} catch (StorageFileException ex) {
 						Utils.dialogDatabaseError(context, ex);
 					} catch (IOException ex) {

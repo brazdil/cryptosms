@@ -11,8 +11,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.telephony.SmsManager;
 
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.data.Message.MessageSentListener;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -177,10 +178,15 @@ public class TextMessage extends Message {
 	 * them to the given phone number
 	 */
 	@Override
-	public void sendSMS(String phoneNumber, final Context context)
+	public void sendSMS(String phoneNumber, final Context context, final MessageSentListener listener)
 			throws StorageFileException, IOException, MessageException {
 		ArrayList<byte[]> dataSMS = getBytes(context);
+		final boolean[] sent = new boolean[dataSMS.size()];
+		final boolean[] error = new boolean[1];
+		error[0] = false;
+		
 		for (int i = 0; i < dataSMS.size(); ++i) {
+			sent[i] = false;
 			final int index = i;
 			byte[] dataPart = dataSMS.get(i);
 			mStorage.setPartDelivered(i, false);
@@ -191,24 +197,19 @@ public class TextMessage extends Message {
 							// SENT notification
 							switch (getResultCode()) {
 							case Activity.RESULT_OK:
-								
+								sent[index] = true;
+								boolean all = true;
+								for (boolean b : sent)
+									all = all && b;
+								if (all)
+									listener.onMessageSent();
 								break;
 							default: // ERROR
-								
+								if (!error[0]) {
+									error[0] = true;
+									listener.onError();
+								}
 								break;
-							}
-						}
-					}, new BroadcastReceiver() {
-						@Override
-						public void onReceive(Context context, Intent intent) {
-							// DELIVERED notification
-							try {
-								mStorage.setPartDelivered(index, true);
-								mStorage.saveToFile();
-							} catch (Exception e) {
-								// we don't care about the exceptions here...
-								// lets just do our best and if it fails
-								// no one really cares
 							}
 						}
 					});

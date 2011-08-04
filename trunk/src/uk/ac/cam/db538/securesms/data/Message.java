@@ -10,14 +10,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 public abstract class Message {
-	public static final int LENGTH_MESSAGE = 140;
+	public static final int LENGTH_MESSAGE = 133;
 
 	public static class MessageException extends Exception {
 		private static final long serialVersionUID = 4922446456153260918L;
@@ -29,6 +31,11 @@ public abstract class Message {
 		public MessageException(String message) {
 			super(message);
 		}
+	}
+	
+	public static interface MessageSentListener {
+		public void onMessageSent();
+		public void onError();
 	}
 	
 	protected static final byte KEY_EXCHANGE_FIRST = (byte) 0x00;	// no bits set
@@ -95,9 +102,8 @@ public abstract class Message {
     }
     
     private static final String SENT_SMS_ACTION = "SENT_SMS_ACTION"; 
-    private static final String DELIVERED_SMS_ACTION = "DELIVERED_SMS_ACTION";
     
-    protected void internalSmsSend(String phoneNumber, byte[] data, Context context, BroadcastReceiver sentReceiver, BroadcastReceiver deliveredReceiver) {
+    protected void internalSmsSend(String phoneNumber, byte[] data, Context context, BroadcastReceiver sentReceiver) {
     	// prepare the receiver for SENT notification
     	Intent sentIntent = new Intent(SENT_SMS_ACTION);
     	PendingIntent sentPI = PendingIntent.getBroadcast(
@@ -105,17 +111,10 @@ public abstract class Message {
     								sentIntent, 0);
     	context.registerReceiver(sentReceiver, new IntentFilter(SENT_SMS_ACTION));
     	
-    	// prepare the receiver for DELIVERED notification
-    	Intent deliveryIntent = new Intent(DELIVERED_SMS_ACTION);
-    	PendingIntent deliveredPI = PendingIntent.getBroadcast(
-    								context.getApplicationContext(), 0, 
-    								deliveryIntent, 0);
-    	context.registerReceiver(deliveredReceiver, new IntentFilter(DELIVERED_SMS_ACTION));
-    	
     	// send the data
-    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, deliveredPI);
+    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, null);
     }
           
     public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException;
-    public abstract void sendSMS(String phoneNumber, Context context) throws StorageFileException, IOException, MessageException;
+    public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, IOException, MessageException;
 }

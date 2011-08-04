@@ -3,7 +3,6 @@ package uk.ac.cam.db538.securesms;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 public class Charset {
 	private static final String CHARSET_ASCII = "US-ASCII";

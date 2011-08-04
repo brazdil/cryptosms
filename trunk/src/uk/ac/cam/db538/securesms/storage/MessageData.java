@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.Message;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
  * 
@@ -768,7 +768,7 @@ public class MessageData {
 		return mEntryIndex;
 	}
 	
-	public void setDeliveredPart(boolean deliveredPart) {
+	void setDeliveredPart(boolean deliveredPart) {
 		this.mDeliveredPart = deliveredPart;
 	}
 
@@ -776,7 +776,7 @@ public class MessageData {
 		return mDeliveredPart;
 	}
 
-	void setDeliveredAll(boolean deliveredAll) {
+	public void setDeliveredAll(boolean deliveredAll) {
 		this.mDeliveredAll = deliveredAll;
 	}
 

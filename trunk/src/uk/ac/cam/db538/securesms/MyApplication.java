@@ -41,7 +41,7 @@ public class MyApplication extends Application {
 		
 		try {
 			Conversation conv1 = Conversation.createConversation();
-			conv1.setPhoneNumber("+420605219051");
+			conv1.setPhoneNumber("+447572306095");
 			SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
 			keys1.setSimNumber(new SimNumber("89441000301641313004", true));
 			keys1.setKeysSent(true);
@@ -73,6 +73,13 @@ public class MyApplication extends Application {
 			keys3.setKeysSent(false);
 			keys3.setKeysConfirmed(false);
 			keys3.saveToFile();
+			Conversation conv3 = Conversation.createConversation();
+			conv3.setPhoneNumber("+447879116797");
+			SessionKeys keys6 = SessionKeys.createSessionKeys(conv3);
+			keys6.setSimNumber(new SimNumber("+447572306095", false));
+			keys6.setKeysSent(true);
+			keys6.setKeysConfirmed(true);
+			keys6.saveToFile();
 		} catch (Exception ex) {
 		}
 	}

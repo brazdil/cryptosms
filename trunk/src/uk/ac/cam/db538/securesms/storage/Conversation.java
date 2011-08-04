@@ -9,9 +9,9 @@ import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.SimCard;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 
 /**

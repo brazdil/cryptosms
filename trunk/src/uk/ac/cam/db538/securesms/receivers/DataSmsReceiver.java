@@ -10,11 +10,11 @@ import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.widget.Toast;
 
-public class SMSReceiver extends BroadcastReceiver {
+public class DataSmsReceiver extends BroadcastReceiver {
 
 	public static final String SMS_RECEIVED="android.intent.action.DATA_SMS_RECEIVED";
 	
-	public SMSReceiver() {
+	public DataSmsReceiver() {
 		super();
 	}
 
@@ -36,11 +36,11 @@ public class SMSReceiver extends BroadcastReceiver {
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
-						String messageBody = new String(data);
+						//String messageBody = new String(data);
 						String phoneNumber = msg.getOriginatingAddress();
 						
 						// show it on screen
-						Toast.makeText(context, phoneNumber + ": " + messageBody, Toast.LENGTH_LONG).show();
+						Toast.makeText(context, phoneNumber /*+ ": " + messageBody*/, Toast.LENGTH_LONG).show();
 					}
 				}
 			}

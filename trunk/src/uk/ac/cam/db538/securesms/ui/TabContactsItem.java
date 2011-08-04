@@ -122,7 +122,10 @@ public class TabContactsItem extends RelativeLayout {
 	    	}
 	    	
 	    	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
-	        mFromView.setText(contact.getName());
+	    	if (contact.getName().length() > 0)
+	    		mFromView.setText(contact.getName());
+	    	else
+	    		mFromView.setText(contact.getPhoneNumber());
 	        mIconView.setVisibility(VISIBLE);
 
 	    	Drawable avatarDrawable = contact.getAvatar(context, sDefaultContactImage);

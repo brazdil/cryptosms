@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.encryption;
+package uk.ac.cam.db538.securesms;
 
 import java.nio.ByteBuffer;
 import java.security.*;

@@ -476,6 +476,9 @@
     <string name="menu_move_sessions">Move sessions</string>
     <string name="menu_move_sessions_none">None available</string>
     <string name="menu_move_sessions_none_details">No transferable sessions were found in the database.</string>
+    <string name="conversation_sending">Sending...</string>
+    <string name="error_sms_service">Error</string>
+    <string name="error_sms_service_details">The application was unable to send the text message.</string>
 
 </resources>
 

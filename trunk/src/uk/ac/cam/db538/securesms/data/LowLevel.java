@@ -2,7 +2,7 @@ package uk.ac.cam.db538.securesms.data;
 
 import java.nio.ByteBuffer;
 
-import uk.ac.cam.db538.securesms.encryption.Encryption;
+import uk.ac.cam.db538.securesms.Encryption;
 
 public class LowLevel {
 	/**

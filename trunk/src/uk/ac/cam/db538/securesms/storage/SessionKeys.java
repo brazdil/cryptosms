@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import android.telephony.PhoneNumberUtils;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.LowLevel;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 
 /**
  * 
