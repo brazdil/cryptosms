@@ -9,12 +9,9 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.telephony.SmsManager;
-import android.widget.Toast;
 
 import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
-import uk.ac.cam.db538.securesms.data.Message.MessageSentListener;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;

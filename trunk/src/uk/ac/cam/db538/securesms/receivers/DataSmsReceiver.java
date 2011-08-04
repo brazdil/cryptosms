@@ -1,5 +1,7 @@
 package uk.ac.cam.db538.securesms.receivers;
 
+import java.util.ArrayList;
+
 import uk.ac.cam.db538.securesms.MyApplication;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +16,14 @@ public class DataSmsReceiver extends BroadcastReceiver {
 	
 	public DataSmsReceiver() {
 		super();
+	}
+	
+	private void checkPending(String phoneNumber, Context context, DbPendingAdapter database) {
+		ArrayList<Pending> pending =  database.getEntry(phoneNumber);
+
+		// TODO: check whether we can put together any complete messages
+		// from the user and potentially show notifications
+
 	}
 
 	@Override
@@ -31,15 +41,20 @@ public class DataSmsReceiver extends BroadcastReceiver {
 					SmsMessage[] messages = new SmsMessage[pdus.length];
 					for (int i = 0; i < pdus.length; ++i)
 						messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
+
+					DbPendingAdapter database = new DbPendingAdapter(context);
+					database.open();
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
-						//String messageBody = new String(data);
+						// get the sender
 						String phoneNumber = msg.getOriginatingAddress();
-						
-						// show it on screen
-						Toast.makeText(context, phoneNumber /*+ ": " + messageBody*/, Toast.LENGTH_LONG).show();
+						// put it in the database
+						database.insertEntry(new Pending(phoneNumber, data));
+						// check pending
+						checkPending(phoneNumber, context, database);
 					}
+					database.close();
 				}
 			}
 		}

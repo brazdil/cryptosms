@@ -2,7 +2,6 @@ package uk.ac.cam.db538.securesms;
 
 import java.nio.ByteBuffer;
 import java.security.*;
-import java.util.Random;
 
 public class Encryption {
 	public static final int KEY_LENGTH = 32;

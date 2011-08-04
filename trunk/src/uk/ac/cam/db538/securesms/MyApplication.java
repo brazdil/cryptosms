@@ -27,6 +27,9 @@ public class MyApplication extends Application {
 		mSingleton = this;
 		SMS_PORT = (short) this.getResources().getInteger(R.integer.presets_data_sms_port);
 		
+		//TODO: Test whether PKI uses AES-256 by checking these:
+		// http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc-256
+		
 		//TODO: Just For Testing!!!
 		File file = new File("/data/data/uk.ac.cam.db538.securesms/files/storage.db");
 		if (file.exists())
