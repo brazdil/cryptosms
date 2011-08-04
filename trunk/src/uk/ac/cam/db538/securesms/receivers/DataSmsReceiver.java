@@ -1,11 +1,9 @@
 package uk.ac.cam.db538.securesms.receivers;
 
 import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.R;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.widget.Toast;

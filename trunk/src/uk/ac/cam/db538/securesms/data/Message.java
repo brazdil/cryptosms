@@ -3,18 +3,14 @@ package uk.ac.cam.db538.securesms.data;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.SmsManager;
-import android.telephony.SmsMessage;
 
-import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 

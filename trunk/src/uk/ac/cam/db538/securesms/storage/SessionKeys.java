@@ -445,14 +445,20 @@ public class SessionKeys {
 		}
 	}
 	
-	public void incrementID_Out() {
-		int id = LowLevel.getUnsignedByte(getNextID_Out());
-		setNextID_Out(LowLevel.getBytesUnsignedByte(id++));
+	public void incrementOut(int count) {
+		for (int i = 0; i < count; ++i) {
+			int id = LowLevel.getUnsignedByte(getNextID_Out()) + 1;
+			setNextID_Out(LowLevel.getBytesUnsignedByte(id));
+			setSessionKey_Out(Encryption.getHash(getSessionKey_Out()));
+		}
 	}
 	
-	public void incrementID_In() {
-		int id = LowLevel.getUnsignedByte(getLastID_In());
-		setLastID_In(LowLevel.getBytesUnsignedByte(id++));
+	public void incrementIn(int count) {
+		for (int i = 0; i < count; ++i) {
+			int id = LowLevel.getUnsignedByte(getLastID_In()) + 1;
+			setLastID_In(LowLevel.getBytesUnsignedByte(id));
+			setSessionKey_In(Encryption.getHash(getSessionKey_In()));
+		}
 	}
 
 	// GETTERS / SETTERS

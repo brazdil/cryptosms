@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.telephony.SmsManager;
+import android.widget.Toast;
 
 import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
@@ -182,11 +183,13 @@ public class TextMessage extends Message {
 			throws StorageFileException, IOException, MessageException {
 		ArrayList<byte[]> dataSMS = getBytes(context);
 		final boolean[] sent = new boolean[dataSMS.size()];
+		final boolean[] notified = new boolean[dataSMS.size()];
 		final boolean[] error = new boolean[1];
 		error[0] = false;
-		
+		for (int i = 0; i < dataSMS.size(); ++i)
+			sent[i] = notified[i] = false;
+
 		for (int i = 0; i < dataSMS.size(); ++i) {
-			sent[i] = false;
 			final int index = i;
 			byte[] dataPart = dataSMS.get(i);
 			mStorage.setPartDelivered(i, false);
@@ -195,13 +198,14 @@ public class TextMessage extends Message {
 						@Override
 						public void onReceive(Context context, Intent intent) {
 							// SENT notification
+							notified[index] = true;
 							switch (getResultCode()) {
 							case Activity.RESULT_OK:
 								sent[index] = true;
-								boolean all = true;
+								boolean allSent = true;
 								for (boolean b : sent)
-									all = all && b;
-								if (all)
+									allSent = allSent && b;
+								if (allSent)
 									listener.onMessageSent();
 								break;
 							default: // ERROR
@@ -210,6 +214,23 @@ public class TextMessage extends Message {
 									listener.onError();
 								}
 								break;
+							}
+
+							boolean allNotified = true, oneSent = false;
+							for (boolean b : notified)
+								allNotified = allNotified && b;
+							for (boolean b : sent)
+								oneSent = oneSent || b;
+							if (allNotified && oneSent) {
+								// it at least something was sent, increment the ID and session keys
+								SessionKeys keys;
+								try {
+									keys = mStorage.getParent().getSessionKeysForSIM(context);
+									keys.incrementOut(1);
+									keys.saveToFile();
+								} catch (StorageFileException e) {
+								} catch (IOException e) {
+								}
 							}
 						}
 					});
