@@ -70,6 +70,24 @@ public class LowLevel {
 		result[1] = (byte) (integer & 0xFF);
 		return result;
 	}
+	
+	/**
+	 * Takes a number (has to be between 0 and 255) and returns a byte that represents it.
+	 * @param number
+	 * @return
+	 */
+	public static byte getBytesUnsignedByte(int number) {
+		return (byte)(number & 0xFF);
+	}
+	
+	/**
+	 * Takes a byte that is supposed to be unsigned and returns an int that represents that number.
+	 * @param number
+	 * @return
+	 */
+	public static int getUnsignedByte(byte number) {
+		return number & 0xFF;
+	}
 
 	/**
 	 * Inserts data into an array of specified length. Puts random data behind to fill the rest.

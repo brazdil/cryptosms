@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="presets_data_sms_port" type="integer">17780</item>
-    
+    <item type="integer" format="integer" name="presets_data_sms_port">16948</item>
     
 </resources>

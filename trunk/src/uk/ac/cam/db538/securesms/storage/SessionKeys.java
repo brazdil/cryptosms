@@ -445,6 +445,16 @@ public class SessionKeys {
 		}
 	}
 	
+	public void incrementID_Out() {
+		int id = LowLevel.getUnsignedByte(getNextID_Out());
+		setNextID_Out(LowLevel.getBytesUnsignedByte(id++));
+	}
+	
+	public void incrementID_In() {
+		int id = LowLevel.getUnsignedByte(getLastID_In());
+		setLastID_In(LowLevel.getBytesUnsignedByte(id++));
+	}
+
 	// GETTERS / SETTERS
 	
 	long getEntryIndex() {

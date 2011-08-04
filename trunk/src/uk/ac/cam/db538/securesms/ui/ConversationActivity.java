@@ -11,6 +11,7 @@ import uk.ac.cam.db538.securesms.data.Message.MessageException;
 import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.data.CompressedText;
 import android.app.Activity;
@@ -56,8 +57,8 @@ public class ConversationActivity extends Activity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        Context context = this;
-	    Resources res = getResources();
+        final Context context = this;
+	    final Resources res = getResources();
 	    
         if (sDefaultContactImage == null) {
             sDefaultContactImage = res.getDrawable(R.drawable.ic_contact_picture);
@@ -68,6 +69,16 @@ public class ConversationActivity extends Activity {
 	    String phoneNumber = bundle.getString(OPTION_PHONE_NUMBER);
 	    errorNoKeysShow = bundle.getBoolean(OPTION_OFFER_KEYS_SETUP, true);
 	    mContact = Contact.getContact(context, phoneNumber);
+		try {
+			mConversation = Conversation.getConversation(mContact.getPhoneNumber());
+		} catch (StorageFileException ex) {
+			Utils.dialogDatabaseError(this, ex);
+			this.finish();
+		} catch (IOException ex) {
+			Utils.dialogIOError(this, ex);
+			this.finish();
+		}
+	    
 	    mNameView = (TextView) findViewById(R.id.conversation_name);
 	    mPhoneNumberView = (TextView) findViewById(R.id.conversation_phone_number);
 	    mAvatarView = (QuickContactBadge) findViewById(R.id.conversation_avatar);
@@ -115,11 +126,28 @@ public class ConversationActivity extends Activity {
 				mRemainsView.setVisibility(View.VISIBLE);
 			}
 		});
+
+        mSendButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mConversation != null) {
+					try {
+						TextMessage msg = new TextMessage(MessageData.createMessageData(mConversation));
+						msg.setText(CompressedText.createFromString(mTextEditor.getText().toString()));
+						msg.sendSMS(mContact.getPhoneNumber(), context);
+					} catch (StorageFileException ex) {
+						Utils.dialogDatabaseError(context, ex);
+					} catch (IOException ex) {
+						Utils.dialogIOError(context, ex);
+					} catch (MessageException e) {
+					}
+				}
+			}
+        });
 	}
 	
 	private void modeEnabled(boolean value) {
 		Resources res = getResources();
-		
 		mSendButton.setEnabled(value);
 		mTextEditor.setEnabled(value);
 		mTextEditor.setHint((value) ? res.getString(R.string.conversation_type_to_compose) : null);
@@ -130,10 +158,8 @@ public class ConversationActivity extends Activity {
 	private void checkResources() {
 		// check for SIM availability
 	    try {
+		    Resources res = getResources();
 			if (Utils.checkSimPhoneNumberAvailable(this)) {
-			    Resources res = getResources();
-				mConversation = Conversation.getConversation(mContact.getPhoneNumber());
-
 				// check keys availability
 		    	if (!Utils.hasKeysExchangedForSIM(this, mConversation)) {
 		    		if (errorNoKeysShow) {

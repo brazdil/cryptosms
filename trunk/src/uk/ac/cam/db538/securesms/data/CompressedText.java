@@ -69,7 +69,7 @@ public class CompressedText {
 		return msg;
 	}
 	
-	public int getLength() {
+	public int getDataLength() {
 		return mData.length;
 	}
 	

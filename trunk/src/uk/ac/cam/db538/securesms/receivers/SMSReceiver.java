@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.securesms.receivers;
 
+import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.R;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,13 +20,11 @@ public class SMSReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Resources r = context.getResources();
-		
 		if (intent.getAction().equals(SMS_RECEIVED)) {
 			// check the port number
 			String[] uri = intent.getDataString().split(":");
 			int port = Integer.parseInt(uri[uri.length - 1]);
-			if (port == r.getInteger(R.integer.presets_data_sms_port))
+			if (port == MyApplication.getSmsPort())
 			{
 				// for each message
 				Bundle bundle = intent.getExtras();

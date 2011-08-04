@@ -10,16 +10,22 @@ import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import android.app.Application;
 
 public class MyApplication extends Application {
+	private static short SMS_PORT; 
 	private static MyApplication mSingleton;
 	
 	public static MyApplication getSingleton() {
 		return mSingleton;
 	}
 	
+	public static short getSmsPort() {
+		return SMS_PORT;
+	}
+	
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		mSingleton = this;
+		SMS_PORT = (short) this.getResources().getInteger(R.integer.presets_data_sms_port);
 		
 		//TODO: Just For Testing!!!
 		File file = new File("/data/data/uk.ac.cam.db538.securesms/files/storage.db");
