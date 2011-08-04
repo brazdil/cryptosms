@@ -66,6 +66,12 @@ public class LowLevel_Test extends TestCase {
 		number = 4294967295L;
 		result = LowLevel.getBytesUnsignedInt(number);
 		CustomAsserts.assertArrayEquals(expected, result);
+		
+		// unsigned byte
+		assertEquals(145, LowLevel.getUnsignedByte((byte)0x91));
+		assertEquals(21, LowLevel.getUnsignedByte((byte)0x15));
+		assertEquals((byte)0x91, LowLevel.getBytesUnsignedByte(145));
+		assertEquals((byte)0x15, LowLevel.getBytesUnsignedByte(21));
 	}
 
 }

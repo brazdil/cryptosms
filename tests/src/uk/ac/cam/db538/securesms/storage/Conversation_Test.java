@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.LowLevel;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;

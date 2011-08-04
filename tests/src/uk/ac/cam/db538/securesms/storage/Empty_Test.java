@@ -2,8 +2,8 @@ package uk.ac.cam.db538.securesms.storage;
 
 import java.io.IOException;
 
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.LowLevel;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.Empty;

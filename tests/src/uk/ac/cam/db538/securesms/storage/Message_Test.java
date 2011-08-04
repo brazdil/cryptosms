@@ -4,8 +4,8 @@ import java.io.IOException;
 import android.text.format.Time;
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.CustomAsserts;
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.data.LowLevel;
-import uk.ac.cam.db538.securesms.encryption.Encryption;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -246,7 +246,7 @@ public class Message_Test extends TestCase {
 		// setting/getting
 		
 		byte[] data = Encryption.generateRandomData(280);
-		byte[] dataCut = LowLevel.cutData(data, 0, 140);
+		byte[] dataCut = LowLevel.cutData(data, 0, 133);
 		
 		msg.setPartData(2, data);
 		assertEquals(0, msg.getPartData(0).length);
