@@ -10,5 +10,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/AndroidMockRuntime.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Encryption"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
