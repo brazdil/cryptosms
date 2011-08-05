@@ -99,27 +99,27 @@ public class TextMessage_Test  extends TestCase {
 		assertEquals(data.get(0)[1], nextID_Out); // ID
 		assertEquals(LowLevel.getUnsignedShort(data.get(0), 2), textShort.getDataLength()); // data length
 		byte[] dataDecrypted = Encryption.decryptSymmetric(LowLevel.cutData(data.get(0), 4, 129), keys.getSessionKey_Out());
-		assertEquals(dataDecrypted.length, 65);
+		assertEquals(dataDecrypted.length, 81);
 		CustomAsserts.assertArrayEquals(LowLevel.cutData(dataDecrypted, 0, textShort.getDataLength()), textShort.getData());
 		
 		msg.setText(textLong);
 		data = msg.getBytes(context);
 		int texts = TextMessage.computeNumberOfMessageParts(textLong);
-		int totalBytes = 65 + (texts - 1) * 130;
+		int totalBytes = 81 + (texts - 1) * 130;
 		assertEquals(data.size(), texts);
-		byte[] dataEncrypted = new byte[64 + totalBytes];
+		byte[] dataEncrypted = new byte[Encryption.ENCRYPTION_OVERHEAD + totalBytes];
 		// first text
 		assertEquals(data.get(0).length, 133);
 		assertEquals(data.get(0)[0], headerFirstLong); // header
 		assertEquals(data.get(0)[1], nextID_Out); // ID
 		assertEquals(LowLevel.getUnsignedShort(data.get(0), 2), textLong.getDataLength()); // data length
-		System.arraycopy(data.get(0), 4, dataEncrypted, 0, 65 + 64);
+		System.arraycopy(data.get(0), 4, dataEncrypted, 0, 81 + Encryption.ENCRYPTION_OVERHEAD);
 		for (int i = 1; i < texts; ++i) {
 			assertEquals(data.get(i).length, 133);
 			assertEquals(data.get(i)[0], headerNext); // header
 			assertEquals(data.get(i)[1], nextID_Out); // header
 			assertEquals(data.get(i)[2], LowLevel.getBytesUnsignedByte(i)); // index
-			System.arraycopy(data.get(i), 3, dataEncrypted, 65 + 64 + (i - 1) * 130, 130);
+			System.arraycopy(data.get(i), 3, dataEncrypted, 81 + Encryption.ENCRYPTION_OVERHEAD + (i - 1) * 130, 130);
 		}
 		dataDecrypted = Encryption.decryptSymmetric(dataEncrypted, keys.getSessionKey_Out());
 		assertEquals(dataDecrypted.length, totalBytes);
