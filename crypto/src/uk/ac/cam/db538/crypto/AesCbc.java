@@ -64,7 +64,7 @@ public class AesCbc {
 			data = wrapData(data, (data.length / AES_BLOCKSIZE + 1) * AES_BLOCKSIZE);
 		
 		byte[] result = new byte[data.length];
-		byte[] buffer;
+		byte[] buffer, buffer2;
 		for (int i = 0; i < data.length / AES_BLOCKSIZE; ++i) {
 			// get this block of data
 			buffer = new byte[AES_BLOCKSIZE];
@@ -72,11 +72,11 @@ public class AesCbc {
 			// apply IV
 			buffer = xor(buffer, iv);
 			// encrypt
-			buffer = aesAlgorithm.encrypt(buffer);
+			buffer2 = aesAlgorithm.encrypt(buffer);
 			// copy to result
-			System.arraycopy(buffer, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE);
+			System.arraycopy(buffer2, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE);
 			// IV is now the previous result
-			iv = buffer;
+			iv = buffer2;
 		}
 		
 		return result;
@@ -105,7 +105,7 @@ public class AesCbc {
 	 */
 	static byte[] decrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm) {
 		byte[] result = new byte[data.length];
-		byte[] buffer, xored;
+		byte[] buffer, decrypted, xored;
 		
 		// decrypt with AES
 		for (int i = 0; i < data.length / AES_BLOCKSIZE; ++i) {
@@ -113,9 +113,9 @@ public class AesCbc {
 			// get this block of data
 			System.arraycopy(data, AES_BLOCKSIZE * i, buffer, 0, AES_BLOCKSIZE);
 			// decrypt
-			buffer = aesAlgorithm.decrypt(buffer);
+			decrypted = aesAlgorithm.decrypt(buffer);
 			// apply iv
-			xored = xor(buffer, iv);
+			xored = xor(decrypted, iv);
 			// copy to result
 			System.arraycopy(xored, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE);
 			// IV is now the original block
