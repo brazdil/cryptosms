@@ -112,7 +112,7 @@ public final class Storage {
 	 * @throws IOException
 	 */
 	public synchronized void lockFile(boolean condition) throws IOException {
-		if (condition) smsFile.lock();
+		//if (condition) smsFile.lock();
 	}
 	
 	/**
@@ -131,7 +131,7 @@ public final class Storage {
 	 * @throws IOException
 	 */
 	public synchronized void unlockFile(boolean condition) throws IOException {
-		if (condition) smsFile.unlock();
+		//if (condition) smsFile.unlock();
 	}
 	
 	/**
