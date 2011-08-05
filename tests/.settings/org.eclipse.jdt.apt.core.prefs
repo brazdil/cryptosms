@@ -1,7 +1,5 @@
-#Mon Aug 01 09:23:09 BST 2011
+#Fri Aug 05 16:04:36 BST 2011
 eclipse.preferences.version=1
-org.eclipse.jdt.apt.aptEnabled=true
+org.eclipse.jdt.apt.aptEnabled=false
 org.eclipse.jdt.apt.genSrcDir=.apt_generated
-org.eclipse.jdt.apt.processorOptions/bin_dir=U\:\\android\\Secure SMS Test\\bin
-org.eclipse.jdt.apt.processorOptions/logfile=U\:\\android\\Secure SMS Test\\AnnotationProcessor.log
 org.eclipse.jdt.apt.reconcileEnabled=false
