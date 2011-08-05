@@ -3,7 +3,7 @@
       package="uk.ac.cam.db538.securesms"
       android:versionCode="1"
       android:versionName="0.1">
-    <uses-sdk android:minSdkVersion="8" />
+    <uses-sdk android:minSdkVersion="7" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
