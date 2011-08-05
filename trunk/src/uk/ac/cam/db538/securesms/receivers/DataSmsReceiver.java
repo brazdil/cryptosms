@@ -2,13 +2,26 @@ package uk.ac.cam.db538.securesms.receivers;
 
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.MyApplication;
+import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
+import uk.ac.cam.db538.securesms.data.LowLevel;
+import uk.ac.cam.db538.securesms.data.Message;
+import uk.ac.cam.db538.securesms.data.Pending;
+import uk.ac.cam.db538.securesms.data.TextMessage;
+import uk.ac.cam.db538.securesms.data.Message.MessageException;
+import uk.ac.cam.db538.securesms.data.Message.MessageType;
+import uk.ac.cam.db538.securesms.ui.MainTabActivity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
-import android.widget.Toast;
 
 public class DataSmsReceiver extends BroadcastReceiver {
 
@@ -17,17 +30,11 @@ public class DataSmsReceiver extends BroadcastReceiver {
 	public DataSmsReceiver() {
 		super();
 	}
-	
-	private void checkPending(String phoneNumber, Context context, DbPendingAdapter database) {
-		ArrayList<Pending> pending =  database.getEntry(phoneNumber);
-
-		// TODO: check whether we can put together any complete messages
-		// from the user and potentially show notifications
-
-	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		Resources res = context.getResources();
+		
 		if (intent.getAction().equals(SMS_RECEIVED)) {
 			// check the port number
 			String[] uri = intent.getDataString().split(":");
@@ -47,12 +54,27 @@ public class DataSmsReceiver extends BroadcastReceiver {
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
-						// get the sender
-						String phoneNumber = msg.getOriginatingAddress();
-						// put it in the database
-						database.insertEntry(new Pending(phoneNumber, data));
-						// check pending
-						checkPending(phoneNumber, context, database);
+						if (data.length != Message.LENGTH_MESSAGE) {
+							// TODO: ERROR!!!
+						} else {
+							// get the sender
+							String phoneNumber = msg.getOriginatingAddress();
+							// put it in the database
+							database.insertEntry(new Pending(phoneNumber, data));
+							
+							// show notification
+							NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+							Notification notification = MyApplication.getSingleton().getNotification();
+							
+							String expandedTitle = res.getString(R.string.notification_title);
+							String expandedText = res.getString(R.string.notification_text);
+							Intent startActivityIntent = new Intent(context, MainTabActivity.class);
+							PendingIntent launchIntent = PendingIntent.getActivity(context, 0, startActivityIntent, 0);
+							notification.setLatestEventInfo(context, expandedTitle, expandedText, launchIntent);
+							notification.when = System.currentTimeMillis();
+							
+							notificationManager.notify(MyApplication.NOTIFICATION_ID, notification);
+						}
 					}
 					database.close();
 				}

@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.receivers;
+package uk.ac.cam.db538.securesms.data;
 
 import java.util.ArrayList;
 
@@ -17,7 +17,8 @@ public class DbPendingAdapter {
  
   	// The index (key) column name for use in where clauses
 	public static final String KEY_ID = "_id";
-
+	public static final int COLUMN_ID = 0;
+	
 	// The name and column index of each column in your database
 	public static final String KEY_SENDER = "sender"; 
 	public static final int COLUMN_SENDER = 1;
@@ -69,27 +70,26 @@ public class DbPendingAdapter {
 			do {
 				Time time = new Time();
 				time.parse3339(cursor.getString(COLUMN_TIMESTAMP));
-				list.add(new Pending(
-							cursor.getString(COLUMN_SENDER),
-							time,
-							cursor.getBlob(COLUMN_TIMESTAMP)
-						));
+				Pending pending = new Pending(
+						cursor.getString(COLUMN_SENDER),
+						time,
+						cursor.getBlob(COLUMN_DATA)
+					);
+				pending.setRowIndex(cursor.getLong(COLUMN_ID));
+				list.add(pending);
+				
 			} while (cursor.moveToNext());
 		}
 		return list;
 	}
 
 	public long insertEntry(Pending pending) {
-		return mDatabase.insert(DATABASE_TABLE, null, getValues(pending));
+		pending.setRowIndex(mDatabase.insert(DATABASE_TABLE, null, getValues(pending)));
+		return pending.getRowIndex();
 	}
 
-	public boolean removeEntry(long rowIndex) {
-		return mDatabase.delete(DATABASE_TABLE, KEY_ID + "=" + rowIndex, null) > 0;
-	}
-
-	public Cursor getAllEntries () {
-		return mDatabase.query(DATABASE_TABLE, new String[] {KEY_ID, KEY_SENDER, KEY_TIMESTAMP, KEY_DATA}, 
-                    null, null, null, null, null);
+	public boolean removeEntry(Pending pending) {
+		return mDatabase.delete(DATABASE_TABLE, KEY_ID + "=" + pending.getRowIndex(), null) > 0;
 	}
 
 	public Pending getEntry(long rowIndex) {
@@ -119,8 +119,8 @@ public class DbPendingAdapter {
 		return result;
 	}
 
-	public boolean updateEntry(long rowIndex, Pending pending) {
-		return mDatabase.update(DATABASE_TABLE, getValues(pending), KEY_ID + "=" + rowIndex, null) > 0;
+	public boolean updateEntry(Pending pending) {
+		return mDatabase.update(DATABASE_TABLE, getValues(pending), KEY_ID + "=" + pending.getRowIndex(), null) > 0;
 	}
 
 	private static class DbPendingHelper extends SQLiteOpenHelper {

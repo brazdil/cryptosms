@@ -16,6 +16,8 @@ import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 public abstract class Message {
 	public static final int LENGTH_MESSAGE = 133;
+	protected static final int LENGTH_HEADER = 1;
+	protected static final int OFFSET_HEADER = 0;
 
 	public static class MessageException extends Exception {
 		private static final long serialVersionUID = 4922446456153260918L;
@@ -31,15 +33,23 @@ public abstract class Message {
 	
 	public static interface MessageSentListener {
 		public void onMessageSent();
-		public void onError();
+		public void onError(String message);
 	}
 	
-	protected static final byte KEY_EXCHANGE_FIRST = (byte) 0x00;	// no bits set
-	protected static final byte KEY_EXCHANGE_NEXT = (byte) 0x40;	// second bit set
-	protected static final byte MESSAGE_FIRST = (byte) 0x80;		// first bit set
-	protected static final byte MESSAGE_NEXT = (byte) 0xC0;			// first and second bit set
+	protected static final byte HEADER_KEY_FIRST = (byte) 0x00;	// no bits set
+	protected static final byte HEADER_KEY_PART = (byte) 0x40;	// second bit set
+	protected static final byte HEADER_MESSAGE_FIRST = (byte) 0x80;		// first bit set
+	protected static final byte HEADER_MESSAGE_PART = (byte) 0xC0;			// first and second bit set
 	
-	protected MessageData	mStorage;
+	public static enum MessageType {
+		KEY_FIRST,
+		KEY_PART,
+		MESSAGE_FIRST,
+		MESSAGE_PART,
+		UNKNOWN
+	}
+	
+	protected MessageData mStorage;
     
     public Message(MessageData storage) {
 		mStorage = storage;
@@ -113,4 +123,18 @@ public abstract class Message {
           
     public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException;
     public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, IOException, MessageException;
+    
+    public static MessageType getMessageType(byte[] data) {
+    	byte headerType = (byte) (data[0] & 0xC0); // takes first two bits only
+    	if (headerType == HEADER_KEY_FIRST)
+    		return MessageType.KEY_FIRST;
+    	else if (headerType == HEADER_KEY_PART)
+    		return MessageType.KEY_PART;
+    	else if (headerType == HEADER_MESSAGE_FIRST)
+    		return MessageType.MESSAGE_FIRST;
+    	else if (headerType == HEADER_MESSAGE_PART)
+    		return MessageType.MESSAGE_PART;
+    	else
+    		return MessageType.UNKNOWN;
+    }
 }

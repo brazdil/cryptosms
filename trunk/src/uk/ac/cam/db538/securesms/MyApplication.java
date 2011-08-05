@@ -2,15 +2,21 @@ package uk.ac.cam.db538.securesms;
 
 import java.io.File;
 
+import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
+import uk.ac.cam.db538.securesms.receivers.DataSmsReceiver;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import android.app.Application;
+import android.app.Notification;
+import android.content.res.Resources;
 
 public class MyApplication extends Application {
 	private static short SMS_PORT; 
+	public static final int NOTIFICATION_ID = 1;
+	
 	private static MyApplication mSingleton;
 	
 	public static MyApplication getSingleton() {
@@ -20,18 +26,30 @@ public class MyApplication extends Application {
 	public static short getSmsPort() {
 		return SMS_PORT;
 	}
+
+	private Notification mNotification;
 	
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		mSingleton = this;
-		SMS_PORT = (short) this.getResources().getInteger(R.integer.presets_data_sms_port);
+		Resources res = this.getResources();
+		
+		SMS_PORT = (short) res.getInteger(R.integer.presets_data_sms_port);
+		
+		int icon = R.drawable.icon_notification;
+		String tickerText = res.getString(R.string.notification_ticker);
+		long when = System.currentTimeMillis();
+		mNotification = new Notification(icon, tickerText, when);
 		
 		//TODO: Test whether PKI uses AES-256 by checking these:
 		// http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc-256
 		
 		//TODO: Just For Testing!!!
 		File file = new File("/data/data/uk.ac.cam.db538.securesms/files/storage.db");
+		if (file.exists())
+			file.delete();
+		file = new File("/data/data/uk.ac.cam.db538.securesms/databases/pending.db");
 		if (file.exists())
 			file.delete();
 
@@ -85,5 +103,9 @@ public class MyApplication extends Application {
 			keys6.saveToFile();
 		} catch (Exception ex) {
 		}
+	}
+	
+	public Notification getNotification() {
+		return mNotification;
 	}
 }

@@ -105,6 +105,14 @@ public class SimCard {
 			return new SimNumber(serialNumber, true);
 	}
 	
+	public SimNumber getSimNumberWrapped(Context context) {
+		SimNumber phone = getSimPhoneNumberWrapped(context);
+		if (phone == null || phone.getNumber().length() == 0)
+			return getSimSerialNumberWrapped(context);
+		else
+			return phone;
+	}
+	
 	public static interface OnSimStateListener {
 		public void onChange();
 	}

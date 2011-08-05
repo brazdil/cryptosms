@@ -153,11 +153,11 @@ public class ConversationActivity extends Activity {
 							}
 							
 							@Override
-							public void onError() {
+							public void onError(String message) {
 								pd.cancel();
 								new AlertDialog.Builder(context)
 								.setTitle(res.getString(R.string.error_sms_service))
-								.setMessage(res.getString(R.string.error_sms_service_details))
+								.setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + message)
 								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
 								.show();
 							}
