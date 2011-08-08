@@ -5,6 +5,7 @@ import android.text.format.Time;
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
@@ -274,7 +275,7 @@ public class Message_Test extends TestCase {
 		assertEquals(false, msg.getPartDelivered(2));
 	}
 	
-	public void testCreateData() throws StorageFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException, WrongKeyException {
 		// set data
 		Conversation conv = Conversation.createConversation();
 		MessageData msg = MessageData.createMessageData(conv);

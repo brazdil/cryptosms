@@ -10,6 +10,7 @@ import android.test.mock.MockContext;
 import junit.framework.TestCase;
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.Message.MessageException;
 import uk.ac.cam.db538.securesms.storage.Common;
 import uk.ac.cam.db538.securesms.storage.Conversation;
@@ -73,7 +74,7 @@ public class TextMessage_Test  extends TestCase {
 		}*/
 	}
 	
-	public void testSMSData() throws StorageFileException, IOException, MessageException {
+	public void testSMSData() throws StorageFileException, IOException, MessageException, WrongKeyException {
 		Context context = new MockContext();
 		Conversation conv = Conversation.createConversation();
 		TextMessage msg = new TextMessage(MessageData.createMessageData(conv));

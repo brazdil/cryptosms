@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.CustomAsserts;
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
@@ -88,7 +89,7 @@ public class MessagePart_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws StorageFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException, WrongKeyException {
 		// compute expected values
 		byte flags = 0;
 		flags |= (deliveredPart) ? 0x80 : 0x00;

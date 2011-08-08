@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -76,7 +77,7 @@ public class Header_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws StorageFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException, WrongKeyException {
 		long indexFree = 25L;
 		long indexConversation = 13L;
 		int version = 32;

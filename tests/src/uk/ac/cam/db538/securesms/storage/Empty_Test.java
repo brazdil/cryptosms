@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -54,7 +55,7 @@ public class Empty_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws StorageFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException, WrongKeyException {
 		long indexNext = 36L;
 		
 		Empty free = Empty.createEmpty() ;

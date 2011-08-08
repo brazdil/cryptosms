@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Storage;
@@ -192,7 +193,7 @@ public class Conversation_Test extends TestCase {
 		}
 	}
 
-	public void testCreateData() throws StorageFileException, IOException {
+	public void testCreateData() throws StorageFileException, IOException, WrongKeyException {
 		byte flags = 0;
 
 		Conversation conv = Conversation.createConversation() ;
