@@ -3,6 +3,7 @@ package uk.ac.cam.db538.securesms;
 import java.io.File;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
