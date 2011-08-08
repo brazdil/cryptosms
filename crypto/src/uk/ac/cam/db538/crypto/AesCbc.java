@@ -49,11 +49,11 @@ public class AesCbc {
 	 * @param key			Encryption key
 	 * @return
 	 */
-	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key, boolean alignWithRandom) {
+	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key, boolean alignWithRandom, boolean storeLength) {
 		// set up AES
 		AesAlgorithm aesAlgorithm = new AesAlgorithm();
 		aesAlgorithm.setKey(key);
-		return encrypt(data, iv, aesAlgorithm, alignWithRandom);
+		return encrypt(data, iv, aesAlgorithm, alignWithRandom, storeLength);
 	}
 
 	/**
@@ -63,12 +63,13 @@ public class AesCbc {
 	 * @param aesAlgorithm			AES class instance
 	 * @return
 	 */
-	static byte[] encrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm, boolean alignWithRandom) {
+	static byte[] encrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm, boolean alignWithRandom, boolean storeLength) {
 		// align with random data to AES_BLOCKSIZE bytes
-		if (data.length % AES_BLOCKSIZE != 0)
-			data = wrapData(data, (data.length / AES_BLOCKSIZE + 1) * AES_BLOCKSIZE, alignWithRandom);
-		
-		byte[] result = new byte[data.length];
+		int lengthCrap = (AES_BLOCKSIZE - data.length % AES_BLOCKSIZE) % AES_BLOCKSIZE; 
+		if (lengthCrap != 0)
+			data = wrapData(data, data.length + lengthCrap, alignWithRandom);
+
+		byte[] result = new byte[(storeLength) ? data.length + 1 : data.length];
 		byte[] buffer, buffer2;
 		for (int i = 0; i < data.length / AES_BLOCKSIZE; ++i) {
 			// get this block of data
@@ -84,6 +85,9 @@ public class AesCbc {
 			iv = buffer2;
 		}
 		
+		if (storeLength)
+			result[data.length] = (byte)lengthCrap;
+		
 		return result;
 	}
 	
@@ -94,11 +98,11 @@ public class AesCbc {
 	 * @param key
 	 * @return
 	 */
-	public static byte[] decrypt(byte[] data, byte[] iv, byte[] key) {
+	public static byte[] decrypt(byte[] data, byte[] iv, byte[] key, boolean lengthStored) {
 		// set up AES
 		AesAlgorithm aesAlgorithm = new AesAlgorithm();
 		aesAlgorithm.setKey(key);
-		return decrypt(data, iv, aesAlgorithm);
+		return decrypt(data, iv, aesAlgorithm, lengthStored);
 	}
 
 	/**
@@ -108,12 +112,15 @@ public class AesCbc {
 	 * @param aesAlgorithm
 	 * @return
 	 */
-	static byte[] decrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm) {
-		byte[] result = new byte[data.length];
+	static byte[] decrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm, boolean lengthStored) {
+		int lengthCrap = (lengthStored) ? data[data.length - 1] : 0;
+		int length = (lengthStored) ? data.length - lengthCrap - 1 : data.length;
+		byte[] result = new byte[length];
 		byte[] buffer, decrypted, xored;
 		
 		// decrypt with AES
-		for (int i = 0; i < data.length / AES_BLOCKSIZE; ++i) {
+		int blockCount = length / AES_BLOCKSIZE;
+		for (int i = 0; i < blockCount; ++i) {
 			buffer = new byte[AES_BLOCKSIZE];
 			// get this block of data
 			System.arraycopy(data, AES_BLOCKSIZE * i, buffer, 0, AES_BLOCKSIZE);
@@ -122,7 +129,10 @@ public class AesCbc {
 			// apply iv
 			xored = xor(decrypted, iv);
 			// copy to result
-			System.arraycopy(xored, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE);
+			if (i == blockCount - 1)
+				System.arraycopy(xored, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE - lengthCrap);
+			else
+				System.arraycopy(xored, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE);
 			// IV is now the original block
 			iv = buffer;
 		}
