@@ -47,7 +47,7 @@ public class AesCbc {
 	/**
 	 * Encrypts data with AES/CBC encryption.
 	 * @param data				Data to encrypt
-	 * @param iv				Initialisation vector
+	 * @param iv				Initialization vector
 	 * @param key				Encryption key
 	 * @param alignWithRandom	If true, puts random data at the end to align to AES block size. Otherwise puts zeros.
 	 * @param storeLength		If true, stores the length of data used to align to AES block size as one extra byte at the end.
@@ -88,7 +88,7 @@ public class AesCbc {
 	/**
 	 * Decrypts data with AES/CBC algorithm
 	 * @param data			Data to encrypt
-	 * @param iv			Initialisation vector
+	 * @param iv			Initialization vector
 	 * @param key			Encryption key
 	 * @param lengthStored	Indicates whether the last byte holds the length of random data used to align to AES block size.
 	 * @return
