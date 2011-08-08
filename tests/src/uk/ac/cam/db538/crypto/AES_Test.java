@@ -2,6 +2,7 @@ package uk.ac.cam.db538.crypto;
 
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.CustomAsserts;
+import uk.ac.cam.db538.securesms.Encryption;
 import junit.framework.TestCase;
 
 public class AES_Test extends TestCase {
@@ -49,22 +50,22 @@ public class AES_Test extends TestCase {
 	
 	private void assertEncryptionCBC(AesAlgorithm aesAlgorithm, byte[] testData, byte[] iv, byte[] expectedResult) {
 		CustomAsserts.assertArrayEquals(
-			AesCbc.encrypt(testData, iv, aesAlgorithm, true),
+			AesCbc.encrypt(testData, iv, aesAlgorithm, true, false),
 			expectedResult
 			);
 		CustomAsserts.assertArrayEquals(
-				AesCbc.decrypt(expectedResult, iv, aesAlgorithm),
+				AesCbc.decrypt(expectedResult, iv, aesAlgorithm, false),
 				testData
 				);
 	}
 
 	private void assertEncryptionCBC(byte[] key, byte[] testData, byte[] iv, byte[] expectedResult) {
 		CustomAsserts.assertArrayEquals(
-			AesCbc.encrypt(testData, iv, key, true),
+			AesCbc.encrypt(testData, iv, key, true, false),
 			expectedResult
 			);
 		CustomAsserts.assertArrayEquals(
-				AesCbc.decrypt(expectedResult, iv, key),
+				AesCbc.decrypt(expectedResult, iv, key, false),
 				testData
 				);
 	}
@@ -178,5 +179,29 @@ public class AES_Test extends TestCase {
                             HEX("a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf"),
                             HEX("8ce82eefbea0da3c44699ed7db51b7d9"), 
                             HEX("c30e32ffedc0774e6aff6af0869f71aa0f3af07a9a31a9c684db207eb0ef8e4e35907aa632c3ffdf868bb7b29d3d46ad83ce9f9a102ee99d49a53e87f4c3da55"));
+	}
+	
+	public void testAES4() {
+		byte[] testData, encryptedData, decryptedData;
+		byte[] iv = Encryption.generateRandomData(Encryption.IV_LENGTH);
+		byte[] key = Encryption.generateRandomData(Encryption.KEY_LENGTH);
+
+		// 125-byte data
+		testData = Charset.toAscii8("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc euismod malesuada urna at cursus. Morbi magna felis, mattis id.");
+		encryptedData = AesCbc.encrypt(testData, iv, key, true, true);
+		decryptedData = AesCbc.decrypt(encryptedData, iv, key, true);
+		CustomAsserts.assertArrayEquals(decryptedData, testData);
+
+		// 121-byte data
+		testData = Charset.toAscii8("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sed elit diam, sed bibendum felis. Nunc sed massa metus.");
+		encryptedData = AesCbc.encrypt(testData, iv, key, true, true);
+		decryptedData = AesCbc.decrypt(encryptedData, iv, key, true);
+		CustomAsserts.assertArrayEquals(decryptedData, testData);
+
+		// 112-byte data
+		testData = Charset.toAscii8("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis ullamcorper felis id tortor dictum a tempor metus.");
+		encryptedData = AesCbc.encrypt(testData, iv, key, true, true);
+		decryptedData = AesCbc.decrypt(encryptedData, iv, key, true);
+		CustomAsserts.assertArrayEquals(decryptedData, testData);
 	}
 }
