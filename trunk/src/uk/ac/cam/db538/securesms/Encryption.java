@@ -3,13 +3,22 @@ package uk.ac.cam.db538.securesms;
 import java.nio.ByteBuffer;
 import java.security.*;
 
+import uk.ac.cam.db538.securesms.data.LowLevel;
+
 public class Encryption {
 	public static final int IV_LENGTH = 16;
 	public static final int MAC_LENGTH = 32;
 	public static final int KEY_LENGTH = 32;
 	public static final int ENCRYPTION_OVERHEAD = IV_LENGTH + MAC_LENGTH;
+	
+	public static class WrongKeyException extends Exception {
+		private static final long serialVersionUID = 7462739153684558050L;
+		
+		public WrongKeyException() {
+			super("Wrong key exception");
+		}
+	}
 
-	//private static final String ENCRYPTION_ALGORITHM = "PBEWithSHA256And256BitAES-CBC-BC";
 	private static final String HASHING_ALGORITHM = "SHA-256";
 	
 	private static SecureRandom mRandom = null;
@@ -43,21 +52,30 @@ public class Encryption {
 
 	public static byte[] encryptSymmetric(byte[] data, byte[] key) {
 		ByteBuffer result = ByteBuffer.allocate(data.length + ENCRYPTION_OVERHEAD);
+		// MAC
+		result.put(getHash(data));
 		// IV
 		for (int i = 0; i < IV_LENGTH; i++)
 			result.put((byte) 0x49);
-		// MAC
-		result.put(getHash(data));
 		// DATA
 		result.put(data);
 		
 		return result.array();
 	}
 	
-	public static byte[] decryptSymmetric(byte[] data, byte[] key) {
-		ByteBuffer result = ByteBuffer.allocate(data.length - ENCRYPTION_OVERHEAD);
-		result.put(data, ENCRYPTION_OVERHEAD, data.length - ENCRYPTION_OVERHEAD);
-		return result.array();
+	public static byte[] decryptSymmetric(byte[] data, byte[] key) throws WrongKeyException {
+		byte[] macSaved = LowLevel.cutData(data, 0, MAC_LENGTH);
+		byte[] dataEncrypted = LowLevel.cutData(data, MAC_LENGTH, data.length - MAC_LENGTH);
+		byte[] dataDecrypted = LowLevel.cutData(dataEncrypted, IV_LENGTH, dataEncrypted.length - IV_LENGTH);
+		byte[] macReal = getHash(dataDecrypted);
+		
+		boolean isCorrect = true;
+		for (int i = 0; i < MAC_LENGTH; ++i)
+			isCorrect = isCorrect && macSaved[i] == macReal[i];
+		if (isCorrect)
+			return dataDecrypted;
+		else
+			throw new WrongKeyException();
 	}
 	
 	public static void storeEncryptionKey(byte[] key) {

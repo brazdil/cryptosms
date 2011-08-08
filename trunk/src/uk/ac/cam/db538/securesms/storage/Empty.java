@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 
 /**
@@ -35,6 +36,7 @@ class Empty {
 	/**
 	 * Returns an instance of Empty class at the end of the file
 	 * @param index		Index in file
+	 * @throws WrongKeyException 
 	 */
 	static Empty createEmpty() throws StorageFileException, IOException {
 		return createEmpty(true);
@@ -44,6 +46,7 @@ class Empty {
 	 * Returns an instance of Empty class at the end of the file
 	 * @param index		Index in file
 	 * @param lock		File lock allow
+	 * @throws WrongKeyException 
 	 */
 	static Empty createEmpty(boolean lockAllow) throws StorageFileException, IOException {
 		// create a new one at the end of the file
@@ -55,6 +58,7 @@ class Empty {
 	/**
 	 * Returns an instance of Empty class with given index in file. Reads it from the file if not cached.
 	 * @param index		Index in file
+	 * @throws WrongKeyException 
 	 */
 	static Empty getEmpty(long index) throws StorageFileException, IOException {
 		return getEmpty(index, true);
@@ -64,6 +68,7 @@ class Empty {
 	 * Returns an instance of Empty class with given index in file. Reads it from the file if not cached.
 	 * @param index		Index in file
 	 * @param lock		File lock allow
+	 * @throws WrongKeyException 
 	 */
 	static Empty getEmpty(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
@@ -87,6 +92,7 @@ class Empty {
 	 * @return	
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	static Empty replaceWithEmpty(long index) throws StorageFileException, IOException {
 		return replaceWithEmpty(index, true);
@@ -100,6 +106,7 @@ class Empty {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	static Empty replaceWithEmpty(long index, boolean lockAllow) throws StorageFileException, IOException {
 		Empty empty = new Empty(index, false, lockAllow);
@@ -123,6 +130,7 @@ class Empty {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	static long getEmptyIndex(boolean lockAllow) throws StorageFileException, IOException {
 		return getEmptyIndices(1, lockAllow)[0];
@@ -134,6 +142,7 @@ class Empty {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	static long[] getEmptyIndices(int count) throws StorageFileException, IOException {
 		return getEmptyIndices(count, true);
@@ -146,6 +155,7 @@ class Empty {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	static long[] getEmptyIndices(int count, boolean lockAllow) throws StorageFileException, IOException {
 		Storage db = Storage.getDatabase();
@@ -187,6 +197,7 @@ class Empty {
 	 * @param count		Number of entries requested
 	 * @throws IOException
 	 * @throws StorageFileException
+	 * @throws WrongKeyException 
 	 */
 	static void addEmptyEntries(int count) throws IOException, StorageFileException {
 		addEmptyEntries(count, true);
@@ -198,6 +209,7 @@ class Empty {
 	 * @param lockAllow		Allow the file to be locked
 	 * @throws IOException
 	 * @throws StorageFileException
+	 * @throws WrongKeyException 
 	 */
 	static void addEmptyEntries(int count, boolean lockAllow) throws IOException, StorageFileException {
 		Storage db = Storage.getDatabase();
@@ -245,6 +257,7 @@ class Empty {
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	private Empty(long index, boolean readFromFile) throws StorageFileException, IOException {
 		this(index, readFromFile, true);
@@ -257,13 +270,19 @@ class Empty {
 	 * @param lockAllow		Allow the file to be locked
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	private Empty(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
-			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			byte[] dataPlain;
+			try {
+				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			} catch (WrongKeyException e) {
+				throw new StorageFileException(e);
+			}
 			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
 		}
 		else {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 
 /**
@@ -124,7 +125,12 @@ public class Header {
 			// decrypt rest of  data
 			byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD];
 			System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD);
-			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			byte[] dataPlain;
+			try {
+				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			} catch (WrongKeyException e) {
+				throw new StorageFileException(e);
+			}
 			
 			// set fields
 			setVersion(version);

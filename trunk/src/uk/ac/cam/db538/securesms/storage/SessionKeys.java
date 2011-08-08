@@ -8,6 +8,7 @@ import android.telephony.PhoneNumberUtils;
 
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 
 /**
@@ -191,7 +192,12 @@ public class SessionKeys {
 		
 		if (readFromFile) {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
-			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			byte[] dataPlain;
+			try {
+				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			} catch (WrongKeyException e) {
+				throw new StorageFileException(e);
+			}
 
 			byte flags = dataPlain[OFFSET_FLAGS];
 			boolean keysSent = ((flags & (1 << 7)) == 0) ? false : true;

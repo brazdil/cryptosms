@@ -10,6 +10,7 @@ import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
 import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
@@ -57,6 +58,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws IOException 
 	 * @throws StorageFileException 
+	 * @throws WrongKeyException 
 	 */
 	public static Conversation createConversation() throws StorageFileException, IOException {
 		return createConversation(true);
@@ -68,6 +70,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws IOException 
 	 * @throws StorageFileException 
+	 * @throws WrongKeyException 
 	 */
 	public static Conversation createConversation(boolean lockAllow) throws StorageFileException, IOException {
 		// create a new one
@@ -79,6 +82,7 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param phoneNumber		Contacts phone number
+	 * @throws WrongKeyException 
 	 */
 	public static Conversation getConversation(String phoneNumber) throws StorageFileException, IOException {
 		return getConversation(phoneNumber, true);
@@ -88,6 +92,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param phoneNumber		Contacts phone number
 	 * @param lock		File lock allow
+	 * @throws WrongKeyException 
 	 */
 	public static Conversation getConversation(String phoneNumber, boolean lockAllow) throws StorageFileException, IOException {
 		Conversation conv = Header.getHeader(lockAllow).getFirstConversation(lockAllow);
@@ -102,6 +107,7 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param index		Index in file
+	 * @throws WrongKeyException 
 	 */
 	static Conversation getConversation(long index) throws StorageFileException, IOException {
 		return getConversation(index, true);
@@ -111,6 +117,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param index		Index in file
 	 * @param lock		File lock allow
+	 * @throws WrongKeyException 
 	 */
 	static Conversation getConversation(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
@@ -131,6 +138,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * Explicitly requests each conversation in the file to be loaded to memory
 	 * @throws IOException
 	 * @throws StorageFileException
+	 * @throws WrongKeyException 
 	 */
 	public static void cacheAllConversations() throws IOException, StorageFileException {
 		Conversation convCurrent = Header.getHeader(false).getFirstConversation();
@@ -157,7 +165,12 @@ public class Conversation implements Comparable<Conversation> {
 		
 		if (readFromFile) {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
-			byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			byte[] dataPlain;
+			try {
+				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+			} catch (WrongKeyException e) {
+				throw new StorageFileException(e);
+			}
 			
 			setPhoneNumber(Charset.fromAscii8(dataPlain, OFFSET_PHONENUMBER, LENGTH_PHONENUMBER));
 			setIndexSessionKeys(LowLevel.getUnsignedInt(dataPlain, OFFSET_KEYSINDEX));
@@ -228,6 +241,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public Conversation getPreviousConversation() throws StorageFileException, IOException {
 		return getPreviousConversation(true);
@@ -239,6 +253,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public Conversation getPreviousConversation(boolean lockAllow) throws StorageFileException, IOException {
 		return Conversation.getConversation(mIndexPrev, lockAllow);
@@ -249,6 +264,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public Conversation getNextConversation() throws StorageFileException, IOException {
 		return getNextConversation(true);
@@ -260,6 +276,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public Conversation getNextConversation(boolean lockAllow) throws StorageFileException, IOException {
 		return Conversation.getConversation(mIndexNext, lockAllow);
@@ -411,6 +428,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * Delete MessageData and all the MessageDataParts it controls
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public void delete() throws StorageFileException, IOException {
 		delete(true);
@@ -421,6 +439,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @param lockAllow 	Allow the file to be locked
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public void delete(boolean lockAllow) throws StorageFileException, IOException {
 		Storage db = Storage.getDatabase();
@@ -609,6 +628,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public SessionKeys getSessionKeysForSIM(Context context) throws StorageFileException, IOException { 
 		return getSessionKeysForSIM(context, true);
@@ -622,6 +642,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public SessionKeys getSessionKeysForSIM(final Context context, boolean lockAllow) throws StorageFileException, IOException {
 		SessionKeys result = null;
@@ -718,6 +739,7 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Calls replaceSessionKeys on all the conversations.
 	 * Calls an update of listeners afterwards.
+	 * @throws WrongKeyException 
 	 */
 	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement, boolean lockAllow) throws StorageFileException, IOException {
 		Storage.getDatabase().lockFile(lockAllow);
@@ -743,6 +765,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
+	 * @throws WrongKeyException 
 	 */
 	public static ArrayList<SimNumber> getAllSimNumbersStored(boolean lockAllow) throws StorageFileException, IOException {
 		ArrayList<SimNumber> simNumbers = new ArrayList<SimNumber>();
