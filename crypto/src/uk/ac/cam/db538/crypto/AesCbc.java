@@ -119,7 +119,7 @@ public class AesCbc {
 		byte[] buffer, decrypted, xored;
 		
 		// decrypt with AES
-		int blockCount = length / AES_BLOCKSIZE;
+		int blockCount = data.length / AES_BLOCKSIZE;
 		for (int i = 0; i < blockCount; ++i) {
 			buffer = new byte[AES_BLOCKSIZE];
 			// get this block of data
