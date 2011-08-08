@@ -13,16 +13,21 @@ public class AesCbc {
 	 * @param length
 	 * @return
 	 */
-	private static byte[] wrapData(byte[] data, int length) {
+	private static byte[] wrapData(byte[] data, int length, boolean putRandom) {
 		ByteBuffer buffer = ByteBuffer.allocate(length);
 		if (data.length >= length)
 			buffer.put(data, 0, length);
 		else {
 			buffer.put(data);
 			byte[] rand = new byte[length - data.length];
-			try {
-				SecureRandom.getInstance("SHA1PRNG").nextBytes(rand);
-			} catch (NoSuchAlgorithmException e) {
+			if (putRandom) { 
+				try {
+					SecureRandom.getInstance("SHA1PRNG").nextBytes(rand);
+				} catch (NoSuchAlgorithmException e) {
+				}
+			} else {
+				for (int i = 0; i < rand.length; ++i)
+					rand[i] = 0;
 			}
 			buffer.put(rand);
 		}
@@ -44,11 +49,11 @@ public class AesCbc {
 	 * @param key			Encryption key
 	 * @return
 	 */
-	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key) {
+	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key, boolean alignWithRandom) {
 		// set up AES
 		AesAlgorithm aesAlgorithm = new AesAlgorithm();
 		aesAlgorithm.setKey(key);
-		return encrypt(data, iv, aesAlgorithm);
+		return encrypt(data, iv, aesAlgorithm, alignWithRandom);
 	}
 
 	/**
@@ -58,10 +63,10 @@ public class AesCbc {
 	 * @param aesAlgorithm			AES class instance
 	 * @return
 	 */
-	static byte[] encrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm) {
+	static byte[] encrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm, boolean alignWithRandom) {
 		// align with random data to AES_BLOCKSIZE bytes
 		if (data.length % AES_BLOCKSIZE != 0)
-			data = wrapData(data, (data.length / AES_BLOCKSIZE + 1) * AES_BLOCKSIZE);
+			data = wrapData(data, (data.length / AES_BLOCKSIZE + 1) * AES_BLOCKSIZE, alignWithRandom);
 		
 		byte[] result = new byte[data.length];
 		byte[] buffer, buffer2;
