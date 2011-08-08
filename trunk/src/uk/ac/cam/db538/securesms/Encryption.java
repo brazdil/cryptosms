@@ -4,8 +4,10 @@ import java.nio.ByteBuffer;
 import java.security.*;
 
 public class Encryption {
+	public static final int IV_LENGTH = 16;
+	public static final int MAC_LENGTH = 32;
 	public static final int KEY_LENGTH = 32;
-	public static final int ENCRYPTION_OVERHEAD = 2 * KEY_LENGTH;
+	public static final int ENCRYPTION_OVERHEAD = IV_LENGTH + MAC_LENGTH;
 
 	//private static final String ENCRYPTION_ALGORITHM = "PBEWithSHA256And256BitAES-CBC-BC";
 	private static final String HASHING_ALGORITHM = "SHA-256";
@@ -42,8 +44,8 @@ public class Encryption {
 	public static byte[] encryptSymmetric(byte[] data, byte[] key) {
 		ByteBuffer result = ByteBuffer.allocate(data.length + ENCRYPTION_OVERHEAD);
 		// IV
-		for (int i = 0; i < ENCRYPTION_OVERHEAD / 4; i++)
-			result.putShort((short) 0x4956);
+		for (int i = 0; i < IV_LENGTH; i++)
+			result.put((byte) 0x49);
 		// MAC
 		result.put(getHash(data));
 		// DATA
