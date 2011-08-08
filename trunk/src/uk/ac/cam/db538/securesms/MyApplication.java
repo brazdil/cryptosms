@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.securesms;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
 import uk.ac.cam.db538.securesms.receivers.DataSmsReceiver;
@@ -14,8 +15,13 @@ import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
 import android.app.Application;
 import android.app.Notification;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
+import android.os.Looper;
 
 public class MyApplication extends Application {
 	private static short SMS_PORT; 
@@ -31,8 +37,27 @@ public class MyApplication extends Application {
 		return SMS_PORT;
 	}
 
-	private Notification mNotification;
-	private PKIwrapper mPKI;
+	private Notification mNotification = null;
+	private PKIwrapper mPki = null;
+	private ArrayList<ProgressDialog> mPkiWaitingDialogs = new ArrayList<ProgressDialog>();
+	
+	//private final Context mContext = this.getApplicationContext();
+	private ConnectionListener onPkiConnect;
+
+	private void initPki() {
+		if (mPki != null) return;
+		
+		try {
+			mPki = new PKIwrapper(this.getApplicationContext());
+		} catch (InterruptedException e1) {
+			// ignore
+		}
+		try {
+			if (mPki != null) mPki.connect(onPkiConnect);
+		} catch (PKInotInstalledException e) {
+			mPki = null;
+		}
+	}
 
 	@Override
 	public void onCreate() {
@@ -47,15 +72,14 @@ public class MyApplication extends Application {
 		String tickerText = res.getString(R.string.notification_ticker);
 		long when = System.currentTimeMillis();
 		mNotification = new Notification(icon, tickerText, when);
-		
-		//TODO: Test whether PKI uses AES-256 by checking these:
-		// http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc-256
-		
-		mPKI = new PKIwrapper(context);
-		try {
-			mPKI.connect(new ConnectionListener() {
+	
+		onPkiConnect = new ConnectionListener() {
 				@Override
 				public void onConnect() {
+					for (ProgressDialog pd : mPkiWaitingDialogs)
+						pd.cancel();
+					mPkiWaitingDialogs.clear();
+					
 					//TODO: Just For Testing!!!
 					File file = new File("/data/data/uk.ac.cam.db538.securesms/files/storage.db");
 					if (file.exists())
@@ -114,40 +138,76 @@ public class MyApplication extends Application {
 						keys6.saveToFile();
 					} catch (Exception ex) {
 					}
-				}
+				}		
 
 				@Override
 				public void onConnectionDeclined() {
 					// TODO Auto-generated method stub
 					
 				}
-
 				@Override
 				public void onConnectionFailed() {
 					// TODO Auto-generated method stub
 					
 				}
-
 				@Override
 				public void onConnectionTimeout() {
 					// TODO Auto-generated method stub
 					
 				}
-
 				@Override
 				public void onDisconnect() {
-					// TODO Auto-generated method stub
-					
+					mPki = null;
 				}
-				
-			});
-		} catch (PKInotInstalledException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		};
+		initPki();
+		
+		//TODO: Test whether PKI uses AES-256 by checking these:
+		// http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc-256
 	}
 	
 	public Notification getNotification() {
 		return mNotification;
+	}
+	
+	public PKIwrapper getPki() {
+		return mPki;
+	}
+	
+	public boolean checkPki() {
+		initPki();
+		return mPki != null;  
+	}
+	
+	public interface OnPkiAvailableListener {
+		public void OnPkiAvailable();
+	}
+	
+	public void waitForPki(Context context, final OnPkiAvailableListener listener) {
+	    if (mPki != null) {
+	    	if (mPki.isConnected()) {
+	    		listener.OnPkiAvailable();
+	    	} else {
+	    		Resources res = context.getResources();
+	    		ProgressDialog pd = new ProgressDialog(context);
+	    		pd.setCancelable(false);
+	    		pd.setTitle(res.getString(R.string.pki_waiting_title));
+	    		pd.setMessage(res.getString(R.string.pki_waiting_details));
+	    		pd.setOnCancelListener(new OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						listener.OnPkiAvailable();
+					}
+				});
+	    		mPkiWaitingDialogs.add(pd);
+	    		if (mPki.isConnected())
+	    			mPkiWaitingDialogs.remove(pd);
+	    		else
+	    			pd.show();
+	    	}
+	    } else {
+			Intent intent = new Intent(context, PkiInstallDialog.class);
+			context.startActivity(intent);
+	    }
 	}
 }

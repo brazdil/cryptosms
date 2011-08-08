@@ -487,6 +487,12 @@
     <string name="notification_ticker">New message</string>
     <string name="notification_title">Secure SMS</string>
     <string name="notification_text">New messages</string>
+    <string name="pki_install_message">Secure SMS is dependant on the Public Key Infrastructure project, which is currently not installed on your device.</string>
+    <string name="quit">Quit</string>
+    <string name="pki_install_title">PKI unavailable</string>
+    <string name="try_again">Try again</string>
+    <string name="pki_waiting_title">Waiting for PKI</string>
+    <string name="pki_waiting_details">Connecting to the PKI...</string>
 
 </resources>
 

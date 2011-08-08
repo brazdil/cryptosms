@@ -274,6 +274,5 @@ public class TabContacts extends ListActivity {
 	
     public void onResume() {
     	super.onResume();
-    	checkResources();
     }
 }

@@ -1,17 +1,10 @@
 package uk.ac.cam.db538.securesms.receivers;
 
-import java.util.ArrayList;
-
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
-import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.Message;
 import uk.ac.cam.db538.securesms.data.Pending;
-import uk.ac.cam.db538.securesms.data.TextMessage;
-import uk.ac.cam.db538.securesms.data.Message.MessageException;
-import uk.ac.cam.db538.securesms.data.Message.MessageType;
 import uk.ac.cam.db538.securesms.ui.MainTabActivity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -33,7 +26,7 @@ public class DataSmsReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Resources res = context.getResources();
+	    Resources res = context.getResources();
 		
 		if (intent.getAction().equals(SMS_RECEIVED)) {
 			// check the port number

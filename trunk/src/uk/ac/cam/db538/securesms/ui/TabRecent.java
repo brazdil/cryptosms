@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.MyApplication.OnPkiAvailableListener;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.Header;
@@ -26,6 +28,7 @@ public class TabRecent extends ListActivity {
 		
 	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();;
 	private ArrayAdapter<Conversation> mAdapterRecent;
+	private Context mContext = this;
 	
 	private void updateContacts() throws StorageFileException, IOException {
 		mRecent.clear();
@@ -58,55 +61,68 @@ public class TabRecent extends ListActivity {
         // set appearance of list view
 		listView.setFastScrollEnabled(true);
 		
-        try {
-        	// initialize the list of conversations
-        	updateContacts();
-        	// create the adapter
-        	final ArrayAdapter<Conversation> adapterContacts = new ArrayAdapter<Conversation>(this, R.layout.item_main_contacts, mRecent) {
-        		@Override
-				public View getView(int position, View convertView, ViewGroup parent) {
-					TabRecentItem row;
+    	// create the adapter
+    	final ArrayAdapter<Conversation> adapterContacts = new ArrayAdapter<Conversation>(this, R.layout.item_main_contacts, mRecent) {
+    		@Override
+			public View getView(int position, View convertView, ViewGroup parent) {
+				TabRecentItem row;
 
-					if (convertView == null)
-						row = (TabRecentItem) inflater.inflate(R.layout.item_main_recent, listView, false);
-					else
-						row = (TabRecentItem) convertView;
-				    
-					row.bind(getItem(position));
-					return row;
+				if (convertView == null)
+					row = (TabRecentItem) inflater.inflate(R.layout.item_main_recent, listView, false);
+				else
+					row = (TabRecentItem) convertView;
+			    
+				row.bind(getItem(position));
+				return row;
+			}
+		};
+    	// add listeners			
+    	Conversation.addUpdateListener(new ConversationUpdateListener() {
+			public void onUpdate() {
+				try {
+					updateContacts();
+					adapterContacts.notifyDataSetChanged();
+				} catch (StorageFileException ex) {
+					Utils.dialogDatabaseError(context, ex);
+				} catch (IOException ex) {
+					Utils.dialogIOError(context, ex);
 				}
-			};
-        	// add listeners			
-        	Conversation.addUpdateListener(new ConversationUpdateListener() {
-				public void onUpdate() {
-					try {
-						updateContacts();
-						adapterContacts.notifyDataSetChanged();
-					} catch (StorageFileException ex) {
-						Utils.dialogDatabaseError(context, ex);
-					} catch (IOException ex) {
-						Utils.dialogIOError(context, ex);
-					}
-				}
-			});
-        	// set adapter
-        	mAdapterRecent = adapterContacts;
-			setListAdapter(mAdapterRecent);
-			// specify what to do when clicked on items
-			listView.setOnItemClickListener(new OnItemClickListener() {
-				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
-					TabRecentItem item = (TabRecentItem) view;
-					Conversation conv;
-		    		if ((conv = item.getConversationHeader()) != null) {
-			    		// clicked on a conversation
-	    				startConversation(conv);
-		    		}
-				}
-			});
-		} catch (StorageFileException ex) {
-			Utils.dialogDatabaseError(this, ex);
-		} catch (IOException ex) {
-			Utils.dialogIOError(this, ex);
-		}
+			}
+		});
+    	// set adapter
+    	mAdapterRecent = adapterContacts;
+		// specify what to do when clicked on items
+		listView.setOnItemClickListener(new OnItemClickListener() {
+			public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
+				TabRecentItem item = (TabRecentItem) view;
+				Conversation conv;
+	    		if ((conv = item.getConversationHeader()) != null) {
+		    		// clicked on a conversation
+    				startConversation(conv);
+	    		}
+			}
+		});
     }
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		setListAdapter(null);
+		MyApplication.getSingleton().waitForPki(this, mPkiAvailableListener);
+	}
+	
+	private OnPkiAvailableListener mPkiAvailableListener = new OnPkiAvailableListener() {
+		@Override
+		public void OnPkiAvailable() {
+	        try {
+	        	// initialize the list of conversations
+	        	updateContacts();
+			} catch (StorageFileException ex) {
+				Utils.dialogDatabaseError(mContext, ex);
+			} catch (IOException ex) {
+				Utils.dialogIOError(mContext, ex);
+			}
+			setListAdapter(mAdapterRecent);
+		}
+	};
 }

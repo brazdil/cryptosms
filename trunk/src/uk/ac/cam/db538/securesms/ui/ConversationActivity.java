@@ -2,7 +2,9 @@ package uk.ac.cam.db538.securesms.ui;
 
 import java.io.IOException;
 
+import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.MyApplication.OnPkiAvailableListener;
 import uk.ac.cam.db538.securesms.data.Contact;
 import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
 import uk.ac.cam.db538.securesms.data.SimCard;
@@ -50,7 +52,7 @@ public class ConversationActivity extends Activity {
     private TextView mRemainsView;
     
     private boolean errorNoKeysShow;
-
+    
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.screen_conversation);
@@ -221,6 +223,15 @@ public class ConversationActivity extends Activity {
 	
 	public void onResume() {
 		super.onResume();
-		checkResources();
+        modeEnabled(false);
+		MyApplication.getSingleton().waitForPki(this, mOnPkiAvailable);
 	}
+	
+	private OnPkiAvailableListener mOnPkiAvailable = new OnPkiAvailableListener() {
+		@Override
+		public void OnPkiAvailable() {
+			checkResources();
+			// TODO: load messages...
+		}
+	};
 }
