@@ -211,7 +211,7 @@ class AesAlgorithm {
     byte [] a = new byte[BLOCK_SIZE];    // AES state variable
     byte [] ta = new byte[BLOCK_SIZE];    // AES temp state variable
     byte [] Ker;                // encrypt keys for current round
-    int    i, j, k, row, col;
+    int    i, k, row, col;
 
     traceInfo = "";                // reset trace info
     if (traceLevel > 0) traceInfo = "encryptAES(" + Util.toHEX1(plain) + ")";
@@ -305,7 +305,7 @@ class AesAlgorithm {
     byte [] a = new byte[BLOCK_SIZE];    // AES state variable
     byte [] ta = new byte[BLOCK_SIZE];    // AES temp state variable
     byte [] Kdr;                // encrypt keys for current round
-    int    i, j, k, row, col;
+    int    i, k, row, col;
 
     traceInfo = "";                // reset trace info
     if (traceLevel > 0) traceInfo = "decryptAES(" + Util.toHEX1(cipher) + ")";
