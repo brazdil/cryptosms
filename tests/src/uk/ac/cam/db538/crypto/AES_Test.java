@@ -48,17 +48,6 @@ public class AES_Test extends TestCase {
 			);
 	}
 	
-	private void assertEncryptionCBC(AesAlgorithm aesAlgorithm, byte[] testData, byte[] iv, byte[] expectedResult) {
-		CustomAsserts.assertArrayEquals(
-			AesCbc.encrypt(testData, iv, aesAlgorithm, true, false),
-			expectedResult
-			);
-		CustomAsserts.assertArrayEquals(
-				AesCbc.decrypt(expectedResult, iv, aesAlgorithm, false),
-				testData
-				);
-	}
-
 	private void assertEncryptionCBC(byte[] key, byte[] testData, byte[] iv, byte[] expectedResult) {
 		CustomAsserts.assertArrayEquals(
 			AesCbc.encrypt(testData, iv, key, true, false),
@@ -93,26 +82,21 @@ public class AES_Test extends TestCase {
 		assertEncryptionECB(aesAlgorithm, DATA4, HEX("23304b7a39f9f3ff067d8d8f9e24ecc7"));
 
 		// AES/CBC
-		aesAlgorithm.setKey(KEY_128);
-		assertEncryptionCBC(aesAlgorithm, DATA1, IV1, HEX("7649abac8119b246cee98e9b12e9197d"));
-		assertEncryptionCBC(aesAlgorithm, DATA2, IV2, HEX("5086cb9b507219ee95db113a917678b2"));
-		assertEncryptionCBC(aesAlgorithm, DATA3, IV3, HEX("73bed6b8e3c1743b7116e69e22229516"));
-		assertEncryptionCBC(aesAlgorithm, DATA4, IV4, HEX("3ff1caa1681fac09120eca307586e1a7"));
+		assertEncryptionCBC(KEY_128, DATA1, IV1, HEX("7649abac8119b246cee98e9b12e9197d"));
+		assertEncryptionCBC(KEY_128, DATA2, IV2, HEX("5086cb9b507219ee95db113a917678b2"));
+		assertEncryptionCBC(KEY_128, DATA3, IV3, HEX("73bed6b8e3c1743b7116e69e22229516"));
+		assertEncryptionCBC(KEY_128, DATA4, IV4, HEX("3ff1caa1681fac09120eca307586e1a7"));
 		
-		aesAlgorithm.setKey(KEY_192);
-		assertEncryptionCBC(aesAlgorithm, DATA1, IV1, HEX("4f021db243bc633d7178183a9fa071e8"));
-		assertEncryptionCBC(aesAlgorithm, DATA2, IV5, HEX("b4d9ada9ad7dedf4e5e738763f69145a"));
-		assertEncryptionCBC(aesAlgorithm, DATA3, IV6, HEX("571b242012fb7ae07fa9baac3df102e0"));
-		assertEncryptionCBC(aesAlgorithm, DATA4, IV7, HEX("08b0e27988598881d920a9e64f5615cd"));
+		assertEncryptionCBC(KEY_192, DATA1, IV1, HEX("4f021db243bc633d7178183a9fa071e8"));
+		assertEncryptionCBC(KEY_192, DATA2, IV5, HEX("b4d9ada9ad7dedf4e5e738763f69145a"));
+		assertEncryptionCBC(KEY_192, DATA3, IV6, HEX("571b242012fb7ae07fa9baac3df102e0"));
+		assertEncryptionCBC(KEY_192, DATA4, IV7, HEX("08b0e27988598881d920a9e64f5615cd"));
 
-		aesAlgorithm.setKey(KEY_256);
-		assertEncryptionCBC(aesAlgorithm, DATA1, IV1, HEX("f58c4c04d6e5f1ba779eabfb5f7bfbd6"));
-		assertEncryptionCBC(aesAlgorithm, DATA2, IV8, HEX("9cfc4e967edb808d679f777bc6702c7d"));
-		assertEncryptionCBC(aesAlgorithm, DATA3, IV9, HEX("39f23369a9d9bacfa530e26304231461"));
-		assertEncryptionCBC(aesAlgorithm, DATA4, IV10, HEX("b2eb05e2c39be9fcda6c19078c6a9d1b"));
-	}
-	
-	public void testAES_2() {
+		assertEncryptionCBC(KEY_256, DATA1, IV1, HEX("f58c4c04d6e5f1ba779eabfb5f7bfbd6"));
+		assertEncryptionCBC(KEY_256, DATA2, IV8, HEX("9cfc4e967edb808d679f777bc6702c7d"));
+		assertEncryptionCBC(KEY_256, DATA3, IV9, HEX("39f23369a9d9bacfa530e26304231461"));
+		assertEncryptionCBC(KEY_256, DATA4, IV10, HEX("b2eb05e2c39be9fcda6c19078c6a9d1b"));
+
 		byte[] KEY, IV, PLAINTEXT;
 		
 		// 128-bit AES CBC
@@ -155,7 +139,7 @@ public class AES_Test extends TestCase {
 		assertEncryptionCBC(HEX("fca02f3d5011cfc5c1e23165d413a049d4526a991827424d896fe3435e0bf68e"), PLAINTEXT, IV, HEX("179a49c712154bbffbe6e7a84a18e220"));
 	}
 	
-	public void testAES3() {
+	public void testAES_MoreBlocks() {
 		// Case #1: Encrypting 16 bytes (1 block) using AES-CBC with 128-bit key
 		assertEncryptionCBC(HEX("06a9214036b8a15b512e03d534120006"), 
 		                    Charset.toAscii8("Single block msg"), 
@@ -181,7 +165,7 @@ public class AES_Test extends TestCase {
                             HEX("c30e32ffedc0774e6aff6af0869f71aa0f3af07a9a31a9c684db207eb0ef8e4e35907aa632c3ffdf868bb7b29d3d46ad83ce9f9a102ee99d49a53e87f4c3da55"));
 	}
 	
-	public void testAES4() {
+	public void testAES_UnalignedData() {
 		byte[] testData, encryptedData, decryptedData;
 		byte[] iv = Encryption.generateRandomData(Encryption.IV_LENGTH);
 		byte[] key = Encryption.generateRandomData(Encryption.KEY_LENGTH);
