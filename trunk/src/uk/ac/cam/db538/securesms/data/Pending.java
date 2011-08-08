@@ -86,7 +86,7 @@ public class Pending {
 				// init
 				int textsFound = 1;
 				int totalDataLength = dataLength + Encryption.ENCRYPTION_OVERHEAD;
-				int toCopy, index;
+				int index;
 				byte[] dataEncrypted = new byte[totalDataLength];
 				
 				// get all message parts with the same ID

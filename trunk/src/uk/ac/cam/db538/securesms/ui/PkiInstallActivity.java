@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms;
+package uk.ac.cam.db538.securesms.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -7,19 +7,24 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.R.id;
+import uk.ac.cam.db538.securesms.R.layout;
+import uk.ac.cam.db538.securesms.R.string;
 import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
 
-public class PkiInstallDialog extends Activity {
+public class PkiInstallActivity extends Activity {
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_pki_install);
 		setTitle(R.string.pki_install_title);
 		
-		final PkiInstallDialog context = this;
+		final PkiInstallActivity context = this;
 		final Resources res = context.getResources();
 		
 		Button buttonMarket = (Button)findViewById(R.id.pki_install_button_market);
@@ -44,8 +49,9 @@ public class PkiInstallDialog extends Activity {
 		buttonTryAgain.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (MyApplication.getSingleton().checkPki())
+				if (MyApplication.getSingleton().checkPki()) {
 					context.simulateBackPressed();
+				}
 			}
 		});
 	}

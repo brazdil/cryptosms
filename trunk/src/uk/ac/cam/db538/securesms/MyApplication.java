@@ -3,13 +3,12 @@ package uk.ac.cam.db538.securesms;
 import java.io.File;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
-import uk.ac.cam.db538.securesms.receivers.DataSmsReceiver;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.Storage;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.securesms.ui.PkiInstallActivity;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
@@ -21,7 +20,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
-import android.os.Looper;
+import android.util.Log;
+import android.widget.Toast;
 
 public class MyApplication extends Application {
 	private static short SMS_PORT; 
@@ -53,7 +53,10 @@ public class MyApplication extends Application {
 			// ignore
 		}
 		try {
-			if (mPki != null) mPki.connect(onPkiConnect);
+			if (mPki != null) {
+				mPki.setTimeout(60);
+				mPki.connect(onPkiConnect);
+			}
 		} catch (PKInotInstalledException e) {
 			mPki = null;
 		}
@@ -76,6 +79,7 @@ public class MyApplication extends Application {
 		onPkiConnect = new ConnectionListener() {
 				@Override
 				public void onConnect() {
+					Log.d("SECURESMS", "onConnect");
 					for (ProgressDialog pd : mPkiWaitingDialogs)
 						pd.cancel();
 					mPkiWaitingDialogs.clear();
@@ -143,21 +147,23 @@ public class MyApplication extends Application {
 				@Override
 				public void onConnectionDeclined() {
 					// TODO Auto-generated method stub
+					Log.d("SECURESMS", "onConnectionDeclined");
 					
 				}
 				@Override
 				public void onConnectionFailed() {
 					// TODO Auto-generated method stub
-					
+					Log.d("SECURESMS", "onConnectionFailed");
 				}
 				@Override
 				public void onConnectionTimeout() {
 					// TODO Auto-generated method stub
-					
+					Log.d("SECURESMS", "onConnectionTimeout");
 				}
 				@Override
 				public void onDisconnect() {
 					mPki = null;
+					Log.d("SECURESMS", "onDisconnect");
 				}
 		};
 		initPki();
@@ -206,7 +212,7 @@ public class MyApplication extends Application {
 	    			pd.show();
 	    	}
 	    } else {
-			Intent intent = new Intent(context, PkiInstallDialog.class);
+			Intent intent = new Intent(context, PkiInstallActivity.class);
 			context.startActivity(intent);
 	    }
 	}

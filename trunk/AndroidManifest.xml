@@ -19,7 +19,7 @@
            		<data android:port="@integer/presets_data_sms_port" />
        		</intent-filter>
         </receiver>
-        <activity android:name=".PkiInstallDialog" />
+        <activity android:name=".ui.PkiInstallActivity" />
 		<activity android:name=".ui.MainTabActivity" android:label="@string/app_label">        
     		<intent-filter>
     			<action android:name="android.intent.action.MAIN"></action>
