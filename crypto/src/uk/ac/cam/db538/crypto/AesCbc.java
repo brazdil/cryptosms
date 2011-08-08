@@ -42,29 +42,23 @@ public class AesCbc {
 		return result;
 	}
 	
+	private static AesAlgorithm mAes = null;
+	
 	/**
 	 * Encrypts data with AES/CBC encryption.
-	 * @param data			Data to encrypt
-	 * @param iv			Initialisation vector
-	 * @param key			Encryption key
+	 * @param data				Data to encrypt
+	 * @param iv				Initialisation vector
+	 * @param key				Encryption key
+	 * @param alignWithRandom	If true, puts random data at the end to align to AES block size. Otherwise puts zeros.
+	 * @param storeLength		If true, stores the length of data used to align to AES block size as one extra byte at the end.
 	 * @return
 	 */
 	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key, boolean alignWithRandom, boolean storeLength) {
 		// set up AES
-		AesAlgorithm aesAlgorithm = new AesAlgorithm();
-		aesAlgorithm.setKey(key);
-		return encrypt(data, iv, aesAlgorithm, alignWithRandom, storeLength);
-	}
+		if (mAes == null)
+			mAes = new AesAlgorithm();
+		mAes.setKey(key);
 
-	/**
-	 * Encrypts data with AES/CBC encryption.
-	 * @param data			Data to encrypt
-	 * @param iv			Initialisation vector
-	 * @param aesAlgorithm			AES class instance
-	 * @return
-	 */
-	static byte[] encrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm, boolean alignWithRandom, boolean storeLength) {
-		// align with random data to AES_BLOCKSIZE bytes
 		int lengthCrap = (AES_BLOCKSIZE - data.length % AES_BLOCKSIZE) % AES_BLOCKSIZE; 
 		if (lengthCrap != 0)
 			data = wrapData(data, data.length + lengthCrap, alignWithRandom);
@@ -78,7 +72,7 @@ public class AesCbc {
 			// apply IV
 			buffer = xor(buffer, iv);
 			// encrypt
-			buffer2 = aesAlgorithm.encrypt(buffer);
+			buffer2 = mAes.encrypt(buffer);
 			// copy to result
 			System.arraycopy(buffer2, 0, result, AES_BLOCKSIZE * i, AES_BLOCKSIZE);
 			// IV is now the previous result
@@ -90,29 +84,21 @@ public class AesCbc {
 		
 		return result;
 	}
-	
+
 	/**
 	 * Decrypts data with AES/CBC algorithm
-	 * @param data
-	 * @param iv
-	 * @param key
+	 * @param data			Data to encrypt
+	 * @param iv			Initialisation vector
+	 * @param key			Encryption key
+	 * @param lengthStored	Indicates whether the last byte holds the length of random data used to align to AES block size.
 	 * @return
 	 */
 	public static byte[] decrypt(byte[] data, byte[] iv, byte[] key, boolean lengthStored) {
 		// set up AES
-		AesAlgorithm aesAlgorithm = new AesAlgorithm();
-		aesAlgorithm.setKey(key);
-		return decrypt(data, iv, aesAlgorithm, lengthStored);
-	}
+		if (mAes == null)
+			mAes = new AesAlgorithm();
+		mAes.setKey(key);
 
-	/**
-	 * Decrypts data with AES/CBC algorithm
-	 * @param data
-	 * @param iv
-	 * @param aesAlgorithm
-	 * @return
-	 */
-	static byte[] decrypt(byte[] data, byte[] iv, AesAlgorithm aesAlgorithm, boolean lengthStored) {
 		int lengthCrap = (lengthStored) ? data[data.length - 1] : 0;
 		int length = (lengthStored) ? data.length - lengthCrap - 1 : data.length;
 		byte[] result = new byte[length];
@@ -125,7 +111,7 @@ public class AesCbc {
 			// get this block of data
 			System.arraycopy(data, AES_BLOCKSIZE * i, buffer, 0, AES_BLOCKSIZE);
 			// decrypt
-			decrypted = aesAlgorithm.decrypt(buffer);
+			decrypted = mAes.decrypt(buffer);
 			// apply iv
 			xored = xor(decrypted, iv);
 			// copy to result
