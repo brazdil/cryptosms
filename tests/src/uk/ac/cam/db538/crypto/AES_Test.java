@@ -49,7 +49,7 @@ public class AES_Test extends TestCase {
 	
 	private void assertEncryptionCBC(AesAlgorithm aesAlgorithm, byte[] testData, byte[] iv, byte[] expectedResult) {
 		CustomAsserts.assertArrayEquals(
-			AesCbc.encrypt(testData, iv, aesAlgorithm),
+			AesCbc.encrypt(testData, iv, aesAlgorithm, true),
 			expectedResult
 			);
 		CustomAsserts.assertArrayEquals(
@@ -60,7 +60,7 @@ public class AES_Test extends TestCase {
 
 	private void assertEncryptionCBC(byte[] key, byte[] testData, byte[] iv, byte[] expectedResult) {
 		CustomAsserts.assertArrayEquals(
-			AesCbc.encrypt(testData, iv, key),
+			AesCbc.encrypt(testData, iv, key, true),
 			expectedResult
 			);
 		CustomAsserts.assertArrayEquals(
