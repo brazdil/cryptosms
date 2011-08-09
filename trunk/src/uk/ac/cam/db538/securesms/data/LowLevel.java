@@ -2,7 +2,7 @@ package uk.ac.cam.db538.securesms.data;
 
 import java.nio.ByteBuffer;
 
-import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
 
 public class LowLevel {
 	/**
@@ -101,7 +101,7 @@ public class LowLevel {
 			buffer.put(data, 0, length);
 		else {
 			buffer.put(data);
-			buffer.put(Encryption.generateRandomData(length - data.length));
+			buffer.put(Encryption.getSingleton().generateRandomData(length - data.length));
 		}
 		return buffer.array();
 	}
@@ -120,5 +120,35 @@ public class LowLevel {
 			return result;
 		} else
 			return new byte[0];
+	}
+
+	/**
+	 * Takes string containing HEX data and returns byte array that represents it
+	 * @param s
+	 * @return
+	 */
+	public static byte[] fromHex(String s) {
+	    int len = s.length();
+	    byte[] data = new byte[len / 2];
+	    for (int i = 0; i < len; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+	                             + Character.digit(s.charAt(i+1), 16));
+	    }
+	    return data;
+	}
+	
+	private static char[] hexChars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+	/**
+	 * Turns byte array into string containing HEX of all the bytes   
+	 * @param data
+	 * @return
+	 */
+	public static String toHex(byte[] data) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < data.length; ++i) {
+			builder.append(hexChars[(data[i] & 0xF0) >> 4]);
+			builder.append(hexChars[data[i] & 0x0F]);
+		}
+		return builder.toString();
 	}
 }

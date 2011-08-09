@@ -3,6 +3,11 @@ package uk.ac.cam.db538.securesms;
 import java.io.File;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.crypto.AesCbc;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.SimCard;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
@@ -12,7 +17,11 @@ import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import uk.ac.cam.db538.securesms.ui.PkiInstallActivity;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 import android.app.Application;
 import android.app.Notification;
 import android.app.ProgressDialog;
@@ -27,6 +36,7 @@ import android.widget.Toast;
 public class MyApplication extends Application {
 	private static short SMS_PORT; 
 	public static final int NOTIFICATION_ID = 1;
+	public static final String APP_TAG = "SECURESMS";
 	
 	private static MyApplication mSingleton;
 	
@@ -80,11 +90,24 @@ public class MyApplication extends Application {
 		onPkiConnect = new ConnectionListener() {
 				@Override
 				public void onConnect() {
-					Log.d("SECURESMS", "onConnect");
+					Log.i(APP_TAG, "onConnect");
 					for (ProgressDialog pd : mPkiWaitingDialogs)
 						pd.cancel();
 					mPkiWaitingDialogs.clear();
 					
+					// Check whether there is already a Master Key
+					// and generate a new one if not
+					try {
+						EncryptionInterface crypto = Encryption.getSingleton();
+						crypto.generateMasterKey();
+						Log.d(APP_TAG, "Master Key: " + LowLevel.toHex(crypto.getMasterKey()));
+						if (!crypto.testEncryption())
+							throw new EncryptionException();
+					} catch (EncryptionException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
+
 					//TODO: Just For Testing!!!
 					File file = new File("/data/data/uk.ac.cam.db538.securesms/files/storage.db");
 					if (file.exists())
@@ -148,29 +171,26 @@ public class MyApplication extends Application {
 				@Override
 				public void onConnectionDeclined() {
 					// TODO Auto-generated method stub
-					Log.d("SECURESMS", "onConnectionDeclined");
+					Log.d(APP_TAG, "onConnectionDeclined");
 					
 				}
 				@Override
 				public void onConnectionFailed() {
 					// TODO Auto-generated method stub
-					Log.d("SECURESMS", "onConnectionFailed");
+					Log.d(APP_TAG, "onConnectionFailed");
 				}
 				@Override
 				public void onConnectionTimeout() {
 					// TODO Auto-generated method stub
-					Log.d("SECURESMS", "onConnectionTimeout");
+					Log.d(APP_TAG, "onConnectionTimeout");
 				}
 				@Override
 				public void onDisconnect() {
 					mPki = null;
-					Log.d("SECURESMS", "onDisconnect");
+					Log.d(APP_TAG, "onDisconnect");
 				}
 		};
 		initPki();
-		
-		//TODO: Test whether PKI uses AES-256 by checking these:
-		// http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc-256
 	}
 	
 	public Notification getNotification() {

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.Encryption;
-import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 
 /**
@@ -279,8 +279,8 @@ class Empty {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
-				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			} catch (WrongKeyException e) {
+				dataPlain = Encryption.getSingleton().decryptSymmetricWithMasterKey(dataEncrypted);
+			} catch (EncryptionException e) {
 				throw new StorageFileException(e);
 			}
 			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
@@ -316,9 +316,14 @@ class Empty {
 	 */
 	public void saveToFile(boolean lockAllow) throws StorageFileException, IOException {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
-		entryBuffer.put(Encryption.generateRandomData(OFFSET_NEXTINDEX));
+		entryBuffer.put(Encryption.getSingleton().generateRandomData(OFFSET_NEXTINDEX));
 		entryBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
-		byte[] dataEncrypted = Encryption.encryptSymmetric(entryBuffer.array(), Encryption.retreiveEncryptionKey());
+		byte[] dataEncrypted = null;
+		try {
+			dataEncrypted = Encryption.getSingleton().encryptSymmetricWithMasterKey(entryBuffer.array());
+		} catch (EncryptionException e) {
+			throw new StorageFileException(e);
+		}
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lockAllow);
 	}
 

@@ -3,8 +3,8 @@ package uk.ac.cam.db538.securesms.storage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import uk.ac.cam.db538.securesms.Encryption;
-import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 
 /**
@@ -21,7 +21,9 @@ public class Header {
 	
 	// FILE FORMAT
 	private static final int LENGTH_PLAIN_HEADER = 4;
-	private static final int LENGTH_ENCRYPTED_HEADER = Storage.ENCRYPTED_ENTRY_SIZE - LENGTH_PLAIN_HEADER;
+	private static final int LENGTH_RANDOM_STUFF = Encryption.AES_BLOCK_LENGTH - LENGTH_PLAIN_HEADER; 	// for alignment
+	private static final int OFFSET_ENCRYPTED_HEADER = LENGTH_PLAIN_HEADER + LENGTH_RANDOM_STUFF;  
+	private static final int LENGTH_ENCRYPTED_HEADER = Storage.ENCRYPTED_ENTRY_SIZE - OFFSET_ENCRYPTED_HEADER;
 	private static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
 
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
@@ -124,11 +126,11 @@ public class Header {
 
 			// decrypt rest of  data
 			byte[] dataEncrypted = new byte[LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD];
-			System.arraycopy(dataAll, LENGTH_PLAIN_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD);
+			System.arraycopy(dataAll, OFFSET_ENCRYPTED_HEADER, dataEncrypted, 0, LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD);
 			byte[] dataPlain;
 			try {
-				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			} catch (WrongKeyException e) {
+				dataPlain = Encryption.getSingleton().decryptSymmetricWithMasterKey(dataEncrypted);
+			} catch (EncryptionException e) {
 				throw new StorageFileException(e);
 			}
 			
@@ -164,7 +166,7 @@ public class Header {
 	 */
 	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
-		headerBuffer.put(Encryption.generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
+		headerBuffer.put(Encryption.getSingleton().generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexEmpty())); 
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexConversations()));
 		
@@ -173,7 +175,12 @@ public class Header {
 		headerBufferEncrypted.put((byte) 0x4D); // M
 		headerBufferEncrypted.put((byte) 0x53); // S
 		headerBufferEncrypted.put((byte) (this.getVersion() & 0xFF)); // version
-		headerBufferEncrypted.put(Encryption.encryptSymmetric(headerBuffer.array(), Encryption.retreiveEncryptionKey()));
+		headerBufferEncrypted.put(Encryption.getSingleton().generateRandomData(LENGTH_RANDOM_STUFF)); // random stuff
+		try {
+			headerBufferEncrypted.put(Encryption.getSingleton().encryptSymmetricWithMasterKey(headerBuffer.array()));
+		} catch (EncryptionException e) {
+			throw new StorageFileException(e);
+		}
 		
 		Storage.getDatabase().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
 	}

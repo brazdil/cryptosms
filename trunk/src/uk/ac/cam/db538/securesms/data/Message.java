@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.telephony.SmsManager;
 
 import uk.ac.cam.db538.securesms.MyApplication;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
@@ -121,8 +122,8 @@ public abstract class Message {
     	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, null);
     }
           
-    public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException;
-    public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, IOException, MessageException;
+    public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException, EncryptionException;
+    public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, IOException, MessageException, EncryptionException;
     
     public static MessageType getMessageType(byte[] data) {
     	byte headerType = (byte) (data[0] & 0xC0); // takes first two bits only

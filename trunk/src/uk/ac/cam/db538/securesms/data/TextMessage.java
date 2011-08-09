@@ -12,8 +12,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.telephony.SmsManager;
 
-import uk.ac.cam.db538.securesms.Encryption;
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
@@ -94,7 +95,11 @@ public class TextMessage extends Message {
 		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
 		while (totalBytes <= data.length)
 			totalBytes += LENGTH_PART_MESSAGEBODY;
-		data = Encryption.encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
+		try {
+			data = Encryption.getSingleton().encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
+		} catch (EncryptionException e1) {
+			throw new MessageException(e1.getMessage());
+		}
 
 		// first message (always)
 		byte header = HEADER_MESSAGE_FIRST;
@@ -161,6 +166,7 @@ public class TextMessage extends Message {
 	 * @throws MessageException 
 	 */
 	public static int computeNumberOfMessageParts(int dataLength) throws MessageException {
+		dataLength = Encryption.getSingleton().getAlignedLength(dataLength);
 		int count = 1; 
 		int remains = dataLength - LENGTH_FIRST_MESSAGEBODY;
 		while (remains > 0) {
@@ -178,10 +184,22 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int remainingBytesInLastMessagePart(CompressedText text) {
-		int len = text.getDataLength() - LENGTH_FIRST_MESSAGEBODY;
-		while (len > 0)
-			len -= LENGTH_PART_MESSAGEBODY;
-		return -len;
+		int length = text.getDataLength();
+		
+		int inThisMessage = length - LENGTH_FIRST_MESSAGEBODY;
+		while (inThisMessage > 0)
+			inThisMessage -= LENGTH_PART_MESSAGEBODY;
+		inThisMessage = -inThisMessage;
+
+		int untilEndOfBlock = (Encryption.AES_BLOCK_LENGTH - (length % Encryption.AES_BLOCK_LENGTH)) % Encryption.AES_BLOCK_LENGTH;
+		int remainsBytes = inThisMessage - untilEndOfBlock;
+		if (remainsBytes < 0)
+			remainsBytes += LENGTH_PART_MESSAGEBODY;
+		int remainsBlocks = remainsBytes / Encryption.AES_BLOCK_LENGTH;
+			
+		int remainsReal = (remainsBlocks * Encryption.AES_BLOCK_LENGTH) + untilEndOfBlock;
+		
+		return remainsReal;
 	}
 
 	/**

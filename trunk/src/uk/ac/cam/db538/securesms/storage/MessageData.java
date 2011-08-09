@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import android.text.format.Time;
 
 import uk.ac.cam.db538.securesms.Charset;
-import uk.ac.cam.db538.securesms.Encryption;
-import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 import uk.ac.cam.db538.securesms.data.Message;
 
@@ -156,8 +156,8 @@ public class MessageData {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
-				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			} catch (WrongKeyException e) {
+				dataPlain = Encryption.getSingleton().decryptSymmetricWithMasterKey(dataEncrypted);
+			} catch (EncryptionException e) {
 				throw new StorageFileException(e);
 			}
 			
@@ -256,7 +256,7 @@ public class MessageData {
 		msgBuffer.put(LowLevel.wrapData(mMessageBody, LENGTH_MESSAGEBODY));
 
 		// random data
-		msgBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
+		msgBuffer.put(Encryption.getSingleton().generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
 		msgBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexParent)); 
@@ -264,7 +264,12 @@ public class MessageData {
 		msgBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexPrev));
 		msgBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
 		
-		byte[] dataEncrypted = Encryption.encryptSymmetric(msgBuffer.array(), Encryption.retreiveEncryptionKey());
+		byte[] dataEncrypted = null;
+		try {
+			dataEncrypted = Encryption.getSingleton().encryptSymmetricWithMasterKey(msgBuffer.array());
+		} catch (EncryptionException e) {
+			throw new StorageFileException(e);
+		}
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 

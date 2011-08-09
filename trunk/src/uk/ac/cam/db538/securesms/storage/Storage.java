@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import uk.ac.cam.db538.securesms.Encryption;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
 import android.content.Context;
 
 public final class Storage {

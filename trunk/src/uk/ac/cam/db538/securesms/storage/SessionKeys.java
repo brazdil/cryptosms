@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import android.telephony.PhoneNumberUtils;
 
 import uk.ac.cam.db538.securesms.Charset;
-import uk.ac.cam.db538.securesms.Encryption;
-import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.data.LowLevel;
 
 /**
@@ -194,8 +194,8 @@ public class SessionKeys {
 			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
-				dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
-			} catch (WrongKeyException e) {
+				dataPlain = Encryption.getSingleton().decryptSymmetricWithMasterKey(dataEncrypted);
+			} catch (EncryptionException e) {
 				throw new StorageFileException(e);
 			}
 
@@ -225,9 +225,9 @@ public class SessionKeys {
 			setKeysSent(false);
 			setKeysConfirmed(false);
 			setSimNumber(new SimNumber());
-			setSessionKey_Out(Encryption.generateRandomData(Encryption.KEY_LENGTH));
+			setSessionKey_Out(Encryption.getSingleton().generateRandomData(Encryption.KEY_LENGTH));
 			setNextID_Out((byte) 0x00);
-			setSessionKey_In(Encryption.generateRandomData(Encryption.KEY_LENGTH));
+			setSessionKey_In(Encryption.getSingleton().generateRandomData(Encryption.KEY_LENGTH));
 			setLastID_In((byte) 0x00);
 			setIndexParent(0L);
 			setIndexPrev(0L);
@@ -281,14 +281,19 @@ public class SessionKeys {
 		keysBuffer.put((byte) this.mLastID_In);
 		
 		// random data
-		keysBuffer.put(Encryption.generateRandomData(LENGTH_RANDOMDATA));
+		keysBuffer.put(Encryption.getSingleton().generateRandomData(LENGTH_RANDOMDATA));
 		
 		// indices
 		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexParent));
 		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexPrev));
 		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
 		
-		byte[] dataEncrypted = Encryption.encryptSymmetric(keysBuffer.array(), Encryption.retreiveEncryptionKey());
+		byte[] dataEncrypted = null;
+		try {
+			dataEncrypted = Encryption.getSingleton().encryptSymmetricWithMasterKey(keysBuffer.array());
+		} catch (EncryptionException e) {
+			throw new StorageFileException(e);
+		}
 		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
@@ -455,7 +460,7 @@ public class SessionKeys {
 		for (int i = 0; i < count; ++i) {
 			int id = LowLevel.getUnsignedByte(getNextID_Out()) + 1;
 			setNextID_Out(LowLevel.getBytesUnsignedByte(id));
-			setSessionKey_Out(Encryption.getHash(getSessionKey_Out()));
+			setSessionKey_Out(Encryption.getSingleton().getHash(getSessionKey_Out()));
 		}
 	}
 	
@@ -463,7 +468,7 @@ public class SessionKeys {
 		for (int i = 0; i < count; ++i) {
 			int id = LowLevel.getUnsignedByte(getLastID_In()) + 1;
 			setLastID_In(LowLevel.getBytesUnsignedByte(id));
-			setSessionKey_In(Encryption.getHash(getSessionKey_In()));
+			setSessionKey_In(Encryption.getSingleton().getHash(getSessionKey_In()));
 		}
 	}
 

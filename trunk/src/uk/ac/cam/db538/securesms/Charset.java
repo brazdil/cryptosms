@@ -3,6 +3,8 @@ package uk.ac.cam.db538.securesms;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import uk.ac.cam.db538.securesms.crypto.Encryption;
+
 
 public class Charset {
 	private static final String CHARSET_ASCII = "US-ASCII";
@@ -50,7 +52,7 @@ public class Charset {
 		if (latin.length < bufferLength) {
 			buffer.put(latin);
 			buffer.put((byte) 0x00);
-			buffer.put(Encryption.generateRandomData(bufferLength - latin.length - 1));
+			buffer.put(Encryption.getSingleton().generateRandomData(bufferLength - latin.length - 1));
 		}
 		else
 			buffer.put(latin, 0, bufferLength);
