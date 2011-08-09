@@ -128,9 +128,6 @@ public final class Encryption implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	public byte[] encryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
-		ByteBuffer result = ByteBuffer.allocate(data.length + ENCRYPTION_OVERHEAD);
-		// MAC
-		result.put(getHash(data));
 		// Encryption through PKI (prepends IV)
 		byte[] dataEncrypted = null;
 		try {
@@ -144,6 +141,11 @@ public final class Encryption implements EncryptionInterface {
 		} catch (NotConnectedException e1) {
 			throw new EncryptionException(e1);
 		}
+
+		ByteBuffer result = ByteBuffer.allocate(dataEncrypted.length + MAC_LENGTH);
+		// MAC
+		result.put(getHash(data));
+		// IV and data
 		result.put(dataEncrypted);
 		
 		return result.array();

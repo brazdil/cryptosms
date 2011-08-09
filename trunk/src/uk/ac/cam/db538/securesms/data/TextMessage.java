@@ -92,15 +92,18 @@ public class TextMessage extends Message {
 		
 		// get the data, add random data to fit the messages exactly and encrypt it
 		byte[] data = getStoredData();
-		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
-		while (totalBytes <= data.length)
-			totalBytes += LENGTH_PART_MESSAGEBODY;
 		try {
-			data = Encryption.getSingleton().encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
+			data = Encryption.getSingleton().encryptSymmetric(data, keys.getSessionKey_Out());
 		} catch (EncryptionException e1) {
 			throw new MessageException(e1.getMessage());
 		}
 
+		// wrap it to fit text messages 
+		int totalBytes = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
+		while (totalBytes <= data.length)
+			totalBytes += LENGTH_PART_MESSAGEBODY;
+		data = LowLevel.wrapData(data, totalBytes);
+		
 		// first message (always)
 		byte header = HEADER_MESSAGE_FIRST;
 		if (mStorage.getAscii())
