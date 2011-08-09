@@ -2,6 +2,8 @@ package uk.ac.cam.db538.securesms.ui;
 
 import java.io.IOException;
 
+import uk.ac.cam.db538.securesms.MyApplication;
+import uk.ac.cam.db538.securesms.MyApplication.OnPkiAvailableListener;
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
@@ -44,6 +46,14 @@ public class MainTabActivity extends TabActivity {
 	                      res.getDrawable(R.drawable.tab_contacts))
 	                  .setContent(intent);
 	    tabHost.addTab(specContacts);
+	    
+	    MyApplication.getSingleton().waitForPki(this, new OnPkiAvailableListener() {
+			@Override
+			public void OnPkiAvailable() {
+				// TODO: Check for incoming messages
+				
+			}
+		});
 	}
 	
 	public void onStart() {

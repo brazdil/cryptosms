@@ -187,14 +187,14 @@ public class Charset {
 		int posCompressed = 0;
 		int start = 7;
 		int temp;
-		for (int i = 0; i < bigLength; ++i) {
+		for (int i = 0; posCompressed < compressedData.length; ++i) {
 			if (start == 7) {
 				// only position where all the data fit in one byte
 				asciiData[i] = (byte) (((int) compressedData[offset + posCompressed] & 0xFF) >> 1);
 				start = 0;
 			} else {
 				temp = ((((int)compressedData[posCompressed++]) & 0xFF) << (6 - start)) & 0x7F;
-				if (start != 6)
+				if (start != 6 && posCompressed < compressedData.length)
 					temp |= ((((int)compressedData[posCompressed]) & 0xFF) >> (2 + start)) & 0x7F;
 				asciiData[i] = (byte) temp;
 				++start;

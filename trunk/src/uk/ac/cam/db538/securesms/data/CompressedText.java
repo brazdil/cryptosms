@@ -62,7 +62,7 @@ public class CompressedText {
 		if (msg.mCompression)
 			data = Compression.decompressZ(data);
 		if (msg.mCharset == TextCharset.ASCII)
-			msg.mString = Charset.fromAscii8(data);
+			msg.mString = (msg.mCompression) ? Charset.fromAscii8(data) : Charset.fromAscii7(data);
 		else
 			msg.mString = Charset.fromUnicode(data);
 		

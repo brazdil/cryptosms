@@ -720,25 +720,6 @@ public class Conversation implements Comparable<Conversation> {
 			return false;
 	}
 
-	/**
-	 * Returns formatted preview of the last message in conversation
-	 * @return
-	 */
-	public String getPreview() {
-		MessageData firstMessageData = null;
-		try {
-			firstMessageData = getFirstMessageData();
-		} catch (StorageFileException e) {
-		} catch (IOException e) {
-		}
-		
-		if (firstMessageData != null)
-			// TODO: FIX!!!
-			return "SHIT!!!"; //firstMessageData.getMessageBody();
-		else
-			return new String();
-	}
-
 	// STATIC FUNCTIONS
 
 	/**

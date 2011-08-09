@@ -17,9 +17,16 @@
 
 package uk.ac.cam.db538.securesms.ui;
 
+import java.io.IOException;
+import java.util.zip.DataFormatException;
+
 import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.securesms.data.CompressedText;
 import uk.ac.cam.db538.securesms.data.Contact;
+import uk.ac.cam.db538.securesms.data.TextMessage;
 import uk.ac.cam.db538.securesms.storage.Conversation;
+import uk.ac.cam.db538.securesms.storage.MessageData;
+import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -107,6 +114,30 @@ public class TabRecentItem extends RelativeLayout {
         }
         return buf;
     }*/
+	
+	private String getPreview(Conversation conv) {
+		MessageData firstMessageData = null;
+		try {
+			firstMessageData = conv.getFirstMessageData();
+		} catch (StorageFileException e) {
+		} catch (IOException e) {
+		}
+		
+		if (firstMessageData != null) {
+			TextMessage message = new TextMessage(firstMessageData);
+			CompressedText text = null;
+;			try {
+				text = message.getText();
+			} catch (StorageFileException e) {
+			} catch (IOException e) {
+			} catch (DataFormatException e) {
+			}
+			if (text != null)
+				return text.getMessage();
+		}
+		
+		return new String();
+	}
 
 
     public final void bind(final Conversation conv) {
@@ -116,7 +147,7 @@ public class TabRecentItem extends RelativeLayout {
         
         boolean hasError = false; 
         boolean hasNoEncryption = false;
-
+        
         setBackgroundDrawable(
         	(conv.getMarkedUnread()) ?
         		res.getDrawable(R.drawable.conversation_item_background_unread) :
@@ -141,7 +172,7 @@ public class TabRecentItem extends RelativeLayout {
 
     	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
         mFromView.setText(contact.getName());
-        mSubjectView.setText(conv.getPreview());
+        mSubjectView.setText(getPreview(conv));
 
     	Drawable avatarDrawable = contact.getAvatar(context, sDefaultContactImage);
         if (contact.existsInDatabase()) {

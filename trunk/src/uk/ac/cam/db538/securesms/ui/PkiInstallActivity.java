@@ -7,14 +7,10 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.R.id;
-import uk.ac.cam.db538.securesms.R.layout;
-import uk.ac.cam.db538.securesms.R.string;
 import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
 
 public class PkiInstallActivity extends Activity {

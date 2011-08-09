@@ -3,12 +3,12 @@ package uk.ac.cam.db538.securesms;
 import java.io.File;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.crypto.AesCbc;
 import uk.ac.cam.db538.securesms.crypto.Encryption;
 import uk.ac.cam.db538.securesms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.securesms.data.CompressedText;
 import uk.ac.cam.db538.securesms.data.LowLevel;
-import uk.ac.cam.db538.securesms.data.SimCard;
+import uk.ac.cam.db538.securesms.data.TextMessage;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
@@ -17,11 +17,7 @@ import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
 import uk.ac.cam.db538.securesms.ui.PkiInstallActivity;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 import android.app.Application;
 import android.app.Notification;
 import android.app.ProgressDialog;
@@ -31,7 +27,6 @@ import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.res.Resources;
 import android.util.Log;
-import android.widget.Toast;
 
 public class MyApplication extends Application {
 	private static short SMS_PORT; 
@@ -143,7 +138,8 @@ public class MyApplication extends Application {
 						keys5.saveToFile();
 						Conversation conv2 = Conversation.createConversation();
 						MessageData msg2 = MessageData.createMessageData(conv2);
-						//msg2.setMessageBody("You're a jerk!");
+						TextMessage txtmsg2 = new TextMessage(msg2);
+						txtmsg2.setText(CompressedText.createFromString("You're a jerk!"));
 						msg2.setUnread(false);
 						msg2.saveToFile();
 						conv2.setPhoneNumber("+20104544366");
