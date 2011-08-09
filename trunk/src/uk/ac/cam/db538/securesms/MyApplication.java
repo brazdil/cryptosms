@@ -135,6 +135,7 @@ public class MyApplication extends Application {
 						keys5.setSimNumber(new SimNumber("07572306095", false));
 						keys5.setKeysSent(true);
 						keys5.setKeysConfirmed(true);
+						keys5.setSessionKey_In(keys5.getSessionKey_Out().clone());
 						keys5.saveToFile();
 						Conversation conv2 = Conversation.createConversation();
 						MessageData msg2 = MessageData.createMessageData(conv2);

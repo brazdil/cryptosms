@@ -119,6 +119,18 @@ public class DbPendingAdapter {
 		return result;
 	}
 
+	public ArrayList<Pending> getAllEntries() {
+		Cursor cursor = mDatabase.query(DATABASE_TABLE, 
+				                        null,
+				                        null,
+				                        null,
+				                        null,
+				                        null,
+				                        null);
+		ArrayList<Pending> result = getPending(cursor);
+		return result;
+	}
+
 	public boolean updateEntry(Pending pending) {
 		return mDatabase.update(DATABASE_TABLE, getValues(pending), KEY_ID + "=" + pending.getRowIndex(), null) > 0;
 	}

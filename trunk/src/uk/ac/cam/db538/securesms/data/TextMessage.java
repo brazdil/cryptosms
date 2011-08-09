@@ -27,7 +27,7 @@ public class TextMessage extends Message {
 
 	// first part specific
 	private static final int LENGTH_FIRST_DATALENGTH = 2;
-	private static final int LENGTH_FIRST_ENCRYPTION = Encryption.ENCRYPTION_OVERHEAD;
+	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.ENCRYPTION_OVERHEAD;
 	
 	private static final int OFFSET_FIRST_DATALENGTH = OFFSET_ID + LENGTH_ID;
 	private static final int OFFSET_FIRST_ENCRYPTION = OFFSET_FIRST_DATALENGTH + LENGTH_FIRST_DATALENGTH;
@@ -92,17 +92,17 @@ public class TextMessage extends Message {
 		
 		// get the data, add random data to fit the messages exactly and encrypt it
 		byte[] data = getStoredData();
+		int alignedLength = Encryption.getSingleton().getAlignedLength(data.length);
+		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
+		while (totalBytes <= alignedLength)
+			totalBytes += LENGTH_PART_MESSAGEBODY;
+
 		try {
-			data = Encryption.getSingleton().encryptSymmetric(data, keys.getSessionKey_Out());
+			data = Encryption.getSingleton().encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
 		} catch (EncryptionException e1) {
 			throw new MessageException(e1.getMessage());
 		}
-
-		// wrap it to fit text messages 
-		int totalBytes = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
-		while (totalBytes <= data.length)
-			totalBytes += LENGTH_PART_MESSAGEBODY;
-		data = LowLevel.wrapData(data, totalBytes);
+		totalBytes += LENGTH_FIRST_ENCRYPTION; 
 		
 		// first message (always)
 		byte header = HEADER_MESSAGE_FIRST;
@@ -314,13 +314,16 @@ public class TextMessage extends Message {
 	}
 
 	/**
-	 * Expects encrypted data of a non-first part of text message 
+	 * Expects encrypted data of bot first and non-first part of text message 
 	 * and returns its index
 	 * @param data
 	 * @return
 	 */
 	public static int getMessageIndex(byte[] data) {
-		return LowLevel.getUnsignedByte(data[OFFSET_PART_INDEX]);
+		if (getMessageType(data) == MessageType.MESSAGE_FIRST)
+			return (short) 0;
+		else
+			return LowLevel.getUnsignedByte(data[OFFSET_PART_INDEX]);
 	}
 	
 	/**
