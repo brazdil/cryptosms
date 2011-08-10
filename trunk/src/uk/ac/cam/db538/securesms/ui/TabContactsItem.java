@@ -24,6 +24,7 @@ import uk.ac.cam.db538.securesms.data.Contact;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
+import uk.ac.cam.db538.securesms.storage.StorageUtils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -94,7 +95,7 @@ public class TabContactsItem extends RelativeLayout {
     	Resources res = context.getResources();
 
 		try {
-			SessionKeys keys = conv.getSessionKeysForSIM(context);
+			SessionKeys keys = StorageUtils.getSessionKeysForSIM(conv, context);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:

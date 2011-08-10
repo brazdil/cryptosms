@@ -4,10 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionPki;
 import uk.ac.cam.db538.securesms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.securesms.data.CompressedText;
-import uk.ac.cam.db538.securesms.data.LowLevel;
+import uk.ac.cam.db538.securesms.utils.CompressedText;
+import uk.ac.cam.db538.securesms.utils.LowLevel;
 import uk.ac.cam.db538.securesms.data.TextMessage;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
@@ -32,6 +33,7 @@ public class MyApplication extends Application {
 	private static short SMS_PORT; 
 	public static final int NOTIFICATION_ID = 1;
 	public static final String APP_TAG = "SECURESMS";
+	private static final String STORAGE_FILE_NAME = "storage.db";
 	
 	private static MyApplication mSingleton;
 	
@@ -81,11 +83,14 @@ public class MyApplication extends Application {
 		String tickerText = res.getString(R.string.notification_ticker);
 		long when = System.currentTimeMillis();
 		mNotification = new Notification(icon, tickerText, when);
+		
+		if (Encryption.getEncryption() == null)
+			Encryption.setEncryption(new EncryptionPki());
 	
 		onPkiConnect = new ConnectionListener() {
 				@Override
 				public void onConnect() {
-					Log.i(APP_TAG, "onConnect");
+					Log.d(APP_TAG, "onConnect");
 					for (ProgressDialog pd : mPkiWaitingDialogs)
 						pd.cancel();
 					mPkiWaitingDialogs.clear();
@@ -93,7 +98,7 @@ public class MyApplication extends Application {
 					// Check whether there is already a Master Key
 					// and generate a new one if not
 					try {
-						EncryptionInterface crypto = Encryption.getSingleton();
+						EncryptionInterface crypto = Encryption.getEncryption();
 						crypto.generateMasterKey();
 						Log.d(APP_TAG, "Master Key: " + LowLevel.toHex(crypto.getMasterKey()));
 						if (!crypto.testEncryption())
@@ -112,7 +117,8 @@ public class MyApplication extends Application {
 						file.delete();
 
 					try {
-						Storage.initSingleton(context);
+						String filename = context.getFilesDir().getAbsolutePath() + "/" + STORAGE_FILE_NAME;
+						Storage.initSingleton(filename);
 						Preferences.initSingleton(context);
 					} catch (Exception e) {
 						// TODO: show error dialog
@@ -224,10 +230,7 @@ public class MyApplication extends Application {
 					}
 				});
 	    		mPkiWaitingDialogs.add(pd);
-	    		if (mPki.isConnected())
-	    			mPkiWaitingDialogs.remove(pd);
-	    		else
-	    			pd.show();
+	    		pd.show();
 	    	}
 	    } else {
 			Intent intent = new Intent(context, PkiInstallActivity.class);

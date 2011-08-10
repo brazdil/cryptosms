@@ -16,7 +16,8 @@ import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.data.CompressedText;
+import uk.ac.cam.db538.securesms.storage.StorageUtils;
+import uk.ac.cam.db538.securesms.utils.CompressedText;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -190,7 +191,7 @@ public class ConversationActivity extends Activity {
 		    Resources res = getResources();
 			if (Utils.checkSimPhoneNumberAvailable(this)) {
 				// check keys availability
-		    	if (!Utils.hasKeysExchangedForSIM(this, mConversation)) {
+		    	if (!StorageUtils.hasKeysExchangedForSIM(this, mConversation)) {
 		    		if (errorNoKeysShow) {
 						// secure connection has not been successfully established yet
 						new AlertDialog.Builder(this)

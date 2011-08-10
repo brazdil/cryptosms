@@ -116,6 +116,7 @@ public class DbPendingAdapter {
 				                        null,
 				                        null);
 		ArrayList<Pending> result = getPending(cursor);
+		cursor.close();
 		return result;
 	}
 
@@ -128,6 +129,7 @@ public class DbPendingAdapter {
 				                        null,
 				                        null);
 		ArrayList<Pending> result = getPending(cursor);
+		cursor.close();
 		return result;
 	}
 

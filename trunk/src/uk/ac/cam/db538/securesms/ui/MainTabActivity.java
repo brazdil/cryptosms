@@ -9,7 +9,7 @@ import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.crypto.Encryption;
 import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
-import uk.ac.cam.db538.securesms.data.LowLevel;
+import uk.ac.cam.db538.securesms.utils.LowLevel;
 import uk.ac.cam.db538.securesms.data.Message.MessageException;
 import uk.ac.cam.db538.securesms.data.Message.MessageType;
 import uk.ac.cam.db538.securesms.data.Pending;
@@ -18,6 +18,7 @@ import uk.ac.cam.db538.securesms.data.Utils;
 import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.StorageUtils;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -84,7 +85,7 @@ public class MainTabActivity extends TabActivity {
 						// do we have Session Keys for this person?
 						SessionKeys keys = null;
 						try {
-							keys = Conversation.getConversation(pendingFirst.getSender()).getSessionKeysForSIM(context);
+							keys = StorageUtils.getSessionKeysForSIM(Conversation.getConversation(pendingFirst.getSender()), context);
 						} catch (StorageFileException e1) {
 						} catch (IOException e1) {
 						}
@@ -127,7 +128,7 @@ public class MainTabActivity extends TabActivity {
 									// decrypt it
 									byte[] dataDecrypted = null;
 									try {
-										dataDecrypted = Encryption.getSingleton().decryptSymmetric(dataEncrypted, keys.getSessionKey_In());
+										dataDecrypted = Encryption.getEncryption().decryptSymmetric(dataEncrypted, keys.getSessionKey_In());
 									} catch (EncryptionException e) {
 										// TODO: PROBABLY BAD KEY, but potentially problem with PKI 
 									}

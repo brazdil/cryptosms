@@ -13,6 +13,7 @@ import uk.ac.cam.db538.securesms.storage.Conversation;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 import uk.ac.cam.db538.securesms.storage.Header;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
+import uk.ac.cam.db538.securesms.storage.StorageUtils;
 import uk.ac.cam.db538.securesms.storage.Conversation.ConversationUpdateListener;
 import uk.ac.cam.db538.securesms.storage.SessionKeys.SessionKeysStatus;
 import android.app.Activity;
@@ -45,7 +46,7 @@ public class TabContacts extends ListActivity {
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			if (conv.getSessionKeysForSIM(this) != null)
+			if (StorageUtils.getSessionKeysForSIM(conv, this) != null)
 				mContacts.add(conv);
 			conv = conv.getNextConversation();
 		}
@@ -155,7 +156,7 @@ public class TabContacts extends ListActivity {
 		    		if ((conv = item.getConversationHeader()) != null) {
 			    		// clicked on a conversation
 						try {
-							SessionKeys keys = conv.getSessionKeysForSIM(context);
+							SessionKeys keys = StorageUtils.getSessionKeysForSIM(conv, context);
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
 						} catch (StorageFileException ex) {

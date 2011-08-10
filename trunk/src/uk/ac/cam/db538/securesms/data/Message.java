@@ -16,7 +16,6 @@ import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
 
 public abstract class Message {
-	public static final int LENGTH_MESSAGE = 133;
 	protected static final int LENGTH_HEADER = 1;
 	protected static final int OFFSET_HEADER = 0;
 

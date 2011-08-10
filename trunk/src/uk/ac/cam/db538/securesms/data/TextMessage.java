@@ -14,11 +14,16 @@ import android.telephony.SmsManager;
 
 import uk.ac.cam.db538.securesms.R;
 import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.securesms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.securesms.crypto.EncryptionPki;
 import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.securesms.data.CompressedText.TextCharset;
+import uk.ac.cam.db538.securesms.utils.CompressedText.TextCharset;
 import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.storage.SessionKeys;
 import uk.ac.cam.db538.securesms.storage.StorageFileException;
+import uk.ac.cam.db538.securesms.storage.StorageUtils;
+import uk.ac.cam.db538.securesms.utils.CompressedText;
+import uk.ac.cam.db538.securesms.utils.LowLevel;
 
 public class TextMessage extends Message {
 	// same for all parts
@@ -33,7 +38,7 @@ public class TextMessage extends Message {
 	private static final int OFFSET_FIRST_ENCRYPTION = OFFSET_FIRST_DATALENGTH + LENGTH_FIRST_DATALENGTH;
 	private static final int OFFSET_FIRST_MESSAGEBODY = OFFSET_FIRST_ENCRYPTION + LENGTH_FIRST_ENCRYPTION;
 	
-	public static final int LENGTH_FIRST_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
+	public static final int LENGTH_FIRST_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
 	
 	// following parts specific
 	private static final int LENGTH_PART_INDEX = 1;
@@ -41,7 +46,7 @@ public class TextMessage extends Message {
 	private static final int OFFSET_PART_INDEX = OFFSET_ID + LENGTH_ID;
 	private static final int OFFSET_PART_MESSAGEBODY = OFFSET_PART_INDEX + LENGTH_PART_INDEX;
 	
-	public static final int LENGTH_PART_MESSAGEBODY = LENGTH_MESSAGE - OFFSET_PART_MESSAGEBODY;
+	public static final int LENGTH_PART_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGEBODY;
 
 	public TextMessage(MessageData storage) {
 		super(storage);
@@ -82,23 +87,25 @@ public class TextMessage extends Message {
 	 * @throws MessageException 
 	 */
 	public ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException {
+		EncryptionInterface crypto = Encryption.getEncryption();
+		
 		ArrayList<byte[]> list = new ArrayList<byte[]>();
-		ByteBuffer buf = ByteBuffer.allocate(LENGTH_MESSAGE);
+		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
 		int index = 0, offset;
 		
-		SessionKeys keys =  mStorage.getParent().getSessionKeysForSIM(context);
+		SessionKeys keys =  StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
 		if (keys == null)
 			throw new MessageException("No keys found");
 		
 		// get the data, add random data to fit the messages exactly and encrypt it
 		byte[] data = getStoredData();
-		int alignedLength = Encryption.getSingleton().getAlignedLength(data.length);
+		int alignedLength = crypto.getAlignedLength(data.length);
 		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
 		while (totalBytes <= alignedLength)
 			totalBytes += LENGTH_PART_MESSAGEBODY;
 
 		try {
-			data = Encryption.getSingleton().encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
+			data = crypto.encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
 		} catch (EncryptionException e1) {
 			throw new MessageException(e1.getMessage());
 		}
@@ -120,7 +127,7 @@ public class TextMessage extends Message {
 		header = HEADER_MESSAGE_PART;
 		try {
 			while (true) {
-				buf = ByteBuffer.allocate(LENGTH_MESSAGE);
+				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
 				++index;
 				buf.put(header);
 				buf.put(keys.getNextID_Out());
@@ -169,7 +176,7 @@ public class TextMessage extends Message {
 	 * @throws MessageException 
 	 */
 	public static int computeNumberOfMessageParts(int dataLength) throws MessageException {
-		dataLength = Encryption.getSingleton().getAlignedLength(dataLength);
+		dataLength = Encryption.getEncryption().getAlignedLength(dataLength);
 		int count = 1; 
 		int remains = dataLength - LENGTH_FIRST_MESSAGEBODY;
 		while (remains > 0) {
@@ -282,7 +289,7 @@ public class TextMessage extends Message {
 								// it at least something was sent, increment the ID and session keys
 								SessionKeys keys;
 								try {
-									keys = mStorage.getParent().getSessionKeysForSIM(context);
+									keys = StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
 									keys.incrementOut(1);
 									keys.saveToFile();
 								} catch (StorageFileException e) {

@@ -5,41 +5,24 @@ import java.security.*;
 
 import android.util.Log;
 
-import uk.ac.cam.db538.securesms.Charset;
+import uk.ac.cam.db538.securesms.utils.Charset;
 import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.data.LowLevel;
+import uk.ac.cam.db538.securesms.utils.LowLevel;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 
-public final class Encryption implements EncryptionInterface {
-	public static final int IV_LENGTH = 16;
-	public static final int AES_BLOCK_LENGTH = 16;
-	public static final int MAC_LENGTH = 32;
-	public static final int KEY_LENGTH = 32;
-	public static final int ENCRYPTION_OVERHEAD = IV_LENGTH + MAC_LENGTH;
+public final class EncryptionPki implements EncryptionInterface {
 	private static final String KEY_STORAGE = "SECURESMS_MASTER_KEY";
-	
 	private static final String HASHING_ALGORITHM = "SHA-256";
-	
-	
-	// SINGLETON
-	
-	private static Encryption mSingleton = null;
 	
 	private SecureRandom mRandom = null;
 
-	private Encryption() {
+	public EncryptionPki() {
 	}
 	
-	public static EncryptionInterface getSingleton() {
-		if (mSingleton == null)
-			mSingleton = new Encryption();
-		return mSingleton;
-	}
-
 	// METHODS 
 	
 	/**
@@ -81,7 +64,7 @@ public final class Encryption implements EncryptionInterface {
 	 * @return
 	 */
 	public int getEncryptedLength(int length) {
-		return getAlignedLength(length) + ENCRYPTION_OVERHEAD;
+		return getAlignedLength(length) + Encryption.ENCRYPTION_OVERHEAD;
 	}
 	
 	/**
@@ -90,7 +73,7 @@ public final class Encryption implements EncryptionInterface {
 	 * @return
 	 */
 	public int getAlignedLength(int length) {
-		return length + (AES_BLOCK_LENGTH - (length % AES_BLOCK_LENGTH)) % AES_BLOCK_LENGTH;
+		return length + (Encryption.AES_BLOCK_LENGTH - (length % Encryption.AES_BLOCK_LENGTH)) % Encryption.AES_BLOCK_LENGTH;
 	}
 
 	/**
@@ -100,13 +83,13 @@ public final class Encryption implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
-		ByteBuffer result = ByteBuffer.allocate(data.length + ENCRYPTION_OVERHEAD);
+		ByteBuffer result = ByteBuffer.allocate(data.length + Encryption.ENCRYPTION_OVERHEAD);
 		// MAC
 		result.put(getHash(data));
 		// Encryption through PKI (prepends IV)
 		byte[] dataEncrypted = null;
 		try {
-			dataEncrypted = MyApplication.getSingleton().getPki().encryptSymmetric(data, KEY_STORAGE, generateRandomData(IV_LENGTH), true);
+			dataEncrypted = MyApplication.getSingleton().getPki().encryptSymmetric(data, KEY_STORAGE, generateRandomData(Encryption.IV_LENGTH), true);
 		} catch (TimeoutException e1) {
 			throw new EncryptionException(e1);
 		} catch (PKIErrorException e1) {
@@ -131,7 +114,7 @@ public final class Encryption implements EncryptionInterface {
 		// Encryption through PKI (prepends IV)
 		byte[] dataEncrypted = null;
 		try {
-			dataEncrypted = MyApplication.getSingleton().getPki().encryptSymmetric(data, key, generateRandomData(IV_LENGTH), true);
+			dataEncrypted = MyApplication.getSingleton().getPki().encryptSymmetric(data, key, generateRandomData(Encryption.IV_LENGTH), true);
 		} catch (TimeoutException e1) {
 			throw new EncryptionException(e1);
 		} catch (PKIErrorException e1) {
@@ -142,7 +125,7 @@ public final class Encryption implements EncryptionInterface {
 			throw new EncryptionException(e1);
 		}
 
-		ByteBuffer result = ByteBuffer.allocate(dataEncrypted.length + MAC_LENGTH);
+		ByteBuffer result = ByteBuffer.allocate(dataEncrypted.length + Encryption.MAC_LENGTH);
 		// MAC
 		result.put(getHash(data));
 		// IV and data
@@ -158,8 +141,8 @@ public final class Encryption implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
-		byte[] macSaved = LowLevel.cutData(data, 0, MAC_LENGTH);
-		byte[] dataEncrypted = LowLevel.cutData(data, MAC_LENGTH, data.length - MAC_LENGTH);
+		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
+		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.MAC_LENGTH, data.length - Encryption.MAC_LENGTH);
 		
 		// Decryption through PKI (removes IV)
 		byte[] dataDecrypted = null;
@@ -177,7 +160,7 @@ public final class Encryption implements EncryptionInterface {
 		byte[] macReal = getHash(dataDecrypted);
 		
 		boolean isCorrect = true;
-		for (int i = 0; i < MAC_LENGTH; ++i)
+		for (int i = 0; i < Encryption.MAC_LENGTH; ++i)
 			isCorrect = isCorrect && macSaved[i] == macReal[i];
 		if (isCorrect)
 			return dataDecrypted;
@@ -192,8 +175,8 @@ public final class Encryption implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
-		byte[] macSaved = LowLevel.cutData(data, 0, MAC_LENGTH);
-		byte[] dataEncrypted = LowLevel.cutData(data, MAC_LENGTH, data.length - MAC_LENGTH);
+		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
+		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.MAC_LENGTH, data.length - Encryption.MAC_LENGTH);
 		
 		// Decryption through PKI (removes IV)
 		byte[] dataDecrypted = null;
@@ -211,7 +194,7 @@ public final class Encryption implements EncryptionInterface {
 		byte[] macReal = getHash(dataDecrypted);
 		
 		boolean isCorrect = true;
-		for (int i = 0; i < MAC_LENGTH; ++i)
+		for (int i = 0; i < Encryption.MAC_LENGTH; ++i)
 			isCorrect = isCorrect && macSaved[i] == macReal[i];
 		if (isCorrect)
 			return dataDecrypted;
@@ -227,7 +210,7 @@ public final class Encryption implements EncryptionInterface {
 		try {
 			PKIwrapper pki = MyApplication.getSingleton().getPki();
 			if (!pki.hasDataStore(KEY_STORAGE))
-				pki.setDataStore(KEY_STORAGE, generateRandomData(KEY_LENGTH));
+				pki.setDataStore(KEY_STORAGE, generateRandomData(Encryption.KEY_LENGTH));
 		} catch (NotConnectedException e) {
 			throw new EncryptionException(e);
 		} catch (TimeoutException e) {

@@ -26,36 +26,6 @@ public class Utils {
 	private static boolean warningSIMNotPresent = false;
 	
 	/**
-	 * Tries to find session keys for this SIM and if it succeeds, 
-	 * returns whether they have been successfully exchanged.
-	 * @param context
-	 * @param conv
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv) throws StorageFileException, IOException {
-		return hasKeysExchangedForSIM(context, conv, true);
-	}
-
-	/**
-	 * Tries to find session keys for this SIM and if it succeeds, 
-	 * returns whether they have been successfully exchanged.
-	 * @param context
-	 * @param conv
-	 * @param lockAllow		Allow storage file locks
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv, boolean lockAllow) throws StorageFileException, IOException {
-		SessionKeys keys = conv.getSessionKeysForSIM(context, lockAllow);
-		if (keys == null)
-			return false;
-		return keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED;
-	}
-
-	/**
 	 * Checks whether there is a phone number available for this SIM card.
 	 * @param context
 	 * @return

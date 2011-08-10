@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.zip.DataFormatException;
 
 import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.data.CompressedText;
+import uk.ac.cam.db538.securesms.utils.CompressedText;
 import uk.ac.cam.db538.securesms.data.Contact;
 import uk.ac.cam.db538.securesms.data.TextMessage;
 import uk.ac.cam.db538.securesms.storage.Conversation;

@@ -5,6 +5,7 @@ import uk.ac.cam.db538.securesms.MyApplication;
 import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
 import uk.ac.cam.db538.securesms.data.Message;
 import uk.ac.cam.db538.securesms.data.Pending;
+import uk.ac.cam.db538.securesms.storage.MessageData;
 import uk.ac.cam.db538.securesms.ui.MainTabActivity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -47,7 +48,7 @@ public class DataSmsReceiver extends BroadcastReceiver {
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
-						if (data.length != Message.LENGTH_MESSAGE) {
+						if (data.length != MessageData.LENGTH_MESSAGE) {
 							// TODO: ERROR!!!
 						} else {
 							// get the sender
