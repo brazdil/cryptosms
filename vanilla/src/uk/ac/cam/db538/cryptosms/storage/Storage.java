@@ -7,8 +7,6 @@ import java.io.IOException;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 
 public final class Storage {
-	private static final String FILE_NAME = "storage.db";
-	
 	static final int CHUNK_SIZE = 256;
 	static final int ALIGN_SIZE = 256 * 32; // 8KB
 	static final int ENCRYPTED_ENTRY_SIZE = CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD;
