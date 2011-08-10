@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-package uk.ac.cam.db538.securesms.ui;
+package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.IOException;
 
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.data.Contact;
-import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import uk.ac.cam.db538.securesms.storage.StorageUtils;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 
 import android.content.Context;
 import android.content.res.Resources;

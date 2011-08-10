@@ -1,16 +1,16 @@
-package uk.ac.cam.db538.securesms.data;
+package uk.ac.cam.db538.cryptosms.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.Preferences;
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import uk.ac.cam.db538.securesms.storage.Storage;
-import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SessionKeysStatus;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.Preferences;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;

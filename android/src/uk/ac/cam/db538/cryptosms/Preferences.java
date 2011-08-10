@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms;
+package uk.ac.cam.db538.cryptosms;
 
 import android.app.Activity;
 import android.content.Context;

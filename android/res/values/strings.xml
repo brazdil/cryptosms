@@ -431,7 +431,7 @@
          changed -->
     <!-- For debugging: Dialog box text indicating there's a situation where data has unexpectedly
          changed -->
-    <string name="app_label">Secure SMS</string>
+    <string name="app_label">CryptoSMS</string>
     <string name="item_contacts_sending_keys">Sending handshake...</string>
     <string name="item_contacts_waiting_for_reply">Waiting for confirmation...</string>
     <string name="item_contacts_keys_exchanged">Encryption active</string><string name="item_contacts_sending_confirmation">Accepting handshake...</string>
@@ -485,9 +485,9 @@
     <string name="error_sending_null_pdu">Null PDU</string>
     <string name="error_sending_radio_off">Radio off</string>
     <string name="notification_ticker">New message</string>
-    <string name="notification_title">Secure SMS</string>
+    <string name="notification_title">CryptoSMS</string>
     <string name="notification_text">New messages</string>
-    <string name="pki_install_message">Secure SMS is dependant on the Public Key Infrastructure project, which is currently not installed on your device.</string>
+    <string name="pki_install_message">CryptoSMS is dependent on the Public Key Infrastructure project, which is currently not installed on your device.</string>
     <string name="quit">Quit</string>
     <string name="pki_install_title">PKI unavailable</string>
     <string name="try_again">Try again</string>

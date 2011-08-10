@@ -1,12 +1,12 @@
-package uk.ac.cam.db538.securesms.receivers;
+package uk.ac.cam.db538.cryptosms.receivers;
 
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.data.DbPendingAdapter;
-import uk.ac.cam.db538.securesms.data.Message;
-import uk.ac.cam.db538.securesms.data.Pending;
-import uk.ac.cam.db538.securesms.storage.MessageData;
-import uk.ac.cam.db538.securesms.ui.MainTabActivity;
+import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
+import uk.ac.cam.db538.cryptosms.data.Message;
+import uk.ac.cam.db538.cryptosms.data.Pending;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.ui.MainTabActivity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;

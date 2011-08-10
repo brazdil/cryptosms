@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.ui;
+package uk.ac.cam.db538.cryptosms.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,9 +9,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
+import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 
 public class PkiInstallActivity extends Activity {
 	

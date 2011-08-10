@@ -1,12 +1,15 @@
-package uk.ac.cam.db538.securesms.storage;
+package uk.ac.cam.db538.cryptosms.storage;
 
 import java.io.IOException;
 
 import android.content.Context;
 
-import uk.ac.cam.db538.securesms.data.SimCard;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SessionKeysStatus;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.data.SimCard;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 
 public class StorageUtils {
 

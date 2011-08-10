@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.cam.db538.securesms.ui;
+package uk.ac.cam.db538.cryptosms.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;

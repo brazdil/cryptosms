@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.data;
+package uk.ac.cam.db538.cryptosms.data;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,18 +12,18 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.telephony.SmsManager;
 
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.crypto.Encryption;
-import uk.ac.cam.db538.securesms.crypto.EncryptionInterface;
-import uk.ac.cam.db538.securesms.crypto.EncryptionPki;
-import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.securesms.utils.CompressedText.TextCharset;
-import uk.ac.cam.db538.securesms.storage.MessageData;
-import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.storage.StorageUtils;
-import uk.ac.cam.db538.securesms.utils.CompressedText;
-import uk.ac.cam.db538.securesms.utils.LowLevel;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
+import uk.ac.cam.db538.cryptosms.utils.CompressedText;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+import uk.ac.cam.db538.cryptosms.utils.CompressedText.TextCharset;
 
 public class TextMessage extends Message {
 	// same for all parts

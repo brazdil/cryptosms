@@ -1,21 +1,21 @@
-package uk.ac.cam.db538.securesms;
+package uk.ac.cam.db538.cryptosms;
 
 import java.io.File;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.crypto.Encryption;
-import uk.ac.cam.db538.securesms.crypto.EncryptionPki;
-import uk.ac.cam.db538.securesms.crypto.EncryptionInterface;
-import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.securesms.utils.CompressedText;
-import uk.ac.cam.db538.securesms.utils.LowLevel;
-import uk.ac.cam.db538.securesms.data.TextMessage;
-import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.MessageData;
-import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import uk.ac.cam.db538.securesms.storage.Storage;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
-import uk.ac.cam.db538.securesms.ui.PkiInstallActivity;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.ui.PkiInstallActivity;
+import uk.ac.cam.db538.cryptosms.utils.CompressedText;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
@@ -32,7 +32,7 @@ import android.util.Log;
 public class MyApplication extends Application {
 	private static short SMS_PORT; 
 	public static final int NOTIFICATION_ID = 1;
-	public static final String APP_TAG = "SECURESMS";
+	public static final String APP_TAG = "CRYPTOSMS";
 	private static final String STORAGE_FILE_NAME = "storage.db";
 	
 	private static MyApplication mSingleton;

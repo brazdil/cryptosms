@@ -1,6 +1,6 @@
-package uk.ac.cam.db538.securesms.data;
+package uk.ac.cam.db538.cryptosms.data;
 
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;

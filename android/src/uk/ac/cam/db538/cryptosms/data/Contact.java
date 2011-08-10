@@ -1,10 +1,10 @@
-package uk.ac.cam.db538.securesms.data;
+package uk.ac.cam.db538.cryptosms.data;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.R;
+import uk.ac.cam.db538.cryptosms.R;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;

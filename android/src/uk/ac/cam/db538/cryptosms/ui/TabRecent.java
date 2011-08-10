@@ -1,17 +1,17 @@
-package uk.ac.cam.db538.securesms.ui;
+package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.MyApplication.OnPkiAvailableListener;
-import uk.ac.cam.db538.securesms.data.Utils;
-import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.Header;
-import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.storage.Conversation.ConversationUpdateListener;
+import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.MyApplication.OnPkiAvailableListener;
+import uk.ac.cam.db538.cryptosms.data.Utils;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.Header;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationUpdateListener;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;

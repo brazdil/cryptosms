@@ -1,21 +1,21 @@
-package uk.ac.cam.db538.securesms.ui;
+package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.R;
-import uk.ac.cam.db538.securesms.data.Contact;
-import uk.ac.cam.db538.securesms.data.DummyOnClickListener;
-import uk.ac.cam.db538.securesms.data.SimCard;
-import uk.ac.cam.db538.securesms.data.SimCard.OnSimStateListener;
-import uk.ac.cam.db538.securesms.data.Utils;
-import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.storage.Header;
-import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import uk.ac.cam.db538.securesms.storage.StorageUtils;
-import uk.ac.cam.db538.securesms.storage.Conversation.ConversationUpdateListener;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SessionKeysStatus;
+import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
+import uk.ac.cam.db538.cryptosms.data.SimCard;
+import uk.ac.cam.db538.cryptosms.data.Utils;
+import uk.ac.cam.db538.cryptosms.data.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.Header;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
+import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationUpdateListener;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;

@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.data;
+package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
 

@@ -1,13 +1,15 @@
-package uk.ac.cam.db538.securesms.crypto;
+package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.nio.ByteBuffer;
 import java.security.*;
 
 import android.util.Log;
 
-import uk.ac.cam.db538.securesms.utils.Charset;
-import uk.ac.cam.db538.securesms.MyApplication;
-import uk.ac.cam.db538.securesms.utils.LowLevel;
+import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.cryptosms.utils.Charset;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
