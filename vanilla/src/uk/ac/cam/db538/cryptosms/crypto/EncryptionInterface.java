@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.crypto;
+package uk.ac.cam.db538.cryptosms.crypto;
 
 public interface EncryptionInterface {
 	public static class WrongKeyException extends Exception {

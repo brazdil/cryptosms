@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.crypto;
+package uk.ac.cam.db538.cryptosms.crypto;
 
 public class Encryption {
 	public static final int IV_LENGTH = 16;

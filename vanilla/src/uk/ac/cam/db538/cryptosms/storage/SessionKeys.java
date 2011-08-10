@@ -1,14 +1,14 @@
-package uk.ac.cam.db538.securesms.storage;
+package uk.ac.cam.db538.cryptosms.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.securesms.crypto.Encryption;
-import uk.ac.cam.db538.securesms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.securesms.utils.Charset;
-import uk.ac.cam.db538.securesms.utils.LowLevel;
-import uk.ac.cam.db538.securesms.utils.PhoneNumber;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.utils.Charset;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+import uk.ac.cam.db538.cryptosms.utils.PhoneNumber;
 
 /**
  * 

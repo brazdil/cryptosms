@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.cam.db538.securesms.utils;
+package uk.ac.cam.db538.cryptosms.utils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

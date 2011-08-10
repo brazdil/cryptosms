@@ -1,10 +1,10 @@
-package uk.ac.cam.db538.securesms.storage;
+package uk.ac.cam.db538.cryptosms.storage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 
 public final class Storage {
 	private static final String FILE_NAME = "storage.db";

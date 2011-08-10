@@ -1,9 +1,9 @@
-package uk.ac.cam.db538.securesms.utils;
+package uk.ac.cam.db538.cryptosms.utils;
 
 import java.util.zip.DataFormatException;
 
-import uk.ac.cam.db538.securesms.utils.Charset;
-import uk.ac.cam.db538.securesms.utils.Compression;
+import uk.ac.cam.db538.cryptosms.utils.Charset;
+import uk.ac.cam.db538.cryptosms.utils.Compression;
 
 public class CompressedText {
 	public enum TextCharset {

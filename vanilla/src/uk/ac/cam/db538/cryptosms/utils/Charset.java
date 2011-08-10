@@ -1,9 +1,9 @@
-package uk.ac.cam.db538.securesms.utils;
+package uk.ac.cam.db538.cryptosms.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
-import uk.ac.cam.db538.securesms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 
 
 public class Charset {

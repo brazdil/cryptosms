@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.storage;
+package uk.ac.cam.db538.cryptosms.storage;
 
 import java.io.File;
 import java.io.IOException;

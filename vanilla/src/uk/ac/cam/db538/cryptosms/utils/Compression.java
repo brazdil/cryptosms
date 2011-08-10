@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.utils;
+package uk.ac.cam.db538.cryptosms.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
