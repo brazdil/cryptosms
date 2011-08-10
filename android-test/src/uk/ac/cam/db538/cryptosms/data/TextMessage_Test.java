@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.securesms.data;
+package uk.ac.cam.db538.cryptosms.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,21 +8,25 @@ import android.content.Context;
 import android.test.mock.MockContext;
 
 import junit.framework.TestCase;
-import uk.ac.cam.db538.securesms.CustomAsserts;
-import uk.ac.cam.db538.securesms.Encryption;
-import uk.ac.cam.db538.securesms.Encryption.WrongKeyException;
-import uk.ac.cam.db538.securesms.data.Message.MessageException;
-import uk.ac.cam.db538.securesms.storage.Common;
-import uk.ac.cam.db538.securesms.storage.Conversation;
-import uk.ac.cam.db538.securesms.storage.MessageData;
-import uk.ac.cam.db538.securesms.storage.SessionKeys;
-import uk.ac.cam.db538.securesms.storage.StorageFileException;
-import uk.ac.cam.db538.securesms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.CustomAsserts;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
+import uk.ac.cam.db538.cryptosms.storage.Common;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.utils.CompressedText;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
-public class TextMessage_Test  extends TestCase {
+public class TextMessage_Test extends TestCase {
 	
 	protected void setUp() throws Exception {
 		super.setUp();
+		EncryptionNone.initEncryption();
 		Common.clearStorageFile();
 	}
 
@@ -74,7 +78,7 @@ public class TextMessage_Test  extends TestCase {
 		}*/
 	}
 	
-	public void testSMSData() throws StorageFileException, IOException, MessageException, WrongKeyException {
+	public void testSMSData() throws StorageFileException, IOException, MessageException, EncryptionException {
 		Context context = new MockContext();
 		Conversation conv = Conversation.createConversation();
 		TextMessage msg = new TextMessage(MessageData.createMessageData(conv));
@@ -99,7 +103,7 @@ public class TextMessage_Test  extends TestCase {
 		assertEquals(data.get(0)[0], headerFirstShort); // header
 		assertEquals(data.get(0)[1], nextID_Out); // ID
 		assertEquals(LowLevel.getUnsignedShort(data.get(0), 2), textShort.getDataLength()); // data length
-		byte[] dataDecrypted = Encryption.decryptSymmetric(LowLevel.cutData(data.get(0), 4, 129), keys.getSessionKey_Out());
+		byte[] dataDecrypted = Encryption.getEncryption().decryptSymmetric(LowLevel.cutData(data.get(0), 4, 129), keys.getSessionKey_Out());
 		assertEquals(dataDecrypted.length, 81);
 		CustomAsserts.assertArrayEquals(LowLevel.cutData(dataDecrypted, 0, textShort.getDataLength()), textShort.getData());
 		
@@ -122,7 +126,7 @@ public class TextMessage_Test  extends TestCase {
 			assertEquals(data.get(i)[2], LowLevel.getBytesUnsignedByte(i)); // index
 			System.arraycopy(data.get(i), 3, dataEncrypted, 81 + Encryption.ENCRYPTION_OVERHEAD + (i - 1) * 130, 130);
 		}
-		dataDecrypted = Encryption.decryptSymmetric(dataEncrypted, keys.getSessionKey_Out());
+		dataDecrypted = Encryption.getEncryption().decryptSymmetric(dataEncrypted, keys.getSessionKey_Out());
 		assertEquals(dataDecrypted.length, totalBytes);
 		CustomAsserts.assertArrayEquals(LowLevel.cutData(dataDecrypted, 0, textLong.getDataLength()), textLong.getData());
 		
