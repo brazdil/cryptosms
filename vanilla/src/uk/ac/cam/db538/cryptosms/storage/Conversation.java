@@ -164,7 +164,7 @@ public class Conversation implements Comparable<Conversation> {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -235,7 +235,7 @@ public class Conversation implements Comparable<Conversation> {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getDatabase().setEntry(this.mEntryIndex, dataEncrypted, lock);
+		Storage.getStorage().setEntry(this.mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
@@ -325,7 +325,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws StorageFileException, IOException {
-		Storage.getDatabase().lockFile(lockAllow);
+		Storage.getStorage().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexSessionKeys();
 			if (indexFirstInStack != 0) {
@@ -344,7 +344,7 @@ public class Conversation implements Comparable<Conversation> {
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Storage.getDatabase().unlockFile(lockAllow);	
+			Storage.getStorage().unlockFile(lockAllow);	
 		}
 	}
 
@@ -366,7 +366,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	void attachMessageData(MessageData msg, boolean lockAllow) throws StorageFileException, IOException {
-		Storage.getDatabase().lockFile(lockAllow);
+		Storage.getStorage().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexMessages();
 			if (indexFirstInStack != 0) {
@@ -385,7 +385,7 @@ public class Conversation implements Comparable<Conversation> {
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Storage.getDatabase().unlockFile(lockAllow);	
+			Storage.getStorage().unlockFile(lockAllow);	
 		}
 	}
 	
@@ -444,7 +444,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public void delete(boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -566,7 +566,7 @@ public class Conversation implements Comparable<Conversation> {
 			// no point in continuing
 			return;
 		
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -671,7 +671,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement, boolean lockAllow) throws StorageFileException, IOException {
-		Storage.getDatabase().lockFile(lockAllow);
+		Storage.getStorage().lockFile(lockAllow);
 		try {
 			Conversation conv = Header.getHeader(false).getFirstConversation(false);
 			while (conv != null) {
@@ -683,7 +683,7 @@ public class Conversation implements Comparable<Conversation> {
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Storage.getDatabase().unlockFile(lockAllow);
+			Storage.getStorage().unlockFile(lockAllow);
 		}
 		notifyUpdate();
 	}

@@ -129,7 +129,7 @@ class MessageDataPart {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -207,7 +207,7 @@ class MessageDataPart {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+		Storage.getStorage().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
@@ -289,7 +289,7 @@ class MessageDataPart {
 	 * @throws StorageFileException
 	 */
 	void delete(boolean lockAllow) throws IOException, StorageFileException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {

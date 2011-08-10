@@ -190,7 +190,7 @@ public class SessionKeys {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -293,7 +293,7 @@ public class SessionKeys {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+		Storage.getStorage().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
@@ -381,7 +381,7 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public void delete(boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {

@@ -21,7 +21,7 @@ public final class Storage {
 	 * @return instance of Database class
 	 * @throws StorageFileException
 	 */
-	public static Storage getDatabase() throws StorageFileException {
+	public static Storage getStorage() throws StorageFileException {
 		if (mSingleton == null) 
 			throw new StorageFileException("Database not initialized yet");
 		return mSingleton;
@@ -117,6 +117,10 @@ public final class Storage {
 	 */
 	public synchronized void unlockFile(boolean condition) throws IOException {
 		//if (condition) smsFile.unlock();
+	}
+	
+	public synchronized void closeFile() throws IOException {
+		smsFile.mFile.close();
 	}
 	
 	/**

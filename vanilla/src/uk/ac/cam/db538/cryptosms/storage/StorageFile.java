@@ -15,7 +15,6 @@ class StorageFile {
 	RandomAccessFile mFile;
 	FileLock mLock;
 
-	
 	StorageFile(String filename) throws IOException {
 		String directory = new File(filename).getParent();
 		new File(directory).mkdirs();

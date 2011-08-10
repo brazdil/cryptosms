@@ -50,7 +50,7 @@ class Empty {
 	 */
 	static Empty createEmpty(boolean lockAllow) throws StorageFileException, IOException {
 		// create a new one at the end of the file
-		Empty empty = new Empty(Storage.getDatabase().getEntriesCount(), false, lockAllow);
+		Empty empty = new Empty(Storage.getStorage().getEntriesCount(), false, lockAllow);
 		Header.getHeader(lockAllow).attachEmpty(empty, lockAllow);
 		return empty;
 	}
@@ -158,7 +158,7 @@ class Empty {
 	 * @throws WrongKeyException 
 	 */
 	static long[] getEmptyIndices(int count, boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		long[] indices = new long[count];
 		
 		db.lockFile(lockAllow);
@@ -212,7 +212,7 @@ class Empty {
 	 * @throws WrongKeyException 
 	 */
 	static void addEmptyEntries(int count, boolean lockAllow) throws IOException, StorageFileException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		db.lockFile(lockAllow);
 		try {
 			for (int i = 0; i < count; ++i) {
@@ -276,7 +276,7 @@ class Empty {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -324,7 +324,7 @@ class Empty {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lockAllow);
+		Storage.getStorage().setEntry(mEntryIndex, dataEncrypted, lockAllow);
 	}
 
 	/**

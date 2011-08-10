@@ -112,7 +112,7 @@ public class Header {
 	private Header(boolean readFromDisk, boolean lockAllow) throws StorageFileException, IOException {
 		if (readFromDisk) {
 			// read bytes from file
-			byte[] dataAll = Storage.getDatabase().getEntry(INDEX_HEADER, lockAllow);
+			byte[] dataAll = Storage.getStorage().getEntry(INDEX_HEADER, lockAllow);
 			
 			// check the first three bytes, looking for SMS in ASCII
 			if (dataAll[0] != (byte) 0x53 ||
@@ -182,7 +182,7 @@ public class Header {
 			throw new StorageFileException(e);
 		}
 		
-		Storage.getDatabase().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
+		Storage.getStorage().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
 	}
 	
 	/**
@@ -251,7 +251,7 @@ public class Header {
 	 * @throws StorageFileException
 	 */
 	void attachConversation(Conversation conv, boolean lockAllow) throws IOException, StorageFileException {
-		Storage.getDatabase().lockFile(lockAllow);
+		Storage.getStorage().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexConversations();
 			if (indexFirstInStack != 0) {
@@ -271,7 +271,7 @@ public class Header {
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Storage.getDatabase().unlockFile(lockAllow);	
+			Storage.getStorage().unlockFile(lockAllow);	
 		}
 	}
 
@@ -293,7 +293,7 @@ public class Header {
 	 * @throws StorageFileException
 	 */
 	void attachEmpty(Empty empty, boolean lockAllow) throws IOException, StorageFileException {
-		Storage.getDatabase().lockFile(lockAllow);
+		Storage.getStorage().lockFile(lockAllow);
 		try {
 			long indexFirstInStack = getIndexEmpty();
 			empty.setIndexNext(indexFirstInStack);
@@ -306,7 +306,7 @@ public class Header {
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Storage.getDatabase().unlockFile(lockAllow);	
+			Storage.getStorage().unlockFile(lockAllow);	
 		}
 	}
 

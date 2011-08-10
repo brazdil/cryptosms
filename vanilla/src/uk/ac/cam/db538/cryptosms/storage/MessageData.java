@@ -155,7 +155,7 @@ public class MessageData {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getDatabase().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -269,7 +269,7 @@ public class MessageData {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getDatabase().setEntry(mEntryIndex, dataEncrypted, lock);
+		Storage.getStorage().setEntry(mEntryIndex, dataEncrypted, lock);
 	}
 
 	/**
@@ -384,7 +384,7 @@ public class MessageData {
 	 * @throws StorageFileException
 	 */
 	void assignMessageDataParts(ArrayList<MessageDataPart> list, boolean lockAllow) throws IOException, StorageFileException {
-		Storage.getDatabase().lockFile(lockAllow);
+		Storage.getStorage().lockFile(lockAllow);
 		try {
 			// delete all previous message parts
 			long indexFirstInStack = getIndexMessageParts();
@@ -427,7 +427,7 @@ public class MessageData {
 		} catch (IOException ex) {
 			throw ex;
 		} finally {
-			Storage.getDatabase().unlockFile(lockAllow);	
+			Storage.getStorage().unlockFile(lockAllow);	
 		}
 	}
 	
@@ -447,7 +447,7 @@ public class MessageData {
 	 * @throws IOException
 	 */
 	public void delete(boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -512,7 +512,7 @@ public class MessageData {
 	 * Returns the data assigned to message part at given index
 	 */
 	public byte[] getPartData(int index, boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -556,7 +556,7 @@ public class MessageData {
 	 * @throws StorageFileException
 	 */
 	public void setNumberOfParts(int count, boolean lockAllow) throws IOException, StorageFileException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -624,7 +624,7 @@ public class MessageData {
 	 * @throws IOException
 	 */
 	private MessageDataPart getMessageDataPart(int index, boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -671,7 +671,7 @@ public class MessageData {
 	 * @throws StorageFileException
 	 */
 	public void setPartData(int index, byte[] data, boolean lockAllow) throws IOException, StorageFileException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		// if it's too long, just cut it
 		if (data.length > LENGTH_MESSAGEBODY)
@@ -715,7 +715,7 @@ public class MessageData {
 	 * @throws StorageFileException
 	 */
 	public boolean getPartDelivered(int index, boolean lockAllow) throws IOException, StorageFileException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
@@ -751,7 +751,7 @@ public class MessageData {
 	 * @throws StorageFileException
 	 */
 	public void setPartDelivered(int index, boolean delivered, boolean lockAllow) throws IOException, StorageFileException {
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		
 		db.lockFile(lockAllow);
 		try {
