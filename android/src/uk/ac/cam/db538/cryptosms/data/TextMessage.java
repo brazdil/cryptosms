@@ -386,6 +386,9 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int getExpectedDataOffset(int totalDataLength, int index) {
+		if (index == 0)
+			return 0;
+		
 		int prev = 0, count = LENGTH_FIRST_MESSAGEBODY;
 		while (count < totalDataLength) {
 			prev = count;

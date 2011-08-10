@@ -17,7 +17,6 @@ public class StorageUtils {
 	 * Tries to find session keys for this particular SIM,
 	 * either by phone number or (if not available) by SIM's serial number
 	 * @param context
-	 * @lockAllow		Allow to be locked
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
@@ -29,7 +28,7 @@ public class StorageUtils {
 		String simPhoneNumberString = SimCard.getSingleton().getSimPhoneNumber(context);
 		String simSerialString = SimCard.getSingleton().getSimSerialNumber(context);
 		SimNumber simSerial = new SimNumber(simSerialString, true);
-		SessionKeys keysSerial = conv.getSessionKeys(simSerial, false);
+		SessionKeys keysSerial = conv.getSessionKeys(simSerial);
 		
 		if (simPhoneNumberString == null || simPhoneNumberString.length() == 0) {
 			// no phone number, return keys for serial number or null
@@ -39,8 +38,8 @@ public class StorageUtils {
 			// try assigning all the (possible) keys assigned to 
 			// SIM serial to the phone number
 			if (keysSerial != null)
-				Conversation.changeAllSessionKeys(simSerial, simPhoneNumber, false);
-			result = conv.getSessionKeys(simPhoneNumber, false);
+				Conversation.changeAllSessionKeys(simSerial, simPhoneNumber);
+			result = conv.getSessionKeys(simPhoneNumber);
 		}
 		return result;
 	}
