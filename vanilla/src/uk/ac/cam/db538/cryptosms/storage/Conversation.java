@@ -61,21 +61,9 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public static Conversation createConversation() throws StorageFileException, IOException {
-		return createConversation(true);
-	}
-
-	/**
-	 * Returns instance of a new Conversation created in one of the empty spaces in file.
-	 * @lockAllow		Allow to lock the file
-	 * @return
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 * @throws WrongKeyException 
-	 */
-	public static Conversation createConversation(boolean lockAllow) throws StorageFileException, IOException {
 		// create a new one
-		Conversation conv = new Conversation(Empty.getEmptyIndex(lockAllow), false, lockAllow);
-		Header.getHeader(lockAllow).attachConversation(conv, lockAllow);
+		Conversation conv = new Conversation(Empty.getEmptyIndex(), false);
+		Header.getHeader().attachConversation(conv);
 		return conv;
 	}	
 	
@@ -85,21 +73,11 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public static Conversation getConversation(String phoneNumber) throws StorageFileException, IOException {
-		return getConversation(phoneNumber, true);
-	}
-
-	/**
-	 * Returns an instance of Conversation class with given index in file.
-	 * @param phoneNumber		Contacts phone number
-	 * @param lock		File lock allow
-	 * @throws WrongKeyException 
-	 */
-	public static Conversation getConversation(String phoneNumber, boolean lockAllow) throws StorageFileException, IOException {
-		Conversation conv = Header.getHeader(lockAllow).getFirstConversation(lockAllow);
+		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
 			if (PhoneNumber.compare(conv.getPhoneNumber(), phoneNumber))
 				return conv;
-			conv = conv.getNextConversation(lockAllow);
+			conv = conv.getNextConversation();
 		}
 		return null;
 	}
@@ -110,16 +88,6 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	static Conversation getConversation(long index) throws StorageFileException, IOException {
-		return getConversation(index, true);
-	}
-	
-	/**
-	 * Returns an instance of Conversation class with given index in file.
-	 * @param index		Index in file
-	 * @param lock		File lock allow
-	 * @throws WrongKeyException 
-	 */
-	static Conversation getConversation(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
@@ -131,7 +99,7 @@ public class Conversation implements Comparable<Conversation> {
 		}
 		
 		// create a new one
-		return new Conversation(index, true, lockAllow);
+		return new Conversation(index, true);
 	}
 	
 	/** 
@@ -141,7 +109,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public static void cacheAllConversations() throws IOException, StorageFileException {
-		Conversation convCurrent = Header.getHeader(false).getFirstConversation();
+		Conversation convCurrent = Header.getHeader().getFirstConversation();
 		while (convCurrent != null) 
 			convCurrent = convCurrent.getNextConversation();
 	}
@@ -157,14 +125,10 @@ public class Conversation implements Comparable<Conversation> {
 	// CONSTRUCTORS
 	
 	private Conversation(long index, boolean readFromFile) throws StorageFileException, IOException {
-		this(index, readFromFile, true);
-	}
-	
-	private Conversation(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -186,7 +150,7 @@ public class Conversation implements Comparable<Conversation> {
 			setIndexPrev(0L);
 			setIndexNext(0L);
 			
-			saveToFile(lockAllow);
+			saveToFile();
 		}
 
 		synchronized (cacheConversation) {
@@ -201,16 +165,6 @@ public class Conversation implements Comparable<Conversation> {
 	 * Saves data to the storage file.
 	 */
 	public void saveToFile() throws StorageFileException, IOException {
-		saveToFile(true);
-	}
-	
-	/**
-	 * Saves data to the storage file.
-	 * @param lock			Allow the file to be locked.
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer convBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -235,7 +189,7 @@ public class Conversation implements Comparable<Conversation> {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getStorage().setEntry(this.mEntryIndex, dataEncrypted, lock);
+		Storage.getStorage().setEntry(this.mEntryIndex, dataEncrypted);
 	}
 
 	/**
@@ -246,19 +200,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public Conversation getPreviousConversation() throws StorageFileException, IOException {
-		return getPreviousConversation(true);
-	}
-	
-	/**
-	 * Returns previous instance of Conversation in the double-linked list or null if this is the first.
-	 * @param lockAllow		Allow storage file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
-	 */
-	public Conversation getPreviousConversation(boolean lockAllow) throws StorageFileException, IOException {
-		return Conversation.getConversation(mIndexPrev, lockAllow);
+		return Conversation.getConversation(mIndexPrev);
 	}
 
 	/**
@@ -269,19 +211,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public Conversation getNextConversation() throws StorageFileException, IOException {
-		return getNextConversation(true);
-	}
-	
-	/**
-	 * Returns next instance of Conversation in the double-linked list or null if this is the last.
-	 * @param lockAllow		Allow storage file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
-	 */
-	public Conversation getNextConversation(boolean lockAllow) throws StorageFileException, IOException {
-		return Conversation.getConversation(mIndexNext, lockAllow);
+		return Conversation.getConversation(mIndexNext);
 	}
 
 	/**
@@ -291,20 +221,9 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	public SessionKeys getFirstSessionKeys() throws StorageFileException, IOException {
-		return getFirstSessionKeys(true);
-	}
-	
-	/**
-	 * Returns first SessionKeys object in the stored linked list, or null if there isn't any.
-	 * @param lockAllow		Allow the file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public SessionKeys getFirstSessionKeys(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexSessionKeys == 0)
 			return null;
-		return SessionKeys.getSessionKeys(mIndexSessionKeys, lockAllow);
+		return SessionKeys.getSessionKeys(mIndexSessionKeys);
 	}
 
 	/**
@@ -314,38 +233,18 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	void attachSessionKeys(SessionKeys keys) throws StorageFileException, IOException {
-		attachSessionKeys(keys, true);
-	}
-
-	/**
-	 * Attach new SessionKeys object to the conversation.
-	 * @param lockAllow		Allow the file to be locked
-	 * @param keys
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	void attachSessionKeys(SessionKeys keys, boolean lockAllow) throws StorageFileException, IOException {
-		Storage.getStorage().lockFile(lockAllow);
-		try {
-			long indexFirstInStack = getIndexSessionKeys();
-			if (indexFirstInStack != 0) {
-				SessionKeys firstInStack = SessionKeys.getSessionKeys(indexFirstInStack);
-				firstInStack.setIndexPrev(keys.getEntryIndex());
-				firstInStack.saveToFile(false);
-			}
-			keys.setIndexNext(indexFirstInStack);
-			keys.setIndexPrev(0L);
-			keys.setIndexParent(this.mEntryIndex);
-			keys.saveToFile(false);
-			this.setIndexSessionKeys(keys.getEntryIndex());
-			this.saveToFile(false);
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			Storage.getStorage().unlockFile(lockAllow);	
+		long indexFirstInStack = getIndexSessionKeys();
+		if (indexFirstInStack != 0) {
+			SessionKeys firstInStack = SessionKeys.getSessionKeys(indexFirstInStack);
+			firstInStack.setIndexPrev(keys.getEntryIndex());
+			firstInStack.saveToFile();
 		}
+		keys.setIndexNext(indexFirstInStack);
+		keys.setIndexPrev(0L);
+		keys.setIndexParent(this.mEntryIndex);
+		keys.saveToFile();
+		this.setIndexSessionKeys(keys.getEntryIndex());
+		this.saveToFile();
 	}
 
 	/**
@@ -355,38 +254,18 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	void attachMessageData(MessageData msg) throws StorageFileException, IOException {
-		attachMessageData(msg, true);
-	}
-
-	/**
-	 * Attach new MessageData object to the conversation
-	 * @param lockAllow		Allow the file to be locked 
-	 * @param msg
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	void attachMessageData(MessageData msg, boolean lockAllow) throws StorageFileException, IOException {
-		Storage.getStorage().lockFile(lockAllow);
-		try {
-			long indexFirstInStack = getIndexMessages();
-			if (indexFirstInStack != 0) {
-				MessageData firstInStack = MessageData.getMessageData(indexFirstInStack);
-				firstInStack.setIndexPrev(msg.getEntryIndex());
-				firstInStack.saveToFile(false);
-			}
-			msg.setIndexNext(indexFirstInStack);
-			msg.setIndexPrev(0L);
-			msg.setIndexParent(this.mEntryIndex);
-			msg.saveToFile(false);
-			this.setIndexMessages(msg.getEntryIndex());
-			this.saveToFile(false);
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			Storage.getStorage().unlockFile(lockAllow);	
+		long indexFirstInStack = getIndexMessages();
+		if (indexFirstInStack != 0) {
+			MessageData firstInStack = MessageData.getMessageData(indexFirstInStack);
+			firstInStack.setIndexPrev(msg.getEntryIndex());
+			firstInStack.saveToFile();
 		}
+		msg.setIndexNext(indexFirstInStack);
+		msg.setIndexPrev(0L);
+		msg.setIndexParent(this.mEntryIndex);
+		msg.saveToFile();
+		this.setIndexMessages(msg.getEntryIndex());
+		this.saveToFile();
 	}
 	
 	/**
@@ -396,7 +275,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	public MessageData getFirstMessageData() throws StorageFileException, IOException {
-		return getFirstMessageData(true);
+		return MessageData.getMessageData(mIndexMessages);
 	}
 	
 	/**
@@ -405,23 +284,12 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	public MessageData getFirstMessageData(boolean lockAllow) throws StorageFileException, IOException {
-		return MessageData.getMessageData(mIndexMessages, lockAllow);
-	}
-	
-	/**
-	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
-	 * @param lockAllow		Allow the file to be locked 
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public ArrayList<MessageData> getMessages(boolean lockAllow) throws StorageFileException, IOException {
+	public ArrayList<MessageData> getMessages() throws StorageFileException, IOException {
 		ArrayList<MessageData> list = new ArrayList<MessageData>();
-		MessageData msg = getFirstMessageData(lockAllow);
+		MessageData msg = getFirstMessageData();
 		while (msg != null) {
 			list.add(msg);
-			msg = msg.getNextMessageData(lockAllow);
+			msg = msg.getNextMessageData();
 		}
 		return list;
 	}
@@ -433,75 +301,53 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws WrongKeyException 
 	 */
 	public void delete() throws StorageFileException, IOException {
-		delete(true);
-	}
-	
-	/**
-	 * Delete MessageData and all the MessageDataParts it controls
-	 * @param lockAllow 	Allow the file to be locked
-	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
-	 */
-	public void delete(boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getStorage();
-		
-		db.lockFile(lockAllow);
-		try {
-			Conversation prev = this.getPreviousConversation(false);
-			Conversation next = this.getNextConversation(false); 
-	
-			if (prev != null) {
-				// this is not the first Conversation in the list
-				// update the previous one
-				prev.setIndexNext(this.getIndexNext());
-				prev.saveToFile(false);
-			} else {
-				// this IS the first Conversation in the list
-				// update parent
-				Header header = Header.getHeader(false);
-				header.setIndexConversations(this.getIndexNext());
-				header.saveToFile(false);
-			}
-			
-			// update next one
-			if (next != null) {
-				next.setIndexPrev(this.getIndexPrev());
-				next.saveToFile(false);
-			}
-			
-			// delete all of the SessionKeys
-			SessionKeys keys = getFirstSessionKeys(false);
-			while (keys != null) {
-				keys.delete(false);
-				keys = getFirstSessionKeys(false);
-			}
-			
-			// delete all of the MessageDatas
-			MessageData msg = getFirstMessageData(false);
-			while (msg != null) {
-				msg.delete(false);
-				msg = getFirstMessageData(false);
-			}
-	
-			// delete this conversation
-			Empty.replaceWithEmpty(mEntryIndex, false);
-			
-			// remove from cache
-			synchronized (cacheConversation) {
-				cacheConversation.remove(this);
-			}
-			notifyUpdate();
-			
-			// make this instance invalid
-			this.mEntryIndex = -1L;
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			db.unlockFile(lockAllow);
+		Conversation prev = this.getPreviousConversation();
+		Conversation next = this.getNextConversation(); 
+
+		if (prev != null) {
+			// this is not the first Conversation in the list
+			// update the previous one
+			prev.setIndexNext(this.getIndexNext());
+			prev.saveToFile();
+		} else {
+			// this IS the first Conversation in the list
+			// update parent
+			Header header = Header.getHeader();
+			header.setIndexConversations(this.getIndexNext());
+			header.saveToFile();
 		}
+		
+		// update next one
+		if (next != null) {
+			next.setIndexPrev(this.getIndexPrev());
+			next.saveToFile();
+		}
+		
+		// delete all of the SessionKeys
+		SessionKeys keys = getFirstSessionKeys();
+		while (keys != null) {
+			keys.delete();
+			keys = getFirstSessionKeys();
+		}
+		
+		// delete all of the MessageDatas
+		MessageData msg = getFirstMessageData();
+		while (msg != null) {
+			msg.delete();
+			msg = getFirstMessageData();
+		}
+
+		// delete this conversation
+		Empty.replaceWithEmpty(mEntryIndex);
+		
+		// remove from cache
+		synchronized (cacheConversation) {
+			cacheConversation.remove(this);
+		}
+		notifyUpdate();
+		
+		// make this instance invalid
+		this.mEntryIndex = -1L;
 	}
 
 	/**
@@ -512,23 +358,11 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	public SessionKeys getSessionKeys(SimNumber simNumber) throws StorageFileException, IOException {
-		return getSessionKeys(simNumber, true);
-	}
-
-	/**
-	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any
-	 * @param simNumber
-	 * @param lockAllow		Allow file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public SessionKeys getSessionKeys(SimNumber simNumber, boolean lockAllow) throws StorageFileException, IOException {
-		SessionKeys keys = getFirstSessionKeys(lockAllow);
+		SessionKeys keys = getFirstSessionKeys();
 		while (keys != null) {
 			if (simNumber.equals(keys.getSimNumber()))
 				return keys;
-			keys = keys.getNextSessionKeys(lockAllow);
+			keys = keys.getNextSessionKeys();
 		}
 		
 		return null;
@@ -546,80 +380,53 @@ public class Conversation implements Comparable<Conversation> {
 	 * @throws IOException
 	 */
 	public void replaceSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException, IOException {
-		replaceSessionKeys(original, replacement, true);
-	}
-		
-	/**
-	 * Goes through all the assigned session keys.
-	 * If there is a session key with SIM number of the param original,
-	 * its SIM number is replaced for the one in param replacement and
-	 * all the other keys matching the param replacement are deleted.
-	 * If there isn't one matching param original, nothing happens.
-	 * @param original
-	 * @param replacement
-	 * @param lockAllow
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public void replaceSessionKeys(SimNumber original, SimNumber replacement, boolean lockAllow) throws StorageFileException, IOException {
 		if (original.equals(replacement))
 			// no point in continuing
 			return;
 		
-		Storage db = Storage.getStorage();
-		
-		db.lockFile(lockAllow);
-		try {
-			boolean canBeReplaced = false;
-			boolean sthToDelete = false;
-			SessionKeys keys = this.getFirstSessionKeys(false);
-			while (keys != null) {
-				// go through all the assigned keys
-				// look for ones matching the param original
-				if (keys.getSimNumber().equals(original))
-					// so SIM number of this key should be replaced
-					canBeReplaced = true;
-				if (keys.getSimNumber().equals(replacement))
-					// this matches the new SIM number
-					// will be deleted if sth is replaced
-					sthToDelete = true;
-				keys = keys.getNextSessionKeys(false);
-			}
+		boolean canBeReplaced = false;
+		boolean sthToDelete = false;
+		SessionKeys keys = this.getFirstSessionKeys();
+		while (keys != null) {
+			// go through all the assigned keys
+			// look for ones matching the param original
+			if (keys.getSimNumber().equals(original))
+				// so SIM number of this key should be replaced
+				canBeReplaced = true;
+			if (keys.getSimNumber().equals(replacement))
+				// this matches the new SIM number
+				// will be deleted if sth is replaced
+				sthToDelete = true;
+			keys = keys.getNextSessionKeys();
+		}
 
-			if (canBeReplaced) {
-				if (sthToDelete) {
-					keys = this.getFirstSessionKeys(false);
-					while (keys != null) {
-						if (keys.getSimNumber().equals(replacement))
-							keys.delete(false);
-						keys = keys.getNextSessionKeys(false);
-					}
-				}
-				
-				boolean found = false;
-				keys = this.getFirstSessionKeys(false);
+		if (canBeReplaced) {
+			if (sthToDelete) {
+				keys = this.getFirstSessionKeys();
 				while (keys != null) {
-					if (keys.getSimNumber().equals(original)) {
-						// if this is the first key matching original,
-						// its SIM number will be replaced
-						// otherwise deleted because it's redundant
-						if (found)
-							keys.delete(false);
-						else {
-							keys.setSimNumber(replacement);
-							keys.saveToFile(false);
-							found = true;
-						}
-					}
-					keys = keys.getNextSessionKeys(false);
+					if (keys.getSimNumber().equals(replacement))
+						keys.delete();
+					keys = keys.getNextSessionKeys();
 				}
 			}
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			db.unlockFile(lockAllow);
+			
+			boolean found = false;
+			keys = this.getFirstSessionKeys();
+			while (keys != null) {
+				if (keys.getSimNumber().equals(original)) {
+					// if this is the first key matching original,
+					// its SIM number will be replaced
+					// otherwise deleted because it's redundant
+					if (found)
+						keys.delete();
+					else {
+						keys.setSimNumber(replacement);
+						keys.saveToFile();
+						found = true;
+					}
+				}
+				keys = keys.getNextSessionKeys();
+			}
 		}
 	}
 	
@@ -668,40 +475,29 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Calls replaceSessionKeys on all the conversations.
 	 * Calls an update of listeners afterwards.
-	 * @throws WrongKeyException 
 	 */
-	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement, boolean lockAllow) throws StorageFileException, IOException {
-		Storage.getStorage().lockFile(lockAllow);
-		try {
-			Conversation conv = Header.getHeader(false).getFirstConversation(false);
-			while (conv != null) {
-				conv.replaceSessionKeys(original, replacement, false);
-				conv = conv.getNextConversation(false);
-			}
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			Storage.getStorage().unlockFile(lockAllow);
+	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException, IOException {
+		Conversation conv = Header.getHeader().getFirstConversation();
+		while (conv != null) {
+			conv.replaceSessionKeys(original, replacement);
+			conv = conv.getNextConversation();
 		}
 		notifyUpdate();
 	}
 	
 	/**
 	 * Returns all SIM numbers stored with session keys of all conversations
-	 * @param lockAllow
 	 * @return
 	 * @throws StorageFileException
 	 * @throws IOException
 	 * @throws WrongKeyException 
 	 */
-	public static ArrayList<SimNumber> getAllSimNumbersStored(boolean lockAllow) throws StorageFileException, IOException {
+	public static ArrayList<SimNumber> getAllSimNumbersStored() throws StorageFileException, IOException {
 		ArrayList<SimNumber> simNumbers = new ArrayList<SimNumber>();
 		
-		Conversation conv = Header.getHeader(lockAllow).getFirstConversation(lockAllow);
+		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
-			SessionKeys keys = conv.getFirstSessionKeys(lockAllow);
+			SessionKeys keys = conv.getFirstSessionKeys();
 			while (keys != null) {
 				boolean found = false;
 				for (SimNumber n : simNumbers)
@@ -709,9 +505,9 @@ public class Conversation implements Comparable<Conversation> {
 						found = true;
 				if (!found)
 					simNumbers.add(keys.getSimNumber());
-				keys = keys.getNextSessionKeys(lockAllow);
+				keys = keys.getNextSessionKeys();
 			}
-			conv = conv.getNextConversation(lockAllow);			
+			conv = conv.getNextConversation();			
 		}
 		
 		return simNumbers;

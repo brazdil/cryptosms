@@ -67,56 +67,10 @@ public final class Storage {
 	 */
 	private synchronized void createFile() throws IOException, StorageFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
-		
-		lockFile();
-		try {
-			// create an empty instance of the header
-			Header.createHeader(false);
-			// add some empty entries
-			Empty.addEmptyEntries(countFreeEntries, false);
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			unlockFile();
-		}
-	}
-	
-	/**
-	 * Locks the secure storage file.
-	 * @throws IOException
-	 */
-	public void lockFile() throws IOException {
-		lockFile(true);
-	}
-
-	/**
-	 * Locks the secure storage file if the condition is set to true.
-	 * @param condition		Lock condition
-	 * @throws IOException
-	 */
-	public synchronized void lockFile(boolean condition) throws IOException {
-		//if (condition) smsFile.lock();
-	}
-	
-	/**
-	 * Unlocks the secure storage file.
-	 * Doesn't do anything if the file is not locked or the lock is invalid.
-	 * @throws IOException
-	 */
-	public void unlockFile() throws IOException {
-		unlockFile(true);
-	}
-
-	/**
-	 * Unlocks the secure storage file provided the condition parameter is set to true.
-	 * Doesn't do anything if the file is not locked or the lock is invalid.
-	 * @param condition		Unlock condition.
-	 * @throws IOException
-	 */
-	public synchronized void unlockFile(boolean condition) throws IOException {
-		//if (condition) smsFile.unlock();
+		// create an empty instance of the header
+		Header.createHeader();
+		// add some empty entries
+		Empty.addEmptyEntries(countFreeEntries);
 	}
 	
 	public synchronized void closeFile() throws IOException {
@@ -140,33 +94,13 @@ public final class Storage {
 	 * @throws IOException
 	 */
 	byte[] getEntry(long index) throws StorageFileException, IOException {
-		return getEntry(index, true);
-	}
-
-	/**
-	 * Reads data from specified entry index the file
-	 * @param index
-	 * @param lock
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	synchronized byte[] getEntry(long index, boolean lock) throws StorageFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		if (offset > smsFile.mFile.length() - CHUNK_SIZE)
 			throw new StorageFileException("Index in history file out of bounds");
 		
-		lockFile(lock);
 		byte[] data = new byte[CHUNK_SIZE];
-		try {
-			smsFile.mFile.seek(offset);
-			smsFile.mFile.read(data);
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			unlockFile(lock);
-		}
-
+		smsFile.mFile.seek(offset);
+		smsFile.mFile.read(data);
 		return data;
 	}
 	
@@ -178,39 +112,19 @@ public final class Storage {
 	 * @throws IOException
 	 */
 	void setEntry(long index, byte[] data) throws StorageFileException, IOException {
-		setEntry(index, data, true);
-	}
-
-	/**
-	 * Saves data to specified entry index the file
-	 * @param index
-	 * @param lock
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	synchronized void setEntry(long index, byte[] data, boolean lock) throws StorageFileException, IOException {
 		long offset = index * CHUNK_SIZE;
 		long fileSize = smsFile.mFile.length();
 		if (offset > fileSize)
 			throw new StorageFileException("Index in history file out of bounds");
 
-		lockFile(lock);
-		try {
-			smsFile.mFile.seek(offset);
-			smsFile.mFile.write(data);
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			unlockFile(lock);
-		}
+		smsFile.mFile.seek(offset);
+		smsFile.mFile.write(data);
 	}
 
 	// FOR TESTING ONLY
 	static void freeSingleton() {
 		if (mSingleton != null)
 			try {
-				mSingleton.smsFile.mLock.release();
 				mSingleton.smsFile.mFile.close();
 			} catch (Exception e) {
 			}

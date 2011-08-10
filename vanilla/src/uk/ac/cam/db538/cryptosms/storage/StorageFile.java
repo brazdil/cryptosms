@@ -13,25 +13,25 @@ import java.nio.channels.FileLock;
  */
 class StorageFile {
 	RandomAccessFile mFile;
-	FileLock mLock;
+//	FileLock mLock;
 
 	StorageFile(String filename) throws IOException {
 		String directory = new File(filename).getParent();
 		new File(directory).mkdirs();
 		mFile = new RandomAccessFile(filename, "rw");
-		mLock = null;
+//		mLock = null;
 	}
 
-	void lock() throws IOException {
-		mLock = mFile.getChannel().lock();
-	}
-	
-	void unlock() {
-		try {
-			if (mLock.isValid())
-				mLock.release();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+//	void lock() throws IOException {
+//		mLock = mFile.getChannel().lock();
+//	}
+//	
+//	void unlock() {
+//		try {
+//			if (mLock.isValid())
+//				mLock.release();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 }

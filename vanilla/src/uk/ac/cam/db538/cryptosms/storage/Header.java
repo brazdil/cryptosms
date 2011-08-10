@@ -41,7 +41,7 @@ public class Header {
 	}
 	
 	/**
-	 * Returns an instance of Header class. Locks the file if necessary
+	 * Returns an instance of Header class.
 	 * @return
 	 * @throws IOException 
 	 * @throws StorageFileException 
@@ -49,19 +49,8 @@ public class Header {
 	 * @throws IOException
 	 */
 	public static Header getHeader() throws StorageFileException, IOException {
-		return getHeader(true);
-	}
-	
-	/**
-	 * Returns an instance of Header class
-	 * @param lockAllow 		Lock the file if necessary
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public static Header getHeader(boolean lockAllow) throws StorageFileException, IOException {
 		if (cacheHeader == null) 
-			cacheHeader = new Header(true, lockAllow);
+			cacheHeader = new Header(true);
 		return cacheHeader;
 	}
 	
@@ -72,18 +61,7 @@ public class Header {
 	 * @throws StorageFileException 
 	 */
 	static Header createHeader() throws StorageFileException, IOException {
-		return createHeader(true);
-	}
-
-	/**
-	 * Only to be called from within Database.createFile()
-	 * Forces the header to be created with default values and written to the file.
-	 * @param lockAllow 		Lock the file if necessary
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 */
-	static Header createHeader(boolean lockAllow) throws StorageFileException, IOException {
-		cacheHeader = new Header(false, lockAllow);
+		cacheHeader = new Header(false);
 		return cacheHeader;
 	}
 	
@@ -99,20 +77,9 @@ public class Header {
 	 * @throws IOException
 	 */
 	private Header(boolean readFromDisk) throws StorageFileException, IOException {
-		this(readFromDisk, true);
-	}
-	
-	/**
-	 * Constructor
-	 * @param readFromFile	Does this entry already exist in the file?
-	 * @param lockAllow		Allow the file to be locked
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	private Header(boolean readFromDisk, boolean lockAllow) throws StorageFileException, IOException {
 		if (readFromDisk) {
 			// read bytes from file
-			byte[] dataAll = Storage.getStorage().getEntry(INDEX_HEADER, lockAllow);
+			byte[] dataAll = Storage.getStorage().getEntry(INDEX_HEADER);
 			
 			// check the first three bytes, looking for SMS in ASCII
 			if (dataAll[0] != (byte) 0x53 ||
@@ -145,7 +112,7 @@ public class Header {
 			setIndexEmpty(0L);
 			setIndexConversations(0L);
 			
-			saveToFile(lockAllow);
+			saveToFile();
 		}
 	}
 
@@ -155,16 +122,6 @@ public class Header {
 	 * @throws IOException
 	 */
 	public void saveToFile() throws StorageFileException, IOException {
-		saveToFile(true);
-	}
-	
-	/**
-	 * Save data to the storage file
-	 * @param lock		Allow the file to be locked
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexEmpty())); 
@@ -182,7 +139,7 @@ public class Header {
 			throw new StorageFileException(e);
 		}
 		
-		Storage.getStorage().setEntry(INDEX_HEADER, headerBufferEncrypted.array(), lock);
+		Storage.getStorage().setEntry(INDEX_HEADER, headerBufferEncrypted.array());
 	}
 	
 	/**
@@ -192,21 +149,10 @@ public class Header {
 	 * @throws IOException
 	 */
 	public Empty getFirstEmpty() throws StorageFileException, IOException {
-		return getFirstEmpty(true);
-	}
-
-	/**
-	 * Return instance of the first object in the empty-entry stack
-	 * @param lockAllow		Allow the file to be locked
-	 * @return
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 */
-	public Empty getFirstEmpty(boolean lockAllow) throws StorageFileException, IOException {
 		if (this.mIndexEmpty == 0)
 			return null;
 		else
-			return Empty.getEmpty(this.mIndexEmpty, lockAllow);
+			return Empty.getEmpty(this.mIndexEmpty);
 	}
 	
 	/**
@@ -216,21 +162,10 @@ public class Header {
 	 * @throws IOException
 	 */
 	public Conversation getFirstConversation() throws StorageFileException, IOException {
-		return getFirstConversation(true);
-	}
-	
-	/**
-	 * Return instance of the first object in the conversations linked list
-	 * @param lockAllow		Allow the file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public Conversation getFirstConversation(boolean lockAllow) throws StorageFileException, IOException {
 		if (this.mIndexConversations == 0) 
 			return null;
 		else
-			return Conversation.getConversation(this.mIndexConversations, lockAllow);
+			return Conversation.getConversation(this.mIndexConversations);
 	}
 
 	/**
@@ -240,39 +175,19 @@ public class Header {
 	 * @throws StorageFileException
 	 */
 	void attachConversation(Conversation conv) throws IOException, StorageFileException {
-		attachConversation(conv, true);
-	}
-	
-	/**
-	 * Insert new element into the linked list of conversations
-	 * @param lockAllow		Allow the file to be locked
-	 * @param conv
-	 * @throws IOException
-	 * @throws StorageFileException
-	 */
-	void attachConversation(Conversation conv, boolean lockAllow) throws IOException, StorageFileException {
-		Storage.getStorage().lockFile(lockAllow);
-		try {
-			long indexFirstInStack = getIndexConversations();
-			if (indexFirstInStack != 0) {
-				Conversation first = Conversation.getConversation(indexFirstInStack, false);
-				first.setIndexPrev(conv.getEntryIndex());
-				first.saveToFile(false);
-			}
-
-			conv.setIndexNext(indexFirstInStack);
-			conv.setIndexPrev(0L);
-			conv.saveToFile(false);
-			
-			this.setIndexConversations(conv.getEntryIndex());
-			this.saveToFile(false);
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			Storage.getStorage().unlockFile(lockAllow);	
+		long indexFirstInStack = getIndexConversations();
+		if (indexFirstInStack != 0) {
+			Conversation first = Conversation.getConversation(indexFirstInStack);
+			first.setIndexPrev(conv.getEntryIndex());
+			first.saveToFile();
 		}
+
+		conv.setIndexNext(indexFirstInStack);
+		conv.setIndexPrev(0L);
+		conv.saveToFile();
+		
+		this.setIndexConversations(conv.getEntryIndex());
+		this.saveToFile();
 	}
 
 	/**
@@ -282,32 +197,12 @@ public class Header {
 	 * @throws StorageFileException
 	 */
 	void attachEmpty(Empty empty) throws IOException, StorageFileException {
-		attachEmpty(empty, true);
-	}
-	
-	/**
-	 * Insert new element into the stack of empty entries
-	 * @param lockAllow		Allow the file to be locked
-	 * @param conv
-	 * @throws IOException
-	 * @throws StorageFileException
-	 */
-	void attachEmpty(Empty empty, boolean lockAllow) throws IOException, StorageFileException {
-		Storage.getStorage().lockFile(lockAllow);
-		try {
-			long indexFirstInStack = getIndexEmpty();
-			empty.setIndexNext(indexFirstInStack);
-			empty.saveToFile(false);
-			
-			this.setIndexEmpty(empty.getEntryIndex());
-			this.saveToFile(false);
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			Storage.getStorage().unlockFile(lockAllow);	
-		}
+		long indexFirstInStack = getIndexEmpty();
+		empty.setIndexNext(indexFirstInStack);
+		empty.saveToFile();
+		
+		this.setIndexEmpty(empty.getEntryIndex());
+		this.saveToFile();
 	}
 
 	// GETTERS / SETTERS

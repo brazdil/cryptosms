@@ -111,16 +111,8 @@ public class SessionKeys {
 	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 */
 	public static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException, IOException {
-		return createSessionKeys(parent, true);
-	}
-	
-	/**
-	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
-	 * @param lock		File lock allow
-	 */
-	public static SessionKeys createSessionKeys(Conversation parent, boolean lockAllow) throws StorageFileException, IOException {
-		SessionKeys keys = new SessionKeys(Empty.getEmptyIndex(lockAllow), false, lockAllow);
-		parent.attachSessionKeys(keys, lockAllow);
+		SessionKeys keys = new SessionKeys(Empty.getEmptyIndex(), false);
+		parent.attachSessionKeys(keys);
 		return keys;
 	}
 
@@ -129,15 +121,6 @@ public class SessionKeys {
 	 * @param index		Index in file
 	 */
 	static SessionKeys getSessionKeys(long index) throws StorageFileException, IOException {
-		return getSessionKeys(index, true);
-	}
-	
-	/**
-	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file  
-	 * @param index		Index in file
-	 * @param lock		File lock allow
-	 */
-	static SessionKeys getSessionKeys(long index, boolean lockAllow) throws StorageFileException, IOException {
 		if (index <= 0L)
 			return null;
 		
@@ -149,7 +132,7 @@ public class SessionKeys {
 		}
 		
 		// create a new one
-		return new SessionKeys(index, true, lockAllow);
+		return new SessionKeys(index, true);
 	}
 
 	// INTERNAL FIELDS
@@ -175,22 +158,10 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	private SessionKeys(long index, boolean readFromFile) throws StorageFileException, IOException {
-		this(index, readFromFile, true);
-	}
-	
-	/**
-	 * Constructor
-	 * @param index			Which chunk of data should occupy in file
-	 * @param readFromFile	Does this entry already exist in the file?
-	 * @param lockAllow		Allow the file to be locked
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	private SessionKeys(long index, boolean readFromFile, boolean lockAllow) throws StorageFileException, IOException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
-			byte[] dataEncrypted = Storage.getStorage().getEntry(index, lockAllow);
+			byte[] dataEncrypted = Storage.getStorage().getEntry(index);
 			byte[] dataPlain;
 			try {
 				dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
@@ -232,7 +203,7 @@ public class SessionKeys {
 			setIndexPrev(0L);
 			setIndexNext(0L);
 			
-			saveToFile(lockAllow);
+			saveToFile();
 		}
 
 		synchronized (cacheSessionKeys) {
@@ -248,16 +219,6 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public void saveToFile() throws StorageFileException, IOException {
-		saveToFile(true);
-	}
-	
-	/**
-	 * Saves contents of the class to the storage file
-	 * @param lockAllow		Allow the file to be locked
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public void saveToFile(boolean lock) throws StorageFileException, IOException {
 		ByteBuffer keysBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -293,7 +254,7 @@ public class SessionKeys {
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
-		Storage.getStorage().setEntry(mEntryIndex, dataEncrypted, lock);
+		Storage.getStorage().setEntry(mEntryIndex, dataEncrypted);
 	}
 
 	/**
@@ -303,20 +264,9 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public Conversation getParent() throws StorageFileException, IOException {
-		return getParent(true);
-	}
-	
-	/**
-	 * Returns an instance of the Conversation class that is the parent of this SessionKeys in the data structure
-	 * @param lockAllow		Allow file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public Conversation getParent(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexParent == 0)
 			return null;
-		return Conversation.getConversation(mIndexParent, lockAllow);
+		return Conversation.getConversation(mIndexParent);
 	}
 	
 	/**
@@ -326,20 +276,9 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public SessionKeys getPreviousSessionKeys() throws StorageFileException, IOException {
-		return getPreviousSessionKeys(true);
-	}
-	
-	/**
-	 * Returns an instance of the predecessor in the list of session keys for parent conversation
-	 * @param lockAllow		Allow the file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public SessionKeys getPreviousSessionKeys(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexPrev == 0)
 			return null;
-		return getSessionKeys(mIndexPrev, lockAllow);
+		return getSessionKeys(mIndexPrev);
 	}
 
 	/**
@@ -349,20 +288,9 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public SessionKeys getNextSessionKeys() throws StorageFileException, IOException {
-		return getNextSessionKeys(true);
-	}
-	
-	/**
-	 * Returns an instance of the predecessor in the list of session keys for parent conversation
-	 * @param lockAllow		Allow the file to be locked
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public SessionKeys getNextSessionKeys(boolean lockAllow) throws StorageFileException, IOException {
 		if (mIndexNext == 0)
 			return null;
-		return getSessionKeys(mIndexNext, lockAllow);
+		return getSessionKeys(mIndexNext);
 	}
 	
 	/**
@@ -371,59 +299,38 @@ public class SessionKeys {
 	 * @throws IOException
 	 */
 	public void delete() throws StorageFileException, IOException {
-		delete(true);
-	}
-	
-	/**
-	 * Delete Message and all the MessageParts it controls
-	 * @param lockAllow 	Allow the file to be locked
-	 * @throws StorageFileException
-	 * @throws IOException
-	 */
-	public void delete(boolean lockAllow) throws StorageFileException, IOException {
-		Storage db = Storage.getStorage();
-		
-		db.lockFile(lockAllow);
-		try {
-			SessionKeys prev = this.getPreviousSessionKeys(false);
-			SessionKeys next = this.getNextSessionKeys(false); 
-	
-			if (prev != null) {
-				// this is not the first message in the list
-				// update the previous one
-				prev.setIndexNext(this.getIndexNext());
-				prev.saveToFile(false);
-			} else {
-				// this IS the first message in the list
-				// update parent
-				Conversation parent = this.getParent(false);
-				parent.setIndexSessionKeys(this.getIndexNext());
-				parent.saveToFile(false);
-			}
-			
-			// update next one
-			if (next != null) {
-				next.setIndexPrev(this.getIndexPrev());
-				next.saveToFile(false);
-			}
-			
-			// delete this message
-			Empty.replaceWithEmpty(mEntryIndex, false);
-					
-			// remove from cache
-			synchronized (cacheSessionKeys) {
-				cacheSessionKeys.remove(this);
-			}
-			
-			// make this instance invalid
-			this.mEntryIndex = -1L;
-		} catch (StorageFileException ex) {
-			throw ex;
-		} catch (IOException ex) {
-			throw ex;
-		} finally {
-			db.unlockFile(lockAllow);
+		SessionKeys prev = this.getPreviousSessionKeys();
+		SessionKeys next = this.getNextSessionKeys(); 
+
+		if (prev != null) {
+			// this is not the first message in the list
+			// update the previous one
+			prev.setIndexNext(this.getIndexNext());
+			prev.saveToFile();
+		} else {
+			// this IS the first message in the list
+			// update parent
+			Conversation parent = this.getParent();
+			parent.setIndexSessionKeys(this.getIndexNext());
+			parent.saveToFile();
 		}
+		
+		// update next one
+		if (next != null) {
+			next.setIndexPrev(this.getIndexPrev());
+			next.saveToFile();
+		}
+		
+		// delete this message
+		Empty.replaceWithEmpty(mEntryIndex);
+				
+		// remove from cache
+		synchronized (cacheSessionKeys) {
+			cacheSessionKeys.remove(this);
+		}
+		
+		// make this instance invalid
+		this.mEntryIndex = -1L;
 	}
 
 	public enum SessionKeysStatus {
