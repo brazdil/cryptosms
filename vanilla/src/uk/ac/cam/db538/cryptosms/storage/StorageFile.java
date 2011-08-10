@@ -3,7 +3,6 @@ package uk.ac.cam.db538.cryptosms.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.channels.FileLock;
 
 /**
  * Represents the opened secure storage file 
