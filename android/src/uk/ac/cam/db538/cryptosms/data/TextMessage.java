@@ -15,7 +15,6 @@ import android.telephony.SmsManager;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;

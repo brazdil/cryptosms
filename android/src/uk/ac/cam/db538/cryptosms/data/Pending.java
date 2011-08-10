@@ -3,7 +3,6 @@ package uk.ac.cam.db538.cryptosms.data;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
 import android.content.Context;
