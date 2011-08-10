@@ -108,17 +108,18 @@ public class MyApplication extends Application {
 						e2.printStackTrace();
 					}
 
+					String storageFile = context.getFilesDir().getAbsolutePath() + "/" + STORAGE_FILE_NAME;
+					
 					//TODO: Just For Testing!!!
-					File file = new File("/data/data/uk.ac.cam.db538.securesms/files/storage.db");
+					File file = new File(storageFile);
 					if (file.exists())
 						file.delete();
-					file = new File("/data/data/uk.ac.cam.db538.securesms/databases/pending.db");
+					file = new File(context.getFilesDir().getAbsolutePath() + "/pending.db");
 					if (file.exists())
 						file.delete();
 
 					try {
-						String filename = context.getFilesDir().getAbsolutePath() + "/" + STORAGE_FILE_NAME;
-						Storage.initSingleton(filename);
+						Storage.initSingleton(storageFile);
 						Preferences.initSingleton(context);
 					} catch (Exception e) {
 						// TODO: show error dialog

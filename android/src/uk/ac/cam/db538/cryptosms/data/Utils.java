@@ -60,7 +60,7 @@ public class Utils {
 			// try to get its serial number
 			final String simSerial = SimCard.getSingleton().getSimSerialNumber(context);
 
-			Storage.getDatabase().lockFile(lockAllow);
+			Storage.getStorage().lockFile(lockAllow);
 			try {
 				// offer import
 				// check preferences
@@ -98,7 +98,7 @@ public class Utils {
 			} catch (IOException ex) {
 				throw ex;
 			} finally {
-				Storage.getDatabase().unlockFile(lockAllow);
+				Storage.getStorage().unlockFile(lockAllow);
 			}
 			
 			return (simSerial != null && simSerial.length() > 0);
