@@ -6,6 +6,7 @@ import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.Pending;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.ui.MainTabActivity;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -15,6 +16,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
+import android.util.Log;
 
 public class DataSmsReceiver extends BroadcastReceiver {
 
@@ -47,6 +49,7 @@ public class DataSmsReceiver extends BroadcastReceiver {
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
+						Log.d(MyApplication.APP_TAG, "Received data: " + LowLevel.toHex(data));
 						if (data.length != MessageData.LENGTH_MESSAGE) {
 							// TODO: ERROR!!!
 						} else {

@@ -14,6 +14,7 @@ import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
+import uk.ac.cam.db538.cryptosms.data.Pending.ProcessingException;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -24,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
@@ -63,92 +65,11 @@ public class MainTabActivity extends TabActivity {
 	    MyApplication.getSingleton().waitForPki(this, new OnPkiAvailableListener() {
 			@Override
 			public void OnPkiAvailable() {
-				// TODO: Check for incoming messages
-				DbPendingAdapter database = new DbPendingAdapter(context);
-				database.open();
-				ArrayList<Pending> listPending = database.getAllEntries();
-				
-				boolean found = false;
-				do {
-					// let's look for messages of type MESSAGE_FIRST
-					Pending pendingFirst = null;
-					for (Pending p : listPending)
-						if (p.getMessageType() == MessageType.MESSAGE_FIRST) {
-							pendingFirst = p;
-							break;
-						}
-					// have we found one?
-					if (pendingFirst != null) {
-						found = true;
-						listPending.remove(pendingFirst);
-						
-						// do we have Session Keys for this person?
-						SessionKeys keys = null;
-						try {
-							keys = StorageUtils.getSessionKeysForSIM(Conversation.getConversation(pendingFirst.getSender()), context);
-						} catch (StorageFileException e1) {
-						} catch (IOException e1) {
-						}
-						
-						if (keys != null) {
-							int ID = TextMessage.getMessageID(pendingFirst.getData());
-							int totalBytes = TextMessage.getMessageDataLength(pendingFirst.getData());
-							int partCount = -1;
-							try {
-								partCount = TextMessage.computeNumberOfMessageParts(totalBytes);
-							} catch (MessageException e) {
-								// too long or data corrupted
-							}
-							if (partCount > 0) {
-								// look for other parts
-								ArrayList<Pending> listParts = new ArrayList<Pending>();
-								listParts.add(pendingFirst);
-								for (Pending p : listPending)
-									if (p.getMessageType() == MessageType.MESSAGE_PART &&
-										TextMessage.getMessageID(p.getData()) == ID)
-										listParts.add(p);
-								// have we found them all?
-								if (listParts.size() == partCount) {
-									int totalDataLength = TextMessage.LENGTH_FIRST_MESSAGEBODY + (partCount - 1) * TextMessage.LENGTH_PART_MESSAGEBODY;
-									
-									// get all the data in one byte array
-									byte[] dataEncrypted = new byte[TextMessage.LENGTH_FIRST_ENCRYPTION + totalDataLength];
-									for (Pending p : listParts) {
-										int index = TextMessage.getMessageIndex(p.getData());
-										System.arraycopy(TextMessage.getMessageData(p.getData()), 0, 
-										                 dataEncrypted, TextMessage.LENGTH_FIRST_ENCRYPTION + TextMessage.getExpectedDataOffset(totalDataLength, index), 
-										                 TextMessage.getExpectedDataLength(totalDataLength, index));
-										if (index == 0)
-											System.arraycopy(TextMessage.getMessageEncryptionData(p.getData()), 0, 
-									                 dataEncrypted, 0, 
-									                 TextMessage.LENGTH_FIRST_ENCRYPTION);
-									}
-									dataEncrypted = LowLevel.cutData(dataEncrypted, 0, dataEncrypted.length - (dataEncrypted.length % Encryption.AES_BLOCK_LENGTH));
-									
-									// decrypt it
-									byte[] dataDecrypted = null;
-									try {
-										dataDecrypted = Encryption.getEncryption().decryptSymmetric(dataEncrypted, keys.getSessionKey_In());
-									} catch (EncryptionException e) {
-										// TODO: PROBABLY BAD KEY, but potentially problem with PKI 
-									}
-									
-									if (dataDecrypted != null) {
-										// take only the relevant part
-										byte[] dataPlain = LowLevel.cutData(dataDecrypted, 0, totalBytes);
-									} else {
-										// TODO: couldn't decrypt
-									}
-								}
-							} else {
-								// TODO: notify about error!!! (probably too long)
-							}
-						} else {
-							// TODO: notify about error!!! (no keys found)
-						}
-					}
-							
-				} while (found);
+				try {
+					Pending.processPending(context);
+				} catch (ProcessingException e) {
+					Log.d(MyApplication.APP_TAG, "Processing exception: " + e.getMessage());
+				}
 			}
 		});
 	}

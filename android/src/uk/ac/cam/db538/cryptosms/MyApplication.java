@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
@@ -85,7 +86,7 @@ public class MyApplication extends Application {
 		mNotification = new Notification(icon, tickerText, when);
 		
 		if (Encryption.getEncryption() == null)
-			Encryption.setEncryption(new EncryptionPki());
+			Encryption.setEncryption(new EncryptionNone());
 	
 		onPkiConnect = new ConnectionListener() {
 				@Override
@@ -114,7 +115,7 @@ public class MyApplication extends Application {
 					File file = new File(storageFile);
 					if (file.exists())
 						file.delete();
-					file = new File(context.getFilesDir().getAbsolutePath() + "/pending.db");
+					file = new File(context.getFilesDir().getAbsolutePath() + "/../databases/pending.db");
 					if (file.exists())
 						file.delete();
 

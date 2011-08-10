@@ -117,9 +117,7 @@ public class TabRecent extends ListActivity {
 		public void OnPkiAvailable() {
 	        try {
 	        	// initialize the list of conversations
-	        	Log.d(MyApplication.APP_TAG, "Recent - updating...");
 	        	updateContacts();
-	        	Log.d(MyApplication.APP_TAG, "Recent - finished");
 			} catch (StorageFileException ex) {
 				Utils.dialogDatabaseError(mContext, ex);
 			} catch (IOException ex) {

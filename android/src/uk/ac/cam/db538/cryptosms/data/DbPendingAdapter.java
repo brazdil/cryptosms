@@ -2,6 +2,9 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.*;
@@ -61,6 +64,7 @@ public class DbPendingAdapter {
 		values.put(KEY_SENDER, pending.getSender());
 		values.put(KEY_TIMESTAMP, pending.getTimeStamp().format3339(false));
 		values.put(KEY_DATA, pending.getData());
+		Log.d(MyApplication.APP_TAG, "Putting into database: " + LowLevel.toHex(pending.getData()));
 		return values;
 	}
 	
@@ -76,6 +80,7 @@ public class DbPendingAdapter {
 						cursor.getBlob(COLUMN_DATA)
 					);
 				pending.setRowIndex(cursor.getLong(COLUMN_ID));
+				Log.d(MyApplication.APP_TAG, "Retrieving from database: " + LowLevel.toHex(pending.getData()));
 				list.add(pending);
 				
 			} while (cursor.moveToNext());

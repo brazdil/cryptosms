@@ -11,7 +11,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.telephony.SmsManager;
+import android.util.Log;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
@@ -92,23 +94,31 @@ public class TextMessage extends Message {
 		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
 		int index = 0, offset;
 		
-		SessionKeys keys =  StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
+		SessionKeys keys = StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
 		if (keys == null)
 			throw new MessageException("No keys found");
 		
 		// get the data, add random data to fit the messages exactly and encrypt it
 		byte[] data = getStoredData();
+		Log.d(MyApplication.APP_TAG, "Text data: " + LowLevel.toHex(data));
 		int alignedLength = crypto.getAlignedLength(data.length);
 		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
 		while (totalBytes <= alignedLength)
 			totalBytes += LENGTH_PART_MESSAGEBODY;
 
+		int alignedTotalBytes = totalBytes - (totalBytes % Encryption.AES_BLOCK_LENGTH);
+		data = LowLevel.wrapData(data, alignedTotalBytes);
+		Log.d(MyApplication.APP_TAG, "Aligned data: " + LowLevel.toHex(data));
+
 		try {
-			data = crypto.encryptSymmetric(LowLevel.wrapData(data, totalBytes), keys.getSessionKey_Out());
+			data = crypto.encryptSymmetric(data, keys.getSessionKey_Out());
+			Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(data));
+			Log.d(MyApplication.APP_TAG, "Session key: " + LowLevel.toHex(keys.getSessionKey_Out()));
 		} catch (EncryptionException e1) {
 			throw new MessageException(e1.getMessage());
 		}
 		totalBytes += LENGTH_FIRST_ENCRYPTION; 
+		data = LowLevel.wrapData(data, totalBytes);
 		
 		// first message (always)
 		byte header = HEADER_MESSAGE_FIRST;
@@ -121,6 +131,7 @@ public class TextMessage extends Message {
 		buf.put(LowLevel.getBytesUnsignedShort(getStoredDataLength()));
 		buf.put(LowLevel.cutData(data, 0, LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY));
 		list.add(buf.array());
+		Log.d(MyApplication.APP_TAG, "SMS data: " + LowLevel.toHex(buf.array()));
 		
 		offset = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
 		header = HEADER_MESSAGE_PART;

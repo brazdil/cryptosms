@@ -170,6 +170,7 @@ public class ConversationActivity extends Activity {
 					} catch (IOException ex) {
 						Utils.dialogIOError(context, ex);
 					} catch (MessageException e) {
+						// TODO: fill
 					}
 				}
 			}
