@@ -10,18 +10,21 @@ import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.CustomAsserts;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import junit.framework.TestCase;
 
-public class MessagePart_Test extends TestCase {
+public class MessageDataPart_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
+		EncryptionNone.initEncryption();
 		Common.clearStorageFile();	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
+		Common.closeStorageFile();
 	}
 
 	private boolean deliveredPart = true;
@@ -100,7 +103,7 @@ public class MessagePart_Test extends TestCase {
 		msgPart.saveToFile();
 		
 		// get the generated data
-		byte[] dataEncrypted = Storage.getDatabase().getEntry(msgPart.getEntryIndex());
+		byte[] dataEncrypted = Storage.getStorage().getEntry(msgPart.getEntryIndex());
 		
 		// chunk length
 		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
@@ -134,7 +137,7 @@ public class MessagePart_Test extends TestCase {
 		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(dataPlain);
 
 		// inject it into the file
-		Storage.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getStorage().setEntry(index, dataEncrypted);
 		
 		// have it parsed
 		MessageDataPart.forceClearCache();

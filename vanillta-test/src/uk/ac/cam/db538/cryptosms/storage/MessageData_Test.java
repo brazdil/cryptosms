@@ -1,24 +1,35 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.io.IOException;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeComparator;
+import org.joda.time.format.ISODateTimeFormat;
+
+import uk.ac.cam.db538.cryptosms.CustomAsserts;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.MessageData.MessageType;
+import uk.ac.cam.db538.cryptosms.utils.Charset;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import junit.framework.TestCase;
 
-public class Message_Test extends TestCase {
-/*
+public class MessageData_Test extends TestCase {
+
 	protected void setUp() throws Exception {
 		super.setUp();
+		EncryptionNone.initEncryption();
 		Common.clearStorageFile();
-		
-		timeStamp.setToNow();
 	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
+		Common.closeStorageFile();
 	}
 	
 	private boolean deliveredPart = true;
@@ -27,7 +38,7 @@ public class Message_Test extends TestCase {
 	private boolean unread = true;
 	private boolean compressed = true;
 	private boolean ascii = true;
-	private Time timeStamp = new Time(); 
+	private DateTime timeStamp = new DateTime(); 
 	private String messageBody = "Testing body";
 	private byte[] messageBodyData = messageBody.getBytes();
 	private short messageBodyLength = (short) messageBodyData.length;
@@ -58,7 +69,7 @@ public class Message_Test extends TestCase {
 		assertEquals(msg.getUnread(), unread);
 		assertEquals(msg.getCompressed(), compressed);
 		assertEquals(msg.getAscii(), ascii);
-		assertEquals(Time.compare(msg.getTimeStamp(), timeStamp), 0);
+		assertEquals(DateTimeComparator.getInstance().compare(msg.getTimeStamp(), timeStamp), 0);
 		assertEquals(msg.getMessageBody().length, messageBodyLength);
 		CustomAsserts.assertArrayEquals(msg.getMessageBody(), messageBodyData);
 		assertEquals(msg.getIndexParent(), indexParent);
@@ -240,7 +251,7 @@ public class Message_Test extends TestCase {
 		
 		// setting/getting
 		
-		byte[] data = Encryption.generateRandomData(280);
+		byte[] data = Encryption.getEncryption().generateRandomData(280);
 		byte[] dataCut = LowLevel.cutData(data, 0, 133);
 		
 		msg.setPartData(2, data);
@@ -269,7 +280,7 @@ public class Message_Test extends TestCase {
 		assertEquals(false, msg.getPartDelivered(2));
 	}
 	
-	public void testCreateData() throws StorageFileException, IOException, WrongKeyException {
+	public void testCreateData() throws StorageFileException, IOException, EncryptionException {
 		// set data
 		Conversation conv = Conversation.createConversation();
 		MessageData msg = MessageData.createMessageData(conv);
@@ -286,18 +297,18 @@ public class Message_Test extends TestCase {
 		flags |= (ascii) ? 0x04: 0x00;
 		
 		// get the generated data
-		byte[] dataEncrypted = Storage.getDatabase().getEntry(msg.getEntryIndex());
+		byte[] dataEncrypted = Storage.getStorage().getEntry(msg.getEntryIndex());
 		
 		// chunk length
 		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
 		
 		// decrypt the encoded part
-		byte[] dataPlain = Encryption.decryptSymmetric(dataEncrypted, Encryption.retreiveEncryptionKey());
+		byte[] dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
 		
 		// check the data
 		assertEquals(dataPlain[0], flags);
-		Time time = new Time(); time.parse3339(Charset.fromAscii8(dataPlain, 1, 29));
-		assertEquals(Time.compare(time, timeStamp), 0);
+		DateTime time = ISODateTimeFormat.dateTimeParser().parseDateTime(Charset.fromAscii8(dataPlain, 1, 29));
+		assertEquals(DateTimeComparator.getInstance().compare(time, timeStamp), 0);
 		assertEquals(LowLevel.getUnsignedShort(dataPlain, 30), messageBodyLength);
 		CustomAsserts.assertArrayEquals(LowLevel.cutData(dataPlain, 32, messageBodyLength), messageBodyData);
 		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16), indexParent);
@@ -306,7 +317,7 @@ public class Message_Test extends TestCase {
 		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4), indexNext);
 	}
 	
-	public void testParseData() throws StorageFileException, IOException {
+	public void testParseData() throws StorageFileException, IOException, EncryptionException {
 		Conversation conv = Conversation.createConversation();
 		MessageData msg = MessageData.createMessageData(conv);
 		long index = msg.getEntryIndex();
@@ -323,7 +334,7 @@ public class Message_Test extends TestCase {
 		// create plain data
 		byte[] dataPlain = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		dataPlain[0] = flags;
-		System.arraycopy(Charset.toAscii8(timeStamp.format3339(false), 29), 0, dataPlain, 1, 29);
+		System.arraycopy(Charset.toAscii8(ISODateTimeFormat.dateTime().print(timeStamp), 29), 0, dataPlain, 1, 29);
 		System.arraycopy(LowLevel.getBytesUnsignedShort(messageBodyLength), 0, dataPlain, 30, 2);
 		System.arraycopy(LowLevel.wrapData(messageBodyData, 140), 0, dataPlain, 32, 140);
 		System.arraycopy(LowLevel.getBytesUnsignedInt(indexParent), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 16, 4);
@@ -332,10 +343,10 @@ public class Message_Test extends TestCase {
 		System.arraycopy(LowLevel.getBytesUnsignedInt(indexNext), 0, dataPlain, Storage.ENCRYPTED_ENTRY_SIZE - 4, 4);
 		
 		// encrypt it
-		byte[] dataEncrypted = Encryption.encryptSymmetric(dataPlain, Encryption.retreiveEncryptionKey());
+		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(dataPlain);
 	
 		// inject it in the file
-		Storage.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getStorage().setEntry(index, dataEncrypted);
 
 		// have it parsed
 		MessageData.forceClearCache();
@@ -348,12 +359,12 @@ public class Message_Test extends TestCase {
 		assertEquals(unread, msg.getUnread());
 		assertEquals(compressed, msg.getCompressed());
 		assertEquals(ascii, msg.getAscii());
-		assertEquals(Time.compare(timeStamp, msg.getTimeStamp()), 0);
+		assertEquals(DateTimeComparator.getInstance().compare(timeStamp, msg.getTimeStamp()), 0);
 		assertEquals(messageBodyLength, msg.getMessageBody().length);
 		CustomAsserts.assertArrayEquals(messageBodyData, msg.getMessageBody());
 		assertEquals(indexParent, msg.getIndexParent());
 		assertEquals(indexMessageParts, msg.getIndexMessageParts());
 		assertEquals(indexPrev, msg.getIndexPrev());
 		assertEquals(indexNext, msg.getIndexNext());
-	}*/
+	}
 }

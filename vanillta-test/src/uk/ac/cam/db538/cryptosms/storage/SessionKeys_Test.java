@@ -10,6 +10,7 @@ import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.CustomAsserts;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import junit.framework.TestCase;
@@ -18,20 +19,25 @@ public class SessionKeys_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
+		EncryptionNone.initEncryption();
 		Common.clearStorageFile();
+		
+		sessionKey_Out = Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH);
+		sessionKey_In = Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH);
 	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
+		Common.closeStorageFile();
 	}
 
 	private boolean keysSent = true;
 	private boolean keysConfirmed = true;
 	private boolean simSerial = true;
 	private String simNumber = "+123456789012";
-	private byte[] sessionKey_Out = Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH);
+	private byte[] sessionKey_Out = null;
 	private byte lastID_Out = 0x12;
-	private byte[] sessionKey_In = Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH);
+	private byte[] sessionKey_In = null;
 	private byte lastID_In = 0x18;
 	private long indexParent = 246L;
 	private long indexPrev = 247L;
@@ -109,7 +115,7 @@ public class SessionKeys_Test extends TestCase {
 		keys.saveToFile();
 		
 		// get the generated data
-		byte[] dataEncrypted = Storage.getDatabase().getEntry(keys.getEntryIndex());
+		byte[] dataEncrypted = Storage.getStorage().getEntry(keys.getEntryIndex());
 		
 		// chunk length
 		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
@@ -150,7 +156,7 @@ public class SessionKeys_Test extends TestCase {
 		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(dataPlain);
 
 		// inject it into the file
-		Storage.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getStorage().setEntry(index, dataEncrypted);
 		
 		// have it parsed
 		SessionKeys.forceClearCache();

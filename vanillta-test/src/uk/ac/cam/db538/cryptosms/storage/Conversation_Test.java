@@ -13,6 +13,7 @@ import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import junit.framework.TestCase;
@@ -46,11 +47,13 @@ public class Conversation_Test extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
+		EncryptionNone.initEncryption();
 		Common.clearStorageFile();
 	}
 
 	protected void tearDown() throws Exception {
 		super.tearDown();
+		Common.closeStorageFile();
 	}
 	
 	public void testConstruction() throws StorageFileException, IOException {
@@ -201,7 +204,7 @@ public class Conversation_Test extends TestCase {
 		conv.saveToFile();
 		
 		// get the generated data
-		byte[] dataEncrypted = Storage.getDatabase().getEntry(conv.getEntryIndex()); 
+		byte[] dataEncrypted = Storage.getStorage().getEntry(conv.getEntryIndex()); 
 		
 		// chunk length
 		assertEquals(dataEncrypted.length, Storage.CHUNK_SIZE);
@@ -235,7 +238,7 @@ public class Conversation_Test extends TestCase {
 		
 		// encrypt it and inject it into the file
 		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(dataPlain);
-		Storage.getDatabase().setEntry(index, dataEncrypted);
+		Storage.getStorage().setEntry(index, dataEncrypted);
 
 		// have it parsed
 		Conversation.forceClearCache();

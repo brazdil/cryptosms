@@ -13,12 +13,13 @@ import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 
 public class Common {
-	public static final String TESTING_FILE = "/data/data/uk.ac.cam.db538.securesms/files/testing.db";
+	public static final String TESTING_FILE = "bin/testing.db";
 	
-	public static void clearStorageFile() throws IOException, StorageFileException {
+	public static void clearStorageFile() throws Exception {
 		File file = new File(TESTING_FILE);
 		if (file.exists())
-			file.delete();
+			if (!file.delete())
+				throw new Exception("Couldn't delete file");
 		
 		// clear caches
 		Header.forceClearCache();
@@ -33,6 +34,18 @@ public class Common {
 		Storage.initSingleton(TESTING_FILE);
 	}
 
+	public static void closeStorageFile() {
+		try {
+			Storage.getStorage().closeFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (StorageFileException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public static boolean checkStructure() throws StorageFileException, IOException {
 		boolean visitedAll = true;
 		boolean corruptedPointers = false;
@@ -47,7 +60,7 @@ public class Common {
 		MessageDataPart.forceClearCache();
 		
 		// initialize
-		Storage db = Storage.getDatabase();
+		Storage db = Storage.getStorage();
 		int countEntries = (int) db.getEntriesCount();
 		boolean[] visitedEntries = new boolean[countEntries];
 		for (int i = 0; i < countEntries; ++i)
