@@ -31,7 +31,7 @@ public class Common {
 		
 		// free the singleton
 		Storage.freeSingleton();
-		Storage.initSingleton(TESTING_FILE);
+		Storage.setFilename(TESTING_FILE);
 	}
 
 	public static void closeStorageFile() {
