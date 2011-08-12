@@ -4,17 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
-import uk.ac.cam.db538.cryptosms.PkiStateReceiver;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.PkiStateReceiver.PkiStateListener;
 import uk.ac.cam.db538.cryptosms.data.Utils;
+import uk.ac.cam.db538.cryptosms.pki.Pki;
+import uk.ac.cam.db538.cryptosms.pki.Pki.PkiStateListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationUpdateListener;
 import android.app.ListActivity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -105,7 +103,7 @@ public class TabRecent extends ListActivity {
 			}
 		});
 		
-		PkiStateReceiver.addListener(mPkiStateListener);
+		Pki.addListener(mPkiStateListener);
     }
 
 	@Override
@@ -149,7 +147,7 @@ public class TabRecent extends ListActivity {
 
 	@Override
 	protected void onStop() {
-		PkiStateReceiver.removeListener(mPkiStateListener);
+		Pki.removeListener(mPkiStateListener);
 		super.onStop();
 	}
 }

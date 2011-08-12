@@ -19,7 +19,7 @@
            		<data android:port="@integer/presets_data_sms_port" />
        		</intent-filter>
         </receiver>
-    	<receiver android:name=".PkiStateReceiver">
+    	<receiver android:name=".pki.PkiStateReceiver">
 			<intent-filter android:priority="10">
         		<action android:name="uk.ac.cam.dje38.pki.login" />
         		<action android:name="uk.ac.cam.dje38.pki.logout" />

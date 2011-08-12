@@ -2,32 +2,21 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.IOException;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
-import uk.ac.cam.db538.cryptosms.PkiStateReceiver;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.PkiStateReceiver.PkiStateListener;
-import uk.ac.cam.db538.cryptosms.data.Pending;
 import uk.ac.cam.db538.cryptosms.data.Utils;
-import uk.ac.cam.db538.cryptosms.data.Pending.ProcessingException;
+import uk.ac.cam.db538.cryptosms.pki.Pki;
+import uk.ac.cam.db538.cryptosms.pki.Pki.PkiStateListener;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
-import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 import android.app.TabActivity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.provider.ContactsContract.Contacts;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.TabHost;
 
 public class MainTabActivity extends TabActivity {
@@ -65,7 +54,7 @@ public class MainTabActivity extends TabActivity {
 		public void onLogout() {
 			mErrorOverlay.getButton().setOnClickListener(new OnClickListener(){
 				public void onClick(View v) {
-					MyApplication.getSingleton().loginPki();
+					Pki.login(false);
 				}
 	        });
 			mErrorOverlay.getButton().setText(R.string.log_in);
@@ -112,7 +101,7 @@ public class MainTabActivity extends TabActivity {
         mPkiStateListener.onLogout();
 
         // listen for logins/logouts
-        PkiStateReceiver.addListener(mPkiStateListener);
+        Pki.addListener(mPkiStateListener);
 	}
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -135,7 +124,7 @@ public class MainTabActivity extends TabActivity {
 
 	@Override
 	protected void onStop() {
-		PkiStateReceiver.removeListener(mPkiStateListener);
+		Pki.removeListener(mPkiStateListener);
 		super.onStop();
 	}
 }

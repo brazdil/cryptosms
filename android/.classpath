@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/CryptoSMS Vanilla"/>
 	<classpathentry kind="lib" path="/CryptoSMS Vanilla/lib/joda-time-2.0.jar"/>
 	<classpathentry kind="src" path="PKIwrapper_src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Encryption"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

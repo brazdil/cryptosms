@@ -2,7 +2,6 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.IOException;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
@@ -12,6 +11,7 @@ import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSentListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.cryptosms.pki.Pki;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -225,7 +225,7 @@ public class ConversationActivity extends Activity {
 	public void onResume() {
 		super.onResume();
         modeEnabled(false);
-		MyApplication.getSingleton().loginPki();
+		Pki.login(false);
 	}
 	
 /*	private OnPkiAvailableListener mOnPkiAvailable = new OnPkiAvailableListener() {

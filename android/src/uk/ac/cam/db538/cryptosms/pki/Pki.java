@@ -1,0 +1,301 @@
+package uk.ac.cam.db538.cryptosms.pki;
+
+import java.util.ArrayList;
+
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.utils.CompressedText;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
+
+public class Pki {
+	private static PKIwrapper mPki = null;
+	private static Context mContext = null;
+	
+	private static byte[] mMasterKey = null;
+	private static final String KEY_STORAGE = "CRYPTOSMS_MASTER_KEY";
+
+	private static boolean mLoggedIn = false;
+	
+	public static class PkiNotReadyException extends Exception {
+		private static final long serialVersionUID = 5247215307724480706L;
+		
+		public PkiNotReadyException() {
+			super("PKI is not available (either not connected or logged out)");
+		}
+	}
+	
+	private static PkiStateListener mMainListener = new PkiStateListener() {
+		@Override
+		public void onLogout() {
+			
+		}
+		
+		@Override
+		public void onLogin() {
+			// TODO Just for testing!!!
+			try {
+				Conversation conv1 = Conversation.createConversation();
+				conv1.setPhoneNumber("+447572306095");
+				SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
+				keys1.setSimNumber(new SimNumber("89441000301641313004", true));
+				keys1.setKeysSent(true);
+				keys1.setKeysConfirmed(false);
+				keys1.saveToFile();
+				SessionKeys keys4 = SessionKeys.createSessionKeys(conv1);
+				keys4.setSimNumber(new SimNumber("07879116797", false));
+				keys4.setKeysSent(true);
+				keys4.setKeysConfirmed(true);
+				keys4.saveToFile();
+				SessionKeys keys5 = SessionKeys.createSessionKeys(conv1);
+				keys5.setSimNumber(new SimNumber("07572306095", false));
+				keys5.setKeysSent(true);
+				keys5.setKeysConfirmed(true);
+				keys5.setSessionKey_In(keys5.getSessionKey_Out().clone());
+				keys5.saveToFile();
+				Conversation conv2 = Conversation.createConversation();
+				MessageData msg2 = MessageData.createMessageData(conv2);
+				TextMessage txtmsg2 = new TextMessage(msg2);
+				txtmsg2.setText(CompressedText.createFromString("You're a jerk!"));
+				msg2.setUnread(false);
+				msg2.saveToFile();
+				conv2.setPhoneNumber("+20104544366");
+				SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
+				keys2.setSimNumber(new SimNumber("89441000301641313002", true));
+				keys2.setKeysSent(false);
+				keys2.setKeysConfirmed(true);
+				keys2.saveToFile();
+				SessionKeys keys3 = SessionKeys.createSessionKeys(conv2);
+				keys3.setSimNumber(new SimNumber("07879116797", false));
+				keys3.setKeysSent(false);
+				keys3.setKeysConfirmed(false);
+				keys3.saveToFile();
+				Conversation conv3 = Conversation.createConversation();
+				conv3.setPhoneNumber("+447879116797");
+				SessionKeys keys6 = SessionKeys.createSessionKeys(conv3);
+				keys6.setSimNumber(new SimNumber("+447572306095", false));
+				keys6.setKeysSent(true);
+				keys6.setKeysConfirmed(true);
+				keys6.saveToFile();
+			} catch (Exception ex) {
+			}
+		}
+		
+		@Override
+		public void onDisconnect() {
+		}
+		
+		@Override
+		public void onConnect() {
+		}
+	};
+	
+	public static void init(Context context) {
+		mContext = context;
+		if (mPki != null) return;
+		
+		try {
+			mPki = new PKIwrapper(mContext);
+		} catch (InterruptedException e1) {
+			// ignore
+		}
+
+		connect();
+	}
+	
+	public static void connect() {
+		try {
+			if (mPki != null) {
+				mPki.setTimeout(60);
+				mPki.connect(new ConnectionListener() {
+					
+					@Override
+					public void onConnectionDeclined() {
+						// TODO Auto-generated method stub
+						Log.d(MyApplication.APP_TAG, "onConnectionDeclined");
+						
+					}
+					
+					@Override
+					public void onConnectionFailed() {
+						// TODO Auto-generated method stub
+						Log.d(MyApplication.APP_TAG, "onConnectionFailed");
+					}
+					
+					@Override
+					public void onConnectionTimeout() {
+						// TODO Auto-generated method stub
+						Log.d(MyApplication.APP_TAG, "onConnectionTimeout");
+					}
+					
+					@Override
+					public void onDisconnect() {
+						Log.d(MyApplication.APP_TAG, "onDisconnect");
+						setLoggedIn(false);
+						notifyDisconnect();
+						removeListener(mMainListener);
+					}
+					
+					@Override
+					public void onConnect() {
+						Log.d(MyApplication.APP_TAG, "onConnect");
+						notifyConnect();
+						addListener(mMainListener);
+					}
+				});
+			}
+		} catch (PKInotInstalledException e) {
+			// TODO handle
+		}
+	}
+
+	public static boolean isConnected() {
+		return mPki != null && mPki.isConnected();
+	}
+	
+	public static void login(boolean force) {
+		if (isConnected() && !isLoggedIn()) {
+			if (force) {
+				try {
+					setLoggedIn(mPki.authorise());
+				} catch (TimeoutException e) {
+				} catch (PKIErrorException e) {
+				} catch (NotConnectedException e) {
+				}
+			} else {
+				Intent intent = new Intent("uk.ac.cam.dje38.pki.login");
+				mContext.startService(intent);
+			}
+		}
+	}
+
+	public static void disconnect() {
+		if (mPki != null)
+			try {
+				mPki.disconnect();
+			} catch (TimeoutException e) {
+			} catch (PKIErrorException e) {
+		}
+	}
+
+	public interface PkiStateListener {
+		public void onConnect();
+		public void onLogin();
+		public void onLogout();
+		public void onDisconnect();
+	}
+	
+	private static ArrayList<PkiStateListener> mListeners = new ArrayList<PkiStateListener>();
+	
+	public static void addListener(PkiStateListener listener) {
+		mListeners.add(listener);
+		
+		if (isConnected()) {
+			listener.onConnect();
+			if (isLoggedIn())
+				listener.onLogin();
+		}
+	}
+	
+	public static void removeListener(PkiStateListener listener) {
+		mListeners.remove(listener);
+	}
+	
+	public static void notifyConnect() {
+		for (PkiStateListener listener : mListeners)
+			listener.onConnect();
+		login(false);
+	}
+	
+	public static void notifyLogin() {
+		for (PkiStateListener listener : mListeners)
+			listener.onLogin();
+	}
+	
+	public static void notifyLogout() {
+		for (PkiStateListener listener : mListeners)
+			listener.onLogout();
+	}
+
+	public static void notifyDisconnect() {
+		for (PkiStateListener listener : mListeners)
+			listener.onDisconnect();
+	}
+	
+	public static boolean isLoggedIn() {
+		return isConnected() && mLoggedIn;
+	}
+	
+	static void setLoggedIn(boolean value) {
+		if (mLoggedIn != value) {
+			mLoggedIn = value;
+			if (mLoggedIn) 
+				Pki.notifyLogin();
+			else
+				Pki.notifyLogout();
+		}
+	}
+	
+	public static byte[] getMasterKey(boolean forceLogIn) throws PkiNotReadyException {
+		return getMasterKey(forceLogIn, true);
+	}
+	
+	public static byte[] getMasterKey(boolean forceLogIn, boolean generateAllow) throws PkiNotReadyException {
+		if (isLoggedIn()) {
+			if (mMasterKey == null) {
+				try {
+					if (mPki.hasDataStore(KEY_STORAGE)) {
+						mMasterKey = mPki.getDataStore(KEY_STORAGE);
+						return mMasterKey;
+					}
+					else if (generateAllow) {
+						mPki.setDataStore(KEY_STORAGE, Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH));
+						return getMasterKey(forceLogIn, false);
+					} else
+						throw new PkiNotReadyException();
+				} catch (NotConnectedException e) {
+					throw new PkiNotReadyException();
+				} catch (TimeoutException e) {
+					throw new PkiNotReadyException();
+				} catch (DeclinedException e) {
+					throw new PkiNotReadyException();
+				} catch (PKIErrorException e) {
+					throw new PkiNotReadyException();
+				}
+			} else
+				return mMasterKey;
+		} else if (forceLogIn) {
+			try {
+				if (mPki.authorise()) {
+					boolean temp = mLoggedIn;
+					mLoggedIn = true;
+					byte[] key = getMasterKey(false, generateAllow);
+					mLoggedIn = temp;
+					return key;
+				}
+				else
+					throw new PkiNotReadyException();
+			} catch (TimeoutException e) {
+				throw new PkiNotReadyException();
+			} catch (PKIErrorException e) {
+				throw new PkiNotReadyException();
+			} catch (NotConnectedException e) {
+				throw new PkiNotReadyException();
+			}
+		} else
+			throw new PkiNotReadyException();
+	}
+}
