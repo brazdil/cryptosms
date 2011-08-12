@@ -372,7 +372,7 @@ public class TextMessage extends Message {
 	 */
 	public static int getExpectedDataLength(int totalDataLength, int index) {
 		int prev = 0, count = LENGTH_FIRST_MESSAGEBODY;
-		while (count < totalDataLength) {
+		while (count < totalDataLength && index-- > 0) {
 			prev = count;
 			count += LENGTH_PART_MESSAGEBODY;
 		}
@@ -386,11 +386,8 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int getExpectedDataOffset(int totalDataLength, int index) {
-		if (index == 0)
-			return 0;
-		
 		int prev = 0, count = LENGTH_FIRST_MESSAGEBODY;
-		while (count < totalDataLength) {
+		while (count < totalDataLength && index-- > 0) {
 			prev = count;
 			count += LENGTH_PART_MESSAGEBODY;
 		}

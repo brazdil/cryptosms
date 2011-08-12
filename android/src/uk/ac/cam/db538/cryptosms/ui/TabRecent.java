@@ -5,14 +5,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.PkiStateReceiver;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.MyApplication.OnPkiAvailableListener;
+import uk.ac.cam.db538.cryptosms.PkiStateReceiver.PkiStateListener;
 import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationUpdateListener;
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -102,18 +104,31 @@ public class TabRecent extends ListActivity {
 	    		}
 			}
 		});
+		
+		PkiStateReceiver.addListener(mPkiStateListener);
     }
 
 	@Override
-	protected void onResume() {
-		super.onResume();
+	protected void onStart() {
+		super.onStart();
 		setListAdapter(null);
-		MyApplication.getSingleton().waitForPki(this, mPkiAvailableListener);
 	}
 	
-	private OnPkiAvailableListener mPkiAvailableListener = new OnPkiAvailableListener() {
+	private PkiStateListener mPkiStateListener = new PkiStateListener() {
 		@Override
-		public void OnPkiAvailable() {
+		public void onConnect() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onDisconnect() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onLogin() {
 	        try {
 	        	// initialize the list of conversations
 	        	updateContacts();
@@ -124,5 +139,17 @@ public class TabRecent extends ListActivity {
 			}
 			setListAdapter(mAdapterRecent);
 		}
+
+		@Override
+		public void onLogout() {
+			// TODO Auto-generated method stub
+			
+		}
 	};
+
+	@Override
+	protected void onStop() {
+		PkiStateReceiver.removeListener(mPkiStateListener);
+		super.onStop();
+	}
 }

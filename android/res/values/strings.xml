@@ -493,6 +493,8 @@
     <string name="try_again">Try again</string>
     <string name="pki_waiting_title">Waiting for PKI</string>
     <string name="pki_waiting_details">Connecting to the PKI...</string>
+    <string name="logged_out">You are logged out. Log in to use this application.</string>
+    <string name="log_in">Log in</string>
 
 </resources>
 

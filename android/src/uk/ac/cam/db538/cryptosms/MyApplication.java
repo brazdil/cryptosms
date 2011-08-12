@@ -19,7 +19,10 @@ import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 import android.app.Application;
 import android.app.Notification;
 import android.app.ProgressDialog;
@@ -48,7 +51,6 @@ public class MyApplication extends Application {
 
 	private Notification mNotification = null;
 	private PKIwrapper mPki = null;
-	private ArrayList<ProgressDialog> mPkiWaitingDialogs = new ArrayList<ProgressDialog>();
 	
 	//private final Context mContext = this.getApplicationContext();
 	private ConnectionListener onPkiConnect;
@@ -70,7 +72,7 @@ public class MyApplication extends Application {
 			mPki = null;
 		}
 	}
-
+	
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -85,30 +87,16 @@ public class MyApplication extends Application {
 		long when = System.currentTimeMillis();
 		mNotification = new Notification(icon, tickerText, when);
 		
+		Preferences.initSingleton(context);
 		if (Encryption.getEncryption() == null)
-			Encryption.setEncryption(new EncryptionNone());
+			Encryption.setEncryption(new EncryptionPki());
 	
 		onPkiConnect = new ConnectionListener() {
 				@Override
 				public void onConnect() {
 					Log.d(APP_TAG, "onConnect");
-					for (ProgressDialog pd : mPkiWaitingDialogs)
-						pd.cancel();
-					mPkiWaitingDialogs.clear();
+					PkiStateReceiver.notifyConnect();
 					
-					// Check whether there is already a Master Key
-					// and generate a new one if not
-					try {
-						EncryptionInterface crypto = Encryption.getEncryption();
-						crypto.generateMasterKey();
-						Log.d(APP_TAG, "Master Key: " + LowLevel.toHex(crypto.getMasterKey()));
-						if (!crypto.testEncryption())
-							throw new EncryptionException();
-					} catch (EncryptionException e2) {
-						// TODO Auto-generated catch block
-						e2.printStackTrace();
-					}
-
 					String storageFile = context.getFilesDir().getAbsolutePath() + "/" + STORAGE_FILE_NAME;
 					
 					//TODO: Just For Testing!!!
@@ -121,7 +109,6 @@ public class MyApplication extends Application {
 
 					try {
 						Storage.initSingleton(storageFile);
-						Preferences.initSingleton(context);
 					} catch (Exception e) {
 						// TODO: show error dialog
 					}
@@ -191,8 +178,9 @@ public class MyApplication extends Application {
 				}
 				@Override
 				public void onDisconnect() {
-					mPki = null;
 					Log.d(APP_TAG, "onDisconnect");
+					mPki = null; 
+					PkiStateReceiver.notifyDisconnect();
 				}
 		};
 		initPki();
@@ -206,37 +194,22 @@ public class MyApplication extends Application {
 		return mPki;
 	}
 	
-	public boolean checkPki() {
-		initPki();
-		return mPki != null;  
+	public void loginPki() {
+		if (mPki != null && mPki.isConnected() && !PkiStateReceiver.isLoggedIn()) {
+			Log.d(MyApplication.APP_TAG, "Logging in");
+			Intent intent = new Intent("uk.ac.cam.dje38.pki.login");
+			this.getApplicationContext().startService(intent);
+		}
 	}
-	
-	public interface OnPkiAvailableListener {
-		public void OnPkiAvailable();
-	}
-	
-	public void waitForPki(Context context, final OnPkiAvailableListener listener) {
-	    if (mPki != null) {
-	    	if (mPki.isConnected()) {
-	    		listener.OnPkiAvailable();
-	    	} else {
-	    		Resources res = context.getResources();
-	    		ProgressDialog pd = new ProgressDialog(context);
-	    		pd.setCancelable(false);
-	    		pd.setTitle(res.getString(R.string.pki_waiting_title));
-	    		pd.setMessage(res.getString(R.string.pki_waiting_details));
-	    		pd.setOnCancelListener(new OnCancelListener() {
-					@Override
-					public void onCancel(DialogInterface dialog) {
-						listener.OnPkiAvailable();
-					}
-				});
-	    		mPkiWaitingDialogs.add(pd);
-	    		pd.show();
-	    	}
-	    } else {
-			Intent intent = new Intent(context, PkiInstallActivity.class);
-			context.startActivity(intent);
-	    }
+
+	@Override
+	public void onTerminate() {
+		super.onTerminate();
+		if (mPki != null)
+			try {
+				mPki.disconnect();
+			} catch (TimeoutException e) {
+			} catch (PKIErrorException e) {
+			}
 	}
 }

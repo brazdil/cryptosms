@@ -85,6 +85,8 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
+		generateMasterKey();
+
 		ByteBuffer result = ByteBuffer.allocate(data.length + Encryption.ENCRYPTION_OVERHEAD);
 		// MAC
 		result.put(getHash(data));
@@ -143,6 +145,8 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
+		generateMasterKey();
+
 		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
 		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.MAC_LENGTH, data.length - Encryption.MAC_LENGTH);
 		

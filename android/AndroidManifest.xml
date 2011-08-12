@@ -12,11 +12,17 @@
     	android:icon="@drawable/icon" 
     	android:label="@string/app_label"
     	android:name="MyApplication"> 	
-    	<receiver android:name=".receivers.DataSmsReceiver">
+    	<receiver android:name=".data.DataSmsReceiver">
 			<intent-filter android:priority="10">
         		<action android:name="android.intent.action.DATA_SMS_RECEIVED" />
           		<data android:scheme="sms" />
            		<data android:port="@integer/presets_data_sms_port" />
+       		</intent-filter>
+        </receiver>
+    	<receiver android:name=".PkiStateReceiver">
+			<intent-filter android:priority="10">
+        		<action android:name="uk.ac.cam.dje38.pki.login" />
+        		<action android:name="uk.ac.cam.dje38.pki.logout" />
        		</intent-filter>
         </receiver>
         <activity android:name=".ui.PkiInstallActivity" />

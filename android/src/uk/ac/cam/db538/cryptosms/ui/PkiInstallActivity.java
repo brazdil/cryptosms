@@ -45,9 +45,9 @@ public class PkiInstallActivity extends Activity {
 		buttonTryAgain.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (MyApplication.getSingleton().checkPki()) {
-					context.simulateBackPressed();
-				}
+//				if (MyApplication.getSingleton().checkPki()) {
+//					context.simulateBackPressed();
+//				}
 			}
 		});
 	}

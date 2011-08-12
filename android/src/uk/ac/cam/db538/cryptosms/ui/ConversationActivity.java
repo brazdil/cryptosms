@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.MyApplication.OnPkiAvailableListener;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
@@ -226,14 +225,14 @@ public class ConversationActivity extends Activity {
 	public void onResume() {
 		super.onResume();
         modeEnabled(false);
-		MyApplication.getSingleton().waitForPki(this, mOnPkiAvailable);
+		MyApplication.getSingleton().loginPki();
 	}
 	
-	private OnPkiAvailableListener mOnPkiAvailable = new OnPkiAvailableListener() {
+/*	private OnPkiAvailableListener mOnPkiAvailable = new OnPkiAvailableListener() {
 		@Override
 		public void OnPkiAvailable() {
 			checkResources();
 			// TODO: load messages...
 		}
-	};
+	};*/
 }
