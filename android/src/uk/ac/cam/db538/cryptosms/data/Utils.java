@@ -137,7 +137,8 @@ public class Utils {
 		new AlertDialog.Builder(context)
 			.setTitle(res.getString(R.string.error_no_sim_number_import))
 			.setItems(numbers, new DialogInterface.OnClickListener() {
-			    public void onClick(DialogInterface dialog, int item) {
+			    @Override
+				public void onClick(DialogInterface dialog, int item) {
 			    	if (item < phoneNumbers.size()) {
 						try {
 							if (simNumber.getNumber().length() == 0)

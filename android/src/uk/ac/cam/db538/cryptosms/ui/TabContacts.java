@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -77,6 +76,7 @@ public class TabContacts extends ListActivity {
 		}
 	}
 
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
         setContentView(R.layout.screen_main_listtab);
@@ -91,6 +91,7 @@ public class TabContacts extends ListActivity {
 		
         // register for changes in SIM state
         SimCard.getSingleton().registerSimStateListener(this, new OnSimStateListener() {
+			@Override
 			public void onChange() {
 				checkResources();
 			}
@@ -121,6 +122,7 @@ public class TabContacts extends ListActivity {
 			};
         	// add listeners			
         	Conversation.addUpdateListener(new ConversationUpdateListener() {
+				@Override
 				public void onUpdate() {
 					try {
 						updateContacts();
@@ -136,6 +138,7 @@ public class TabContacts extends ListActivity {
 			setListAdapter(mAdapterContacts);
 			// specify what to do when clicked on items
 			listView.setOnItemClickListener(new OnItemClickListener() {
+				@Override
 				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
 					// check that the SIM is available
 					try {
@@ -205,7 +208,8 @@ public class TabContacts extends ListActivity {
 	    				new AlertDialog.Builder(this)
 	    					.setTitle(res.getString(R.string.contacts_pick_phone_number))
 	    					.setItems(items, new DialogInterface.OnClickListener() {
-		    				    public void onClick(DialogInterface dialog, int item) {
+		    				    @Override
+								public void onClick(DialogInterface dialog, int item) {
 		    				    	Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
 		    				    	startConversation(phoneNumber.getPhoneNumber());
 		    				    }
@@ -243,7 +247,8 @@ public class TabContacts extends ListActivity {
 		}
 	}
 	
-    public void onResume() {
+    @Override
+	public void onResume() {
     	super.onResume();
     }
 }

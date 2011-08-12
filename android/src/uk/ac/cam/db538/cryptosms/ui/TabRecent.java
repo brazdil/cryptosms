@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.Utils;
-import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
@@ -50,6 +48,7 @@ public class TabRecent extends ListActivity {
 		startActivity(intent);
 	}	
 	
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
         setContentView(R.layout.screen_main_listtab);
@@ -78,6 +77,7 @@ public class TabRecent extends ListActivity {
 		};
     	// add listeners			
     	Conversation.addUpdateListener(new ConversationUpdateListener() {
+			@Override
 			public void onUpdate() {
 				try {
 					updateContacts();
@@ -92,6 +92,7 @@ public class TabRecent extends ListActivity {
     	mAdapterRecent = adapterContacts;
 		// specify what to do when clicked on items
 		listView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
 				TabRecentItem item = (TabRecentItem) view;
 				Conversation conv;

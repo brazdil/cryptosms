@@ -87,6 +87,7 @@ public class TextMessage extends Message {
 	 * @throws StorageFileException 
 	 * @throws MessageException 
 	 */
+	@Override
 	public ArrayList<byte[]> getBytes(Context context) throws StorageFileException, MessageException {
 		EncryptionInterface crypto = Encryption.getEncryption();
 		

@@ -21,6 +21,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @param length
 	 * @return
 	 */
+	@Override
 	public byte[] generateRandomData(int length) {
 		return mEncryptionNone.generateRandomData(length);
 	}
@@ -30,6 +31,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @param data
 	 * @return
 	 */
+	@Override
 	public byte[] getHash(byte[] data) {
 		return mEncryptionNone.getHash(data);
 	}
@@ -40,6 +42,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @param length
 	 * @return
 	 */
+	@Override
 	public int getEncryptedLength(int length) {
 		return mEncryptionNone.getEncryptedLength(length);
 	}
@@ -49,6 +52,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @param length
 	 * @return
 	 */
+	@Override
 	public int getAlignedLength(int length) {
 		return mEncryptionNone.getAlignedLength(length);
 	}
@@ -60,6 +64,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 * @throws EncryptionException
 	 */
+	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException {
 		try {
 			return encryptSymmetric(data, Pki.getMasterKey(forceLogIn));
@@ -74,6 +79,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 * @throws EncryptionException
 	 */
+	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
 		return encryptSymmetricWithMasterKey(data, false);
 	}
@@ -84,6 +90,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 * @throws EncryptionException
 	 */
+	@Override
 	public byte[] encryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
 		// align data for MAC checking
 		data = LowLevel.wrapData(data, getAlignedLength(data.length));
@@ -111,6 +118,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 * @throws EncryptionException
 	 */
+	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException {
 		try {
 			return decryptSymmetric(data, Pki.getMasterKey(forceLogIn));
@@ -125,6 +133,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 * @throws EncryptionException
 	 */
+	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
 		return decryptSymmetricWithMasterKey(data, false);
 	}
@@ -135,6 +144,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 * @throws EncryptionException
 	 */
+	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
 		// cut the file up
 		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);

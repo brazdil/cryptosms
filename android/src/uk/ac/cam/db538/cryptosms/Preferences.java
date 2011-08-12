@@ -19,7 +19,7 @@ public class Preferences {
 	private SharedPreferences mPreferences;
 	
 	private Preferences(Context context) {
-		mPreferences = context.getSharedPreferences(PREFERECES, Activity.MODE_PRIVATE);
+		mPreferences = context.getSharedPreferences(PREFERECES, Context.MODE_PRIVATE);
 	}
 	
 	// GETTERS / SETTERS

@@ -6,6 +6,7 @@ import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import android.app.Dialog;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -19,19 +20,31 @@ import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.TabHost;
 
 public class MainTabActivity extends TabActivity {
-	private Context mContext = this;
+	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 
-	private TabHost.TabSpec specRecent;
-	private TabHost.TabSpec specContacts;
-	
-	private View mMainLayout;
+	private Context mContext = this;
 	private ErrorOverlay mErrorOverlay;
 	
-	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
-	
+	private View mMainLayout;
 	private StateChangeListener mPkiStateListener = new StateChangeListener(){
 		@Override
 		public void onConnect() {
+		}
+
+		@Override
+		public void onDisconnect() {
+			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
+			mErrorOverlay.modeDisconnected();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
+		}
+
+		@Override
+		public void onFatalException(Exception ex) {
+			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
+			mErrorOverlay.modeFatalException(ex);
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
 		}
 
 		@Override
@@ -57,30 +70,19 @@ public class MainTabActivity extends TabActivity {
 		}
 
 		@Override
-		public void onDisconnect() {
-			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
-			mErrorOverlay.modeDisconnected();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
-		}
-
-		@Override
 		public void onPkiMissing() {
 			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
 			mErrorOverlay.modePkiMissing();
 			mErrorOverlay.setVisibility(View.VISIBLE);
 	        mMainLayout.setVisibility(View.INVISIBLE);
 		}
-
-		@Override
-		public void onFatalException(Exception ex) {
-			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
-			mErrorOverlay.modeFatalException(ex);
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
-		}
 	};
+	
+	private TabHost.TabSpec specContacts;
+	
+	private TabHost.TabSpec specRecent;
 
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.screen_main);
@@ -111,6 +113,7 @@ public class MainTabActivity extends TabActivity {
         mPkiStateListener.onLogout();
 	}
 	
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		
@@ -129,7 +132,7 @@ public class MainTabActivity extends TabActivity {
 		return true;
 	}
 
-    @Override
+	@Override
 	protected void onStart() {
         // listen for logins/logouts
         State.addListener(mPkiStateListener);

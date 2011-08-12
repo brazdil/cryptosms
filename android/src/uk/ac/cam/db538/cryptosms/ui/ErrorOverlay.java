@@ -10,7 +10,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.text.Html;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -58,6 +57,7 @@ public class ErrorOverlay extends RelativeLayout {
 	public void modeLogin() {
 		mTextView.setText(R.string.logged_out);
 		mTopButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				Pki.login(false);
 			}
@@ -72,6 +72,7 @@ public class ErrorOverlay extends RelativeLayout {
 		mTextView.setText(R.string.pki_install_message);
 		
 		mTopButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + MyApplication.PKI_PACKAGE));
 				try {
@@ -83,6 +84,7 @@ public class ErrorOverlay extends RelativeLayout {
 		mTopButton.setText(R.string.to_market);
 		
 		mBottomButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				Pki.connect();
 			}
@@ -96,6 +98,7 @@ public class ErrorOverlay extends RelativeLayout {
 	public void modeDisconnected() {
 		mTextView.setText(R.string.disconnected_message);
 		mTopButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				Pki.connect();
 			}
@@ -110,6 +113,7 @@ public class ErrorOverlay extends RelativeLayout {
 		mTextView.setText(R.string.fatal_exception_message);
 
 		mTopButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				// prepare report
 				String report = "Exception: " + ex.getClass().getName();
@@ -130,6 +134,7 @@ public class ErrorOverlay extends RelativeLayout {
 		mTopButton.setText(R.string.report);
 
 		mBottomButton.setOnClickListener(new OnClickListener(){
+			@Override
 			public void onClick(View v) {
 				// kill the app
 				System.runFinalizersOnExit(true);
