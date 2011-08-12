@@ -37,9 +37,6 @@ public class Common {
 	public static void closeStorageFile() {
 		try {
 			Storage.getStorage().closeFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (StorageFileException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
