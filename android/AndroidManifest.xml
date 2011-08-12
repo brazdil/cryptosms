@@ -13,17 +13,23 @@
     	android:label="@string/app_label"
     	android:name="MyApplication"> 	
     	<receiver android:name=".data.DataSmsReceiver">
-			<intent-filter android:priority="10">
+			<intent-filter>
         		<action android:name="android.intent.action.DATA_SMS_RECEIVED" />
           		<data android:scheme="sms" />
            		<data android:port="@integer/presets_data_sms_port" />
        		</intent-filter>
         </receiver>
     	<receiver android:name=".pki.PkiStateReceiver">
-			<intent-filter android:priority="10">
+			<intent-filter>
+        		<action android:name="android.intent.action.PACKAGE_ADDED" />
+        		<action android:name="android.intent.action.PACKAGE_REMOVED" />
+ 				<category android:name="android.intent.category.DEFAULT" />
+        		<data android:scheme="package" android:path="uk.ac.cam.dje38.pki"/> 
+        	</intent-filter>
+        	<intent-filter>
         		<action android:name="uk.ac.cam.dje38.pki.login" />
         		<action android:name="uk.ac.cam.dje38.pki.logout" />
-       		</intent-filter>
+        	</intent-filter>
         </receiver>
         <activity android:name=".ui.PkiInstallActivity" />
 		<activity android:name=".ui.MainTabActivity" android:label="@string/app_label">        

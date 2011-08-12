@@ -16,6 +16,7 @@ public class MyApplication extends Application {
 	public static final int NOTIFICATION_ID = 1;
 	public static final String APP_TAG = "CRYPTOSMS";
 	public static final String STORAGE_FILE_NAME = "storage.db";
+	public static final String PKI_PACKAGE = "uk.ac.cam.dje38.pki";
 	
 	private static MyApplication mSingleton;
 	

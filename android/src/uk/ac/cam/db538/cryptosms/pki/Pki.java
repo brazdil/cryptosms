@@ -28,6 +28,7 @@ public class Pki {
 	private static byte[] mMasterKey = null;
 	private static final String KEY_STORAGE = "CRYPTOSMS_MASTER_KEY";
 
+	private static boolean mPkiMissing = false;
 	private static boolean mLoggedIn = false;
 	
 	public static class PkiNotReadyException extends Exception {
@@ -39,11 +40,6 @@ public class Pki {
 	}
 	
 	private static PkiStateListener mMainListener = new PkiStateListener() {
-		@Override
-		public void onLogout() {
-			
-		}
-		
 		@Override
 		public void onLogin() {
 			// TODO Just for testing!!!
@@ -95,11 +91,19 @@ public class Pki {
 		}
 		
 		@Override
+		public void onConnect() {
+		}
+
+		@Override
 		public void onDisconnect() {
 		}
 		
 		@Override
-		public void onConnect() {
+		public void onPkiMissing() {
+		}
+
+		@Override
+		public void onLogout() {
 		}
 	};
 	
@@ -153,12 +157,16 @@ public class Pki {
 					public void onConnect() {
 						Log.d(MyApplication.APP_TAG, "onConnect");
 						notifyConnect();
+						setLoggedIn(false, true);
+						login(false);
 						addListener(mMainListener);
 					}
 				});
+				mPkiMissing = false;
 			}
 		} catch (PKInotInstalledException e) {
-			// TODO handle
+			mPkiMissing = true;
+			notifyPkiMissing();
 		}
 	}
 
@@ -190,12 +198,19 @@ public class Pki {
 			} catch (PKIErrorException e) {
 		}
 	}
+	
+	static void setPkiMissing() {
+		Log.d(MyApplication.APP_TAG, "PKI missing");
+		mPkiMissing = true;
+		notifyPkiMissing();
+	}
 
 	public interface PkiStateListener {
 		public void onConnect();
 		public void onLogin();
 		public void onLogout();
 		public void onDisconnect();
+		public void onPkiMissing();
 	}
 	
 	private static ArrayList<PkiStateListener> mListeners = new ArrayList<PkiStateListener>();
@@ -203,7 +218,9 @@ public class Pki {
 	public static void addListener(PkiStateListener listener) {
 		mListeners.add(listener);
 		
-		if (isConnected()) {
+		if (mPkiMissing)
+			listener.onPkiMissing();
+		else if (isConnected()) {
 			listener.onConnect();
 			if (isLoggedIn())
 				listener.onLogin();
@@ -235,12 +252,21 @@ public class Pki {
 			listener.onDisconnect();
 	}
 	
+	public static void notifyPkiMissing() {
+		for (PkiStateListener listener : mListeners)
+			listener.onPkiMissing();
+	}
+
 	public static boolean isLoggedIn() {
 		return isConnected() && mLoggedIn;
 	}
 	
 	static void setLoggedIn(boolean value) {
-		if (mLoggedIn != value) {
+		setLoggedIn(value, false);
+	}
+	
+	static void setLoggedIn(boolean value, boolean forceNotify) {
+		if (mLoggedIn != value || forceNotify) {
 			mLoggedIn = value;
 			if (mLoggedIn) 
 				Pki.notifyLogin();

@@ -143,6 +143,12 @@ public class TabRecent extends ListActivity {
 			// TODO Auto-generated method stub
 			
 		}
+
+		@Override
+		public void onPkiMissing() {
+			// TODO Auto-generated method stub
+			
+		}
 	};
 
 	@Override

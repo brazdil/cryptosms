@@ -2,6 +2,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.IOException;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.pki.Pki;
@@ -12,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -52,14 +54,8 @@ public class MainTabActivity extends TabActivity {
 
 		@Override
 		public void onLogout() {
-			mErrorOverlay.getButton().setOnClickListener(new OnClickListener(){
-				public void onClick(View v) {
-					Pki.login(false);
-				}
-	        });
-			mErrorOverlay.getButton().setText(R.string.log_in);
-			mErrorOverlay.getTextView().setText(R.string.logged_out);
-
+			Log.d(MyApplication.APP_TAG, "Logout error overlay");
+			mErrorOverlay.modeLogin();
 			mErrorOverlay.setVisibility(View.VISIBLE);
 	        mMainLayout.setVisibility(View.INVISIBLE);
 		}
@@ -68,6 +64,14 @@ public class MainTabActivity extends TabActivity {
 		public void onDisconnect() {
 			// TODO Auto-generated method stub
 			
+		}
+
+		@Override
+		public void onPkiMissing() {
+			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
+			mErrorOverlay.modePkiMissing();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
 		}
 	};
 
@@ -95,13 +99,10 @@ public class MainTabActivity extends TabActivity {
 	                  .setContent(intent);
 	    tabHost.addTab(specContacts);
 
-	    // login/logout stuff
+	    // error overlay
 	    mMainLayout = findViewById(R.id.screen_main);
 	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_main_error);
         mPkiStateListener.onLogout();
-
-        // listen for logins/logouts
-        Pki.addListener(mPkiStateListener);
 	}
 	
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -122,8 +123,16 @@ public class MainTabActivity extends TabActivity {
 		return true;
 	}
 
+    @Override
+	protected void onStart() {
+        // listen for logins/logouts
+        Pki.addListener(mPkiStateListener);
+		super.onStart();
+	}
+
 	@Override
 	protected void onStop() {
+		Log.d(MyApplication.APP_TAG, "Removing listener");
 		Pki.removeListener(mPkiStateListener);
 		super.onStop();
 	}
