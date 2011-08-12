@@ -11,7 +11,7 @@ import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSentListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard.OnSimStateListener;
-import uk.ac.cam.db538.cryptosms.pki.Pki;
+import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;

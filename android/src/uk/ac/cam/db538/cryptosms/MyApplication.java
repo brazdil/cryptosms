@@ -4,11 +4,13 @@ import java.io.File;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
-import uk.ac.cam.db538.cryptosms.pki.Pki;
+import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import android.app.Application;
 import android.app.Notification;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 
 public class MyApplication extends Application {

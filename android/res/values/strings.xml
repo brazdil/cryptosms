@@ -487,7 +487,7 @@
     <string name="notification_ticker">New message</string>
     <string name="notification_title">CryptoSMS</string>
     <string name="notification_text">New messages</string>
-    <string name="pki_install_message">CryptoSMS is dependent on the Public Key Infrastructure project, which is currently not installed on your device.</string>
+    <string name="pki_install_message">CryptoSMS is dependent on the Public Key Infrastructure application, which is currently not installed on your device.</string>
     <string name="quit">Quit</string>
     <string name="pki_install_title">PKI unavailable</string>
     <string name="try_again">Try again</string>
@@ -495,6 +495,8 @@
     <string name="pki_waiting_details">Connecting to the PKI...</string>
     <string name="logged_out">You are logged out. Log in to use this application.</string>
     <string name="log_in">Log in</string>
+    <string name="disconnected_message">The connection to Public Key Infrastructure has been lost.</string>
+    <string name="reconnect">Reconnect</string>
 
 </resources>
 

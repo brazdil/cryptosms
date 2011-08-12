@@ -3,8 +3,8 @@ package uk.ac.cam.db538.cryptosms.crypto;
 import uk.ac.cam.db538.crypto.AesCbc;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
-import uk.ac.cam.db538.cryptosms.pki.Pki;
-import uk.ac.cam.db538.cryptosms.pki.Pki.PkiNotReadyException;
+import uk.ac.cam.db538.cryptosms.state.Pki;
+import uk.ac.cam.db538.cryptosms.state.Pki.PkiNotReadyException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public final class EncryptionPki implements EncryptionInterface {

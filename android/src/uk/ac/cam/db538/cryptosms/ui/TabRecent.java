@@ -6,8 +6,9 @@ import java.util.Collections;
 
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Utils;
-import uk.ac.cam.db538.cryptosms.pki.Pki;
-import uk.ac.cam.db538.cryptosms.pki.Pki.PkiStateListener;
+import uk.ac.cam.db538.cryptosms.state.Pki;
+import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -102,33 +103,20 @@ public class TabRecent extends ListActivity {
 	    		}
 			}
 		});
-		
-		Pki.addListener(mPkiStateListener);
     }
 
-	@Override
-	protected void onStart() {
-		super.onStart();
-		setListAdapter(null);
-	}
-	
-	private PkiStateListener mPkiStateListener = new PkiStateListener() {
+	private StateChangeListener mPkiStateListener = new StateChangeListener() {
 		@Override
 		public void onConnect() {
-			// TODO Auto-generated method stub
-			
 		}
 
 		@Override
 		public void onDisconnect() {
-			// TODO Auto-generated method stub
-			
 		}
 
 		@Override
 		public void onLogin() {
 	        try {
-	        	// initialize the list of conversations
 	        	updateContacts();
 			} catch (StorageFileException ex) {
 				Utils.dialogDatabaseError(mContext, ex);
@@ -140,20 +128,24 @@ public class TabRecent extends ListActivity {
 
 		@Override
 		public void onLogout() {
-			// TODO Auto-generated method stub
-			
+			setListAdapter(null);
 		}
 
 		@Override
 		public void onPkiMissing() {
-			// TODO Auto-generated method stub
-			
 		}
 	};
 
 	@Override
+	protected void onStart() {
+		super.onStart();
+		setListAdapter(null);
+		State.addListener(mPkiStateListener);
+	}
+	
+	@Override
 	protected void onStop() {
-		Pki.removeListener(mPkiStateListener);
+		State.removeListener(mPkiStateListener);
 		super.onStop();
 	}
 }

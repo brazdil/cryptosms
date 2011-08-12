@@ -5,8 +5,8 @@ import java.io.IOException;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Utils;
-import uk.ac.cam.db538.cryptosms.pki.Pki;
-import uk.ac.cam.db538.cryptosms.pki.Pki.PkiStateListener;
+import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import android.app.TabActivity;
 import android.content.Context;
@@ -18,7 +18,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.MenuItem.OnMenuItemClickListener;
-import android.view.View.OnClickListener;
 import android.widget.TabHost;
 
 public class MainTabActivity extends TabActivity {
@@ -32,7 +31,7 @@ public class MainTabActivity extends TabActivity {
 	
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 	
-	private PkiStateListener mPkiStateListener = new PkiStateListener(){
+	private StateChangeListener mPkiStateListener = new StateChangeListener(){
 		@Override
 		public void onConnect() {
 		}
@@ -126,14 +125,14 @@ public class MainTabActivity extends TabActivity {
     @Override
 	protected void onStart() {
         // listen for logins/logouts
-        Pki.addListener(mPkiStateListener);
+        State.addListener(mPkiStateListener);
 		super.onStart();
 	}
 
 	@Override
 	protected void onStop() {
 		Log.d(MyApplication.APP_TAG, "Removing listener");
-		Pki.removeListener(mPkiStateListener);
+		State.removeListener(mPkiStateListener);
 		super.onStop();
 	}
 }

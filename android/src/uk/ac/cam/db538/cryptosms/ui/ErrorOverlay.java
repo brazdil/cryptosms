@@ -2,7 +2,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.pki.Pki;
+import uk.ac.cam.db538.cryptosms.state.Pki;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -87,5 +87,18 @@ public class ErrorOverlay extends RelativeLayout {
 
 		mTopButton.setVisibility(VISIBLE);
 		mBottomButton.setVisibility(VISIBLE);
+	}
+
+	public void modeDisconnected() {
+		mTextView.setText(R.string.disconnected_message);
+		mTopButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				Pki.connect();
+			}
+        });
+		mTopButton.setText(R.string.reconnect);
+		
+		mTopButton.setVisibility(VISIBLE);
+		mBottomButton.setVisibility(GONE);
 	}
 }
