@@ -19,8 +19,10 @@
            		<data android:port="@integer/presets_data_sms_port" />
        		</intent-filter>
         </receiver>
-        <activity android:name=".ui.PkiInstallActivity" />
-		<activity android:name=".ui.MainTabActivity" android:label="@string/app_label">        
+		<activity
+			android:name=".ui.MainTabActivity" 
+			android:label="@string/app_label"
+			android:configChanges="orientation|keyboardHidden">        
     		<intent-filter>
     			<action android:name="android.intent.action.MAIN"></action>
     			<category android:name="android.intent.category.LAUNCHER"></category>
@@ -28,6 +30,8 @@
     	</activity>
 		<activity android:name=".ui.TabRecent" />
 		<activity android:name=".ui.TabContacts" />
-		<activity android:name=".ui.ConversationActivity" />
+		<activity 
+			android:name=".ui.ConversationActivity"
+			android:configChanges="orientation|keyboardHidden"/>
     </application>
 </manifest>
