@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -52,9 +51,8 @@ class MessageDataPart {
 	 * Replaces an empty entry with new MessagePart
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	static MessageDataPart createMessageDataPart() throws StorageFileException, IOException {
+	static MessageDataPart createMessageDataPart() throws StorageFileException {
 		return new MessageDataPart(Empty.getEmptyIndex(), false);
 	}
 
@@ -62,7 +60,7 @@ class MessageDataPart {
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
-	static MessageDataPart getMessageDataPart(long index) throws StorageFileException, IOException {
+	static MessageDataPart getMessageDataPart(long index) throws StorageFileException {
 		if (index <= 0L)
 			return null;
 		
@@ -91,9 +89,8 @@ class MessageDataPart {
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	private MessageDataPart(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private MessageDataPart(long index, boolean readFromFile) throws StorageFileException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -136,9 +133,8 @@ class MessageDataPart {
 	/**
 	 * Save contents of the class to the storage file
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	void saveToFile() throws StorageFileException, IOException {
+	void saveToFile() throws StorageFileException {
 		ByteBuffer msgBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -172,9 +168,8 @@ class MessageDataPart {
 	 * Returns Message that is a parent to this MessagePart in the data structure
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	MessageData getParent() throws StorageFileException, IOException {
+	MessageData getParent() throws StorageFileException {
 		return MessageData.getMessageData(mIndexParent);
 	}
 
@@ -182,9 +177,8 @@ class MessageDataPart {
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	MessageDataPart getPreviousMessageDataPart() throws StorageFileException, IOException {
+	MessageDataPart getPreviousMessageDataPart() throws StorageFileException {
 		return MessageDataPart.getMessageDataPart(mIndexPrev);
 	}
 	
@@ -192,18 +186,16 @@ class MessageDataPart {
 	 * Returns next MessagePart in the linked list, or null if there isn't any
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	MessageDataPart getNextMessageDataPart() throws StorageFileException, IOException {
+	MessageDataPart getNextMessageDataPart() throws StorageFileException {
 		return getMessageDataPart(mIndexNext);
 	}
 
 	/**
 	 * Replace the file space with Empty entry
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	void delete() throws IOException, StorageFileException {
+	void delete() throws StorageFileException {
 		MessageDataPart prev = this.getPreviousMessageDataPart();
 		MessageDataPart next = this.getNextMessageDataPart(); 
 

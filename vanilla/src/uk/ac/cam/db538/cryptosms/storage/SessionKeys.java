@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -110,7 +109,7 @@ public class SessionKeys {
 	/**
 	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
 	 */
-	public static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException, IOException {
+	public static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException {
 		SessionKeys keys = new SessionKeys(Empty.getEmptyIndex(), false);
 		parent.attachSessionKeys(keys);
 		return keys;
@@ -120,7 +119,7 @@ public class SessionKeys {
 	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file  
 	 * @param index		Index in file
 	 */
-	static SessionKeys getSessionKeys(long index) throws StorageFileException, IOException {
+	static SessionKeys getSessionKeys(long index) throws StorageFileException {
 		if (index <= 0L)
 			return null;
 		
@@ -155,9 +154,8 @@ public class SessionKeys {
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	private SessionKeys(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private SessionKeys(long index, boolean readFromFile) throws StorageFileException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -216,9 +214,8 @@ public class SessionKeys {
 	/**
 	 * Saves contents of the class to the storage file
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void saveToFile() throws StorageFileException, IOException {
+	public void saveToFile() throws StorageFileException {
 		ByteBuffer keysBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -261,9 +258,8 @@ public class SessionKeys {
 	 * Returns an instance of the Conversation class that is the parent of this SessionKeys in the data structure
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public Conversation getParent() throws StorageFileException, IOException {
+	public Conversation getParent() throws StorageFileException {
 		if (mIndexParent == 0)
 			return null;
 		return Conversation.getConversation(mIndexParent);
@@ -273,9 +269,8 @@ public class SessionKeys {
 	 * Returns an instance of the predecessor in the list of session keys for parent conversation
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public SessionKeys getPreviousSessionKeys() throws StorageFileException, IOException {
+	public SessionKeys getPreviousSessionKeys() throws StorageFileException {
 		if (mIndexPrev == 0)
 			return null;
 		return getSessionKeys(mIndexPrev);
@@ -285,9 +280,8 @@ public class SessionKeys {
 	 * Returns an instance of the successor in the list of session keys for parent conversation
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public SessionKeys getNextSessionKeys() throws StorageFileException, IOException {
+	public SessionKeys getNextSessionKeys() throws StorageFileException {
 		if (mIndexNext == 0)
 			return null;
 		return getSessionKeys(mIndexNext);
@@ -296,9 +290,8 @@ public class SessionKeys {
 	/**
 	 * Delete Message and all the MessageParts it controls
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void delete() throws StorageFileException, IOException {
+	public void delete() throws StorageFileException {
 		SessionKeys prev = this.getPreviousSessionKeys();
 		SessionKeys next = this.getNextSessionKeys(); 
 

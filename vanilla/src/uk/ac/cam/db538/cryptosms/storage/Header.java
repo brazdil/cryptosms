@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
@@ -43,12 +42,9 @@ public class Header {
 	/**
 	 * Returns an instance of Header class.
 	 * @return
-	 * @throws IOException 
 	 * @throws StorageFileException 
-	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public static Header getHeader() throws StorageFileException, IOException {
+	public static Header getHeader() throws StorageFileException {
 		if (cacheHeader == null) 
 			cacheHeader = new Header(true);
 		return cacheHeader;
@@ -57,10 +53,9 @@ public class Header {
 	/**
 	 * Only to be called from within Database.createFile()
 	 * Forces the header to be created with default values and written to the file.
-	 * @throws IOException 
 	 * @throws StorageFileException 
 	 */
-	static Header createHeader() throws StorageFileException, IOException {
+	static Header createHeader() throws StorageFileException {
 		cacheHeader = new Header(false);
 		return cacheHeader;
 	}
@@ -74,9 +69,8 @@ public class Header {
 	 * Constructor
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	private Header(boolean readFromDisk) throws StorageFileException, IOException {
+	private Header(boolean readFromDisk) throws StorageFileException {
 		if (readFromDisk) {
 			// read bytes from file
 			byte[] dataAll = Storage.getStorage().getEntry(INDEX_HEADER);
@@ -119,9 +113,8 @@ public class Header {
 	/**
 	 * Save data to the storage file
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void saveToFile() throws StorageFileException, IOException {
+	public void saveToFile() throws StorageFileException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
 		headerBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexEmpty())); 
@@ -146,9 +139,8 @@ public class Header {
 	 * Return instance of the first object in the empty-entry stack
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public Empty getFirstEmpty() throws StorageFileException, IOException {
+	public Empty getFirstEmpty() throws StorageFileException {
 		if (this.mIndexEmpty == 0)
 			return null;
 		else
@@ -159,9 +151,8 @@ public class Header {
 	 * Return instance of the first object in the conversations linked list
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public Conversation getFirstConversation() throws StorageFileException, IOException {
+	public Conversation getFirstConversation() throws StorageFileException {
 		if (this.mIndexConversations == 0) 
 			return null;
 		else
@@ -171,10 +162,9 @@ public class Header {
 	/**
 	 * Insert new element into the linked list of conversations
 	 * @param conv
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	void attachConversation(Conversation conv) throws IOException, StorageFileException {
+	void attachConversation(Conversation conv) throws StorageFileException {
 		long indexFirstInStack = getIndexConversations();
 		if (indexFirstInStack != 0) {
 			Conversation first = Conversation.getConversation(indexFirstInStack);
@@ -193,10 +183,9 @@ public class Header {
 	/**
 	 * Insert new element into the stack of empty entries
 	 * @param conv
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	void attachEmpty(Empty empty) throws IOException, StorageFileException {
+	void attachEmpty(Empty empty) throws StorageFileException {
 		long indexFirstInStack = getIndexEmpty();
 		empty.setIndexNext(indexFirstInStack);
 		empty.saveToFile();

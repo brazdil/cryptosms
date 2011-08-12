@@ -23,7 +23,7 @@ public final class Storage {
 	 * @throws StorageFileException
 	 * @throws IOException 
 	 */
-	public static Storage getStorage() throws StorageFileException, IOException {
+	public static Storage getStorage() throws StorageFileException {
 		if (mSingleton == null) 
 			mSingleton = new Storage();
 		return mSingleton;
@@ -49,12 +49,18 @@ public final class Storage {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	private Storage() throws IOException, StorageFileException {
+	private Storage() throws StorageFileException {
 		if (mFilename == null)
 			throw new StorageFileException("No filename was set");
 		
-		boolean exists = new File(mFilename).exists();
-		smsFile = new StorageFile(mFilename);
+		boolean exists = true;
+		try {
+			exists = new File(mFilename).exists();
+			smsFile = new StorageFile(mFilename);
+		} catch (IOException ex) {
+			throw new StorageFileException(ex);
+		}
+		
 		if (!exists)
 			createFile();
 	}
@@ -65,7 +71,7 @@ public final class Storage {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	private synchronized void createFile() throws IOException, StorageFileException {
+	private synchronized void createFile() throws StorageFileException {
 		int countFreeEntries = ALIGN_SIZE / CHUNK_SIZE - 1;
 		// create an empty instance of the header
 		Header.createHeader();
@@ -73,17 +79,25 @@ public final class Storage {
 		Empty.addEmptyEntries(countFreeEntries);
 	}
 	
-	public synchronized void closeFile() throws IOException {
-		smsFile.mFile.close();
+	public synchronized void closeFile() throws StorageFileException {
+		try {
+			smsFile.mFile.close();
+		} catch (IOException ex) {
+			throw new StorageFileException(ex);
+		}
 	}
 	
 	/**
 	 * Returns number of entries in the file based on the file size
 	 * @return
-	 * @throws IOException 
+	 * @throws StorageFileException 
 	 */
-	public synchronized long getEntriesCount() throws IOException {
-		return smsFile.mFile.length() / CHUNK_SIZE;
+	public synchronized long getEntriesCount() throws StorageFileException {
+		try {
+			return smsFile.mFile.length() / CHUNK_SIZE;
+		} catch (IOException ex) {
+			throw new StorageFileException(ex);
+		}
 	}
 
 	/**
@@ -93,15 +107,19 @@ public final class Storage {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	byte[] getEntry(long index) throws StorageFileException, IOException {
-		long offset = index * CHUNK_SIZE;
-		if (offset > smsFile.mFile.length() - CHUNK_SIZE)
-			throw new StorageFileException("Index in history file out of bounds");
-		
-		byte[] data = new byte[CHUNK_SIZE];
-		smsFile.mFile.seek(offset);
-		smsFile.mFile.read(data);
-		return data;
+	byte[] getEntry(long index) throws StorageFileException {
+		try {
+			long offset = index * CHUNK_SIZE;
+			if (offset > smsFile.mFile.length() - CHUNK_SIZE)
+				throw new StorageFileException("Index in history file out of bounds");
+			
+			byte[] data = new byte[CHUNK_SIZE];
+			smsFile.mFile.seek(offset);
+			smsFile.mFile.read(data);
+			return data;
+		} catch (IOException ex) {
+			throw new StorageFileException(ex);
+		}
 	}
 	
 	/**
@@ -111,14 +129,18 @@ public final class Storage {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void setEntry(long index, byte[] data) throws StorageFileException, IOException {
-		long offset = index * CHUNK_SIZE;
-		long fileSize = smsFile.mFile.length();
-		if (offset > fileSize)
-			throw new StorageFileException("Index in history file out of bounds");
-
-		smsFile.mFile.seek(offset);
-		smsFile.mFile.write(data);
+	void setEntry(long index, byte[] data) throws StorageFileException {
+		try {
+			long offset = index * CHUNK_SIZE;
+			long fileSize = smsFile.mFile.length();
+			if (offset > fileSize)
+				throw new StorageFileException("Index in history file out of bounds");
+	
+			smsFile.mFile.seek(offset);
+			smsFile.mFile.write(data);
+		} catch (IOException ex) {
+			throw new StorageFileException(ex);
+		}
 	}
 
 	// FOR TESTING ONLY

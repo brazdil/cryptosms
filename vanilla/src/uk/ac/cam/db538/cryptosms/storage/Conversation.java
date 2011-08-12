@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -56,11 +55,9 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Returns instance of a new Conversation created in one of the empty spaces in file.
 	 * @return
-	 * @throws IOException 
 	 * @throws StorageFileException 
-	 * @throws WrongKeyException 
 	 */
-	public static Conversation createConversation() throws StorageFileException, IOException {
+	public static Conversation createConversation() throws StorageFileException {
 		// create a new one
 		Conversation conv = new Conversation(Empty.getEmptyIndex(), false);
 		Header.getHeader().attachConversation(conv);
@@ -70,9 +67,8 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param phoneNumber		Contacts phone number
-	 * @throws WrongKeyException 
 	 */
-	public static Conversation getConversation(String phoneNumber) throws StorageFileException, IOException {
+	public static Conversation getConversation(String phoneNumber) throws StorageFileException {
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
 			if (PhoneNumber.compare(conv.getPhoneNumber(), phoneNumber))
@@ -85,9 +81,8 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Returns an instance of Conversation class with given index in file.
 	 * @param index		Index in file
-	 * @throws WrongKeyException 
 	 */
-	static Conversation getConversation(long index) throws StorageFileException, IOException {
+	static Conversation getConversation(long index) throws StorageFileException {
 		if (index <= 0L)
 			return null;
 		
@@ -104,11 +99,10 @@ public class Conversation implements Comparable<Conversation> {
 	
 	/** 
 	 * Explicitly requests each conversation in the file to be loaded to memory
-	 * @throws IOException
 	 * @throws StorageFileException
 	 * @throws WrongKeyException 
 	 */
-	public static void cacheAllConversations() throws IOException, StorageFileException {
+	public static void cacheAllConversations() throws StorageFileException {
 		Conversation convCurrent = Header.getHeader().getFirstConversation();
 		while (convCurrent != null) 
 			convCurrent = convCurrent.getNextConversation();
@@ -124,7 +118,7 @@ public class Conversation implements Comparable<Conversation> {
 	
 	// CONSTRUCTORS
 	
-	private Conversation(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private Conversation(long index, boolean readFromFile) throws StorageFileException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -164,7 +158,7 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Saves data to the storage file.
 	 */
-	public void saveToFile() throws StorageFileException, IOException {
+	public void saveToFile() throws StorageFileException {
 		ByteBuffer convBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -196,10 +190,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Returns previous instance of Conversation in the double-linked list or null if this is the first.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	public Conversation getPreviousConversation() throws StorageFileException, IOException {
+	public Conversation getPreviousConversation() throws StorageFileException {
 		return Conversation.getConversation(mIndexPrev);
 	}
 
@@ -207,10 +199,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Returns next instance of Conversation in the double-linked list or null if this is the last.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	public Conversation getNextConversation() throws StorageFileException, IOException {
+	public Conversation getNextConversation() throws StorageFileException {
 		return Conversation.getConversation(mIndexNext);
 	}
 
@@ -218,9 +208,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Returns first SessionKeys object in the stored linked list, or null if there isn't any.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public SessionKeys getFirstSessionKeys() throws StorageFileException, IOException {
+	public SessionKeys getFirstSessionKeys() throws StorageFileException {
 		if (mIndexSessionKeys == 0)
 			return null;
 		return SessionKeys.getSessionKeys(mIndexSessionKeys);
@@ -230,9 +219,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Attach new SessionKeys object to the conversation.
 	 * @param keys
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	void attachSessionKeys(SessionKeys keys) throws StorageFileException, IOException {
+	void attachSessionKeys(SessionKeys keys) throws StorageFileException {
 		long indexFirstInStack = getIndexSessionKeys();
 		if (indexFirstInStack != 0) {
 			SessionKeys firstInStack = SessionKeys.getSessionKeys(indexFirstInStack);
@@ -251,9 +239,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Attach new MessageData object to the conversation 
 	 * @param msg
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	void attachMessageData(MessageData msg) throws StorageFileException, IOException {
+	void attachMessageData(MessageData msg) throws StorageFileException {
 		long indexFirstInStack = getIndexMessages();
 		if (indexFirstInStack != 0) {
 			MessageData firstInStack = MessageData.getMessageData(indexFirstInStack);
@@ -272,9 +259,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public MessageData getFirstMessageData() throws StorageFileException, IOException {
+	public MessageData getFirstMessageData() throws StorageFileException {
 		return MessageData.getMessageData(mIndexMessages);
 	}
 	
@@ -282,9 +268,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public ArrayList<MessageData> getMessages() throws StorageFileException, IOException {
+	public ArrayList<MessageData> getMessages() throws StorageFileException {
 		ArrayList<MessageData> list = new ArrayList<MessageData>();
 		MessageData msg = getFirstMessageData();
 		while (msg != null) {
@@ -297,10 +282,8 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Delete MessageData and all the MessageDataParts it controls
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	public void delete() throws StorageFileException, IOException {
+	public void delete() throws StorageFileException {
 		Conversation prev = this.getPreviousConversation();
 		Conversation next = this.getNextConversation(); 
 
@@ -355,9 +338,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * @param simNumber
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public SessionKeys getSessionKeys(SimNumber simNumber) throws StorageFileException, IOException {
+	public SessionKeys getSessionKeys(SimNumber simNumber) throws StorageFileException {
 		SessionKeys keys = getFirstSessionKeys();
 		while (keys != null) {
 			if (simNumber.equals(keys.getSimNumber()))
@@ -377,9 +359,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * @param original
 	 * @param replacement
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void replaceSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException, IOException {
+	public void replaceSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException {
 		if (original.equals(replacement))
 			// no point in continuing
 			return;
@@ -435,7 +416,6 @@ public class Conversation implements Comparable<Conversation> {
 		try {
 			firstMessage = getFirstMessageData();
 		} catch (StorageFileException e) {
-		} catch (IOException e) {
 		}
 		
 		if (firstMessage != null)
@@ -461,7 +441,6 @@ public class Conversation implements Comparable<Conversation> {
 		try {
 			firstMessage = getFirstMessageData();
 		} catch (StorageFileException e) {
-		} catch (IOException e) {
 		}
 		
 		if (firstMessage != null)
@@ -476,7 +455,7 @@ public class Conversation implements Comparable<Conversation> {
 	 * Calls replaceSessionKeys on all the conversations.
 	 * Calls an update of listeners afterwards.
 	 */
-	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException, IOException {
+	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException {
 		Conversation conv = Header.getHeader().getFirstConversation();
 		while (conv != null) {
 			conv.replaceSessionKeys(original, replacement);
@@ -489,10 +468,8 @@ public class Conversation implements Comparable<Conversation> {
 	 * Returns all SIM numbers stored with session keys of all conversations
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	public static ArrayList<SimNumber> getAllSimNumbersStored() throws StorageFileException, IOException {
+	public static ArrayList<SimNumber> getAllSimNumbersStored() throws StorageFileException {
 		ArrayList<SimNumber> simNumbers = new ArrayList<SimNumber>();
 		
 		Conversation conv = Header.getHeader().getFirstConversation();

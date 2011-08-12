@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -65,9 +64,8 @@ public class MessageData {
 	 * Returns an instance of a new MessageData entry in the storage file.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public static MessageData createMessageData(Conversation parent) throws StorageFileException, IOException {
+	public static MessageData createMessageData(Conversation parent) throws StorageFileException {
 		// create a new one
 		MessageData msg = new MessageData(Empty.getEmptyIndex(), false);
 		parent.attachMessageData(msg);
@@ -78,7 +76,7 @@ public class MessageData {
 	 * Returns an instance of Empty class with given index in file.
 	 * @param index		Index in file
 	 */
-	static MessageData getMessageData(long index) throws StorageFileException, IOException {
+	static MessageData getMessageData(long index) throws StorageFileException {
 		if (index <= 0L)
 			return null;
 		
@@ -117,9 +115,8 @@ public class MessageData {
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	private MessageData(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private MessageData(long index, boolean readFromFile) throws StorageFileException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -183,9 +180,8 @@ public class MessageData {
 	/**
 	 * Save the contents of this class to its place in the storage file.
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void saveToFile() throws StorageFileException, IOException {
+	public void saveToFile() throws StorageFileException {
 		ByteBuffer msgBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		
 		// flags
@@ -234,9 +230,8 @@ public class MessageData {
 	 * Returns an instance of the Conversation class that is the parent of this Message in the data structure
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public Conversation getParent() throws StorageFileException, IOException {
+	public Conversation getParent() throws StorageFileException {
 		if (mIndexParent == 0)
 			return null;
 		return Conversation.getConversation(mIndexParent);
@@ -246,9 +241,8 @@ public class MessageData {
 	 * Returns an instance of the Message that's predecessor of this one in the linked list of Messages of this Conversation
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public MessageData getPreviousMessageData() throws StorageFileException, IOException {
+	public MessageData getPreviousMessageData() throws StorageFileException {
 		if (mIndexPrev == 0)
 			return null;
 		return MessageData.getMessageData(mIndexPrev);
@@ -258,9 +252,8 @@ public class MessageData {
 	 * Returns an instance of the Message that's successor of this one in the linked list of Messages of this Conversation
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public MessageData getNextMessageData() throws StorageFileException, IOException {
+	public MessageData getNextMessageData() throws StorageFileException {
 		if (mIndexNext == 0)
 			return null;
 		return MessageData.getMessageData(mIndexNext);
@@ -271,9 +264,8 @@ public class MessageData {
 	 * Should not be public - Message has API for making this seamlessly
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	MessageDataPart getFirstMessageDataPart() throws StorageFileException, IOException {
+	MessageDataPart getFirstMessageDataPart() throws StorageFileException {
 		if (mIndexMessageParts == 0)
 			return null;
 		return MessageDataPart.getMessageDataPart(mIndexMessageParts);
@@ -282,10 +274,9 @@ public class MessageData {
 	/**
 	 * Replaces assigned message parts with given list
 	 * @param list
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	void assignMessageDataParts(ArrayList<MessageDataPart> list) throws IOException, StorageFileException {
+	void assignMessageDataParts(ArrayList<MessageDataPart> list) throws StorageFileException {
 		// delete all previous message parts
 		long indexFirstInStack = getIndexMessageParts();
 		while (indexFirstInStack != 0) {
@@ -327,9 +318,8 @@ public class MessageData {
 	/**
 	 * Delete Message and all the MessageParts it controls
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void delete() throws StorageFileException, IOException {
+	public void delete() throws StorageFileException {
 		MessageData prev = this.getPreviousMessageData();
 		MessageData next = this.getNextMessageData(); 
 
@@ -376,7 +366,7 @@ public class MessageData {
 	/**
 	 * Returns the data assigned to message part at given index
 	 */
-	public byte[] getPartData(int index) throws StorageFileException, IOException {
+	public byte[] getPartData(int index) throws StorageFileException {
 		if (index == 0) 
 			return this.getMessageBody();
 		else {
@@ -395,10 +385,9 @@ public class MessageData {
 	 * Adds/removes message parts so that there is exactly given number of them
 	 * (There is always at least one)
 	 * @param count
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public void setNumberOfParts(int count) throws IOException, StorageFileException {
+	public void setNumberOfParts(int count) throws StorageFileException {
 		--count; // count the first part
 		
 		MessageDataPart temp = null, part = getFirstMessageDataPart();
@@ -452,9 +441,8 @@ public class MessageData {
 	 * @param index
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	private MessageDataPart getMessageDataPart(int index) throws StorageFileException, IOException {
+	private MessageDataPart getMessageDataPart(int index) throws StorageFileException {
 		if (index <= 0)
 			throw new IndexOutOfBoundsException();
 		else {
@@ -476,10 +464,9 @@ public class MessageData {
 	 * Sets data to given message part
 	 * @param index
 	 * @param data
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public void setPartData(int index, byte[] data) throws IOException, StorageFileException {
+	public void setPartData(int index, byte[] data) throws StorageFileException {
 		// if it's too long, just cut it
 		if (data.length > LENGTH_MESSAGEBODY)
 			data = LowLevel.cutData(data, 0, LENGTH_MESSAGEBODY);
@@ -498,10 +485,9 @@ public class MessageData {
 	 * Returns whether given message part was delivered
 	 * @param index
 	 * @return
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public boolean getPartDelivered(int index) throws IOException, StorageFileException {
+	public boolean getPartDelivered(int index) throws StorageFileException {
 		if (index == 0)
 			return this.getDeliveredPart();
 		else
@@ -512,10 +498,9 @@ public class MessageData {
 	 * Sets whether given message part was delivered
 	 * @param index
 	 * @return
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public void setPartDelivered(int index, boolean delivered) throws IOException, StorageFileException {
+	public void setPartDelivered(int index, boolean delivered) throws StorageFileException {
 		if (index == 0) {
 			this.setDeliveredPart(delivered);
 			this.saveToFile();

@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -36,9 +35,8 @@ class Empty {
 	/**
 	 * Returns an instance of Empty class at the end of the file
 	 * @param index		Index in file
-	 * @throws WrongKeyException 
 	 */
-	static Empty createEmpty() throws StorageFileException, IOException {
+	static Empty createEmpty() throws StorageFileException {
 		// create a new one at the end of the file
 		Empty empty = new Empty(Storage.getStorage().getEntriesCount(), false);
 		Header.getHeader().attachEmpty(empty);
@@ -48,9 +46,8 @@ class Empty {
 	/**
 	 * Returns an instance of Empty class with given index in file. Reads it from the file if not cached.
 	 * @param index		Index in file
-	 * @throws WrongKeyException 
 	 */
-	static Empty getEmpty(long index) throws StorageFileException, IOException {
+	static Empty getEmpty(long index) throws StorageFileException {
 		if (index <= 0L)
 			return null;
 		
@@ -71,10 +68,8 @@ class Empty {
 	 * @param index		Index in the file
 	 * @return	
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	static Empty replaceWithEmpty(long index) throws StorageFileException, IOException {
+	static Empty replaceWithEmpty(long index) throws StorageFileException {
 		Empty empty = new Empty(index, false);
 		Header.getHeader().attachEmpty(empty);
 		return empty;
@@ -84,9 +79,8 @@ class Empty {
 	 * Returns an index of a single entry that was removed from the linked list of empty entries and is now available to be replaced by useful data entry.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	static long getEmptyIndex() throws StorageFileException, IOException {
+	static long getEmptyIndex() throws StorageFileException {
 		return getEmptyIndices(1)[0];
 	}
 	
@@ -95,10 +89,8 @@ class Empty {
 	 * @param count		Number of entries requested
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	static long[] getEmptyIndices(int count) throws StorageFileException, IOException {
+	static long[] getEmptyIndices(int count) throws StorageFileException {
 		long[] indices = new long[count];
 
 		Header header = Header.getHeader();
@@ -127,10 +119,9 @@ class Empty {
 	/**
 	 * Appends new empty entries to the storage file
 	 * @param count		Number of entries requested
-	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	static void addEmptyEntries(int count) throws IOException, StorageFileException {
+	static void addEmptyEntries(int count) throws StorageFileException {
 		for (int i = 0; i < count; ++i) {
 			// create the empty entry
 			Empty.createEmpty();
@@ -142,9 +133,8 @@ class Empty {
 	 * NOTE: Will cache all of them! It is intended to be used only by the testing classes.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	static int getEmptyEntriesCount() throws StorageFileException, IOException {
+	static int getEmptyEntriesCount() throws StorageFileException {
 		int count = 0;
 		
 		Empty free = Header.getHeader().getFirstEmpty();
@@ -165,10 +155,8 @@ class Empty {
 	 * @param index			Which chunk of data should occupy in file
 	 * @param readFromFile	Does this entry already exist in the file?
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	private Empty(long index, boolean readFromFile) throws StorageFileException, IOException {
+	private Empty(long index, boolean readFromFile) throws StorageFileException {
 		mEntryIndex = index;
 		
 		if (readFromFile) {
@@ -198,9 +186,8 @@ class Empty {
 	/**
 	 * Saves contents of the class to the storage file
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public void saveToFile() throws StorageFileException, IOException {
+	public void saveToFile() throws StorageFileException {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
 		entryBuffer.put(Encryption.getEncryption().generateRandomData(OFFSET_NEXTINDEX));
 		entryBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
@@ -217,9 +204,8 @@ class Empty {
 	 * Return an instance of the next Empty entry in the linked list, or null if there isn't any.
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	Empty getNextEmpty() throws StorageFileException, IOException {
+	Empty getNextEmpty() throws StorageFileException {
 		return Empty.getEmpty(mIndexNext);
 	}
 
