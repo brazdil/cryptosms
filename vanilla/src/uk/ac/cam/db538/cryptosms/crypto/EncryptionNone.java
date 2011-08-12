@@ -2,12 +2,13 @@ package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Random;
+import java.security.SecureRandom;
 
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class EncryptionNone implements EncryptionInterface {
 	private static final String HASHING_ALGORITHM = "SHA-256";
+	private static SecureRandom mRandom = null;
 
 	public static void initEncryption() {
 		Encryption.setEncryption(new EncryptionNone());
@@ -29,7 +30,7 @@ public class EncryptionNone implements EncryptionInterface {
 	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data)
 			throws EncryptionException {
-		return decryptSymmetric(data, getMasterKey());
+		return decryptSymmetricWithMasterKey(data, false);
 	}
 
 	@Override
@@ -48,26 +49,20 @@ public class EncryptionNone implements EncryptionInterface {
 	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data)
 			throws EncryptionException {
-		return encryptSymmetric(data, getMasterKey());
+		return encryptSymmetricWithMasterKey(data, false);
 	}
-
-	private static byte[] mMasterKey = null;
-	
-	@Override
-	public void generateMasterKey() throws EncryptionException {
-		if (mMasterKey == null)
-			mMasterKey = generateRandomData(Encryption.KEY_LENGTH);
-	}
-	
-	private static Random mRandom = null;
 
 	@Override
 	public byte[] generateRandomData(int length) {
 		if (mRandom == null)
-			mRandom = new Random();
-		byte[] buffer = new byte[length];
-		mRandom.nextBytes(buffer);
-		return buffer;
+			try {
+				mRandom = SecureRandom.getInstance("SHA1PRNG");
+			} catch (NoSuchAlgorithmException e) {
+				throw new RuntimeException(e);
+			}
+		byte[] data = new byte[length];
+		mRandom.nextBytes(data);
+		return data;
 	}
 
 	@Override
@@ -92,15 +87,14 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 
 	@Override
-	public byte[] getMasterKey() throws EncryptionException {
-		if (mMasterKey == null)
-			generateMasterKey();
-		return mMasterKey;
+	public byte[] encryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn)
+			throws EncryptionException {
+		return encryptSymmetric(data, null);
 	}
 
 	@Override
-	public boolean testEncryption() throws EncryptionException {
-		return true;
+	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn)
+			throws EncryptionException {
+		return decryptSymmetric(data, null);
 	}
-
 }

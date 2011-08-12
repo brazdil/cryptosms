@@ -14,16 +14,18 @@ public final class Storage {
 	// SINGLETON STUFF
 	
 	private static Storage mSingleton = null;
+	private static String mFilename = null;
 	
 	/**
 	 * Returns the instance of the Database singleton class.
 	 * Singleton has to be initialised beforehand with the initSingleton method.   
 	 * @return instance of Database class
 	 * @throws StorageFileException
+	 * @throws IOException 
 	 */
-	public static Storage getStorage() throws StorageFileException {
+	public static Storage getStorage() throws StorageFileException, IOException {
 		if (mSingleton == null) 
-			throw new StorageFileException("Database not initialized yet");
+			mSingleton = new Storage();
 		return mSingleton;
 	}
 	
@@ -33,11 +35,8 @@ public final class Storage {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	public static void initSingleton(String filename) throws IOException, StorageFileException {
-		if (mSingleton != null) 
-			return; //throw new DatabaseFileException("Database already initialized");
-		
-		new Storage(filename);
+	public static void setFilename(String filename) {
+		mFilename = filename;
 	}
 	
 	// FILE MANIPULATION
@@ -50,11 +49,12 @@ public final class Storage {
 	 * @throws IOException
 	 * @throws StorageFileException
 	 */
-	private Storage(String filename) throws IOException, StorageFileException {
-		mSingleton = this;
+	private Storage() throws IOException, StorageFileException {
+		if (mFilename == null)
+			throw new StorageFileException("No filename was set");
 		
-		boolean exists = new File(filename).exists();
-		smsFile = new StorageFile(filename);
+		boolean exists = new File(mFilename).exists();
+		smsFile = new StorageFile(mFilename);
 		if (!exists)
 			createFile();
 	}
