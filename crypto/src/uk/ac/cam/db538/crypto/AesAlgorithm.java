@@ -395,7 +395,8 @@ class AesAlgorithm {
      *
      * @param key        The 128/192/256-bit AES key to use.
      */
-    public void setKey(byte[] key) {
+    @SuppressWarnings("unused")
+	public void setKey(byte[] key) {
     // assorted internal constants
         final int BC = BLOCK_SIZE / 4;
     final int Klen = key.length;
