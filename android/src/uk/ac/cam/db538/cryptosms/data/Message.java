@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.PendingIntent;
@@ -63,9 +62,8 @@ public abstract class Message {
      * Returns the length of data stored in the storage file for this message
      * @return
      * @throws StorageFileException
-     * @throws IOException
      */
-    public int getStoredDataLength() throws StorageFileException, IOException {
+    public int getStoredDataLength() throws StorageFileException {
     	int index = 0, length = 0;
     	byte[] temp;
     	try {
@@ -81,9 +79,8 @@ public abstract class Message {
      * Returns all the data stored in the storage file for this message
      * @return
      * @throws StorageFileException
-     * @throws IOException
      */
-    public byte[] getStoredData() throws StorageFileException, IOException {
+    public byte[] getStoredData() throws StorageFileException {
     	int index = 0, length = 0;
     	byte[] temp;
     	ArrayList<byte[]> data = new ArrayList<byte[]>();
@@ -121,8 +118,8 @@ public abstract class Message {
     	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, null);
     }
           
-    public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException, EncryptionException;
-    public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, IOException, MessageException, EncryptionException;
+    public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, MessageException, EncryptionException;
+    public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, MessageException, EncryptionException;
     
     public static MessageType getMessageType(byte[] data) {
     	byte headerType = (byte) (data[0] & 0xC0); // takes first two bits only

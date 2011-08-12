@@ -1,7 +1,5 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.io.IOException;
-
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
@@ -12,6 +10,7 @@ import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSentListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard.OnSimStateListener;
 import uk.ac.cam.db538.cryptosms.state.Pki;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -75,11 +74,8 @@ public class ConversationActivity extends Activity {
 		try {
 			mConversation = Conversation.getConversation(mContact.getPhoneNumber());
 		} catch (StorageFileException ex) {
-			Utils.dialogDatabaseError(this, ex);
-			this.finish();
-		} catch (IOException ex) {
-			Utils.dialogIOError(this, ex);
-			this.finish();
+			State.fatalException(ex);
+			return;
 		}
 	    
 	    mNameView = (TextView) findViewById(R.id.conversation_name);
@@ -165,11 +161,11 @@ public class ConversationActivity extends Activity {
 							}
 						});
 					} catch (StorageFileException ex) {
-						Utils.dialogDatabaseError(context, ex);
-					} catch (IOException ex) {
-						Utils.dialogIOError(context, ex);
-					} catch (MessageException e) {
-						// TODO: fill
+						State.fatalException(ex);
+						return;
+					} catch (MessageException ex) {
+						State.fatalException(ex);
+						return;
 					}
 				}
 			}
@@ -214,11 +210,8 @@ public class ConversationActivity extends Activity {
 			} else
 				modeEnabled(false);
 		} catch (StorageFileException ex) {
-			Utils.dialogDatabaseError(this, ex);
-			this.finish();
-		} catch (IOException ex) {
-			Utils.dialogIOError(this, ex);
-			this.finish();
+			State.fatalException(ex);
+			return;
 		}
 	}
 	

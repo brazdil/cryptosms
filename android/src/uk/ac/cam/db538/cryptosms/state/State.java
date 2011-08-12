@@ -9,9 +9,11 @@ public class State {
 		public void onLogout();
 		public void onDisconnect();
 		public void onPkiMissing();
+		public void onFatalException(Exception ex);
 	}
 	
 	private static ArrayList<StateChangeListener> mListeners = new ArrayList<StateChangeListener>();
+	private static Exception mFatalException = null;
 	
 	public static void addListener(StateChangeListener listener) {
 		mListeners.add(listener);
@@ -53,5 +55,15 @@ public class State {
 	public static void notifyPkiMissing() {
 		for (StateChangeListener listener : mListeners)
 			listener.onPkiMissing();
+	}
+	
+	public static void fatalException(Exception ex) {
+		mFatalException = ex;
+		for (StateChangeListener listener : mListeners)
+			listener.onFatalException(ex);
+	}
+	
+	public static boolean isInFatalState() {
+		return mFatalException != null;
 	}
 }

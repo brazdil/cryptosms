@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
@@ -8,6 +7,7 @@ import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -161,8 +161,9 @@ public class Pending {
 				SessionKeys keys = null;
 				try {
 					keys = StorageUtils.getSessionKeysForSIM(Conversation.getConversation(pendingFirst.getSender()), context);
-				} catch (StorageFileException e1) {
-				} catch (IOException e1) {
+				} catch (StorageFileException ex) {
+					State.fatalException(ex);
+					return;
 				}
 				
 				if (keys != null) {

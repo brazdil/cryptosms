@@ -1,7 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.io.IOException;
-
 import android.content.Context;
 
 import uk.ac.cam.db538.cryptosms.data.SimCard;
@@ -19,10 +17,8 @@ public class StorageUtils {
 	 * @param context
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
-	 * @throws WrongKeyException 
 	 */
-	public static SessionKeys getSessionKeysForSIM(Conversation conv, final Context context) throws StorageFileException, IOException {
+	public static SessionKeys getSessionKeysForSIM(Conversation conv, final Context context) throws StorageFileException {
 		SessionKeys result = null;
 		
 		String simPhoneNumberString = SimCard.getSingleton().getSimPhoneNumber(context);
@@ -51,9 +47,8 @@ public class StorageUtils {
 	 * @param conv
 	 * @return
 	 * @throws StorageFileException
-	 * @throws IOException
 	 */
-	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv) throws StorageFileException, IOException {
+	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv) throws StorageFileException {
 		SessionKeys keys = StorageUtils.getSessionKeysForSIM(conv, context);
 		if (keys == null)
 			return false;

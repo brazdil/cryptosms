@@ -449,8 +449,7 @@
     <string name="contacts_no_phone_numbers">No phone numbers</string>
     <string name="contacts_no_phone_numbers_details">The selected contact does not have any phone numbers assigned to it.</string>
     <string name="ok">OK</string>
-    <string name="error_database">Storage file error</string><string name="error_io">Storage file error</string>
-    <string name="error_database_details">An error has occured while operating on the secure storage file:</string><string name="error_io_details">An error has occured while working with the file system:</string>
+    <string name="error_database">An error has occured while working with the encrypted storage file.</string>
     <string name="conversation_no_keys">Secure connection</string>
     <string name="conversation_no_keys_details">A secure connection has not yet been established between the current SIM card and the chosen phone number. You can view the conversation history in read-only mode, but you have to set up a secure connection if you want to send text messages.</string>
     <string name="read_only">Read only</string>
@@ -497,6 +496,10 @@
     <string name="log_in">Log in</string>
     <string name="disconnected_message">The connection to Public Key Infrastructure has been lost.</string>
     <string name="reconnect">Reconnect</string>
+    <string name="fatal_exception_message">A fatal error has occurred which prevents you from using the application. Please report this problem.</string>
+    <string name="report">Report</string>
+    <string name="report_subject">CryptoSMS Report</string>
+    <string name="send_email_report">Send report via email</string>
 
 </resources>
 

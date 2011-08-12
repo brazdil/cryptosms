@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -31,7 +30,7 @@ public class TabRecent extends ListActivity {
 	private ArrayAdapter<Conversation> mAdapterRecent;
 	private Context mContext = this;
 	
-	private void updateContacts() throws StorageFileException, IOException {
+	private void updateContacts() throws StorageFileException {
 		mRecent.clear();
 
 		Conversation conv = Header.getHeader().getFirstConversation();
@@ -84,9 +83,8 @@ public class TabRecent extends ListActivity {
 					updateContacts();
 					adapterContacts.notifyDataSetChanged();
 				} catch (StorageFileException ex) {
-					Utils.dialogDatabaseError(context, ex);
-				} catch (IOException ex) {
-					Utils.dialogIOError(context, ex);
+					State.fatalException(ex);
+					return;
 				}
 			}
 		});
@@ -119,9 +117,8 @@ public class TabRecent extends ListActivity {
 	        try {
 	        	updateContacts();
 			} catch (StorageFileException ex) {
-				Utils.dialogDatabaseError(mContext, ex);
-			} catch (IOException ex) {
-				Utils.dialogIOError(mContext, ex);
+				State.fatalException(ex);
+				return;
 			}
 			setListAdapter(mAdapterRecent);
 		}
@@ -133,6 +130,10 @@ public class TabRecent extends ListActivity {
 
 		@Override
 		public void onPkiMissing() {
+		}
+
+		@Override
+		public void onFatalException(Exception ex) {
 		}
 	};
 

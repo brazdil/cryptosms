@@ -1,7 +1,5 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.io.IOException;
-
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Utils;
@@ -42,9 +40,8 @@ public class MainTabActivity extends TabActivity {
 	        try {
 	        	Utils.checkSimPhoneNumberAvailable(mContext);
 			} catch (StorageFileException ex) {
-				Utils.dialogDatabaseError(mContext, ex);
-			} catch (IOException ex) {
-				Utils.dialogIOError(mContext, ex);
+				State.fatalException(ex);
+				return;
 			}
 
 			mErrorOverlay.setVisibility(View.INVISIBLE);
@@ -61,14 +58,24 @@ public class MainTabActivity extends TabActivity {
 
 		@Override
 		public void onDisconnect() {
-			// TODO Auto-generated method stub
-			
+			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
+			mErrorOverlay.modeDisconnected();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
 		}
 
 		@Override
 		public void onPkiMissing() {
 			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
 			mErrorOverlay.modePkiMissing();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
+		}
+
+		@Override
+		public void onFatalException(Exception ex) {
+			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
+			mErrorOverlay.modeFatalException(ex);
 			mErrorOverlay.setVisibility(View.VISIBLE);
 	        mMainLayout.setVisibility(View.INVISIBLE);
 		}
@@ -115,7 +122,7 @@ public class MainTabActivity extends TabActivity {
 		menuMoveSessions.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				Utils.moveSessionKeys(context);
+				Utils.moveSessionKeys(context);                                 
 				return true;
 			}
 		});

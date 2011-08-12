@@ -17,12 +17,12 @@
 
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.io.IOException;
 import java.util.zip.DataFormatException;
 
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -119,8 +119,9 @@ public class TabRecentItem extends RelativeLayout {
 		MessageData firstMessageData = null;
 		try {
 			firstMessageData = conv.getFirstMessageData();
-		} catch (StorageFileException e) {
-		} catch (IOException e) {
+		} catch (StorageFileException ex) {
+			State.fatalException(ex);
+			return new String();
 		}
 		
 		if (firstMessageData != null) {
@@ -128,9 +129,12 @@ public class TabRecentItem extends RelativeLayout {
 			CompressedText text = null;
 ;			try {
 				text = message.getText();
-			} catch (StorageFileException e) {
-			} catch (IOException e) {
-			} catch (DataFormatException e) {
+			} catch (StorageFileException ex) {
+				State.fatalException(ex);
+				return new String();
+			} catch (DataFormatException ex) {
+				State.fatalException(ex);
+				return new String();
 			}
 			if (text != null)
 				return text.getMessage();

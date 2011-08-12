@@ -17,10 +17,9 @@
 
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.io.IOException;
-
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -138,12 +137,9 @@ public class TabContactsItem extends RelativeLayout {
 	        mAvatarView.setImageDrawable(avatarDrawable);
 	        mAvatarView.setVisibility(View.VISIBLE);
 	        
-		} catch (StorageFileException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (StorageFileException ex) {
+			State.fatalException(ex);
+			return;
 		}
     }
 }

@@ -109,6 +109,10 @@ public class Pki {
 		@Override
 		public void onLogout() {
 		}
+
+		@Override
+		public void onFatalException(Exception ex) {
+		}
 	};
 	
 	public static void init(Context context) {
@@ -209,7 +213,7 @@ public class Pki {
 	}
 
 	public static boolean isConnected() {
-		return mPki != null && mPki.isConnected();
+		return !State.isInFatalState() && mPki != null && mPki.isConnected();
 	}
 	
 	public static void login(boolean force) {
@@ -293,15 +297,11 @@ public class Pki {
 				}
 			} else
 				return mMasterKey;
-		} else if (forceLogIn) {
+		} else if (isConnected() && forceLogIn) {
 			try {
-				if (mPki.authorise()) {
-					boolean temp = mLoggedIn;
-					mLoggedIn = true;
-					byte[] key = getMasterKey(false, generateAllow);
-					mLoggedIn = temp;
-					return key;
-				}
+				if (mPki.authorise()) 
+					// no need to alter our own login information - broadcast will be sent by PKI
+					return getMasterKey(false, generateAllow);
 				else
 					throw new PkiNotReadyException();
 			} catch (TimeoutException e) {

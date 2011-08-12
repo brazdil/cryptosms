@@ -19,6 +19,8 @@ public class MyApplication extends Application {
 	public static final String APP_TAG = "CRYPTOSMS";
 	public static final String STORAGE_FILE_NAME = "storage.db";
 	public static final String PKI_PACKAGE = "uk.ac.cam.dje38.pki";
+	public static final String NEWLINE = System.getProperty("line.separator");
+	public static final String[] REPORT_EMAILS = new String[] { "db538@cam.ac.uk" }; // TODO: create new email!
 	
 	private static MyApplication mSingleton;
 	

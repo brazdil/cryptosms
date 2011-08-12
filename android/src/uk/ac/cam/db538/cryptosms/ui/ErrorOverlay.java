@@ -1,5 +1,8 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.state.Pki;
@@ -7,6 +10,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.Html;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -100,5 +104,41 @@ public class ErrorOverlay extends RelativeLayout {
 		
 		mTopButton.setVisibility(VISIBLE);
 		mBottomButton.setVisibility(GONE);
+	}
+
+	public void modeFatalException(final Exception ex) {
+		mTextView.setText(R.string.fatal_exception_message);
+
+		mTopButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				// prepare report
+				String report = "Exception: " + ex.getClass().getName();
+				report += MyApplication.NEWLINE + "Message: " + ex.getMessage();
+				report += MyApplication.NEWLINE + "Stack: ";
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ex.printStackTrace(new PrintWriter(baos));
+				report += MyApplication.NEWLINE + baos.toString();
+				// send report via email
+				Intent emailIntent = new Intent(Intent.ACTION_SEND);
+				emailIntent.setType("text/html");
+				emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, MyApplication.REPORT_EMAILS);
+				emailIntent.putExtra(android.content.Intent.EXTRA_TEXT, report);			
+				emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, getContext().getResources().getString(R.string.report_subject));
+				getContext().startActivity(Intent.createChooser(emailIntent, getContext().getResources().getString(R.string.send_email_report)));
+			}
+        });
+		mTopButton.setText(R.string.report);
+
+		mBottomButton.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				// kill the app
+				System.runFinalizersOnExit(true);
+	            System.exit(0);			
+			}
+        });
+		mBottomButton.setText(R.string.quit);
+		
+		mTopButton.setVisibility(VISIBLE);
+		mBottomButton.setVisibility(VISIBLE);
 	}
 }

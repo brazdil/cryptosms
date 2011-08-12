@@ -1,10 +1,10 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.Preferences;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
@@ -29,7 +29,7 @@ public class Utils {
 	 * @throws StorageFileException 
 	 * @throws IOException 
 	 */
-	public static boolean checkSimPhoneNumberAvailable(final Context context) throws IOException, StorageFileException {
+	public static boolean checkSimPhoneNumberAvailable(final Context context) throws StorageFileException {
 		final Resources res = context.getResources();
 		String simNumber = SimCard.getSingleton().getSimPhoneNumber(context);
 		if (simNumber == null) {
@@ -114,8 +114,9 @@ public class Utils {
 					.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
 					.show();
 
-		} catch (StorageFileException e) {
-		} catch (IOException e) {
+		} catch (StorageFileException ex) {
+			State.fatalException(ex);
+			return;
 		}
 	}
 	
@@ -143,12 +144,9 @@ public class Utils {
 								Conversation.changeAllSessionKeys(phoneNumbers.get(item), SimCard.getSingleton().getSimSerialNumberWrapped(context));
 							else
 								Conversation.changeAllSessionKeys(phoneNumbers.get(item), simNumber);
-						} catch (StorageFileException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+						} catch (StorageFileException ex) {
+							State.fatalException(ex);
+							return;
 						}
 			    	}
 			    }
@@ -158,25 +156,5 @@ public class Utils {
 	
 	public static String formatPhoneNumber(String phoneNumber) {
 		return PhoneNumberUtils.stripSeparators(phoneNumber);
-	}
-	
-	public static void dialogDatabaseError(Context context, StorageFileException ex) {
-		Resources res = context.getResources();
-		
-		new AlertDialog.Builder(context)
-			.setTitle(res.getString(R.string.error_database))
-			.setMessage(res.getString(R.string.error_database_details) + "\n" + ex.getMessage())
-			.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
-			.show();
-	}
-	
-	public static void dialogIOError(Context context, IOException ex) {
-		Resources res = context.getResources();
-		
-		new AlertDialog.Builder(context)
-			.setTitle(res.getString(R.string.error_io))
-			.setMessage(res.getString(R.string.error_io_details) + "\n" + ex.getMessage())
-			.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
-			.show();
 	}
 }

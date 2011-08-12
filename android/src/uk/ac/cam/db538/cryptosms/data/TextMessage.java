@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
@@ -18,6 +17,7 @@ import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -53,7 +53,7 @@ public class TextMessage extends Message {
 		super(storage);
 	}
 	
-	public CompressedText getText() throws StorageFileException, IOException, DataFormatException {
+	public CompressedText getText() throws StorageFileException, DataFormatException {
 		return CompressedText.decode(
 			getStoredData(),
 			mStorage.getAscii() ? TextCharset.ASCII : TextCharset.UNICODE,
@@ -61,7 +61,7 @@ public class TextMessage extends Message {
 		);
 	}
 	
-	public void setText(CompressedText text) throws IOException, StorageFileException, MessageException {
+	public void setText(CompressedText text) throws StorageFileException, MessageException {
 		byte[] data = text.getData();
 
 		// initialise
@@ -87,7 +87,7 @@ public class TextMessage extends Message {
 	 * @throws StorageFileException 
 	 * @throws MessageException 
 	 */
-	public ArrayList<byte[]> getBytes(Context context) throws StorageFileException, IOException, MessageException {
+	public ArrayList<byte[]> getBytes(Context context) throws StorageFileException, MessageException {
 		EncryptionInterface crypto = Encryption.getEncryption();
 		
 		ArrayList<byte[]> list = new ArrayList<byte[]>();
@@ -161,7 +161,7 @@ public class TextMessage extends Message {
 	 * @throws StorageFileException 
 	 * @throws MessageException 
 	 */
-	public int computeNumberOfMessageParts() throws StorageFileException, IOException, DataFormatException, MessageException {
+	public int computeNumberOfMessageParts() throws StorageFileException, DataFormatException, MessageException {
 		return computeNumberOfMessageParts(getText());
 	}
 	
@@ -228,7 +228,7 @@ public class TextMessage extends Message {
 	 */
 	@Override
 	public void sendSMS(String phoneNumber, final Context context, final MessageSentListener listener)
-			throws StorageFileException, IOException, MessageException {
+			throws StorageFileException, MessageException {
 		ArrayList<byte[]> dataSMS = getBytes(context);
 		final boolean[] sent = new boolean[dataSMS.size()];
 		final boolean[] notified = new boolean[dataSMS.size()];
@@ -302,8 +302,9 @@ public class TextMessage extends Message {
 									keys = StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
 									keys.incrementOut(1);
 									keys.saveToFile();
-								} catch (StorageFileException e) {
-								} catch (IOException e) {
+								} catch (StorageFileException ex) {
+									State.fatalException(ex);
+									return;
 								}
 							}
 						}

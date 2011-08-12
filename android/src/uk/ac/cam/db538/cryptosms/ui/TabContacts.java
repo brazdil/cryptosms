@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
@@ -9,6 +8,7 @@ import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.data.SimCard.OnSimStateListener;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
@@ -41,7 +41,7 @@ public class TabContacts extends ListActivity {
 	private TabContactsItem mNewContactView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
 	
-	private void updateContacts() throws StorageFileException, IOException {
+	private void updateContacts() throws StorageFileException {
 		mContacts.clear();
 		
 		Conversation conv = Header.getHeader().getFirstConversation();
@@ -72,9 +72,8 @@ public class TabContacts extends ListActivity {
 			// if we managed to get it, start the activity
 			startConversation(conv);
 		} catch (StorageFileException ex) {
-			Utils.dialogDatabaseError(this, ex);
-		} catch (IOException ex) {
-			Utils.dialogIOError(this, ex);
+			State.fatalException(ex);
+			return;
 		}
 	}
 
@@ -127,9 +126,8 @@ public class TabContacts extends ListActivity {
 						updateContacts();
 						adapterContacts.notifyDataSetChanged();
 					} catch (StorageFileException ex) {
-						Utils.dialogDatabaseError(context, ex);
-					} catch (IOException ex) {
-						Utils.dialogIOError(context, ex);
+						State.fatalException(ex);
+						return;
 					}
 				}
 			});
@@ -144,10 +142,7 @@ public class TabContacts extends ListActivity {
 						if (!Utils.checkSimPhoneNumberAvailable(context))
 							return;
 					} catch (StorageFileException ex) {
-						Utils.dialogDatabaseError(context, ex);
-						return;
-					} catch (IOException ex) {
-						Utils.dialogIOError(context, ex);
+						State.fatalException(ex);
 						return;
 					}
 					
@@ -160,9 +155,8 @@ public class TabContacts extends ListActivity {
 			    			if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 			    				startConversation(conv);
 						} catch (StorageFileException ex) {
-							Utils.dialogDatabaseError(context, ex);
-						} catch (IOException ex) {
-							Utils.dialogIOError(context, ex);
+							State.fatalException(ex);
+							return;
 						}
 		    		} else {
 		    			// clicked on the header
@@ -176,36 +170,14 @@ public class TabContacts extends ListActivity {
 						try {
 							startActivityForResult(intent, NEW_CONTACT);
 	    				} catch(ActivityNotFoundException e) {
-	    					// PKI not installed
-	    					new AlertDialog.Builder(context)
-	    					.setTitle(res.getString(R.string.error_pki_unavailable))
-	    					.setMessage(res.getString(R.string.error_pki_unavailable_details))
-	    					.setNegativeButton(res.getString(R.string.cancel), new DummyOnClickListener())
-	    					.setPositiveButton(res.getString(R.string.to_market), new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,	int which) {
-			    					Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=uk.ac.cam.PKI"));
-			    					try {
-			    						startActivity(market);
-			    					} catch(ActivityNotFoundException e2) {
-			    						// doesn't have Market
-				    					new AlertDialog.Builder(context)
-				    						.setTitle(res.getString(R.string.error_market_unavailable))
-				    						.setMessage(res.getString(R.string.error_market_unavailable_details))
-				    						.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
-				    						.show();
-			    					}
-								}
-	    					})
-	    					.show();
-	    					
+	    					// TODO: PKI unavailable
 	    				}
 		    		}
 				}
 			});
 		} catch (StorageFileException ex) {
-			Utils.dialogDatabaseError(this, ex);
-		} catch (IOException ex) {
-			Utils.dialogIOError(this, ex);
+			State.fatalException(ex);
+			return;
 		}
     }
 
@@ -267,9 +239,7 @@ public class TabContacts extends ListActivity {
 	            mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
 	    	}
 		} catch (StorageFileException ex) {
-			Utils.dialogDatabaseError(this, ex);
-		} catch (IOException ex) {
-			Utils.dialogIOError(this, ex);
+			State.fatalException(ex);
 		}
 	}
 	
