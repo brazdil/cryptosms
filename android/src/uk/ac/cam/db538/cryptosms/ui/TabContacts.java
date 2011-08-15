@@ -2,22 +2,22 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
-import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationsChangeListener;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
+import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -37,6 +37,8 @@ public class TabContacts extends ListActivity {
 	private static final int ACTIVITY_NEW_CONTACT = 1;
 	
 	private static final String BUNDLE_DIALOG_MANAGER = "DIALOG_MANAGER";
+	private static final String DIALOG_PHONE_NUMBER_PICKER = "DIALOG_PHONE_NUMBER_PICKER";
+	private static final String PARAMS_PHONE_NUMBER_PICKER_ID = "PARAMS_PHONE_NUMBER_PICKER_ID";
 	
 	private Context mContext = this;
     private ListView mListView;
@@ -45,7 +47,7 @@ public class TabContacts extends ListActivity {
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();;
 	private TabContactsItem mNewContactView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
-	private DialogManager mDialogManager = new DialogManager(this);
+	private DialogManager mDialogManager = new DialogManager();
 	
 	private void startConversation(Conversation conv) {
 		Intent intent = new Intent(TabContacts.this, ConversationActivity.class);
@@ -108,11 +110,11 @@ public class TabContacts extends ListActivity {
 	    			// clicked on the header
 	    			
 	    			// pick a contact from PKI
-					Intent intent = new Intent("uk.ac.cam.PKI.getcontact");
+					Intent intent = new Intent(MyApplication.PKI_CONTACT_PICKER);
+					intent.putExtra("pick", true);
 			        intent.putExtra("Contact Criteria", "in_visible_group=1");
 			        intent.putExtra("Key Criteria", "contact_id IN (SELECT contact_id FROM keys GROUP BY contact_id HAVING COUNT(key_name)>0)");
 			        intent.putExtra("sort", "display_name COLLATE LOCALIZED ASC");
-					intent.putExtra("pick", true);
 					try {
 						startActivityForResult(intent, ACTIVITY_NEW_CONTACT);
     				} catch(ActivityNotFoundException e) {
@@ -140,6 +142,37 @@ public class TabContacts extends ListActivity {
 		
 		// prepare dialogs
 		Utils.prepareDialogs(mDialogManager, this);
+		mDialogManager.addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				Resources res = mContext.getResources();
+				
+				// get phone numbers associated with the contact
+				final ArrayList<Contact.PhoneNumber> phoneNumbers = 
+					Contact.getPhoneNumbers(mContext, params.getLong(PARAMS_PHONE_NUMBER_PICKER_ID));
+
+				final CharSequence[] items = new CharSequence[phoneNumbers.size()];
+				for (int i = 0; i < phoneNumbers.size(); ++i)
+					items[i] = phoneNumbers.get(i).toString();
+
+				// display them in a dialog
+				return new AlertDialog.Builder(mContext)
+				       .setTitle(res.getString(R.string.contacts_pick_phone_number))
+				       .setItems(items, new DialogInterface.OnClickListener() {
+				    	   @Override
+				    	   public void onClick(DialogInterface dialog, int item) {
+				    		   Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
+				    		   startConversation(phoneNumber.getPhoneNumber());
+				    	   }
+				       })
+				       .create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_PHONE_NUMBER_PICKER;
+			}
+		});
 	}
 
     @Override
@@ -155,27 +188,16 @@ public class TabContacts extends ListActivity {
     	case ACTIVITY_NEW_CONTACT:
     		if (resultCode == Activity.RESULT_OK) {
     			long contactId = data.getLongExtra("contact", 0);
-    			if (contactId > 0) {
+    			String contactKey = data.getStringExtra("key name");
+    			if (contactId > 0 && contactKey != null) {
     				// get phone numbers associated with the contact
     				final ArrayList<Contact.PhoneNumber> phoneNumbers = 
     					Contact.getPhoneNumbers(context, contactId);
 
     				if (phoneNumbers.size() > 1) {
-        				final CharSequence[] items = new CharSequence[phoneNumbers.size()];
-    					for (int i = 0; i < phoneNumbers.size(); ++i)
-    						items[i] = phoneNumbers.get(i).toString();
-	
-	    				// display them in a dialog
-	    				new AlertDialog.Builder(this)
-	    					.setTitle(res.getString(R.string.contacts_pick_phone_number))
-	    					.setItems(items, new DialogInterface.OnClickListener() {
-		    				    @Override
-								public void onClick(DialogInterface dialog, int item) {
-		    				    	Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
-		    				    	startConversation(phoneNumber.getPhoneNumber());
-		    				    }
-		    				})
-	    					.show();
+    					Bundle params = new Bundle();
+    					params.putLong(PARAMS_PHONE_NUMBER_PICKER_ID, contactId);
+    					mDialogManager.showDialog(DIALOG_PHONE_NUMBER_PICKER, params);
     				} else if (phoneNumbers.size() == 1) {
     					startConversation(phoneNumbers.get(0).getPhoneNumber());
     				} else {
@@ -191,9 +213,13 @@ public class TabContacts extends ListActivity {
     		break;
     	}
     }
-    
-    
 	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Pki.login(false);
+	}
+
 	@Override
 	protected void onStart() {
 		super.onStart();

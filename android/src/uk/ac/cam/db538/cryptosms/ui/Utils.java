@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.Preferences;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
@@ -18,19 +17,22 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
+import android.os.Bundle;
 import android.telephony.PhoneNumberUtils;
 
 public class Utils {
 	private static boolean mImportShown = false;
 	private static boolean mWarningSIMNotPresent = false;
 	
-	private static final String DIALOG_NO_SIM_AVAILABLE = "NO_SIM_AVAILABLE";
-	private static final String DIALOG_IMPORT_KEYS = "IMPORT_KEYS";
+	private static final String DIALOG_NO_SIM_AVAILABLE = "DIALOG_NO_SIM_AVAILABLE";
+	private static final String DIALOG_IMPORT_KEYS = "DIALOG_IMPORT_KEYS";
+	private static final String DIALOG_NO_SESSION_KEYS = "DIALOG_NO_SESSION_KEYS";
+	private static final String DIALOG_EXISTING_PHONE_NUMBERS = "DIALOG_EXISTING_PHONE_NUMBERS";
 	
-	public static void prepareDialogs(DialogManager manager, final Context context) {
+	public static void prepareDialogs(final DialogManager manager, final Context context) {
 		manager.addBuilder(new DialogBuilder() {
 			@Override
-			public Dialog onBuild() {
+			public Dialog onBuild(Bundle params) {
 				Resources res = context.getResources();
 				return new AlertDialog.Builder(context)
 			       .setTitle(res.getString(R.string.error_no_sim_available))
@@ -48,7 +50,24 @@ public class Utils {
 
 		manager.addBuilder(new DialogBuilder() {
 			@Override
-			public Dialog onBuild() {
+			public Dialog onBuild(Bundle params) {
+				Resources res = context.getResources();
+				return new AlertDialog.Builder(context)
+					   .setTitle(res.getString(R.string.menu_move_sessions_none))
+					   .setMessage(res.getString(R.string.menu_move_sessions_none_details))
+					   .setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
+					   .create();
+			}
+
+			@Override
+			public String getId() {
+				return DIALOG_NO_SESSION_KEYS;
+			}
+		});
+
+		manager.addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
 				Resources res = context.getResources();
 				
 				// make list of phone numbers that have session keys
@@ -67,7 +86,7 @@ public class Utils {
 								@Override
 								public void onClick(DialogInterface dialog,	int which) {
 									SharedPreferences.Editor editor = Preferences.getSingleton().getPreferences().edit();
-									editor.putString(Preferences.PREFERENCES_IMPORT_NEVER, SimCard.getSingleton().getSimNumber().getNumber());
+									editor.putString(Preferences.PREFERENCES_IMPORT_NEVER, SimCard.getSingleton().getNumber().getNumber());
 									editor.commit();
 								}
 						   })
@@ -75,7 +94,7 @@ public class Utils {
 						   .setPositiveButton(res.getString(R.string.yes), new OnClickListener() {
 							   @Override
 							   public void onClick(DialogInterface dialog, int which) {
-								   Utils.moveSessionKeys(context, phoneNumbers);
+								   Utils.moveSessionKeys(manager);
 							   }
 						   })
 						   .setCancelable(false)
@@ -89,15 +108,67 @@ public class Utils {
 				return DIALOG_IMPORT_KEYS;
 			}
 		});
+
+		manager.addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				Resources res = context.getResources();
+				
+				final SimNumber simNumber = SimCard.getSingleton().getPhoneNumber();
+				final ArrayList<SimNumber> phoneNumbers = new ArrayList<SimNumber>();
+				try {
+					phoneNumbers.addAll(Conversation.filterOutNumber(
+						Conversation.filterOnlyPhoneNumbers(
+                            	Conversation.getAllSimNumbersStored()
+                            ),
+                            simNumber
+                        )
+                    );
+				} catch (StorageFileException ex) {
+				}
+				
+				String[] numbers = new String[phoneNumbers.size() + 1];
+				int i = 0;
+				for (SimNumber n : phoneNumbers)
+					numbers[i++] = n.getNumber();
+				numbers[i] = res.getString(R.string.error_no_sim_number_import_none);
+				
+				// display them in a dialog
+				return new AlertDialog.Builder(context)
+					   .setTitle(res.getString(R.string.error_no_sim_number_import))
+					   .setItems(numbers, new DialogInterface.OnClickListener() {
+						   @Override
+						   public void onClick(DialogInterface dialog, int item) {
+							   if (item < phoneNumbers.size()) {
+								   try {
+									   if (simNumber.getNumber().length() == 0)
+										   Conversation.changeAllSessionKeys(phoneNumbers.get(item), SimCard.getSingleton().getSerialNumber());
+									   else
+										   Conversation.changeAllSessionKeys(phoneNumbers.get(item), simNumber);
+								   } catch (StorageFileException ex) {
+									   State.fatalException(ex);
+									   return;
+								   }
+							   }
+						   }
+					   })
+					   .create();
+			}
+
+			@Override
+			public String getId() {
+				return DIALOG_EXISTING_PHONE_NUMBERS;
+			}
+		});
 	}
 	
 	public static void handleSimIssues(Context context, DialogManager dialogManager) {
-		SimNumber simNumber = SimCard.getSingleton().getSimNumber();
+		SimNumber simNumber = SimCard.getSingleton().getNumber();
 		
 		if (simNumber == null) {
 			// no SIM present (possibly Airplane mode)
 			if (!mWarningSIMNotPresent) {
-				dialogManager.showDialog(DIALOG_NO_SIM_AVAILABLE);
+				dialogManager.showDialog(DIALOG_NO_SIM_AVAILABLE, null);
 				mWarningSIMNotPresent = true;
 			}
 		} else if (simNumber.isSerial()) {
@@ -109,7 +180,7 @@ public class Utils {
 				declinedSim = new SimNumber(pref, true);
 			if (!mImportShown && (declinedSim == null || simNumber.equals(declinedSim))) {
 				mImportShown = true;
-				dialogManager.showDialog(DIALOG_IMPORT_KEYS);
+				dialogManager.showDialog(DIALOG_IMPORT_KEYS, null);
 			}
 		}
 	}
@@ -118,11 +189,10 @@ public class Utils {
 	 * Lets the user transfer some of the existing keys to different SIM / phone number
 	 * @param context
 	 */
-	public static void moveSessionKeys(Context context) {
+	public static void moveSessionKeys(Context context, DialogManager dialogManager) {
 		//TODO: Nicer import!!!
 		// Let the user choose which contacts, etc...
-		Resources res = context.getResources();
-		SimNumber simNumber = SimCard.getSingleton().getSimPhoneNumber();
+		SimNumber simNumber = SimCard.getSingleton().getPhoneNumber();
 		if (simNumber == null) // no SIM or Airplane mode
 			return;
 		
@@ -134,53 +204,20 @@ public class Utils {
 			                                        simNumber
 			                                    );
 			if (phoneNumbers.size() > 0)
-				moveSessionKeys(context, phoneNumbers);
+				moveSessionKeys(dialogManager);
 			else
-				new AlertDialog.Builder(context)
-					.setTitle(res.getString(R.string.menu_move_sessions_none))
-					.setMessage(res.getString(R.string.menu_move_sessions_none_details))
-					.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
-					.show();
-
+				dialogManager.showDialog(DIALOG_NO_SESSION_KEYS, null);
 		} catch (StorageFileException ex) {
 			State.fatalException(ex);
 			return;
 		}
 	}
 	
-	public static void moveSessionKeys(final Context context, final ArrayList<SimNumber> phoneNumbers) {
-		Resources res = context.getResources();
-		
-		final SimNumber simNumber = SimCard.getSingleton().getSimPhoneNumber();
-		if (simNumber == null)
+	public static void moveSessionKeys(DialogManager dialogManager) {
+		if (!SimCard.getSingleton().isNumberAvailable())
 			return;
-
-		String[] numbers = new String[phoneNumbers.size() + 1];
-		int i = 0;
-		for (SimNumber n : phoneNumbers)
-			numbers[i++] = n.getNumber();
-		numbers[i] = res.getString(R.string.error_no_sim_number_import_none);
 		
-		// display them in a dialog
-		new AlertDialog.Builder(context)
-			.setTitle(res.getString(R.string.error_no_sim_number_import))
-			.setItems(numbers, new DialogInterface.OnClickListener() {
-			    @Override
-				public void onClick(DialogInterface dialog, int item) {
-			    	if (item < phoneNumbers.size()) {
-						try {
-							if (simNumber.getNumber().length() == 0)
-								Conversation.changeAllSessionKeys(phoneNumbers.get(item), SimCard.getSingleton().getSimSerialNumber());
-							else
-								Conversation.changeAllSessionKeys(phoneNumbers.get(item), simNumber);
-						} catch (StorageFileException ex) {
-							State.fatalException(ex);
-							return;
-						}
-			    	}
-			    }
-			})
-			.show();
+		dialogManager.showDialog(DIALOG_EXISTING_PHONE_NUMBERS, null);
 	}
 	
 	public static String formatPhoneNumber(String phoneNumber) {

@@ -4,42 +4,40 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import uk.ac.cam.db538.cryptosms.Preferences;
-import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
-import uk.ac.cam.db538.cryptosms.data.SimCard;
-import uk.ac.cam.db538.cryptosms.storage.Conversation;
-import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.utils.SimNumber;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.content.DialogInterface.OnClickListener;
-import android.content.res.Resources;
 import android.os.Bundle;
 
 public class DialogManager {
 	
+	private static final String INSTANCE_PARAMS = "PARAMS";
+	private static final String INSTANCE_STATE = "STATE";
+	
 	public static interface DialogBuilder {
-		public Dialog onBuild();
+		public Dialog onBuild(Bundle params);
 		public String getId();
 	}
 	
-	private Context mContext;
-	private HashMap<String, Dialog> mActiveDialogs = new HashMap<String, Dialog>();
+	private static class DialogInstance {
+		public Dialog dialog;
+		public Bundle params;
+		
+		public DialogInstance(Dialog dialog, Bundle params) {
+			this.dialog = dialog;
+			this.params = params;
+		}
+	}
+	
+	private HashMap<String, DialogInstance> mActiveDialogs = new HashMap<String, DialogInstance>();
 	private ArrayList<DialogBuilder> mDialogBuilders = new ArrayList<DialogBuilder>();
 	private Bundle mSavedState;
 	
-	public DialogManager(Context context) {
-		mContext = context;
+	public DialogManager() {
 	}
 	
-	private Dialog showDialog(DialogBuilder builder) {
-		Dialog dialog = builder.onBuild();
+	private Dialog showDialog(DialogBuilder builder, Bundle params) {
+		Dialog dialog = builder.onBuild(params);
 		if (dialog != null) {
-			mActiveDialogs.put(builder.getId(), dialog);
+			mActiveDialogs.put(builder.getId(), new DialogInstance(dialog, params));
 			dialog.show();
 		}
 		return dialog;
@@ -50,10 +48,10 @@ public class DialogManager {
 	 * @param id
 	 * @return
 	 */
-	public Dialog showDialog(String id) {
+	public Dialog showDialog(String id, Bundle params) {
 		for (DialogBuilder builder : mDialogBuilders)
 			if (builder.getId().equals(id))
-				return showDialog(builder);
+				return showDialog(builder, params);
 		return null;
 	}
 	
@@ -62,7 +60,7 @@ public class DialogManager {
 	 * @param id
 	 */
 	public void dismissDialog(String id) {
-		Dialog dialog = mActiveDialogs.get(id);
+		Dialog dialog = mActiveDialogs.get(id).dialog;
 		mActiveDialogs.remove(id);
 		if (dialog != null)
 			dialog.dismiss();
@@ -75,9 +73,15 @@ public class DialogManager {
 	public void saveState() {
 		if (mSavedState == null)
 			mSavedState = new Bundle();
-		for (Entry<String, Dialog> entry : mActiveDialogs.entrySet()) {
-			entry.getValue().dismiss();
-			mSavedState.putBundle(entry.getKey(), entry.getValue().onSaveInstanceState());
+		for (Entry<String, DialogInstance> entry : mActiveDialogs.entrySet()) {
+			Dialog dialog = entry.getValue().dialog;
+			if (dialog.isShowing()) {
+				dialog.dismiss();
+				Bundle instance = new Bundle();
+				instance.putBundle(INSTANCE_PARAMS, entry.getValue().params);
+				instance.putBundle(INSTANCE_STATE, dialog.onSaveInstanceState());
+				mSavedState.putBundle(entry.getKey(), instance);
+			}
 		}
 		mActiveDialogs.clear();
 	}
@@ -92,8 +96,9 @@ public class DialogManager {
 		
 		for (DialogBuilder builder : mDialogBuilders) {
 			if (mSavedState.containsKey(builder.getId())) {
-				Dialog dialog = showDialog(builder);
-				Bundle dialogState = mSavedState.getBundle(builder.getId());
+				Bundle instance = mSavedState.getBundle(builder.getId());
+				Dialog dialog = showDialog(builder, instance.getBundle(INSTANCE_PARAMS));
+				Bundle dialogState = instance.getBundle(INSTANCE_STATE);
 				if (dialogState != null)
 					dialog.onRestoreInstanceState(dialogState);
 			}

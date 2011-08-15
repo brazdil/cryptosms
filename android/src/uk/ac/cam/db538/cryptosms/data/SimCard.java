@@ -58,7 +58,7 @@ public class SimCard {
 	 * Returns the phone number of currently active SIM
 	 * @return
 	 */
-	private String getSimPhoneNumberString() {
+	private String getPhoneNumberString() {
 		try {
 			if (getAirplaneMode())
 				return null;
@@ -76,8 +76,8 @@ public class SimCard {
 	 * wrapped in the SimNumber class
 	 * @return
 	 */
-	public SimNumber getSimPhoneNumber() {
-			String phoneNumber = getSimPhoneNumberString();
+	public SimNumber getPhoneNumber() {
+			String phoneNumber = getPhoneNumberString();
 			if (phoneNumber == null)
 				return null;
 			else
@@ -88,7 +88,7 @@ public class SimCard {
 	 * Returns the phone number of currently active SIM
 	 * @return
 	 */
-	private String getSimSerialNumberString() {
+	private String getSerialNumberString() {
 		try {
 			if (getAirplaneMode())
 				return null;
@@ -106,8 +106,8 @@ public class SimCard {
 	 * wrapped in the SimNumber class
 	 * @return
 	 */
-	public SimNumber getSimSerialNumber() {
-		String serialNumber = getSimSerialNumberString();
+	public SimNumber getSerialNumber() {
+		String serialNumber = getSerialNumberString();
 		if (serialNumber == null)
 			return null;
 		else
@@ -119,10 +119,10 @@ public class SimCard {
 	 * Returns null if SIM is not available or the phone is in an airplane mode.
 	 * @return
 	 */
-	public SimNumber getSimNumber() {
-		SimNumber phone = getSimPhoneNumber();
+	public SimNumber getNumber() {
+		SimNumber phone = getPhoneNumber();
 		if (phone == null || phone.getNumber().length() == 0)
-			return getSimSerialNumber();
+			return getSerialNumber();
 		else
 			return phone;
 	}
@@ -132,6 +132,6 @@ public class SimCard {
 	 * @return
 	 */
 	public boolean isNumberAvailable() {
-		return getSimNumber() != null;
+		return getNumber() != null;
 	}
 }

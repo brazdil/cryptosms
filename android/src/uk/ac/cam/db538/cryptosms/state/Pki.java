@@ -42,55 +42,59 @@ public class Pki {
 			super("PKI is not available (either not connected or logged out)");
 		}
 	}
-	
+
+	private static boolean dbInitialized = false;
 	private static StateChangeListener mMainListener = new StateChangeListener() {
 		@Override
 		public void onLogin() {
 			// TODO Just for testing!!!
-			try {
-				Conversation conv1 = Conversation.createConversation();
-				conv1.setPhoneNumber("+447572306095");
-				SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
-				keys1.setSimNumber(new SimNumber("89441000301641313004", true));
-				keys1.setKeysSent(true);
-				keys1.setKeysConfirmed(false);
-				keys1.saveToFile();
-				SessionKeys keys4 = SessionKeys.createSessionKeys(conv1);
-				keys4.setSimNumber(new SimNumber("07879116797", false));
-				keys4.setKeysSent(true);
-				keys4.setKeysConfirmed(true);
-				keys4.saveToFile();
-				SessionKeys keys5 = SessionKeys.createSessionKeys(conv1);
-				keys5.setSimNumber(new SimNumber("07572306095", false));
-				keys5.setKeysSent(true);
-				keys5.setKeysConfirmed(true);
-				keys5.setSessionKey_In(keys5.getSessionKey_Out().clone());
-				keys5.saveToFile();
-				Conversation conv2 = Conversation.createConversation();
-				MessageData msg2 = MessageData.createMessageData(conv2);
-				TextMessage txtmsg2 = new TextMessage(msg2);
-				txtmsg2.setText(CompressedText.createFromString("You're a jerk!"));
-				msg2.setUnread(false);
-				msg2.saveToFile();
-				conv2.setPhoneNumber("+20104544366");
-				SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
-				keys2.setSimNumber(new SimNumber("89441000301641313002", true));
-				keys2.setKeysSent(false);
-				keys2.setKeysConfirmed(true);
-				keys2.saveToFile();
-				SessionKeys keys3 = SessionKeys.createSessionKeys(conv2);
-				keys3.setSimNumber(new SimNumber("07879116797", false));
-				keys3.setKeysSent(false);
-				keys3.setKeysConfirmed(false);
-				keys3.saveToFile();
-				Conversation conv3 = Conversation.createConversation();
-				conv3.setPhoneNumber("+447879116797");
-				SessionKeys keys6 = SessionKeys.createSessionKeys(conv3);
-				keys6.setSimNumber(new SimNumber("+447572306095", false));
-				keys6.setKeysSent(true);
-				keys6.setKeysConfirmed(true);
-				keys6.saveToFile();
-			} catch (Exception ex) {
+			if (!dbInitialized) {
+				dbInitialized = true;
+				try {
+					Conversation conv1 = Conversation.createConversation();
+					conv1.setPhoneNumber("+447572306095");
+					SessionKeys keys1 = SessionKeys.createSessionKeys(conv1);
+					keys1.setSimNumber(new SimNumber("89441000301641313004", true));
+					keys1.setKeysSent(true);
+					keys1.setKeysConfirmed(false);
+					keys1.saveToFile();
+					SessionKeys keys4 = SessionKeys.createSessionKeys(conv1);
+					keys4.setSimNumber(new SimNumber("07879116797", false));
+					keys4.setKeysSent(true);
+					keys4.setKeysConfirmed(true);
+					keys4.saveToFile();
+					SessionKeys keys5 = SessionKeys.createSessionKeys(conv1);
+					keys5.setSimNumber(new SimNumber("07572306095", false));
+					keys5.setKeysSent(true);
+					keys5.setKeysConfirmed(true);
+					keys5.setSessionKey_In(keys5.getSessionKey_Out().clone());
+					keys5.saveToFile();
+					Conversation conv2 = Conversation.createConversation();
+					MessageData msg2 = MessageData.createMessageData(conv2);
+					TextMessage txtmsg2 = new TextMessage(msg2);
+					txtmsg2.setText(CompressedText.createFromString("You're a jerk!"));
+					msg2.setUnread(false);
+					msg2.saveToFile();
+					conv2.setPhoneNumber("+20104544366");
+					SessionKeys keys2 = SessionKeys.createSessionKeys(conv2);
+					keys2.setSimNumber(new SimNumber("89441000301641313002", true));
+					keys2.setKeysSent(false);
+					keys2.setKeysConfirmed(true);
+					keys2.saveToFile();
+					SessionKeys keys3 = SessionKeys.createSessionKeys(conv2);
+					keys3.setSimNumber(new SimNumber("07879116797", false));
+					keys3.setKeysSent(false);
+					keys3.setKeysConfirmed(false);
+					keys3.saveToFile();
+					Conversation conv3 = Conversation.createConversation();
+					conv3.setPhoneNumber("+447879116797");
+					SessionKeys keys6 = SessionKeys.createSessionKeys(conv3);
+					keys6.setSimNumber(new SimNumber("+447572306095", false));
+					keys6.setKeysSent(true);
+					keys6.setKeysConfirmed(true);
+					keys6.saveToFile();
+				} catch (Exception ex) {
+				}
 			}
 		}
 		
@@ -234,6 +238,7 @@ public class Pki {
 				} catch (NotConnectedException e) {
 				}
 			} else {
+				setLoggedIn(false);
 				Intent intent = new Intent("uk.ac.cam.dje38.pki.login");
 				mContext.startService(intent);
 			}

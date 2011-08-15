@@ -2,10 +2,10 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import android.app.TabActivity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -20,6 +20,7 @@ public class MainTabActivity extends TabActivity {
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 
 	private ErrorOverlay mErrorOverlay;
+	private DialogManager mDialogManager = new DialogManager();
 	
 	private View mMainLayout;
 	private StateChangeListener mPkiStateListener = new StateChangeListener(){
@@ -47,6 +48,8 @@ public class MainTabActivity extends TabActivity {
 		public void onLogin() {
 			mErrorOverlay.setVisibility(View.INVISIBLE);
 	        mMainLayout.setVisibility(View.VISIBLE);
+	        
+	        mDialogManager.restoreState();
 		}
 
 		@Override
@@ -55,6 +58,8 @@ public class MainTabActivity extends TabActivity {
 			mErrorOverlay.modeLogin();
 			mErrorOverlay.setVisibility(View.VISIBLE);
 	        mMainLayout.setVisibility(View.INVISIBLE);
+	        
+	        mDialogManager.saveState();
 		}
 
 		@Override
@@ -103,13 +108,15 @@ public class MainTabActivity extends TabActivity {
 	    mMainLayout = findViewById(R.id.screen_main);
 	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_main_error);
         mPkiStateListener.onLogout();
+        
+        // prepare dialogs
+        Utils.prepareDialogs(mDialogManager, this);
 	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		
-		final Context context = this;
 		Resources res = this.getResources();
 		
 		int idGroup = 0;
@@ -117,7 +124,7 @@ public class MainTabActivity extends TabActivity {
 		menuMoveSessions.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				Utils.moveSessionKeys(context);                                 
+				Utils.moveSessionKeys(mDialogManager);                                 
 				return true;
 			}
 		});
@@ -136,5 +143,11 @@ public class MainTabActivity extends TabActivity {
 		Log.d(MyApplication.APP_TAG, "Removing listener");
 		State.removeListener(mPkiStateListener);
 		super.onStop();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Pki.login(false);
 	}
 }

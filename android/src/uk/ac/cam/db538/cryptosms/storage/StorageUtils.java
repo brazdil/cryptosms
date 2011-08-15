@@ -16,14 +16,14 @@ public class StorageUtils {
 	 * @throws StorageFileException
 	 */
 	public static SessionKeys getSessionKeysForSim(Conversation conv) throws StorageFileException {
-		SimNumber simNumber = SimCard.getSingleton().getSimNumber();
+		SimNumber simNumber = SimCard.getSingleton().getNumber();
 		
 		if (simNumber == null)
 			return null;
 		else if (simNumber.isSerial())
 			return conv.getSessionKeys(simNumber);
 		else {
-			SimNumber simSerial = SimCard.getSingleton().getSimSerialNumber();
+			SimNumber simSerial = SimCard.getSingleton().getSerialNumber();
 			SessionKeys keysSerial = conv.getSessionKeys(simSerial);
 			if (keysSerial != null)
 				Conversation.changeAllSessionKeys(simSerial, simNumber);

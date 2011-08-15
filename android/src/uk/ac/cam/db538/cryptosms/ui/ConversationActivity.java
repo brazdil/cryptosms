@@ -2,7 +2,6 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
-import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
@@ -50,7 +49,7 @@ public class ConversationActivity extends Activity {
     private TextView mRemainsView;
     
     private boolean errorNoKeysShow;
-	private DialogManager mDialogManager = new DialogManager(this);
+	private DialogManager mDialogManager = new DialogManager();
 	private Context mContext = this;
     
 	@Override
@@ -195,7 +194,11 @@ public class ConversationActivity extends Activity {
 		super.onStop();
 	}
 
-
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Pki.login(false);
+	}
 
 	private StateChangeListener mStateChangeListener = new StateChangeListener() {
 

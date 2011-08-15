@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
@@ -27,33 +28,20 @@ public class TabRecent extends ListActivity {
 		
 	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();;
 	private ArrayAdapter<Conversation> mAdapterRecent;
-	
-	private void updateContacts() throws StorageFileException {
-		mRecent.clear();
-
-		Conversation conv = Header.getHeader().getFirstConversation();
-		while (conv != null) {
-			if (conv.getFirstMessageData() != null)
-				mRecent.add(conv);
-			conv = conv.getNextConversation();
-		}
-		
-		Collections.sort(mRecent, Collections.reverseOrder());
-	}
+	private DialogManager mDialogManager = new DialogManager();
 	
 	private void startConversation(Conversation conv) {
 		Intent intent = new Intent(TabRecent.this, ConversationActivity.class);
 		intent.putExtra(ConversationActivity.OPTION_PHONE_NUMBER, conv.getPhoneNumber());
 		intent.putExtra(ConversationActivity.OPTION_OFFER_KEYS_SETUP, false);
 		startActivity(intent);
-	}	
+	}
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
         setContentView(R.layout.screen_main_listtab);
 
-        final Context context = this;
         final ListView listView = getListView();
         final LayoutInflater inflater = LayoutInflater.from(this);
         
@@ -75,19 +63,6 @@ public class TabRecent extends ListActivity {
 				return row;
 			}
 		};
-    	// add listeners			
-    	Conversation.addListener(new ConversationsChangeListener() {
-			@Override
-			public void onUpdate() {
-				try {
-					updateContacts();
-					adapterContacts.notifyDataSetChanged();
-				} catch (StorageFileException ex) {
-					State.fatalException(ex);
-					return;
-				}
-			}
-		});
     	// set adapter
     	mAdapterRecent = adapterContacts;
 		// specify what to do when clicked on items
@@ -115,18 +90,15 @@ public class TabRecent extends ListActivity {
 
 		@Override
 		public void onLogin() {
-	        try {
-	        	updateContacts();
-			} catch (StorageFileException ex) {
-				State.fatalException(ex);
-				return;
-			}
+			mConversationChangeListener.onUpdate();
 			setListAdapter(mAdapterRecent);
+			mDialogManager.restoreState();
 		}
 
 		@Override
 		public void onLogout() {
 			setListAdapter(null);
+			mDialogManager.saveState();
 		}
 
 		@Override
@@ -141,23 +113,49 @@ public class TabRecent extends ListActivity {
 		public void onSimState() {
 		}
 	};
-
-	@Override
-	protected Dialog onCreateDialog(int id) {
-		// TODO Auto-generated method stub
-		return super.onCreateDialog(id);
-	}
+	
+	private ConversationsChangeListener mConversationChangeListener = new ConversationsChangeListener() {
+		
+		@Override
+		public void onUpdate() {
+			try {
+	    		mRecent.clear();
+	
+	    		Conversation conv = Header.getHeader().getFirstConversation();
+	    		while (conv != null) {
+	    			if (conv.getFirstMessageData() != null)
+	    				mRecent.add(conv);
+	    			conv = conv.getNextConversation();
+	    		}
+	    		
+	    		Collections.sort(mRecent, Collections.reverseOrder());
+	    		mAdapterRecent.notifyDataSetChanged();
+			} catch (StorageFileException ex) {
+				State.fatalException(ex);
+				return;
+			}
+		}
+	};
 
 	@Override
 	protected void onStart() {
 		super.onStart();
 		setListAdapter(null);
 		State.addListener(mPkiStateListener);
+		Conversation.addListener(mConversationChangeListener);
 	}
 	
 	@Override
 	protected void onStop() {
 		State.removeListener(mPkiStateListener);
+		Conversation.removeListener(mConversationChangeListener);
 		super.onStop();
 	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Pki.login(false);
+	}
+
 }

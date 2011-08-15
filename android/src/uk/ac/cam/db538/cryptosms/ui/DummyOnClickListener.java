@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.cryptosms.data;
+package uk.ac.cam.db538.cryptosms.ui;
 
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
