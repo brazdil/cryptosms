@@ -23,6 +23,7 @@ public class ErrorOverlay extends RelativeLayout {
 	private TextView mTextView;
 	private Button mTopButton;
 	private Button mBottomButton;
+	private View mMainView;
 	
 	private void prepare() {
 		LayoutInflater li = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -55,6 +56,22 @@ public class ErrorOverlay extends RelativeLayout {
 		return mTextView;
 	}
 	
+	public void setMainView(View mainView) {
+		mMainView = mainView;
+	}
+	
+	public void show() {
+		this.setVisibility(VISIBLE);
+		if (mMainView != null)
+			mMainView.setVisibility(GONE);
+	}
+	
+	public void hide() {
+		this.setVisibility(GONE);
+		if (mMainView != null)
+			mMainView.setVisibility(VISIBLE);
+	}
+
 	public void modeLogin() {
 		mTextView.setText(R.string.logged_out);
 		mTopButton.setOnClickListener(new OnClickListener(){

@@ -33,23 +33,19 @@ public class MainTabActivity extends TabActivity {
 		public void onDisconnect() {
 			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
 			mErrorOverlay.modeDisconnected();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
+			mErrorOverlay.show();
 		}
 
 		@Override
 		public void onFatalException(Exception ex) {
 			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
 			mErrorOverlay.modeFatalException(ex);
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
+			mErrorOverlay.show();
 		}
 
 		@Override
 		public void onLogin() {
-			mErrorOverlay.setVisibility(View.INVISIBLE);
-	        mMainLayout.setVisibility(View.VISIBLE);
-	        
+			mErrorOverlay.hide();
 	        mDialogManager.restoreState();
 		}
 
@@ -57,9 +53,7 @@ public class MainTabActivity extends TabActivity {
 		public void onLogout() {
 			Log.d(MyApplication.APP_TAG, "Logout error overlay");
 			mErrorOverlay.modeLogin();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
-	        
+			mErrorOverlay.show();
 	        mDialogManager.saveState();
 		}
 
@@ -67,8 +61,7 @@ public class MainTabActivity extends TabActivity {
 		public void onPkiMissing() {
 			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
 			mErrorOverlay.modePkiMissing();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
+			mErrorOverlay.show();
 		}
 
 		@Override
@@ -108,6 +101,7 @@ public class MainTabActivity extends TabActivity {
 	    // error overlay
 	    mMainLayout = findViewById(R.id.screen_main);
 	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_main_error);
+	    mErrorOverlay.setMainView(mMainLayout);
         mStateListener.onLogout();
         
         // prepare dialogs

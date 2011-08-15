@@ -70,23 +70,19 @@ public class ConversationActivity extends Activity {
 		public void onDisconnect() {
 			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
 			mErrorOverlay.modeDisconnected();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
+			mErrorOverlay.show();
 		}
 
 		@Override
 		public void onFatalException(Exception ex) {
 			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
 			mErrorOverlay.modeFatalException(ex);
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
+			mErrorOverlay.show();
 		}
 
 		@Override
 		public void onLogin() {
-			mErrorOverlay.setVisibility(View.INVISIBLE);
-	        mMainLayout.setVisibility(View.VISIBLE);
-	        
+			mErrorOverlay.hide();
 	        mDialogManager.restoreState();
 		}
 
@@ -95,9 +91,7 @@ public class ConversationActivity extends Activity {
 			Log.d(MyApplication.APP_TAG, "Logout error overlay");
 			modeEnabled(false);
 			mErrorOverlay.modeLogin();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
-	        
+			mErrorOverlay.show();
 	        mDialogManager.saveState();
 		}
 
@@ -105,8 +99,7 @@ public class ConversationActivity extends Activity {
 		public void onPkiMissing() {
 			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
 			mErrorOverlay.modePkiMissing();
-			mErrorOverlay.setVisibility(View.VISIBLE);
-	        mMainLayout.setVisibility(View.INVISIBLE);
+			mErrorOverlay.show();
 		}
 
 		@Override
@@ -256,6 +249,7 @@ public class ConversationActivity extends Activity {
 	    // error overlay
 	    mMainLayout = findViewById(R.id.screen_conversation);
 	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_conversation_error);
+	    mErrorOverlay.setMainView(mMainLayout);
         mStateListener.onLogout();
         
         // prepare dialogs
