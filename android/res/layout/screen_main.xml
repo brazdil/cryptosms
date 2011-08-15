@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TabHost xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@android:id/tabhost"
+    android:id="@+id/screen_main_tabhost"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
     <LinearLayout
-    	android:id="@+id/screen_main"
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -19,9 +18,4 @@
             android:layout_height="fill_parent"
             android:padding="0dp" />
     </LinearLayout>
-    <uk.ac.cam.db538.cryptosms.ui.ErrorOverlay 
-    	android:id="@+id/screen_main_error"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-    	/>
 </TabHost>

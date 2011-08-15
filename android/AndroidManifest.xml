@@ -20,7 +20,7 @@
        		</intent-filter>
         </receiver>
 		<activity
-			android:name=".ui.MainTabActivity" 
+			android:name=".ui.ListsActivity" 
 			android:label="@string/app_label"
 			android:configChanges="orientation|keyboardHidden">        
     		<intent-filter>

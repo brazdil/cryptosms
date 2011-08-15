@@ -1,14 +1,19 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import android.app.Activity;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
-public class StateAwareActivity extends Activity implements StateAwareActivityInterface {
+public class StateAwareActivity extends Activity {
+	private static final String BUNDLE_DIALOG_MANAGER = "DIALOG_MANAGER";
+
 	private ErrorOverlay mErrorOverlay;
 	private View mMainView;
 	private DialogManager mDialogManager = new DialogManager();
@@ -20,14 +25,13 @@ public class StateAwareActivity extends Activity implements StateAwareActivityIn
 		mMainView = view;
 		mErrorOverlay = new ErrorOverlay(this);
 		mErrorOverlay.setMainView(mMainView);
+		getErrorOverlay().hide();
 		
-		RelativeLayout layoutRoot = new RelativeLayout(this);
+		FrameLayout layoutRoot = new FrameLayout(this);
 		layoutRoot.addView(mMainView, params);
 		layoutRoot.addView(mErrorOverlay, new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 		
 		super.setContentView(layoutRoot);
-
-        onPkiLogout();
 	}
 
 	@Override
@@ -45,12 +49,10 @@ public class StateAwareActivity extends Activity implements StateAwareActivityIn
 		return mMainView.findViewById(id);
 	}
 
-	@Override
 	public ErrorOverlay getErrorOverlay() {
 		return mErrorOverlay;
 	}
 
-	@Override
 	public View getMainView() {
 		return mMainView;
 	}
@@ -141,9 +143,30 @@ public class StateAwareActivity extends Activity implements StateAwareActivityIn
 	}
 	
 	@Override
+	protected void onResume() {
+		super.onResume();
+		Pki.login(false);
+	}
+
+	@Override
 	protected void onStop() {
 		super.onStop();
 		State.removeListener(mStateListener);
 	}
 
+	@Override
+	protected void onRestoreInstanceState(Bundle state) {
+		super.onRestoreInstanceState(state);
+		
+		mDialogManager.setSavedState(state.getBundle(BUNDLE_DIALOG_MANAGER));
+		mDialogManager.restoreState();
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		
+		mDialogManager.saveState();
+		outState.putBundle(BUNDLE_DIALOG_MANAGER, mDialogManager.getSavedState());
+	}
 }

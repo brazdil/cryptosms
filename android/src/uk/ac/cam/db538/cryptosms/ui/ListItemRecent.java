@@ -41,7 +41,7 @@ import android.widget.TextView;
 /**
  * This class manages the view for given conversation.
  */
-public class TabRecentItem extends RelativeLayout {
+public class ListItemRecent extends RelativeLayout {
     private TextView mSubjectView;
     private TextView mFromView;
     private TextView mDateView;
@@ -53,11 +53,11 @@ public class TabRecentItem extends RelativeLayout {
     
     private Conversation mConversationHeader;
 
-    public TabRecentItem(Context context) {
+    public ListItemRecent(Context context) {
         super(context);
     }
 
-    public TabRecentItem(Context context, AttributeSet attrs) {
+    public ListItemRecent(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         if (sDefaultContactImage == null) {

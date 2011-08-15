@@ -18,7 +18,7 @@
  */
 -->
 
-<uk.ac.cam.db538.cryptosms.ui.TabContactsItem xmlns:android="http://schemas.android.com/apk/res/android"
+<uk.ac.cam.db538.cryptosms.ui.ListItemContact xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
     android:background="@drawable/conversation_item_background_read"
@@ -71,4 +71,4 @@
         android:layout_toLeftOf="@id/contacts_icon"
         android:ellipsize="end" />
 
-</uk.ac.cam.db538.cryptosms.ui.TabContactsItem>
+</uk.ac.cam.db538.cryptosms.ui.ListItemContact>

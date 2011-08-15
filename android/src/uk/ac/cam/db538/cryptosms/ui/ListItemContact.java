@@ -39,7 +39,7 @@ import android.widget.TextView;
 /**
  * This class manages the view for given contact.
  */
-public class TabContactsItem extends RelativeLayout {
+public class ListItemContact extends RelativeLayout {
     private TextView mFromView;
     private TextView mStatusView;
     private ImageView mIconView;
@@ -49,11 +49,11 @@ public class TabContactsItem extends RelativeLayout {
     
     private Conversation mConversationHeader;
 
-    public TabContactsItem(Context context) {
+    public ListItemContact(Context context) {
         super(context);
     }
 
-    public TabContactsItem(Context context, AttributeSet attrs) {
+    public ListItemContact(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         if (sDefaultContactImage == null) {
