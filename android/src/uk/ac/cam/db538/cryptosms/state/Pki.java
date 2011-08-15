@@ -12,8 +12,8 @@ import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 import uk.ac.cam.db538.cryptosms.utils.CompressedText;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
@@ -113,6 +113,12 @@ public class Pki {
 		@Override
 		public void onFatalException(Exception ex) {
 		}
+
+		@Override
+		public void onSimState() {
+			// TODO Auto-generated method stub
+			
+		}
 	};
 	
 	public static void init(Context context) {
@@ -190,9 +196,11 @@ public class Pki {
 					@Override
 					public void onDisconnect() {
 						Log.d(MyApplication.APP_TAG, "onDisconnect");
-						setLoggedIn(false);
-						State.notifyDisconnect();
-						State.removeListener(mMainListener);
+						if (!State.isInFatalState()) {
+							setLoggedIn(false);
+							State.notifyDisconnect();
+							State.removeListener(mMainListener);
+						}
 					}
 					
 					@Override

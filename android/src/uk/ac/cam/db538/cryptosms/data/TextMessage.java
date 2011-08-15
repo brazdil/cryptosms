@@ -88,14 +88,14 @@ public class TextMessage extends Message {
 	 * @throws MessageException 
 	 */
 	@Override
-	public ArrayList<byte[]> getBytes(Context context) throws StorageFileException, MessageException {
+	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException {
 		EncryptionInterface crypto = Encryption.getEncryption();
 		
 		ArrayList<byte[]> list = new ArrayList<byte[]>();
 		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
 		int index = 0, offset;
 		
-		SessionKeys keys = StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
+		SessionKeys keys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
 		if (keys == null)
 			throw new MessageException("No keys found");
 		
@@ -230,7 +230,7 @@ public class TextMessage extends Message {
 	@Override
 	public void sendSMS(String phoneNumber, final Context context, final MessageSentListener listener)
 			throws StorageFileException, MessageException {
-		ArrayList<byte[]> dataSMS = getBytes(context);
+		ArrayList<byte[]> dataSMS = getBytes();
 		final boolean[] sent = new boolean[dataSMS.size()];
 		final boolean[] notified = new boolean[dataSMS.size()];
 		final boolean[] error = new boolean[1];
@@ -300,7 +300,7 @@ public class TextMessage extends Message {
 								// it at least something was sent, increment the ID and session keys
 								SessionKeys keys;
 								try {
-									keys = StorageUtils.getSessionKeysForSIM(mStorage.getParent(), context);
+									keys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
 									keys.incrementOut(1);
 									keys.saveToFile();
 								} catch (StorageFileException ex) {

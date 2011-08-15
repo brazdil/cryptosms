@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,12 +11,25 @@ import android.telephony.TelephonyManager;
 
 public class SimCard {
 	
-	private static SimCard mSingleton = new SimCard();
+	private static SimCard mSingleton;
 	
-	private SimCard() {
+	private Context mContext;
+	
+	private SimCard(Context context) {
+		mContext = context;
 		
+		mContext.registerReceiver(new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				State.notifySimState();
+			}
+		}, new IntentFilter("android.intent.action.SERVICE_STATE"));
 	}
 	
+	public static void init(Context context) {
+		mSingleton = new SimCard(context);
+	}
+
 	public static SimCard getSingleton() {
 		return mSingleton;
 	}
@@ -26,13 +40,12 @@ public class SimCard {
 	
 	/**
 	 * Returns whether the Airplane Mode is on/off
-	 * @param context
 	 * @return
 	 */
-	public boolean getAirplaneMode(Context context) throws UnsupportedOperationException {
+	public boolean getAirplaneMode() throws UnsupportedOperationException {
 		try {
 			return (Settings.System.getInt(
-					context.getContentResolver(), 
+					mContext.getContentResolver(), 
 					Settings.System.AIRPLANE_MODE_ON, 0) == 1);
 		} catch (UnsupportedOperationException ex) {
 			throw ex;
@@ -43,15 +56,14 @@ public class SimCard {
 	
 	/**
 	 * Returns the phone number of currently active SIM
-	 * @param context
 	 * @return
 	 */
-	public String getSimPhoneNumber(Context context) {
+	private String getSimPhoneNumberString() {
 		try {
-			if (getAirplaneMode(context))
+			if (getAirplaneMode())
 				return null;
 			
-			TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			TelephonyManager tMgr =(TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
 			return tMgr.getLine1Number(); //"+447879116797"
 		} catch (UnsupportedOperationException ex) {
 			// TESTING MODE
@@ -62,11 +74,10 @@ public class SimCard {
 	/**
 	 * Returns the phone number of currently active SIM
 	 * wrapped in the SimNumber class
-	 * @param context
 	 * @return
 	 */
-	public SimNumber getSimPhoneNumberWrapped(Context context) {
-			String phoneNumber = getSimPhoneNumber(context);
+	public SimNumber getSimPhoneNumber() {
+			String phoneNumber = getSimPhoneNumberString();
 			if (phoneNumber == null)
 				return null;
 			else
@@ -75,15 +86,14 @@ public class SimCard {
 
 	/**
 	 * Returns the phone number of currently active SIM
-	 * @param context
 	 * @return
 	 */
-	public String getSimSerialNumber(Context context) {
+	private String getSimSerialNumberString() {
 		try {
-			if (getAirplaneMode(context))
+			if (getAirplaneMode())
 				return null;
 			
-			TelephonyManager tMgr =(TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			TelephonyManager tMgr =(TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
 			return tMgr.getSimSerialNumber();
 		} catch (UnsupportedOperationException ex) {
 			// TESTING MODE
@@ -94,46 +104,34 @@ public class SimCard {
 	/**
 	 * Returns the serial number of currently active SIM
 	 * wrapped in the SimNumber class
-	 * @param context
 	 * @return
 	 */
-	public SimNumber getSimSerialNumberWrapped(Context context) {
-		String serialNumber = getSimSerialNumber(context);
+	public SimNumber getSimSerialNumber() {
+		String serialNumber = getSimSerialNumberString();
 		if (serialNumber == null)
 			return null;
 		else
 			return new SimNumber(serialNumber, true);
 	}
 	
-	public SimNumber getSimNumberWrapped(Context context) {
-		SimNumber phone = getSimPhoneNumberWrapped(context);
+	/**
+	 * Returns the best SIM number it can find (preferably phone number, serial number otherwise).
+	 * Returns null if SIM is not available or the phone is in an airplane mode.
+	 * @return
+	 */
+	public SimNumber getSimNumber() {
+		SimNumber phone = getSimPhoneNumber();
 		if (phone == null || phone.getNumber().length() == 0)
-			return getSimSerialNumberWrapped(context);
+			return getSimSerialNumber();
 		else
 			return phone;
 	}
 	
-	public static interface OnSimStateListener {
-		public void onChange();
-	}
-	
 	/**
-	 * Registers new listener with the SimStateChanged events
-	 * @param context
-	 * @param listener
+	 * Calls getSimNumber() and returns TRUE if the result is not null. 
+	 * @return
 	 */
-	public void registerSimStateListener(Context context, OnSimStateListener listener) {
-		IntentFilter intentFilter = new IntentFilter("android.intent.action.SERVICE_STATE");
-		
-		final OnSimStateListener lst = listener;
-		BroadcastReceiver receiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				lst.onChange();
-			}
-		};
-
-		context.registerReceiver(receiver, intentFilter);
+	public boolean isNumberAvailable() {
+		return getSimNumber() != null;
 	}
-
 }

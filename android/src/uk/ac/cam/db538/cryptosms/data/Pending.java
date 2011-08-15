@@ -160,7 +160,7 @@ public class Pending {
 				// do we have Session Keys for this person?
 				SessionKeys keys = null;
 				try {
-					keys = StorageUtils.getSessionKeysForSIM(Conversation.getConversation(pendingFirst.getSender()), context);
+					keys = StorageUtils.getSessionKeysForSim(Conversation.getConversation(pendingFirst.getSender()));
 				} catch (StorageFileException ex) {
 					State.fatalException(ex);
 					return;

@@ -5,12 +5,11 @@ import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
-import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSentListener;
-import uk.ac.cam.db538.cryptosms.data.SimCard.OnSimStateListener;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -51,6 +50,8 @@ public class ConversationActivity extends Activity {
     private TextView mRemainsView;
     
     private boolean errorNoKeysShow;
+	private DialogManager mDialogManager = new DialogManager(this);
+	private Context mContext = this;
     
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -86,11 +87,15 @@ public class ConversationActivity extends Activity {
 	    mTextEditor = (EditText) findViewById(R.id.conversation_embedded_text_editor);
 	    mRemainsView = (TextView) findViewById(R.id.conversation_text_counter);
 	    
-	    if (mContact.getName().length() > 0)
+	    if (mContact.getName().length() > 0) {
 	    	mNameView.setText(mContact.getName());
-	    else
+	    	mPhoneNumberView.setText(mContact.getPhoneNumber());
+	    }
+	    else {
 	    	mNameView.setText(mContact.getPhoneNumber());
-	    mPhoneNumberView.setText(mContact.getPhoneNumber());
+	    	mPhoneNumberView.setText(new String());
+	    }
+	    
 	    Drawable avatarDrawable = mContact.getAvatar(context, sDefaultContactImage);
         if (mContact.existsInDatabase()) {
             mAvatarView.assignContactUri(mContact.getUri());
@@ -99,14 +104,6 @@ public class ConversationActivity extends Activity {
         }
         mAvatarView.setImageDrawable(avatarDrawable);
         mAvatarView.setVisibility(View.VISIBLE);
-        
-        // register for changes in SIM state
-        SimCard.getSingleton().registerSimStateListener(this, new OnSimStateListener() {
-			@Override
-			public void onChange() {
-				checkResources();
-			}
-		});
         
         mTextEditor.addTextChangedListener(new TextWatcher() {
 			@Override
@@ -182,54 +179,89 @@ public class ConversationActivity extends Activity {
 		mTextEditor.setFocusable(value);
 		mTextEditor.setFocusableInTouchMode(value);
 	}
+
 	
-	private void checkResources() {
-		// check for SIM availability
-	    try {
-		    Resources res = getResources();
-			if (Utils.checkSimPhoneNumberAvailable(this)) {
-				// check keys availability
-		    	if (!StorageUtils.hasKeysExchangedForSIM(this, mConversation)) {
-		    		if (errorNoKeysShow) {
-						// secure connection has not been successfully established yet
-						new AlertDialog.Builder(this)
-							.setTitle(res.getString(R.string.conversation_no_keys))
-							.setMessage(res.getString(R.string.conversation_no_keys_details))
-							.setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
-							.setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									// TODO: Setup
-								}
-							})
-							.show();
-						errorNoKeysShow = false;
-		    		}
-		    		
-					// set to disabled mode
-		    		modeEnabled(false);
-				} else
-					modeEnabled(true);
-			} else
-				modeEnabled(false);
-		} catch (StorageFileException ex) {
-			State.fatalException(ex);
-			return;
-		}
-	}
 	
 	@Override
-	public void onResume() {
-		super.onResume();
-        modeEnabled(false);
-		Pki.login(false);
+	protected void onStart() {
+		super.onStart();
+		modeEnabled(false);
+		State.addListener(mStateChangeListener);
 	}
-	
-/*	private OnPkiAvailableListener mOnPkiAvailable = new OnPkiAvailableListener() {
+
+	@Override
+	protected void onStop() {
+		State.removeListener(mStateChangeListener);
+		super.onStop();
+	}
+
+
+
+	private StateChangeListener mStateChangeListener = new StateChangeListener() {
+
 		@Override
-		public void OnPkiAvailable() {
-			checkResources();
-			// TODO: load messages...
+		public void onConnect() {
 		}
-	};*/
+
+		@Override
+		public void onLogin() {
+		}
+
+		@Override
+		public void onLogout() {
+		}
+
+		@Override
+		public void onDisconnect() {
+		}
+
+		@Override
+		public void onPkiMissing() {
+		}
+
+		@Override
+		public void onSimState() {
+			Utils.handleSimIssues(mContext, mDialogManager);
+			
+			// check for SIM availability
+		    try {
+			    Resources res = getResources();
+				if (SimCard.getSingleton().isNumberAvailable()) {
+					// check keys availability
+			    	if (!StorageUtils.hasKeysExchangedForSim(mConversation)) {
+			    		if (errorNoKeysShow) {
+							// secure connection has not been successfully established yet
+							new AlertDialog.Builder(mContext)
+								.setTitle(res.getString(R.string.conversation_no_keys))
+								.setMessage(res.getString(R.string.conversation_no_keys_details))
+								.setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
+								.setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										// TODO: Setup
+									}
+								})
+								.show();
+							errorNoKeysShow = false;
+			    		}
+			    		
+						// set to disabled mode
+			    		modeEnabled(false);
+					} else
+						modeEnabled(true);
+				} else
+					modeEnabled(false);
+			} catch (StorageFileException ex) {
+				State.fatalException(ex);
+				return;
+			}
+		}
+
+		@Override
+		public void onFatalException(Exception ex) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	};
 }

@@ -88,13 +88,13 @@ public class TabContactsItem extends RelativeLayout {
     }
 
     public final void bind(Conversation conv) {
-    	Context context = this.getContext();
     	setConversationHeader(conv);
     	
+    	Context context = this.getContext();
     	Resources res = context.getResources();
 
 		try {
-			SessionKeys keys = StorageUtils.getSessionKeysForSIM(conv, context);
+			SessionKeys keys = StorageUtils.getSessionKeysForSim(conv);
 	    	if (keys != null) {
 	    		switch(keys.getStatus()) {
 	    		default:

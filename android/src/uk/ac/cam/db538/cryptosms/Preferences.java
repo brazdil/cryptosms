@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 public class Preferences {
-	private static final String PREFERECES = "SECURESMS_PREFS";
+	public static final String PREFERECES = "CRYPTOSMS_PREFS";
+	public static final String PREFERENCES_IMPORT_NEVER = "IMPORT_NEVER";
+	
 	private static Preferences mSingleton;
 	
 	static void initSingleton(Context context) {

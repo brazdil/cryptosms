@@ -1,57 +1,57 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import android.content.Context;
-
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 public class StorageUtils {
 
 	/**
 	 * Tries to find session keys for this particular SIM,
 	 * either by phone number or (if not available) by SIM's serial number
-	 * @param context
 	 * @return
 	 * @throws StorageFileException
 	 */
-	public static SessionKeys getSessionKeysForSIM(Conversation conv, final Context context) throws StorageFileException {
-		SessionKeys result = null;
+	public static SessionKeys getSessionKeysForSim(Conversation conv) throws StorageFileException {
+		SimNumber simNumber = SimCard.getSingleton().getSimNumber();
 		
-		String simPhoneNumberString = SimCard.getSingleton().getSimPhoneNumber(context);
-		String simSerialString = SimCard.getSingleton().getSimSerialNumber(context);
-		SimNumber simSerial = new SimNumber(simSerialString, true);
-		SessionKeys keysSerial = conv.getSessionKeys(simSerial);
-		
-		if (simPhoneNumberString == null || simPhoneNumberString.length() == 0) {
-			// no phone number, return keys for serial number or null
-			result = keysSerial; 
-		} else {
-			SimNumber simPhoneNumber = new SimNumber(simPhoneNumberString, false);
-			// try assigning all the (possible) keys assigned to 
-			// SIM serial to the phone number
+		if (simNumber == null)
+			return null;
+		else if (simNumber.isSerial())
+			return conv.getSessionKeys(simNumber);
+		else {
+			SimNumber simSerial = SimCard.getSingleton().getSimSerialNumber();
+			SessionKeys keysSerial = conv.getSessionKeys(simSerial);
 			if (keysSerial != null)
-				Conversation.changeAllSessionKeys(simSerial, simPhoneNumber);
-			result = conv.getSessionKeys(simPhoneNumber);
+				Conversation.changeAllSessionKeys(simSerial, simNumber);
+			return conv.getSessionKeys(simNumber);
 		}
-		return result;
 	}
 
 	/**
 	 * Tries to find session keys for this SIM and if it succeeds, 
 	 * returns whether they have been successfully exchanged.
-	 * @param context
 	 * @param conv
 	 * @return
 	 * @throws StorageFileException
 	 */
-	public static boolean hasKeysExchangedForSIM(Context context, Conversation conv) throws StorageFileException {
-		SessionKeys keys = StorageUtils.getSessionKeysForSIM(conv, context);
+	public static boolean hasKeysExchangedForSim(Conversation conv) throws StorageFileException {
+		SessionKeys keys = StorageUtils.getSessionKeysForSim(conv);
 		if (keys == null)
 			return false;
 		return keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED;
+	}
+
+	/**
+	 * Tries to find any session keys for this SIM
+	 * @param conv
+	 * @return
+	 * @throws StorageFileException
+	 */
+	public static boolean hasKeysForSim(Conversation conv) throws StorageFileException {
+		return getSessionKeysForSim(conv) != null;
 	}
 }

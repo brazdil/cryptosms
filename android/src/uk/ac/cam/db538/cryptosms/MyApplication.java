@@ -4,11 +4,15 @@ import java.io.File;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
+import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import android.app.Application;
 import android.app.Notification;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 
 public class MyApplication extends Application {
@@ -63,6 +67,7 @@ public class MyApplication extends Application {
 		Storage.setFilename(storageFile);
 		
 		Pki.init(this.getApplicationContext());
+		SimCard.init(this.getApplicationContext());
 	}
 	
 	public Notification getNotification() {

@@ -118,7 +118,7 @@ public abstract class Message {
     	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, null);
     }
           
-    public abstract ArrayList<byte[]> getBytes(Context context) throws StorageFileException, MessageException, EncryptionException;
+    public abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
     public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, MessageException, EncryptionException;
     
     public static MessageType getMessageType(byte[] data) {

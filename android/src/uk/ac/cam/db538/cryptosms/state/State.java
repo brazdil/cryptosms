@@ -9,6 +9,7 @@ public class State {
 		public void onLogout();
 		public void onDisconnect();
 		public void onPkiMissing();
+		public void onSimState();
 		public void onFatalException(Exception ex);
 	}
 	
@@ -22,8 +23,10 @@ public class State {
 			listener.onPkiMissing();
 		else if (Pki.isConnected()) {
 			listener.onConnect();
-			if (Pki.isLoggedIn())
+			if (Pki.isLoggedIn()) {
 				listener.onLogin();
+				listener.onSimState();
+			}
 		}
 	}
 	
@@ -40,6 +43,7 @@ public class State {
 	public static void notifyLogin() {
 		for (StateChangeListener listener : mListeners)
 			listener.onLogin();
+		notifySimState();
 	}
 	
 	public static void notifyLogout() {
@@ -55,6 +59,11 @@ public class State {
 	public static void notifyPkiMissing() {
 		for (StateChangeListener listener : mListeners)
 			listener.onPkiMissing();
+	}
+	
+	public static void notifySimState() {
+		for (StateChangeListener listener : mListeners)
+			listener.onSimState();
 	}
 	
 	public static void fatalException(Exception ex) {

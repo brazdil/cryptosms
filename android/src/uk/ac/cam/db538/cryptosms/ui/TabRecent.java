@@ -9,7 +9,8 @@ import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationUpdateListener;
+import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationsChangeListener;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -26,7 +27,6 @@ public class TabRecent extends ListActivity {
 		
 	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();;
 	private ArrayAdapter<Conversation> mAdapterRecent;
-	private Context mContext = this;
 	
 	private void updateContacts() throws StorageFileException {
 		mRecent.clear();
@@ -76,7 +76,7 @@ public class TabRecent extends ListActivity {
 			}
 		};
     	// add listeners			
-    	Conversation.addUpdateListener(new ConversationUpdateListener() {
+    	Conversation.addListener(new ConversationsChangeListener() {
 			@Override
 			public void onUpdate() {
 				try {
@@ -136,7 +136,17 @@ public class TabRecent extends ListActivity {
 		@Override
 		public void onFatalException(Exception ex) {
 		}
+
+		@Override
+		public void onSimState() {
+		}
 	};
+
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		// TODO Auto-generated method stub
+		return super.onCreateDialog(id);
+	}
 
 	@Override
 	protected void onStart() {

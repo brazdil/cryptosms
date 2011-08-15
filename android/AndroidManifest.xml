@@ -28,8 +28,12 @@
     			<category android:name="android.intent.category.LAUNCHER"></category>
     		</intent-filter>
     	</activity>
-		<activity android:name=".ui.TabRecent" />
-		<activity android:name=".ui.TabContacts" />
+		<activity 
+			android:name=".ui.TabRecent"
+			android:configChanges="orientation|keyboardHidden"/>
+		<activity 
+			android:name=".ui.TabContacts"
+			android:configChanges="orientation|keyboardHidden"/>
 		<activity 
 			android:name=".ui.ConversationActivity"
 			android:configChanges="orientation|keyboardHidden"/>

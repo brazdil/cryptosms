@@ -2,11 +2,8 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.Utils;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
-import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import android.app.Dialog;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -22,7 +19,6 @@ import android.widget.TabHost;
 public class MainTabActivity extends TabActivity {
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 
-	private Context mContext = this;
 	private ErrorOverlay mErrorOverlay;
 	
 	private View mMainLayout;
@@ -49,14 +45,6 @@ public class MainTabActivity extends TabActivity {
 
 		@Override
 		public void onLogin() {
-        	// check for SIM trouble
-	        try {
-	        	Utils.checkSimPhoneNumberAvailable(mContext);
-			} catch (StorageFileException ex) {
-				State.fatalException(ex);
-				return;
-			}
-
 			mErrorOverlay.setVisibility(View.INVISIBLE);
 	        mMainLayout.setVisibility(View.VISIBLE);
 		}
@@ -75,6 +63,10 @@ public class MainTabActivity extends TabActivity {
 			mErrorOverlay.modePkiMissing();
 			mErrorOverlay.setVisibility(View.VISIBLE);
 	        mMainLayout.setVisibility(View.INVISIBLE);
+		}
+
+		@Override
+		public void onSimState() {
 		}
 	};
 	

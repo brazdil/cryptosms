@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.ui.Utils;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
