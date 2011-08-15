@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 

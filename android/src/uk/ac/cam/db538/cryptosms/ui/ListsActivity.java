@@ -238,8 +238,6 @@ public class ListsActivity extends StateAwareActivity {
     	if (!Pki.isLoggedIn())
     		return;
     	
-    	Resources res = this.getResources();
-    	
     	switch (requestCode) {
     	case ACTIVITY_NEW_CONTACT:
     		if (resultCode == Activity.RESULT_OK) {
