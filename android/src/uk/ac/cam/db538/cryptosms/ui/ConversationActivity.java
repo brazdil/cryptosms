@@ -37,7 +37,7 @@ import android.widget.EditText;
 import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
-public class ConversationActivity extends Activity {
+public class ConversationActivity extends StateAwareActivity {
 	public static final String OPTION_PHONE_NUMBER = "phoneNumber";
 	public static final String OPTION_OFFER_KEYS_SETUP = "createKeys";
 	
@@ -54,80 +54,9 @@ public class ConversationActivity extends Activity {
     private EditText mTextEditor;
     private TextView mRemainsView;
     
-	private ErrorOverlay mErrorOverlay;
-	private View mMainLayout;
-    
-    private boolean errorNoKeysShow;
-	private DialogManager mDialogManager = new DialogManager();
 	private Context mContext = this;
+    private boolean mErrorNoKeysShow;
 
-	private StateChangeListener mStateListener = new StateChangeListener(){
-		@Override
-		public void onConnect() {
-		}
-
-		@Override
-		public void onDisconnect() {
-			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
-			mErrorOverlay.modeDisconnected();
-			mErrorOverlay.show();
-		}
-
-		@Override
-		public void onFatalException(Exception ex) {
-			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
-			mErrorOverlay.modeFatalException(ex);
-			mErrorOverlay.show();
-		}
-
-		@Override
-		public void onLogin() {
-			mErrorOverlay.hide();
-	        mDialogManager.restoreState();
-		}
-
-		@Override
-		public void onLogout() {
-			Log.d(MyApplication.APP_TAG, "Logout error overlay");
-			modeEnabled(false);
-			mErrorOverlay.modeLogin();
-			mErrorOverlay.show();
-	        mDialogManager.saveState();
-		}
-
-		@Override
-		public void onPkiMissing() {
-			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
-			mErrorOverlay.modePkiMissing();
-			mErrorOverlay.show();
-		}
-
-		@Override
-		public void onSimState() {
-    		modeEnabled(false);
-    		Utils.handleSimIssues(mContext, mDialogManager);
-    		
-			// check for SIM availability
-		    try {
-				if (SimCard.getSingleton().isNumberAvailable()) {
-					// check keys availability
-			    	if (StorageUtils.hasKeysExchangedForSim(mConversation)) 
-			    		modeEnabled(true);
-			    	else {
-			    		if (errorNoKeysShow) {
-							// secure connection has not been successfully established yet
-							errorNoKeysShow = false;
-							mDialogManager.showDialog(DIALOG_NO_SESSION_KEYS, null);
-			    		}
-					}
-				}
-			} catch (StorageFileException ex) {
-				State.fatalException(ex);
-				return;
-			}
-		}
-	};
-	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -146,7 +75,7 @@ public class ConversationActivity extends Activity {
         Intent intent = getIntent();
 	    Bundle bundle = intent.getExtras();
 	    String phoneNumber = bundle.getString(OPTION_PHONE_NUMBER);
-	    errorNoKeysShow = bundle.getBoolean(OPTION_OFFER_KEYS_SETUP, true);
+	    mErrorNoKeysShow = bundle.getBoolean(OPTION_OFFER_KEYS_SETUP, true);
 	    mContact = Contact.getContact(context, phoneNumber);
 		try {
 			mConversation = Conversation.getConversation(mContact.getPhoneNumber());
@@ -246,14 +175,8 @@ public class ConversationActivity extends Activity {
 			}
         });
 	
-	    // error overlay
-	    mMainLayout = findViewById(R.id.screen_conversation);
-	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_conversation_error);
-	    mErrorOverlay.setMainView(mMainLayout);
-        mStateListener.onLogout();
-        
         // prepare dialogs
-        mDialogManager.addBuilder(new DialogBuilder() {
+        getDialogManager().addBuilder(new DialogBuilder() {
 			@Override
 			public Dialog onBuild(Bundle params) {
 				return new AlertDialog.Builder(mContext)
@@ -290,19 +213,39 @@ public class ConversationActivity extends Activity {
 	protected void onStart() {
 		super.onStart();
 		modeEnabled(false);
-		State.addListener(mStateListener);
-	}
-
-	@Override
-	protected void onStop() {
-		State.removeListener(mStateListener);
-		super.onStop();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
 		Pki.login(false);
 	}
 
+	@Override
+	public void onPkiLogout() {
+		super.onPkiLogout();
+		modeEnabled(false);
+	}
+
+	@Override
+	public void onSimState() {
+		super.onSimState();
+		
+		modeEnabled(false);
+		Utils.handleSimIssues(mContext, getDialogManager());
+		
+		// check for SIM availability
+	    try {
+			if (SimCard.getSingleton().isNumberAvailable()) {
+				// check keys availability
+		    	if (StorageUtils.hasKeysExchangedForSim(mConversation)) 
+		    		modeEnabled(true);
+		    	else {
+		    		if (mErrorNoKeysShow) {
+						// secure connection has not been successfully established yet
+						mErrorNoKeysShow = false;
+						getDialogManager().showDialog(DIALOG_NO_SESSION_KEYS, null);
+		    		}
+				}
+			}
+		} catch (StorageFileException ex) {
+			State.fatalException(ex);
+			return;
+		}
+	}
 }
