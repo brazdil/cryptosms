@@ -19,11 +19,12 @@ import android.widget.TabHost;
 public class MainTabActivity extends TabActivity {
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 
+	private View mMainLayout;
 	private ErrorOverlay mErrorOverlay;
+	
 	private DialogManager mDialogManager = new DialogManager();
 	
-	private View mMainLayout;
-	private StateChangeListener mPkiStateListener = new StateChangeListener(){
+	private StateChangeListener mStateListener = new StateChangeListener(){
 		@Override
 		public void onConnect() {
 		}
@@ -107,7 +108,7 @@ public class MainTabActivity extends TabActivity {
 	    // error overlay
 	    mMainLayout = findViewById(R.id.screen_main);
 	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_main_error);
-        mPkiStateListener.onLogout();
+        mStateListener.onLogout();
         
         // prepare dialogs
         Utils.prepareDialogs(mDialogManager, this);
@@ -134,14 +135,14 @@ public class MainTabActivity extends TabActivity {
 	@Override
 	protected void onStart() {
         // listen for logins/logouts
-        State.addListener(mPkiStateListener);
+        State.addListener(mStateListener);
 		super.onStart();
 	}
 
 	@Override
 	protected void onStop() {
 		Log.d(MyApplication.APP_TAG, "Removing listener");
-		State.removeListener(mPkiStateListener);
+		State.removeListener(mStateListener);
 		super.onStop();
 	}
 

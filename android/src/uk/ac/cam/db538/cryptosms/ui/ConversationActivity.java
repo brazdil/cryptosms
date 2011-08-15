@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
@@ -13,9 +14,11 @@ import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
+import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
 import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -26,6 +29,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -36,6 +40,8 @@ import android.widget.TextView;
 public class ConversationActivity extends Activity {
 	public static final String OPTION_PHONE_NUMBER = "phoneNumber";
 	public static final String OPTION_OFFER_KEYS_SETUP = "createKeys";
+	
+	private static final String DIALOG_NO_SESSION_KEYS = "DIALOG_NO_SESSION_KEYS";
 	
 	static private Drawable sDefaultContactImage = null;
 
@@ -48,10 +54,87 @@ public class ConversationActivity extends Activity {
     private EditText mTextEditor;
     private TextView mRemainsView;
     
+	private ErrorOverlay mErrorOverlay;
+	private View mMainLayout;
+    
     private boolean errorNoKeysShow;
 	private DialogManager mDialogManager = new DialogManager();
 	private Context mContext = this;
-    
+
+	private StateChangeListener mStateListener = new StateChangeListener(){
+		@Override
+		public void onConnect() {
+		}
+
+		@Override
+		public void onDisconnect() {
+			Log.d(MyApplication.APP_TAG, "Disconnect error overlay");
+			mErrorOverlay.modeDisconnected();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
+		}
+
+		@Override
+		public void onFatalException(Exception ex) {
+			Log.d(MyApplication.APP_TAG, "Fatal exception error overlay");
+			mErrorOverlay.modeFatalException(ex);
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
+		}
+
+		@Override
+		public void onLogin() {
+			mErrorOverlay.setVisibility(View.INVISIBLE);
+	        mMainLayout.setVisibility(View.VISIBLE);
+	        
+	        mDialogManager.restoreState();
+		}
+
+		@Override
+		public void onLogout() {
+			Log.d(MyApplication.APP_TAG, "Logout error overlay");
+			modeEnabled(false);
+			mErrorOverlay.modeLogin();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
+	        
+	        mDialogManager.saveState();
+		}
+
+		@Override
+		public void onPkiMissing() {
+			Log.d(MyApplication.APP_TAG, "PkiMissing error overlay");
+			mErrorOverlay.modePkiMissing();
+			mErrorOverlay.setVisibility(View.VISIBLE);
+	        mMainLayout.setVisibility(View.INVISIBLE);
+		}
+
+		@Override
+		public void onSimState() {
+    		modeEnabled(false);
+    		Utils.handleSimIssues(mContext, mDialogManager);
+    		
+			// check for SIM availability
+		    try {
+				if (SimCard.getSingleton().isNumberAvailable()) {
+					// check keys availability
+			    	if (StorageUtils.hasKeysExchangedForSim(mConversation)) 
+			    		modeEnabled(true);
+			    	else {
+			    		if (errorNoKeysShow) {
+							// secure connection has not been successfully established yet
+							errorNoKeysShow = false;
+							mDialogManager.showDialog(DIALOG_NO_SESSION_KEYS, null);
+			    		}
+					}
+				}
+			} catch (StorageFileException ex) {
+				State.fatalException(ex);
+				return;
+			}
+		}
+	};
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -151,6 +234,7 @@ public class ConversationActivity extends Activity {
 							@Override
 							public void onError(String message) {
 								pd.cancel();
+								// TODO: get rid of this!!!
 								new AlertDialog.Builder(context)
 								.setTitle(res.getString(R.string.error_sms_service))
 								.setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + message)
@@ -168,6 +252,35 @@ public class ConversationActivity extends Activity {
 				}
 			}
         });
+	
+	    // error overlay
+	    mMainLayout = findViewById(R.id.screen_conversation);
+	    mErrorOverlay = (ErrorOverlay) findViewById(R.id.screen_conversation_error);
+        mStateListener.onLogout();
+        
+        // prepare dialogs
+        mDialogManager.addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				return new AlertDialog.Builder(mContext)
+				       .setTitle(res.getString(R.string.conversation_no_keys))
+				       .setMessage(res.getString(R.string.conversation_no_keys_details))
+				       .setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
+				       .setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
+				    	   @Override
+				    	   public void onClick(DialogInterface dialog,
+				    			   int which) {
+				    		   // TODO: setup
+				    	   }
+				       })
+				       .create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_NO_SESSION_KEYS;
+			}
+		});
 	}
 	
 	private void modeEnabled(boolean value) {
@@ -178,19 +291,17 @@ public class ConversationActivity extends Activity {
 		mTextEditor.setFocusable(value);
 		mTextEditor.setFocusableInTouchMode(value);
 	}
-
-	
 	
 	@Override
 	protected void onStart() {
 		super.onStart();
 		modeEnabled(false);
-		State.addListener(mStateChangeListener);
+		State.addListener(mStateListener);
 	}
 
 	@Override
 	protected void onStop() {
-		State.removeListener(mStateChangeListener);
+		State.removeListener(mStateListener);
 		super.onStop();
 	}
 
@@ -200,71 +311,4 @@ public class ConversationActivity extends Activity {
 		Pki.login(false);
 	}
 
-	private StateChangeListener mStateChangeListener = new StateChangeListener() {
-
-		@Override
-		public void onConnect() {
-		}
-
-		@Override
-		public void onLogin() {
-		}
-
-		@Override
-		public void onLogout() {
-		}
-
-		@Override
-		public void onDisconnect() {
-		}
-
-		@Override
-		public void onPkiMissing() {
-		}
-
-		@Override
-		public void onSimState() {
-			Utils.handleSimIssues(mContext, mDialogManager);
-			
-			// check for SIM availability
-		    try {
-			    Resources res = getResources();
-				if (SimCard.getSingleton().isNumberAvailable()) {
-					// check keys availability
-			    	if (!StorageUtils.hasKeysExchangedForSim(mConversation)) {
-			    		if (errorNoKeysShow) {
-							// secure connection has not been successfully established yet
-							new AlertDialog.Builder(mContext)
-								.setTitle(res.getString(R.string.conversation_no_keys))
-								.setMessage(res.getString(R.string.conversation_no_keys_details))
-								.setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
-								.setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										// TODO: Setup
-									}
-								})
-								.show();
-							errorNoKeysShow = false;
-			    		}
-			    		
-						// set to disabled mode
-			    		modeEnabled(false);
-					} else
-						modeEnabled(true);
-				} else
-					modeEnabled(false);
-			} catch (StorageFileException ex) {
-				State.fatalException(ex);
-				return;
-			}
-		}
-
-		@Override
-		public void onFatalException(Exception ex) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-	};
 }
