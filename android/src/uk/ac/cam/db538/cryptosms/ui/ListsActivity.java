@@ -155,7 +155,8 @@ public class ListsActivity extends StateAwareActivity {
 	                        						try {
 	                        							startActivityForResult(intent, ACTIVITY_NEW_CONTACT);
 	                        	    				} catch(ActivityNotFoundException e) {
-	                        	    					// TODO: PKI unavailable
+	                        	    					Pki.disconnect();
+	                        	    					State.notifyPkiMissing();
 	                        	    				}
 	                        		    		}
 	                        				}
@@ -316,6 +317,7 @@ public class ListsActivity extends StateAwareActivity {
 	protected void onStart() {
 		super.onStart();
 		Conversation.addListener(mConversationChangeListener);
+		onSimState();
 	}
 
 	@Override

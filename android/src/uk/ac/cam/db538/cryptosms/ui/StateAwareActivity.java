@@ -5,7 +5,10 @@ import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
@@ -16,6 +19,7 @@ public class StateAwareActivity extends Activity {
 	private ErrorOverlay mErrorOverlay;
 	private View mMainView;
 	private DialogManager mDialogManager = new DialogManager();
+	private Menu mOptionsMenu;
 	
 	// CONTENT STUFF
 	
@@ -110,6 +114,7 @@ public class StateAwareActivity extends Activity {
 	public void onPkiDisconnect() {
 		getErrorOverlay().modeDisconnected();
 		getErrorOverlay().show();
+		if (mOptionsMenu != null) mOptionsMenu.close();
 	}
 	
 	public void onPkiLogin() {
@@ -121,16 +126,19 @@ public class StateAwareActivity extends Activity {
 		getErrorOverlay().modeLogin();
 		getErrorOverlay().show();
         mDialogManager.saveState();
+        if (mOptionsMenu != null) mOptionsMenu.close();
 	}
 	
 	public void onPkiMissing() {
 		getErrorOverlay().modePkiMissing();
 		getErrorOverlay().show();
+		if (mOptionsMenu != null) mOptionsMenu.close();
 	}
 	
 	public void onFatalException(Exception ex) {
 		getErrorOverlay().modeFatalException(ex);
 		getErrorOverlay().show();
+		if (mOptionsMenu != null) mOptionsMenu.close();
 	}
 
 	// OVERRIDES
@@ -139,14 +147,9 @@ public class StateAwareActivity extends Activity {
 	protected void onStart() {
 		super.onStart();
 		State.addListener(mStateListener);
-	}
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
 		Pki.login(false);
 	}
-
+	
 	@Override
 	protected void onStop() {
 		super.onStop();
@@ -168,4 +171,15 @@ public class StateAwareActivity extends Activity {
 		mDialogManager.saveState();
 		outState.putBundle(BUNDLE_DIALOG_MANAGER, mDialogManager.getSavedState());
 	}
+
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		mOptionsMenu = menu;
+		boolean loggedIn = Pki.isLoggedIn();
+		for (int i = 0; i < menu.size(); ++i)
+			menu.getItem(i).setVisible(loggedIn);
+		return super.onPrepareOptionsMenu(menu);
+	}
+	
+	
 }

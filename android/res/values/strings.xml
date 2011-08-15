@@ -460,8 +460,6 @@
     <string name="error_no_sim_available_details">No SIM card is present in the handset or the Airplane mode is switched on. You will only be able to read the history of conversations.</string>
     <string name="tab_contacts_not_available">Not available</string>
     <string name="tab_contacts_not_available_details">Insert SIM or switch off the Airplane mode</string>
-    <string name="error_pki_unavailable">PKI unavailable</string>
-    <string name="error_pki_unavailable_details">To exchange the session keys using text messages, you need to have the Public Key Infrastructure project installed.</string>
     <string name="cancel">Cancel</string>
     <string name="to_market">Open Market</string>
     <string name="error_market_unavailable">Android Market unavailable</string>
@@ -486,7 +484,7 @@
     <string name="notification_ticker">New message</string>
     <string name="notification_title">CryptoSMS</string>
     <string name="notification_text">New messages</string>
-    <string name="pki_install_message">CryptoSMS is dependent on the Public Key Infrastructure application, which is currently not installed on your device.</string>
+    <string name="pki_install_message">CryptoSMS is dependent on the Public Key Infrastructure application, which is currently not installed on your device or a problem has occured while connecting to it.</string>
     <string name="quit">Quit</string>
     <string name="pki_install_title">PKI unavailable</string>
     <string name="try_again">Try again</string>
