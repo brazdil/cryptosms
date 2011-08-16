@@ -62,8 +62,10 @@ public class State {
 	}
 	
 	public static void notifySimState() {
-		for (StateChangeListener listener : mListeners)
-			listener.onSimState();
+		if (Pki.isLoggedIn()) {
+			for (StateChangeListener listener : mListeners)
+				listener.onSimState();
+		}
 	}
 	
 	public static void fatalException(Exception ex) {

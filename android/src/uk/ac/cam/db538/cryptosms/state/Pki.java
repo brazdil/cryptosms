@@ -140,13 +140,18 @@ public class Pki {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				if (intent.getAction().equals(INTENT_PKI_LOGIN)) {
+					mPki.setTimeout(TIMEOUT_LOGIN_CHECK);
 					try {
-						if (!Pki.isLoggedIn() && mPki.authorise())
+						if (mPki.authorise())
 							Pki.setLoggedIn(true);
 					} catch (TimeoutException e) {
+						Log.d(MyApplication.APP_TAG, "Timeout");
 					} catch (PKIErrorException e) {
+						Log.d(MyApplication.APP_TAG, "Error");
 					} catch (NotConnectedException e) {
+						Log.d(MyApplication.APP_TAG, "Not Connected");
 					}
+					mPki.setTimeout(TIMEOUT_DEFAULT);
 				} else if (intent.getAction().equals(INTENT_PKI_LOGOUT))
 					Pki.setLoggedIn(false);
 			}
@@ -241,6 +246,7 @@ public class Pki {
 		if (isConnected() && !isLoggedIn()) {
 			if (force) {
 				try {
+					mPki.setTimeout(TIMEOUT_DEFAULT);
 					setLoggedIn(mPki.authorise());
 				} catch (TimeoutException e) {
 				} catch (PKIErrorException e) {
@@ -251,7 +257,8 @@ public class Pki {
 				Intent intent = new Intent("uk.ac.cam.dje38.pki.login");
 				mContext.startService(intent);
 			}
-		}
+		} else if (isLoggedIn())
+			State.notifyLogin();
 	}
 
 	public static void disconnect() {

@@ -498,6 +498,7 @@
     <string name="report">Report</string>
     <string name="report_subject">CryptoSMS Report</string>
     <string name="send_email_report">Send report via email</string>
+    <string name="pki_contact_picker_empty">There are not any people with public keys assigned to them. Please use the Public Keys application to exchange them.</string>
 
 </resources>
 

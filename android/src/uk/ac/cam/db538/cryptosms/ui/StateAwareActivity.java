@@ -147,8 +147,8 @@ public class StateAwareActivity extends Activity {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		State.addListener(mStateListener);
 		Pki.login(false);
+		State.addListener(mStateListener);
 	}
 	
 	@Override

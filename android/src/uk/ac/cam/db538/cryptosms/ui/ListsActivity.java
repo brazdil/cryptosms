@@ -19,10 +19,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +41,9 @@ import android.widget.TabHost.TabSpec;
 
 public class ListsActivity extends StateAwareActivity {
 	private static final int ACTIVITY_NEW_CONTACT = 1;
+	
+	private static final String TAB_RECENT = "RECENT";
+	private static final String TAB_CONTACTS = "CONTACTS";
 
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 	
@@ -70,13 +75,88 @@ public class ListsActivity extends StateAwareActivity {
 	    
 	    mTabHost = (TabHost) findViewById(R.id.screen_main_tabhost);
 	    mTabHost.setup();
+	    
+	    // TAB OF CONTACTS
+	    mSpecContacts = mTabHost.newTabSpec(TAB_CONTACTS)
+	                          	.setIndicator(res.getString(R.string.tab_contacts), res.getDrawable(R.drawable.tab_contacts))
+	                          	.setContent(new TabContentFactory() {
+	                        	  	@Override
+									public View createTabContent(String tag) {
+	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Contacts list");
+	                        	  		mListContacts = (ListView) mInflater.inflate(R.layout.screen_main_listtab, mTabHost.getTabContentView(), false);
 
+	                        	        // set appearance of list view
+	                        	        mListContacts.setFastScrollEnabled(true);
+	                        	        // the New contact header
+	                        			mNewContactView = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
+	                        			mListContacts.addHeaderView(mNewContactView, null, true);
+	                        			// specify what to do when clicked on items
+	                        			mListContacts.setOnItemClickListener(new OnItemClickListener() {
+	                        				@Override
+	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
+	                        					if (!SimCard.getSingleton().isNumberAvailable())
+	                        						return;
+	                        					
+	                        					ListItemContact item = (ListItemContact) view;
+	                        					Conversation conv;
+	                        		    		if ((conv = item.getConversationHeader()) != null) {
+	                        			    		// clicked on a conversation
+	                        						try {
+	                        							if (StorageUtils.hasKeysExchangedForSim(conv))
+	                        			    				startConversation(conv);
+	                        						} catch (StorageFileException ex) {
+	                        							State.fatalException(ex);
+	                        							return;
+	                        						}
+	                        		    		} else {
+	                        		    			// clicked on the header
+	                        		    			Context context = ListsActivity.this;
+	                        		    			Resources res = context.getResources();
+	                        		    			
+	                        		    			// pick a contact from PKI
+	                        						Intent intent = new Intent(MyApplication.PKI_CONTACT_PICKER);
+	                        						intent.putExtra("pick", true);
+	                        				        intent.putExtra("Contact Criteria", "in_visible_group=1");
+	                        				        intent.putExtra("Key Criteria", "contact_id IN (SELECT contact_id FROM keys GROUP BY contact_id HAVING COUNT(key_name)>0)");
+	                        				        intent.putExtra("sort", "display_name COLLATE LOCALIZED ASC");
+	                        				        intent.putExtra("empty", res.getString(2) );
+	                        						try {
+	                        							startActivityForResult(intent, ACTIVITY_NEW_CONTACT);
+	                        	    				} catch(ActivityNotFoundException e) {
+	                        	    					Pki.disconnect();
+	                        	    					State.notifyPkiMissing();
+	                        	    				}
+	                        		    		}
+	                        				}
+	                        			});
+	                        	    	// create the adapter
+	                        	    	mAdapterContacts = new ArrayAdapter<Conversation>(ListsActivity.this, R.layout.item_main_contacts, mContacts) {
+	                        	    		@Override
+	                        				public View getView(int position, View convertView, ViewGroup parent) {
+	                        					ListItemContact row;
+
+	                        					if (convertView == null)
+	                        						row = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
+	                        					else
+	                        						row = (ListItemContact) convertView;
+	                        				    
+	                        					row.bind(getItem(position));
+	                        					return row;
+	                        				}
+	                        			};
+	                        			return mListContacts;
+									}
+	                          	});
+	    mTabHost.addTab(mSpecContacts);
+	    mTabHost.setCurrentTabByTag(TAB_CONTACTS);
+	    
 	    // TAB OF RECENT CONVERSATIONS
-	    mSpecRecent = mTabHost.newTabSpec("recent")
+	    mSpecRecent = mTabHost.newTabSpec(TAB_RECENT)
 	                          .setIndicator(res.getString(R.string.tab_recent), res.getDrawable(R.drawable.tab_recent))
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
+	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Recent list");
 	                        	  		mListRecent = (ListView) mInflater.inflate(R.layout.screen_main_listtab, mTabHost.getTabContentView(), false);
 	                        	        // set appearance of list view
 	                        		    mListRecent.setFastScrollEnabled(true);
@@ -111,78 +191,9 @@ public class ListsActivity extends StateAwareActivity {
 									}
 	                          });
 	    mTabHost.addTab(mSpecRecent);
-	    
-	    // TAB OF CONTACTS
-	    mSpecContacts = mTabHost.newTabSpec("contacts")
-	                          	.setIndicator(res.getString(R.string.tab_contacts), res.getDrawable(R.drawable.tab_contacts))
-	                          	.setContent(new TabContentFactory() {
-	                        	  	@Override
-									public View createTabContent(String tag) {
-	                        	  		mListContacts = (ListView) mInflater.inflate(R.layout.screen_main_listtab, mTabHost.getTabContentView(), false);
+	    mTabHost.setCurrentTabByTag(TAB_RECENT);
 
-	                        	        // set appearance of list view
-	                        	        mListContacts.setFastScrollEnabled(true);
-	                        	        // the New contact header
-	                        			mNewContactView = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
-	                        			mListContacts.addHeaderView(mNewContactView, null, true);
-	                        			// specify what to do when clicked on items
-	                        			mListContacts.setOnItemClickListener(new OnItemClickListener() {
-	                        				@Override
-	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
-	                        					if (!SimCard.getSingleton().isNumberAvailable())
-	                        						return;
-	                        					
-	                        					ListItemContact item = (ListItemContact) view;
-	                        					Conversation conv;
-	                        		    		if ((conv = item.getConversationHeader()) != null) {
-	                        			    		// clicked on a conversation
-	                        						try {
-	                        							if (StorageUtils.hasKeysExchangedForSim(conv))
-	                        			    				startConversation(conv);
-	                        						} catch (StorageFileException ex) {
-	                        							State.fatalException(ex);
-	                        							return;
-	                        						}
-	                        		    		} else {
-	                        		    			// clicked on the header
-	                        		    			
-	                        		    			// pick a contact from PKI
-	                        						Intent intent = new Intent(MyApplication.PKI_CONTACT_PICKER);
-	                        						intent.putExtra("pick", true);
-	                        				        intent.putExtra("Contact Criteria", "in_visible_group=1");
-	                        				        intent.putExtra("Key Criteria", "contact_id IN (SELECT contact_id FROM keys GROUP BY contact_id HAVING COUNT(key_name)>0)");
-	                        				        intent.putExtra("sort", "display_name COLLATE LOCALIZED ASC");
-	                        						try {
-	                        							startActivityForResult(intent, ACTIVITY_NEW_CONTACT);
-	                        	    				} catch(ActivityNotFoundException e) {
-	                        	    					Pki.disconnect();
-	                        	    					State.notifyPkiMissing();
-	                        	    				}
-	                        		    		}
-	                        				}
-	                        			});
-	                        	    	// create the adapter
-	                        	    	mAdapterContacts = new ArrayAdapter<Conversation>(ListsActivity.this, R.layout.item_main_contacts, mContacts) {
-	                        	    		@Override
-	                        				public View getView(int position, View convertView, ViewGroup parent) {
-	                        					ListItemContact row;
-
-	                        					if (convertView == null)
-	                        						row = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
-	                        					else
-	                        						row = (ListItemContact) convertView;
-	                        				    
-	                        					row.bind(getItem(position));
-	                        					return row;
-	                        				}
-	                        			};
-	                        			onSimState();
-	                        			return mListContacts;
-									}
-	                          	});
-	    mTabHost.addTab(mSpecContacts);
-		
-        // PREPARE DIALOGS
+	    // PREPARE DIALOGS
 		getDialogManager().addBuilder(new DialogBuilder() {
 			@Override
 			public Dialog onBuild(Bundle params) {
@@ -288,36 +299,36 @@ public class ListsActivity extends StateAwareActivity {
 		Utils.handleSimIssues(this, getDialogManager());
 		
 		// check SIM availability
-		if (mListContacts != null) {
-			if (SimCard.getSingleton().isNumberAvailable()) {
-				mListContacts.setAdapter(mAdapterContacts);
-	    		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
-			} else {
-				mListContacts.setAdapter(null);
-		        mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
-		    }
-		}
+		Log.d(MyApplication.APP_TAG, "Updating");
+		mConversationChangeListener.onUpdate();
+		if (SimCard.getSingleton().isNumberAvailable()) {
+			mListContacts.setAdapter(mAdapterContacts);
+    		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
+		} else {
+			mListContacts.setAdapter(null);
+	        mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
+	    }
 	}
 
 	@Override
 	public void onPkiLogin() {
 		super.onPkiLogin();
-		if (mListRecent != null) mListRecent.setAdapter(mAdapterRecent);
-		if (mListContacts != null) mListContacts.setAdapter(mAdapterContacts);
+		Log.d(MyApplication.APP_TAG, "Login");
+		mListRecent.setAdapter(mAdapterRecent);
+		mListContacts.setAdapter(mAdapterContacts);
 	}
 
 	@Override
 	public void onPkiLogout() {
 		super.onPkiLogout();
-		if (mListRecent != null) mListRecent.setAdapter(null);
-		if (mListContacts != null) mListContacts.setAdapter(null);
+		mListRecent.setAdapter(null);
+		mListContacts.setAdapter(null);
 	}
 
 	@Override
 	protected void onStart() {
 		super.onStart();
 		Conversation.addListener(mConversationChangeListener);
-		onSimState();
 	}
 
 	@Override
@@ -371,8 +382,8 @@ public class ListsActivity extends StateAwareActivity {
 	    		Collections.sort(mRecent, Collections.reverseOrder());
 	    		// TODO: sort the contacts by name
 	    		
-	    		if (mAdapterRecent != null) mAdapterRecent.notifyDataSetChanged();
-	    		if (mAdapterContacts != null) mAdapterContacts.notifyDataSetChanged();
+	    		mAdapterRecent.notifyDataSetChanged();
+	    		mAdapterContacts.notifyDataSetChanged();
 			} catch (StorageFileException ex) {
 				State.fatalException(ex);
 				return;
