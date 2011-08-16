@@ -34,7 +34,7 @@
     	android:layout_height="?android:attr/listPreferredItemHeight" >
 	
 	    <android.widget.QuickContactBadge
-	        android:id="@+id/conversation_avatar"
+	        android:id="@+id/person_avatar"
 	        android:visibility="gone"
 	        android:layout_marginLeft="7dip"
 	        android:layout_gravity="center_vertical"
@@ -49,7 +49,7 @@
 	        android:layout_marginLeft="7dip">
 	        
 	        <TextView
-	            android:id="@+id/conversation_name"
+	            android:id="@+id/person_name"
 	            style="?android:attr/windowTitleStyle"
 	            android:textStyle="bold"
 	            android:textSize="16dip"
@@ -58,7 +58,7 @@
 	            android:layout_height="wrap_content" />
 	
 	        <TextView
-	            android:id="@+id/conversation_phone_number"
+	            android:id="@+id/person_phone_number"
 	            android:gravity="center_vertical"
 	            style="?android:attr/windowTitleStyle"
 	            android:layout_width="fill_parent"
@@ -81,7 +81,7 @@
         android:orientation="vertical"
         android:gravity="bottom">
 
-		<view class="uk.ac.cam.db538.cryptosms.ui.MessageListView"
+		<view class="uk.ac.cam.db538.cryptosms.ui.ListViewMessage"
 		    style="?android:attr/listViewWhiteStyle"
 		    android:id="@+id/history"
 		    android:layout_width="fill_parent"

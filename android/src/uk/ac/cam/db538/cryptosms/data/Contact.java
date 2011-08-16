@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.ui.Utils;
+import uk.ac.cam.db538.cryptosms.ui.UtilsSimIssues;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -116,7 +116,7 @@ public class Contact {
      * @return a Contact containing the caller id info corresponding to the number.
      */
     public static Contact getContact(Context context, String phoneNumber) {
-        phoneNumber = Utils.formatPhoneNumber(phoneNumber);
+        phoneNumber = UtilsSimIssues.formatPhoneNumber(phoneNumber);
         
         // check whether it is already in the cache
     	for (Contact contact : mCacheContact)

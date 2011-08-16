@@ -20,7 +20,7 @@
        		</intent-filter>
         </receiver>
 		<activity
-			android:name=".ui.ListsActivity" 
+			android:name=".ui.ActivityLists" 
 			android:label="@string/app_label"
 			android:configChanges="orientation|keyboardHidden">        
     		<intent-filter>
@@ -29,13 +29,13 @@
     		</intent-filter>
     	</activity>
 		<activity 
-			android:name=".ui.TabRecent"
+			android:name=".ui.ActivityExchangeMethod"
 			android:configChanges="orientation|keyboardHidden"/>
 		<activity 
 			android:name=".ui.TabContacts"
 			android:configChanges="orientation|keyboardHidden"/>
 		<activity 
-			android:name=".ui.ConversationActivity"
+			android:name=".ui.ActivityConversation"
 			android:configChanges="orientation|keyboardHidden"/>
     </application>
 </manifest>

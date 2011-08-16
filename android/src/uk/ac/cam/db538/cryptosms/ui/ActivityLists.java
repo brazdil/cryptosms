@@ -39,7 +39,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.TabHost.TabContentFactory;
 import android.widget.TabHost.TabSpec;
 
-public class ListsActivity extends StateAwareActivity {
+public class ActivityLists extends ActivityAppState {
 	private static final int ACTIVITY_NEW_CONTACT = 1;
 	
 	private static final String TAB_RECENT = "RECENT";
@@ -110,7 +110,7 @@ public class ListsActivity extends StateAwareActivity {
 	                        						}
 	                        		    		} else {
 	                        		    			// clicked on the header
-	                        		    			Context context = ListsActivity.this;
+	                        		    			Context context = ActivityLists.this;
 	                        		    			Resources res = context.getResources();
 	                        		    			
 	                        		    			// pick a contact from PKI
@@ -119,7 +119,7 @@ public class ListsActivity extends StateAwareActivity {
 	                        				        intent.putExtra("Contact Criteria", "in_visible_group=1");
 	                        				        intent.putExtra("Key Criteria", "contact_id IN (SELECT contact_id FROM keys GROUP BY contact_id HAVING COUNT(key_name)>0)");
 	                        				        intent.putExtra("sort", "display_name COLLATE LOCALIZED ASC");
-	                        				        intent.putExtra("empty", res.getString(2) );
+	                        				        intent.putExtra("empty", res.getString(R.string.pki_contact_picker_empty) );
 	                        						try {
 	                        							startActivityForResult(intent, ACTIVITY_NEW_CONTACT);
 	                        	    				} catch(ActivityNotFoundException e) {
@@ -130,7 +130,7 @@ public class ListsActivity extends StateAwareActivity {
 	                        				}
 	                        			});
 	                        	    	// create the adapter
-	                        	    	mAdapterContacts = new ArrayAdapter<Conversation>(ListsActivity.this, R.layout.item_main_contacts, mContacts) {
+	                        	    	mAdapterContacts = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mContacts) {
 	                        	    		@Override
 	                        				public View getView(int position, View convertView, ViewGroup parent) {
 	                        					ListItemContact row;
@@ -161,7 +161,7 @@ public class ListsActivity extends StateAwareActivity {
 	                        	        // set appearance of list view
 	                        		    mListRecent.setFastScrollEnabled(true);
 	                        	    	// create the adapter
-	                        	    	mAdapterRecent = new ArrayAdapter<Conversation>(ListsActivity.this, R.layout.item_main_contacts, mRecent) {
+	                        	    	mAdapterRecent = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mRecent) {
 	                        	    		@Override
 	                        				public View getView(int position, View convertView, ViewGroup parent) {
 	                        					ListItemRecent row;
@@ -197,18 +197,18 @@ public class ListsActivity extends StateAwareActivity {
 		getDialogManager().addBuilder(new DialogBuilder() {
 			@Override
 			public Dialog onBuild(Bundle params) {
-				Resources res = ListsActivity.this.getResources();
+				Resources res = ActivityLists.this.getResources();
 				
 				// get phone numbers associated with the contact
 				final ArrayList<Contact.PhoneNumber> phoneNumbers = 
-					Contact.getPhoneNumbers(ListsActivity.this, params.getLong(PARAMS_PHONE_NUMBER_PICKER_ID));
+					Contact.getPhoneNumbers(ActivityLists.this, params.getLong(PARAMS_PHONE_NUMBER_PICKER_ID));
 
 				final CharSequence[] items = new CharSequence[phoneNumbers.size()];
 				for (int i = 0; i < phoneNumbers.size(); ++i)
 					items[i] = phoneNumbers.get(i).toString();
 
 				// display them in a dialog
-				return new AlertDialog.Builder(ListsActivity.this)
+				return new AlertDialog.Builder(ActivityLists.this)
 				       .setTitle(res.getString(R.string.contacts_pick_phone_number))
 				       .setItems(items, new DialogInterface.OnClickListener() {
 				    	   @Override
@@ -228,8 +228,8 @@ public class ListsActivity extends StateAwareActivity {
 		getDialogManager().addBuilder(new DialogBuilder() {
 			@Override
 			public Dialog onBuild(Bundle params) {
-				Resources res = ListsActivity.this.getResources();
-				return new AlertDialog.Builder(ListsActivity.this)
+				Resources res = ActivityLists.this.getResources();
+				return new AlertDialog.Builder(ActivityLists.this)
 					   .setTitle(res.getString(R.string.contacts_no_phone_numbers))
 					   .setMessage(res.getString(R.string.contacts_no_phone_numbers_details))
 					   .setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
@@ -241,7 +241,7 @@ public class ListsActivity extends StateAwareActivity {
 				return DIALOG_NO_PHONE_NUMBERS;
 			}
 		});
-        Utils.prepareDialogs(getDialogManager(), this);
+        UtilsSimIssues.prepareDialogs(getDialogManager(), this);
 	}
 
     @Override
@@ -285,7 +285,7 @@ public class ListsActivity extends StateAwareActivity {
 		menuMoveSessions.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				Utils.moveSessionKeys(getDialogManager());                                 
+				UtilsSimIssues.moveSessionKeys(getDialogManager());                                 
 				return true;
 			}
 		});
@@ -296,7 +296,7 @@ public class ListsActivity extends StateAwareActivity {
 	public void onSimState() {
 		super.onSimState();
 		
-		Utils.handleSimIssues(this, getDialogManager());
+		UtilsSimIssues.handleSimIssues(this, getDialogManager());
 		
 		// check SIM availability
 		Log.d(MyApplication.APP_TAG, "Updating");
@@ -338,8 +338,8 @@ public class ListsActivity extends StateAwareActivity {
 	}
 
 	private void startConversation(Conversation conv) {
-		Intent intent = new Intent(ListsActivity.this, ConversationActivity.class);
-		intent.putExtra(ConversationActivity.OPTION_PHONE_NUMBER, conv.getPhoneNumber());
+		Intent intent = new Intent(ActivityLists.this, ActivityConversation.class);
+		intent.putExtra(ActivityConversation.OPTION_PHONE_NUMBER, conv.getPhoneNumber());
 		startActivity(intent);
 	}	
 	

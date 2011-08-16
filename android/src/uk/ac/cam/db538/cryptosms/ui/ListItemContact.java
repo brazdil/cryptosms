@@ -17,6 +17,7 @@
 
 package uk.ac.cam.db538.cryptosms.ui;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.state.State;
@@ -45,8 +46,6 @@ public class ListItemContact extends RelativeLayout {
     private ImageView mIconView;
     private QuickContactBadge mAvatarView;
 
-    static private Drawable sDefaultContactImage;
-    
     private Conversation mConversationHeader;
 
     public ListItemContact(Context context) {
@@ -55,10 +54,6 @@ public class ListItemContact extends RelativeLayout {
 
     public ListItemContact(Context context, AttributeSet attrs) {
         super(context, attrs);
-
-        if (sDefaultContactImage == null) {
-            sDefaultContactImage = context.getResources().getDrawable(R.drawable.ic_contact_picture);
-        }
     }
 
     @Override
@@ -128,7 +123,7 @@ public class ListItemContact extends RelativeLayout {
 	    		mFromView.setText(contact.getPhoneNumber());
 	        mIconView.setVisibility(VISIBLE);
 
-	    	Drawable avatarDrawable = contact.getAvatar(context, sDefaultContactImage);
+	    	Drawable avatarDrawable = contact.getAvatar(context, MyApplication.getSingleton().getDefaultContactImage());
             if (contact.existsInDatabase()) {
                 mAvatarView.assignContactUri(contact.getUri());
             } else {

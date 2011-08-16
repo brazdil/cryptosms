@@ -1,6 +1,11 @@
 package uk.ac.cam.db538.cryptosms;
 
 import java.io.File;
+import java.util.List;
+
+import com.google.inject.Module;
+
+import roboguice.application.RoboApplication;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
@@ -11,8 +16,9 @@ import android.app.Application;
 import android.app.Notification;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 
-public class MyApplication extends Application {
+public class MyApplication extends RoboApplication {
 	private static short SMS_PORT; 
 	public static final int NOTIFICATION_ID = 1;
 	public static final String APP_TAG = "CRYPTOSMS";
@@ -33,6 +39,7 @@ public class MyApplication extends Application {
 	}
 
 	private Notification mNotification = null;
+	private Drawable mDefaultContactImage = null;
 	
 	@Override
 	public void onCreate() {
@@ -47,6 +54,8 @@ public class MyApplication extends Application {
 		String tickerText = res.getString(R.string.notification_ticker);
 		long when = System.currentTimeMillis();
 		mNotification = new Notification(icon, tickerText, when);
+		
+		mDefaultContactImage = getResources().getDrawable(R.drawable.ic_contact_picture);
 		
 		Preferences.initSingleton(context);
 		if (Encryption.getEncryption() == null)
@@ -70,6 +79,10 @@ public class MyApplication extends Application {
 	
 	public Notification getNotification() {
 		return mNotification;
+	}
+	
+	public Drawable getDefaultContactImage() {
+		return mDefaultContactImage;
 	}
 	
 	@Override

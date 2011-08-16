@@ -3,7 +3,7 @@ package uk.ac.cam.db538.cryptosms.data;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
-import uk.ac.cam.db538.cryptosms.ui.ListsActivity;
+import uk.ac.cam.db538.cryptosms.ui.ActivityLists;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -62,7 +62,7 @@ public class DataSmsReceiver extends BroadcastReceiver {
 							
 							String expandedTitle = res.getString(R.string.notification_title);
 							String expandedText = res.getString(R.string.notification_text);
-							Intent startActivityIntent = new Intent(context, ListsActivity.class);
+							Intent startActivityIntent = new Intent(context, ActivityLists.class);
 							startActivityIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 							PendingIntent launchIntent = PendingIntent.getActivity(context, 0, startActivityIntent, 0);
 							notification.setLatestEventInfo(context, expandedTitle, expandedText, launchIntent);

@@ -19,6 +19,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.zip.DataFormatException;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
@@ -49,8 +50,6 @@ public class ListItemRecent extends RelativeLayout {
     private View mErrorIndicator;
     private QuickContactBadge mAvatarView;
 
-    static private Drawable sDefaultContactImage;
-    
     private Conversation mConversationHeader;
 
     public ListItemRecent(Context context) {
@@ -59,10 +58,6 @@ public class ListItemRecent extends RelativeLayout {
 
     public ListItemRecent(Context context, AttributeSet attrs) {
         super(context, attrs);
-
-        if (sDefaultContactImage == null) {
-            sDefaultContactImage = context.getResources().getDrawable(R.drawable.ic_contact_picture);
-        }
     }
 
     @Override
@@ -178,7 +173,7 @@ public class ListItemRecent extends RelativeLayout {
         mFromView.setText(contact.getName());
         mSubjectView.setText(getPreview(conv));
 
-    	Drawable avatarDrawable = contact.getAvatar(context, sDefaultContactImage);
+    	Drawable avatarDrawable = contact.getAvatar(context, MyApplication.getSingleton().getDefaultContactImage());
         if (contact.existsInDatabase()) {
             mAvatarView.assignContactUri(contact.getUri());
         } else {

@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import roboguice.activity.RoboActivity;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
@@ -11,7 +12,7 @@ import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
 
-public class StateAwareActivity extends Activity {
+public class ActivityAppState extends RoboActivity {
 	private static final String BUNDLE_DIALOG_MANAGER = "DIALOG_MANAGER";
 
 	private ErrorOverlay mErrorOverlay;
@@ -66,37 +67,37 @@ public class StateAwareActivity extends Activity {
 	private StateChangeListener mStateListener = new StateChangeListener() {
 		@Override
 		public void onSimState() {
-			StateAwareActivity.this.onSimState();
+			ActivityAppState.this.onSimState();
 		}
 		
 		@Override
 		public void onPkiMissing() {
-			StateAwareActivity.this.onPkiMissing();
+			ActivityAppState.this.onPkiMissing();
 		}
 		
 		@Override
 		public void onLogout() {
-			StateAwareActivity.this.onPkiLogout();
+			ActivityAppState.this.onPkiLogout();
 		}
 		
 		@Override
 		public void onLogin() {
-			StateAwareActivity.this.onPkiLogin();
+			ActivityAppState.this.onPkiLogin();
 		}
 		
 		@Override
 		public void onFatalException(Exception ex) {
-			StateAwareActivity.this.onFatalException(ex);
+			ActivityAppState.this.onFatalException(ex);
 		}
 		
 		@Override
 		public void onDisconnect() {
-			StateAwareActivity.this.onPkiDisconnect();
+			ActivityAppState.this.onPkiDisconnect();
 		}
 		
 		@Override
 		public void onConnect() {
-			StateAwareActivity.this.onPkiConnect();
+			ActivityAppState.this.onPkiConnect();
 		}
 	};
 	

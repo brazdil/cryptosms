@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
@@ -22,7 +23,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -30,24 +30,22 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
-public class ConversationActivity extends StateAwareActivity {
-	public static final String OPTION_PHONE_NUMBER = "phoneNumber";
-	public static final String OPTION_OFFER_KEYS_SETUP = "createKeys";
+public class ActivityConversation extends ActivityAppState {
+	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
+	public static final String OPTION_OFFER_KEYS_SETUP = "KEYS_SETUP";
 	
 	private static final String DIALOG_NO_SESSION_KEYS = "DIALOG_NO_SESSION_KEYS";
 	
-	static private Drawable sDefaultContactImage = null;
-
 	private Contact mContact;
 	private Conversation mConversation;
-	private TextView mNameView;
-	private TextView mPhoneNumberView;
-    private QuickContactBadge mAvatarView;
+	
+	@InjectView(R.id.conversation_send_button)
     private Button mSendButton;
+	@InjectView(R.id.conversation_embedded_text_editor)
     private EditText mTextEditor;
+	@InjectView(R.id.conversation_text_counter)
     private TextView mRemainsView;
     
 	private Context mContext = this;
@@ -61,49 +59,21 @@ public class ConversationActivity extends StateAwareActivity {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        final Context context = this;
 	    final Resources res = getResources();
 	    
-        if (sDefaultContactImage == null) {
-            sDefaultContactImage = res.getDrawable(R.drawable.ic_contact_picture);
-        }
-
-        Intent intent = getIntent();
-	    Bundle bundle = intent.getExtras();
+	    Bundle bundle = getIntent().getExtras();
 	    String phoneNumber = bundle.getString(OPTION_PHONE_NUMBER);
 	    mErrorNoKeysShow = bundle.getBoolean(OPTION_OFFER_KEYS_SETUP, true);
-	    mContact = Contact.getContact(context, phoneNumber);
+	    
+	    mContact = Contact.getContact(this, phoneNumber);
 		try {
 			mConversation = Conversation.getConversation(mContact.getPhoneNumber());
 		} catch (StorageFileException ex) {
 			State.fatalException(ex);
 			return;
 		}
-	    
-	    mNameView = (TextView) findViewById(R.id.conversation_name);
-	    mPhoneNumberView = (TextView) findViewById(R.id.conversation_phone_number);
-	    mAvatarView = (QuickContactBadge) findViewById(R.id.conversation_avatar);
-	    mSendButton = (Button) findViewById(R.id.conversation_send_button);
-	    mTextEditor = (EditText) findViewById(R.id.conversation_embedded_text_editor);
-	    mRemainsView = (TextView) findViewById(R.id.conversation_text_counter);
-	    
-	    if (mContact.getName().length() > 0) {
-	    	mNameView.setText(mContact.getName());
-	    	mPhoneNumberView.setText(mContact.getPhoneNumber());
-	    }
-	    else {
-	    	mNameView.setText(mContact.getPhoneNumber());
-	    	mPhoneNumberView.setText(new String());
-	    }
-	    
-	    Drawable avatarDrawable = mContact.getAvatar(context, sDefaultContactImage);
-        if (mContact.existsInDatabase()) {
-            mAvatarView.assignContactUri(mContact.getUri());
-        } else {
-            mAvatarView.assignContactFromPhone(mContact.getPhoneNumber(), true);
-        }
-        mAvatarView.setImageDrawable(avatarDrawable);
-        mAvatarView.setVisibility(View.VISIBLE);
+
+	    UtilsContactBadge.setBadge(mContact, getMainView());
         
         mTextEditor.addTextChangedListener(new TextWatcher() {
 			@Override
@@ -134,7 +104,7 @@ public class ConversationActivity extends StateAwareActivity {
 				if (mConversation != null) {
 					try {
 						// start the progress bar
-						final ProgressDialog pd = new ProgressDialog(context);
+						final ProgressDialog pd = new ProgressDialog(ActivityConversation.this);
 						pd.setMessage(res.getString(R.string.conversation_sending));
 						pd.show();
 						
@@ -142,7 +112,7 @@ public class ConversationActivity extends StateAwareActivity {
 						TextMessage msg = new TextMessage(MessageData.createMessageData(mConversation));
 						msg.setText(CompressedText.createFromString(mTextEditor.getText().toString()));
 						// send it
-						msg.sendSMS(mContact.getPhoneNumber(), context, new MessageSentListener() {
+						msg.sendSMS(mContact.getPhoneNumber(), ActivityConversation.this, new MessageSentListener() {
 							@Override
 							public void onMessageSent() {
 								pd.cancel();
@@ -153,7 +123,7 @@ public class ConversationActivity extends StateAwareActivity {
 							public void onError(String message) {
 								pd.cancel();
 								// TODO: get rid of this!!!
-								new AlertDialog.Builder(context)
+								new AlertDialog.Builder(ActivityConversation.this)
 								.setTitle(res.getString(R.string.error_sms_service))
 								.setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + message)
 								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
@@ -181,9 +151,10 @@ public class ConversationActivity extends StateAwareActivity {
 				       .setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
 				       .setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
 				    	   @Override
-				    	   public void onClick(DialogInterface dialog,
-				    			   int which) {
-				    		   // TODO: setup
+				    	   public void onClick(DialogInterface dialog, int which) {
+				    			Intent intent = new Intent(ActivityConversation.this, ActivityExchangeMethod.class);
+				    			intent.putExtra(ActivityExchangeMethod.OPTION_PHONE_NUMBER, mConversation.getPhoneNumber());
+				    			startActivity(intent);
 				    	   }
 				       })
 				       .create();
@@ -223,7 +194,7 @@ public class ConversationActivity extends StateAwareActivity {
 		super.onSimState();
 		
 		modeEnabled(false);
-		Utils.handleSimIssues(mContext, getDialogManager());
+		UtilsSimIssues.handleSimIssues(mContext, getDialogManager());
 		
 		// check for SIM availability
 	    try {

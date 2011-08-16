@@ -20,7 +20,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.PhoneNumberUtils;
 
-public class Utils {
+public class UtilsSimIssues {
 	private static boolean mImportShown = false;
 	private static boolean mWarningSIMNotPresent = false;
 	
@@ -94,7 +94,7 @@ public class Utils {
 						   .setPositiveButton(res.getString(R.string.yes), new OnClickListener() {
 							   @Override
 							   public void onClick(DialogInterface dialog, int which) {
-								   Utils.moveSessionKeys(manager);
+								   UtilsSimIssues.moveSessionKeys(manager);
 							   }
 						   })
 						   .setCancelable(false)

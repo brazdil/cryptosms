@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+  
+	<TextView 
+		android:layout_margin="5dp"
+		android:layout_width="fill_parent" 
+		android:layout_height="wrap_content" 
+		android:text="@string/exchange_method_title" 
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:id="@+id/exchange_method_title" />
+	
+	<TextView 
+		android:layout_margin="5dp"
+		android:layout_width="fill_parent" 
+		android:id="@+id/exchange_method_details" 
+		android:layout_height="wrap_content" 
+		android:text="@string/exchange_method_details" />
+	
+	<LinearLayout
+	  	xmlns:android="http://schemas.android.com/apk/res/android"
+	  	android:orientation="vertical"
+		android:layout_margin="5dp"
+	  	android:layout_width="fill_parent"
+	  	android:layout_height="wrap_content">
+	  
+ 		<RadioGroup
+      		android:layout_width="fill_parent"
+      		android:layout_height="wrap_content"
+      		android:orientation="vertical">
+      		
+      	  	<RadioButton 
+			android:layout_width="fill_parent" 
+			android:id="@+id/exchange_method_radio_text_message" 
+			android:text="@string/exchange_method_text_message" 
+			android:layout_height="wrap_content" />
+			
+		</RadioGroup>
+		
+	</LinearLayout>
+
+	<LinearLayout
+	  xmlns:android="http://schemas.android.com/apk/res/android"
+	  android:orientation="vertical"
+	  android:gravity="bottom"
+	  android:layout_width="fill_parent"
+	  android:layout_height="fill_parent">
+	  
+		<LinearLayout
+		    xmlns:android="http://schemas.android.com/apk/res/android"
+		    android:orientation="horizontal"
+		    android:layout_width="fill_parent"
+	    	android:layout_height="?android:attr/listPreferredItemHeight" >
+		
+		    <android.widget.QuickContactBadge
+		        android:id="@+id/person_avatar"
+		        android:layout_marginLeft="7dip"
+		        android:layout_gravity="center_vertical"
+		        style="?android:attr/quickContactBadgeStyleWindowSmall" />
+		
+		    <LinearLayout
+		        android:layout_weight="1"
+		        android:orientation="vertical"
+		        android:layout_gravity="center_vertical"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_marginLeft="7dip">
+		        
+		        <TextView
+		            android:id="@+id/person_name"
+		            style="?android:attr/windowTitleStyle"
+		            android:textStyle="bold"
+		            android:textSize="16dip"
+		            android:gravity="center_vertical"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content" />
+		
+		        <TextView
+		            android:id="@+id/person_phone_number"
+		            android:gravity="center_vertical"
+		            style="?android:attr/windowTitleStyle"
+		            android:layout_width="fill_parent"
+		            android:layout_height="wrap_content" />
+		    </LinearLayout>
+		</LinearLayout>
+			
+		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:orientation="horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+		  
+			<Button 
+				android:id="@+id/exchange_method_back" 
+				android:text="@string/back" 
+				android:layout_weight="1.0"
+				android:layout_height="fill_parent" 
+				android:layout_width="wrap_content" />
+				
+			<Button 
+				android:id="@+id/exchange_method_next" 
+				android:text="@string/next" 
+				android:layout_weight="1.0"
+				android:layout_height="fill_parent" 
+				android:layout_width="wrap_content" />
+	        
+	    </LinearLayout>
+	</LinearLayout>
+</LinearLayout>

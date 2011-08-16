@@ -7,5 +7,8 @@
 	<classpathentry kind="lib" path="/CryptoSMS Vanilla/lib/joda-time-2.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CryptoSMS Encryption"/>
 	<classpathentry kind="src" path="PKIwrapper_src"/>
+	<classpathentry kind="lib" path="lib/guice-2.0-no_aop.jar"/>
+	<classpathentry kind="lib" path="lib/roboguice-1.1.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/roboguice-1.1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

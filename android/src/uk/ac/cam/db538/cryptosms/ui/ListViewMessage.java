@@ -21,12 +21,12 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.widget.ListView;
 
-public final class MessageListView extends ListView {
-    public MessageListView(Context context) {
+public final class ListViewMessage extends ListView {
+    public ListViewMessage(Context context) {
         super(context);
     }
     
-    public MessageListView(Context context, AttributeSet attrs) {
+    public ListViewMessage(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
     
