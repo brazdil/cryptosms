@@ -4,6 +4,8 @@ import roboguice.inject.InjectView;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
@@ -48,7 +50,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 	Button mSendButton;
 	
 	private KeysMessage mKeysMessage;
-
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -92,10 +94,10 @@ public class ActivityExchangeViaText extends ActivityAppState {
 			@Override
 			public void onClick(View v) {
 				mSendButton.setEnabled(false);
+				mBackButton.setEnabled(false);
 				
 				getDialogManager().showDialog(DIALOG_SENDING, null);
-				final ProgressDialog pd = (ProgressDialog) getDialogManager().getDialog(DIALOG_SENDING);
-
+				
 				// generate session keys
 				if (mKeysMessage == null)
 					mKeysMessage = new KeysMessage(mContactId, mContactKey);
@@ -120,11 +122,16 @@ public class ActivityExchangeViaText extends ActivityAppState {
 								State.fatalException(e);
 								return;
 							}
+							
+							// go back
+							ActivityExchangeViaText.this.startActivity(new Intent(ActivityExchangeViaText.this, ActivityLists.class));
 						}
 						
 						@Override
 						public void onError(String message) {
 							getDialogManager().dismissDialog(DIALOG_SENDING);
+							mSendButton.setEnabled(true);
+							mBackButton.setEnabled(true);
 							
 							Bundle params = new Bundle();
 							params.putString(PARAM_SENDING_ERROR, message);
@@ -132,8 +139,11 @@ public class ActivityExchangeViaText extends ActivityAppState {
 						}
 
 						@Override
-						public void onPartSent(int index) {
-							pd.setProgress(index + 1);
+						public boolean onPartSent(int index) {
+							ProgressDialog pd = (ProgressDialog) getDialogManager().getDialog(DIALOG_SENDING);
+							if (pd != null) 
+								pd.setProgress(index + 1);
+							return true;
 						}
 					});
 				} catch (StorageFileException e) {
@@ -155,6 +165,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 			public Dialog onBuild(Bundle params) {
 				Resources res = ActivityExchangeViaText.this.getResources();
 				ProgressDialog pd = new ProgressDialog(ActivityExchangeViaText.this);
+				pd.setCancelable(false);
 				pd.setMessage(res.getString(R.string.sending));
 				pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 				try {

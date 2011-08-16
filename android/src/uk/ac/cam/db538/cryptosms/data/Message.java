@@ -36,7 +36,7 @@ public abstract class Message {
 	
 	public static interface MessageSentListener {
 		public void onMessageSent();
-		public void onPartSent(int index);
+		public boolean onPartSent(int index);
 		public void onError(String message);
 	}
 	
@@ -84,26 +84,35 @@ public abstract class Message {
 				switch (getResultCode()) {
 				case Activity.RESULT_OK:
 					Log.d(MyApplication.APP_TAG, "Sent " + indexLast);
-					listener.onPartSent(indexLast);
-					++indexLast;
-					if (indexLast < dataSms.size())
-						internalSmsSend(phoneNumber, dataSms.get(indexLast), context);
-					else
-						listener.onMessageSent();
+					if (listener.onPartSent(indexLast)) {
+						++indexLast;
+						if (indexLast < dataSms.size())
+							internalSmsSend(phoneNumber, dataSms.get(indexLast), context);
+						else {
+							context.unregisterReceiver(this);
+							listener.onMessageSent();
+						}
+					} else 
+						context.unregisterReceiver(this);
 					break;
 				case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+					context.unregisterReceiver(this);
 					listener.onError(res.getString(R.string.error_sending_generic));
 					break;
 				case SmsManager.RESULT_ERROR_NO_SERVICE:
+					context.unregisterReceiver(this);
 					listener.onError(res.getString(R.string.error_sending_no_service));
 					break;
 				case SmsManager.RESULT_ERROR_NULL_PDU:
+					context.unregisterReceiver(this);
 					listener.onError(res.getString(R.string.error_sending_null_pdu));
 					break;
 				case SmsManager.RESULT_ERROR_RADIO_OFF:
+					context.unregisterReceiver(this);
 					listener.onError(res.getString(R.string.error_sending_radio_off));
 					break;
 				default: // ERROR
+					context.unregisterReceiver(this);
 					listener.onError(res.getString(R.string.error_sending_unknown));
 					break;
 				}
