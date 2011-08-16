@@ -51,6 +51,7 @@ public class ActivityLists extends ActivityAppState {
 	
 	private static final String DIALOG_PHONE_NUMBER_PICKER = "DIALOG_PHONE_NUMBER_PICKER";
 	private static final String PARAMS_PHONE_NUMBER_PICKER_ID = "PARAMS_PHONE_NUMBER_PICKER_ID";
+	private static final String PARAMS_PHONE_NUMBER_PICKER_KEY_NAME = "PARAMS_PHONE_NUMBER_PICKER_KEY_NAME";
 	private static final String DIALOG_NO_PHONE_NUMBERS = "DIALOG_NO_PHONE_NUMBERS";
 
 	private LayoutInflater mInflater;
@@ -69,6 +70,8 @@ public class ActivityLists extends ActivityAppState {
 	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();
 	private ArrayAdapter<Conversation> mAdapterRecent;
 
+	// TODO: listen to contact name changes
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -202,9 +205,12 @@ public class ActivityLists extends ActivityAppState {
 			public Dialog onBuild(Bundle params) {
 				Resources res = ActivityLists.this.getResources();
 				
+				final long contactId = params.getLong(PARAMS_PHONE_NUMBER_PICKER_ID);
+				final String keyName = params.getString(PARAMS_PHONE_NUMBER_PICKER_KEY_NAME);
+				
 				// get phone numbers associated with the contact
 				final ArrayList<Contact.PhoneNumber> phoneNumbers = 
-					Contact.getPhoneNumbers(ActivityLists.this, params.getLong(PARAMS_PHONE_NUMBER_PICKER_ID));
+					Contact.getPhoneNumbers(ActivityLists.this, contactId);
 
 				final CharSequence[] items = new CharSequence[phoneNumbers.size()];
 				for (int i = 0; i < phoneNumbers.size(); ++i)
@@ -217,7 +223,7 @@ public class ActivityLists extends ActivityAppState {
 				    	   @Override
 				    	   public void onClick(DialogInterface dialog, int item) {
 				    		   Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
-				    		   startConversation(phoneNumber.getPhoneNumber());
+				    		   exchangeKeys(contactId, phoneNumber.getPhoneNumber(), keyName);
 				    	   }
 				       })
 				       .create();
@@ -266,7 +272,7 @@ public class ActivityLists extends ActivityAppState {
     					params.putLong(PARAMS_PHONE_NUMBER_PICKER_ID, contactId);
     					getDialogManager().showDialog(DIALOG_PHONE_NUMBER_PICKER, params);
     				} else if (phoneNumbers.size() == 1) {
-    					startConversation(phoneNumbers.get(0).getPhoneNumber());
+    					exchangeKeys(contactId, phoneNumbers.get(0).getPhoneNumber(), contactKey);
     				} else {
     					// no phone numbers assigned to the contact
     					getDialogManager().showDialog(DIALOG_NO_PHONE_NUMBERS, null);
@@ -346,24 +352,14 @@ public class ActivityLists extends ActivityAppState {
 		startActivity(intent);
 	}	
 	
-	private void startConversation(String phoneNumber) {
-    	// get the appropriate conversation
-    	Conversation conv;
-		try {
-			conv = Conversation.getConversation(phoneNumber);
-	    	if (conv == null) {
-	    		conv = Conversation.createConversation();
-	    		conv.setPhoneNumber(phoneNumber);
-	    		conv.saveToFile();
-	    	}
-			// if we managed to get it, start the activity
-			startConversation(conv);
-		} catch (StorageFileException ex) {
-			State.fatalException(ex);
-			return;
-		}
+	private void exchangeKeys(long contactId, String phoneNumber, String keyName) {
+		Intent intent = new Intent(ActivityLists.this, ActivityExchangeMethod.class);
+		intent.putExtra(ActivityExchangeMethod.OPTION_CONTACT_ID, contactId);
+		intent.putExtra(ActivityExchangeMethod.OPTION_PHONE_NUMBER, phoneNumber);
+		intent.putExtra(ActivityExchangeMethod.OPTION_CONTACT_KEY, keyName);
+		startActivity(intent);
 	}
-	
+
 	private ConversationsChangeListener mConversationChangeListener = new ConversationsChangeListener() {
 		
 		@Override

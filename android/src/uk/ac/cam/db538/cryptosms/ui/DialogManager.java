@@ -60,10 +60,15 @@ public class DialogManager {
 	 * @param id
 	 */
 	public void dismissDialog(String id) {
-		Dialog dialog = mActiveDialogs.get(id).dialog;
-		mActiveDialogs.remove(id);
-		if (dialog != null)
+		Dialog dialog = getDialog(id);
+		if (dialog != null) {
+			mActiveDialogs.remove(id);
 			dialog.dismiss();
+		}
+	}
+	
+	public Dialog getDialog(String id) {
+		return mActiveDialogs.get(id).dialog;
 	}
 	
 	/**

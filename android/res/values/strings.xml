@@ -441,7 +441,7 @@
     <string name="tab_contacts_new_contact">New contact</string>
     <string name="tab_contacts_new_contact_details">Establish new secure connection</string>
     <string name="conversation_type_to_compose">Type to compose</string>
-    <string name="conversation_send">Send</string>
+    <string name="send">Send</string>
     <string name="contacts_type_home">Home</string>
     <string name="contacts_type_work">Work</string>
     <string name="contacts_type_mobile">Mobile</string>
@@ -473,7 +473,7 @@
     <string name="menu_move_sessions">Move sessions</string>
     <string name="menu_move_sessions_none">None available</string>
     <string name="menu_move_sessions_none_details">No transferable sessions were found in the database.</string>
-    <string name="conversation_sending">Sending...</string>
+    <string name="sending">Sending...</string>
     <string name="error_sms_service">Error</string>
     <string name="error_sms_service_details">The application was unable to send the text message.</string>
     <string name="error_sending_unknown">Unknown problem</string>

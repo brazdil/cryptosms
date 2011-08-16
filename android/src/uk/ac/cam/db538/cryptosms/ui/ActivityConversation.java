@@ -2,6 +2,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
@@ -11,6 +12,7 @@ import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
@@ -65,6 +67,10 @@ public class ActivityConversation extends ActivityAppState {
 	    String phoneNumber = bundle.getString(OPTION_PHONE_NUMBER);
 	    mErrorNoKeysShow = bundle.getBoolean(OPTION_OFFER_KEYS_SETUP, true);
 	    
+	    // check that we got arguments
+	    if (phoneNumber == null)
+	    	this.finish();
+	    
 	    mContact = Contact.getContact(this, phoneNumber);
 		try {
 			mConversation = Conversation.getConversation(mContact.getPhoneNumber());
@@ -89,7 +95,7 @@ public class ActivityConversation extends ActivityAppState {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
 				try {
-					mBytesCounterView.setText(TextMessage.remainingBytesInLastMessagePart(msg) + " (" + TextMessage.computeNumberOfMessageParts(msg) + ")");
+					mBytesCounterView.setText(TextMessage.getRemainingBytes(msg) + " (" + TextMessage.getPartsCount(msg) + ")");
 					mSendButton.setEnabled(true);
 				} catch (MessageException e) {
 					mSendButton.setEnabled(false);
@@ -104,12 +110,13 @@ public class ActivityConversation extends ActivityAppState {
 				if (mConversation != null) {
 					try {
 						// start the progress bar
+						// TODO: get rid of this!!!
 						final ProgressDialog pd = new ProgressDialog(ActivityConversation.this);
-						pd.setMessage(res.getString(R.string.conversation_sending));
+						pd.setMessage(res.getString(R.string.sending));
 						pd.show();
 						
 						// create message
-						TextMessage msg = new TextMessage(MessageData.createMessageData(mConversation));
+						final TextMessage msg = new TextMessage(MessageData.createMessageData(mConversation));
 						msg.setText(CompressedText.createFromString(mTextEditor.getText().toString()));
 						// send it
 						msg.sendSMS(mContact.getPhoneNumber(), ActivityConversation.this, new MessageSentListener() {
@@ -129,11 +136,34 @@ public class ActivityConversation extends ActivityAppState {
 								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
 								.show();
 							}
+							
+							boolean keyIncremented = false;
+
+							@Override
+							public void onPartSent(int index) {
+								if (keyIncremented)
+									return;
+								
+								// it at least something was sent, increment the ID and session keys
+								SessionKeys keys;
+								try {
+									keys = StorageUtils.getSessionKeysForSim(msg.getStorage().getParent());
+									keys.incrementOut(1);
+									keys.saveToFile();
+								} catch (StorageFileException ex) {
+									State.fatalException(ex);
+									return;
+								}
+								keyIncremented = true;
+							}
 						});
 					} catch (StorageFileException ex) {
 						State.fatalException(ex);
 						return;
 					} catch (MessageException ex) {
+						State.fatalException(ex);
+						return;
+					} catch (EncryptionException ex) {
 						State.fatalException(ex);
 						return;
 					}

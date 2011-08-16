@@ -2,14 +2,18 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.telephony.SmsManager;
+import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -32,101 +36,89 @@ public abstract class Message {
 	
 	public static interface MessageSentListener {
 		public void onMessageSent();
+		public void onPartSent(int index);
 		public void onError(String message);
 	}
 	
-	protected static final byte HEADER_KEY_FIRST = (byte) 0x00;	// no bits set
-	protected static final byte HEADER_KEY_PART = (byte) 0x40;	// second bit set
+	protected static final byte HEADER_KEYS_FIRST = (byte) 0x00;	// no bits set
+	protected static final byte HEADER_KEYS_PART = (byte) 0x40;	// second bit set
 	protected static final byte HEADER_MESSAGE_FIRST = (byte) 0x80;		// first bit set
 	protected static final byte HEADER_MESSAGE_PART = (byte) 0xC0;			// first and second bit set
 	
 	public static enum MessageType {
-		KEY_FIRST,
-		KEY_PART,
+		KEYS_FIRST,
+		KEYS_PART,
 		MESSAGE_FIRST,
 		MESSAGE_PART,
 		UNKNOWN
 	}
 	
-	protected MessageData mStorage;
+    private static final String SENT_SMS_ACTION = "CRYPTOSMS_SMS_SENT"; 
     
-    public Message(MessageData storage) {
-		mStorage = storage;
-	}
-    
-    public MessageData getStorage() {
-    	return mStorage;
-    }
-    
-    /**
-     * Returns the length of data stored in the storage file for this message
-     * @return
-     * @throws StorageFileException
-     */
-    public int getStoredDataLength() throws StorageFileException {
-    	int index = 0, length = 0;
-    	byte[] temp;
-    	try {
-			while ((temp = mStorage.getPartData(index++)) != null)
-				length += temp.length;
-    	} catch (IndexOutOfBoundsException e) {
-    		// ends this way
-    	}
-    	return length;
-    }
-	
-    /**
-     * Returns all the data stored in the storage file for this message
-     * @return
-     * @throws StorageFileException
-     */
-    public byte[] getStoredData() throws StorageFileException {
-    	int index = 0, length = 0;
-    	byte[] temp;
-    	ArrayList<byte[]> data = new ArrayList<byte[]>();
-    	
-    	try {
-			while ((temp = mStorage.getPartData(index++)) != null) {
-				length += temp.length;
-				data.add(temp);
-			}
-    	} catch (IndexOutOfBoundsException e) {
-    		// ends this way
-    	}
-		
-		temp = new byte[length];
-		index = 0;
-		for (byte[] part : data) {
-			System.arraycopy(part, 0, temp, index, part.length);
-			index += part.length;
-		}
-		
-		return temp;
-    }
-    
-    private static final String SENT_SMS_ACTION = "SENT_SMS_ACTION"; 
-    
-    protected void internalSmsSend(String phoneNumber, byte[] data, Context context, BroadcastReceiver sentReceiver) {
-    	// prepare the receiver for SENT notification
+    private void internalSmsSend(String phoneNumber, byte[] data, Context context) {
     	Intent sentIntent = new Intent(SENT_SMS_ACTION);
     	PendingIntent sentPI = PendingIntent.getBroadcast(
     								context.getApplicationContext(), 0, 
     								sentIntent, 0);
-    	context.registerReceiver(sentReceiver, new IntentFilter(SENT_SMS_ACTION));
-    	
     	// send the data
     	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, null);
     }
-          
+
     public abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
-    public abstract void sendSMS(String phoneNumber, Context context, MessageSentListener listener) throws StorageFileException, MessageException, EncryptionException;
+
+	/**
+	 * Takes the byte arrays created by getBytes() method and sends 
+	 * them to the given phone number
+	 */
+	public void sendSMS(final String phoneNumber, Context context, final MessageSentListener listener)
+			throws StorageFileException, MessageException, EncryptionException {
+		final ArrayList<byte[]> dataSms = getBytes();
+		
+		context.registerReceiver(new BroadcastReceiver() {
+			private int indexLast = 0;
+			
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				Resources res = context.getResources();
+				// check that it arrived OK
+				switch (getResultCode()) {
+				case Activity.RESULT_OK:
+					Log.d(MyApplication.APP_TAG, "Sent " + indexLast);
+					listener.onPartSent(indexLast);
+					++indexLast;
+					if (indexLast < dataSms.size())
+						internalSmsSend(phoneNumber, dataSms.get(indexLast), context);
+					else
+						listener.onMessageSent();
+					break;
+				case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+					listener.onError(res.getString(R.string.error_sending_generic));
+					break;
+				case SmsManager.RESULT_ERROR_NO_SERVICE:
+					listener.onError(res.getString(R.string.error_sending_no_service));
+					break;
+				case SmsManager.RESULT_ERROR_NULL_PDU:
+					listener.onError(res.getString(R.string.error_sending_null_pdu));
+					break;
+				case SmsManager.RESULT_ERROR_RADIO_OFF:
+					listener.onError(res.getString(R.string.error_sending_radio_off));
+					break;
+				default: // ERROR
+					listener.onError(res.getString(R.string.error_sending_unknown));
+					break;
+				}
+			}
+		}, new IntentFilter(SENT_SMS_ACTION));
+		
+		internalSmsSend(phoneNumber, dataSms.get(0), context);
+	}
     
     public static MessageType getMessageType(byte[] data) {
     	byte headerType = (byte) (data[0] & 0xC0); // takes first two bits only
-    	if (headerType == HEADER_KEY_FIRST)
-    		return MessageType.KEY_FIRST;
-    	else if (headerType == HEADER_KEY_PART)
-    		return MessageType.KEY_PART;
+    	if (headerType == HEADER_KEYS_FIRST)
+    		return MessageType.KEYS_FIRST;
+    	else if (headerType == HEADER_KEYS_PART)
+    		return MessageType.KEYS_PART;
     	else if (headerType == HEADER_MESSAGE_FIRST)
     		return MessageType.MESSAGE_FIRST;
     	else if (headerType == HEADER_MESSAGE_PART)

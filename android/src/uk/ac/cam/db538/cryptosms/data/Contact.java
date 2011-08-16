@@ -42,12 +42,15 @@ public class Contact {
             Phone.CONTACT_STATUS,           // 5
     };
 
-    private static final int PHONE_NUMBER_COLUMN = 0;
+    @SuppressWarnings("unused")
+	private static final int PHONE_NUMBER_COLUMN = 0;
     private static final int PHONE_LABEL_COLUMN = 1;
     private static final int CONTACT_NAME_COLUMN = 2;
     private static final int CONTACT_ID_COLUMN = 3;
-    private static final int CONTACT_PRESENCE_COLUMN = 4;
-    private static final int CONTACT_STATUS_COLUMN = 5;
+    @SuppressWarnings("unused")
+	private static final int CONTACT_PRESENCE_COLUMN = 4;
+    @SuppressWarnings("unused")
+	private static final int CONTACT_STATUS_COLUMN = 5;
     
     private static ArrayList<Contact> mCacheContact = new ArrayList<Contact>();
     
@@ -63,6 +66,13 @@ public class Contact {
         setName("");
         setLabel("");
         mPersonId = 0;
+	}
+	
+	private Contact(long contactId) {
+		setPhoneNumber("");
+        setName("");
+        setLabel("");
+        mPersonId = contactId;
 	}
 
     public synchronized Drawable getAvatar(Context context, Drawable defaultValue) {
@@ -107,6 +117,10 @@ public class Contact {
 
 	public void setName(String name) {
 		this.mName = name;
+	}
+	
+	public long getId() {
+		return this.mPersonId;
 	}
 
 	// STATIC STUFF
@@ -164,6 +178,67 @@ public class Contact {
         return entry;
     }
 
+	/**
+     * Queries the caller id info with the phone number.
+     * @return a Contact containing the caller id info corresponding to the number.
+     */
+    public static Contact getContact(Context context, String phoneNumber, long contactId) {
+        phoneNumber = UtilsSimIssues.formatPhoneNumber(phoneNumber);
+        
+        // check whether it is already in the cache
+    	for (Contact contact : mCacheContact)
+    		if (PhoneNumberUtils.compare(contact.getPhoneNumber(), phoneNumber))
+    			return contact;
+
+    	// if it's not, create a new one
+    	Contact entry = new Contact(phoneNumber);
+
+        // We need to include the phone number in the selection string itself rather then
+        // selection arguments, because SQLite needs to see the exact pattern of GLOB
+        // to generate the correct query plan
+        String selection = CALLER_ID_SELECTION.replace("+",
+                PhoneNumberUtils.toCallerIDMinMatch(phoneNumber));
+        Cursor cursor = context.getContentResolver().query(
+                PHONES_WITH_PRESENCE_URI,
+                CALLER_ID_PROJECTION,
+                selection,
+                new String[] { phoneNumber },
+                null);
+
+        if (cursor == null) {
+            return entry;
+        }
+
+    	boolean found = false;
+        try {
+            if (cursor.moveToFirst()) {
+            	do {
+	                synchronized (entry) {
+	                    entry.setLabel(cursor.getString(PHONE_LABEL_COLUMN));
+	                    entry.setName(cursor.getString(CONTACT_NAME_COLUMN));
+	                    entry.mPersonId = cursor.getLong(CONTACT_ID_COLUMN);
+	                }
+	
+                    if (entry.mPersonId == contactId) {
+                    	found = true;
+                    	byte[] data = loadAvatarData(context, entry);
+		                synchronized (entry) {
+		                    entry.mAvatarData = data;
+		                }
+                    }
+            	} while (cursor.moveToNext() && !found);
+            }
+        } finally {
+            cursor.close();
+        }
+
+        if (!found)
+        	return null;
+        
+    	mCacheContact.add(entry);
+        return entry;
+    }
+    
     /*
      * Load the avatar data from the cursor into memory.  Don't decode the data
      * until someone calls for it (see getAvatar).  Hang onto the raw data so that

@@ -3,9 +3,14 @@ package uk.ac.cam.db538.cryptosms.crypto;
 import uk.ac.cam.db538.crypto.AesCbc;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.Pki.PkiNotReadyException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 
 public final class EncryptionPki implements EncryptionInterface {
 	private EncryptionNone mEncryptionNone = null;
@@ -43,8 +48,8 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 */
 	@Override
-	public int getEncryptedLength(int length) {
-		return mEncryptionNone.getEncryptedLength(length);
+	public int getSymmetricEncryptedLength(int length) {
+		return mEncryptionNone.getSymmetricEncryptedLength(length);
 	}
 	
 	/**
@@ -53,8 +58,8 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @return
 	 */
 	@Override
-	public int getAlignedLength(int length) {
-		return mEncryptionNone.getAlignedLength(length);
+	public int getSymmetricAlignedLength(int length) {
+		return mEncryptionNone.getSymmetricAlignedLength(length);
 	}
 
 	/**
@@ -93,21 +98,21 @@ public final class EncryptionPki implements EncryptionInterface {
 	@Override
 	public byte[] encryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
 		// align data for MAC checking
-		data = LowLevel.wrapData(data, getAlignedLength(data.length));
+		data = LowLevel.wrapData(data, getSymmetricAlignedLength(data.length));
 		// generate everything
-		byte[] iv = generateRandomData(Encryption.IV_LENGTH);
+		byte[] iv = generateRandomData(Encryption.SYM_IV_LENGTH);
 		byte[] mac = getHash(data);
 		// encrypt
 		byte[] dataEncrypted = AesCbc.encrypt(data, iv, key, true, false);
 		
 		// save everything
-		byte[] result = new byte[dataEncrypted.length + Encryption.ENCRYPTION_OVERHEAD];
+		byte[] result = new byte[dataEncrypted.length + Encryption.SYM_OVERHEAD];
 		// MAC
-		System.arraycopy(mac, 0, result, 0, Encryption.MAC_LENGTH);
+		System.arraycopy(mac, 0, result, 0, Encryption.SYM_MAC_LENGTH);
 		// IV 
-		System.arraycopy(iv, 0, result, Encryption.MAC_LENGTH, Encryption.IV_LENGTH);
+		System.arraycopy(iv, 0, result, Encryption.SYM_MAC_LENGTH, Encryption.SYM_IV_LENGTH);
 		//data
-		System.arraycopy(dataEncrypted, 0, result, Encryption.ENCRYPTION_OVERHEAD, dataEncrypted.length);
+		System.arraycopy(dataEncrypted, 0, result, Encryption.SYM_OVERHEAD, dataEncrypted.length);
 		
 		return result;
 	}
@@ -147,9 +152,9 @@ public final class EncryptionPki implements EncryptionInterface {
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
 		// cut the file up
-		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
-		byte[] iv = LowLevel.cutData(data, Encryption.MAC_LENGTH, Encryption.IV_LENGTH);
-		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.ENCRYPTION_OVERHEAD, data.length - Encryption.ENCRYPTION_OVERHEAD);
+		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.SYM_MAC_LENGTH);
+		byte[] iv = LowLevel.cutData(data, Encryption.SYM_MAC_LENGTH, Encryption.SYM_IV_LENGTH);
+		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, data.length - Encryption.SYM_OVERHEAD);
 		
 		// decrypt
 		byte[] dataDecrypted = AesCbc.decrypt(dataEncrypted, iv, key, false);
@@ -158,12 +163,67 @@ public final class EncryptionPki implements EncryptionInterface {
 		
 		// compare MACs
 		boolean isCorrect = true;
-		for (int i = 0; i < Encryption.MAC_LENGTH; ++i)
+		for (int i = 0; i < Encryption.SYM_MAC_LENGTH; ++i)
 			isCorrect = isCorrect && macSaved[i] == macReal[i];
 		if (isCorrect)
 			return dataDecrypted;
 		else
 			throw new EncryptionException(new WrongKeyException());
+	}
+
+	@Override
+	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId, String contactKey) throws EncryptionException {
+		try {
+			return Pki.getPkiWrapper().encryptAsymmetric(dataPlain, contactId, contactKey);
+		} catch (TimeoutException e) {
+			throw new EncryptionException(e);
+		} catch (PKIErrorException e) {
+			throw new EncryptionException(e);
+		} catch (DeclinedException e) {
+			throw new EncryptionException(e);
+		} catch (NotConnectedException e) {
+			throw new EncryptionException(e);
+		}
+	}
+
+	@Override
+	public byte[] decryptAsymmetric(byte[] dataEncrypted, long contactId,
+			String contactKey) throws EncryptionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public byte[] sign(byte[] data) throws EncryptionException {
+		try {
+			byte[] signature = Pki.getPkiWrapper().sign(data);
+			if (signature.length != Encryption.ASYM_SIGNATURE_LENGTH)
+				throw new EncryptionException();
+				
+			byte[] signedData = new byte[data.length + Encryption.ASYM_SIGNATURE_LENGTH];
+			System.arraycopy(data, 0, signedData, 0, data.length);
+			System.arraycopy(signature, 0, signedData, data.length, Encryption.ASYM_SIGNATURE_LENGTH);
+			
+			return signedData;
+		} catch (TimeoutException e) {
+			throw new EncryptionException(e);
+		} catch (PKIErrorException e) {
+			throw new EncryptionException(e);
+		} catch (DeclinedException e) {
+			throw new EncryptionException(e);
+		} catch (NotConnectedException e) {
+			throw new EncryptionException(e);
+		}
+	}
+
+	@Override
+	public int getAsymmetricEncryptedLength(int length) {
+		return mEncryptionNone.getAsymmetricEncryptedLength(length);
+	}
+
+	@Override
+	public int getAsymmetricAlignedLength(int length) {
+		return mEncryptionNone.getAsymmetricAlignedLength(length);	
 	}
 
 //	public boolean testEncryption() throws EncryptionException {

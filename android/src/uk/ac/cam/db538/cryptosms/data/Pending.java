@@ -104,7 +104,7 @@ public class Pending {
 				throw new ProcessingException("Index of message part out of expected bounds");
 			}
 		}
-		dataEncrypted = LowLevel.cutData(dataEncrypted, 0, dataEncrypted.length - (dataEncrypted.length % Encryption.AES_BLOCK_LENGTH));
+		dataEncrypted = LowLevel.cutData(dataEncrypted, 0, dataEncrypted.length - (dataEncrypted.length % Encryption.SYM_BLOCK_LENGTH));
 		Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(dataEncrypted));
 		Log.d(MyApplication.APP_TAG, "Encrypted data length: " + dataEncrypted.length);
 		Log.d(MyApplication.APP_TAG, "Decryption key: " + LowLevel.toHex(keys.getSessionKey_In()));
@@ -171,7 +171,7 @@ public class Pending {
 					int totalBytes = TextMessage.getMessageDataLength(pendingFirst.getData());
 					int partCount = -1;
 					try {
-						partCount = TextMessage.computeNumberOfMessageParts(totalBytes);
+						partCount = TextMessage.getPartsCount(totalBytes);
 					} catch (MessageException e) {
 						throw new ProcessingException("Invalid data length");
 					}

@@ -19,7 +19,9 @@ public class State {
 	public static void addListener(StateChangeListener listener) {
 		mListeners.add(listener);
 		
-		if (Pki.isMissing())
+		if (isInFatalState())
+			listener.onFatalException(mFatalException);
+		else if (Pki.isMissing())
 			listener.onPkiMissing();
 		else if (Pki.isConnected()) {
 			listener.onConnect();

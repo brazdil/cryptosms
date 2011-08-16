@@ -8,14 +8,19 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.RadioButton;
-import android.widget.Toast;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 
 public class ActivityExchangeMethod extends ActivityAppState {
+	public static final String OPTION_CONTACT_ID = "CONTACT_ID";
+	public static final String OPTION_CONTACT_KEY = "CONTACT_KEY";
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
 	
 	private Contact mContact;
+	
+	private long mContactId;
+	private String mPhoneNumber;
+	private String mContactKey;
 	
 	@InjectView(R.id.via_text)
 	RadioButton mTextMessageRadioButton;
@@ -32,10 +37,20 @@ public class ActivityExchangeMethod extends ActivityAppState {
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        // set up the contact badge
-        mContact = Contact.getContact(this, getIntent().getExtras().getString(OPTION_PHONE_NUMBER));
-        UtilsContactBadge.setBadge(mContact, getMainView());
+        // set up the recipient
+        mContactId = getIntent().getExtras().getLong(OPTION_CONTACT_ID, -1L);
+        mPhoneNumber = getIntent().getExtras().getString(OPTION_PHONE_NUMBER);
+        mContactKey = getIntent().getExtras().getString(OPTION_CONTACT_KEY);
+        if (mContactId == -1L || mPhoneNumber == null || mContactKey == null)
+        	this.finish();
         
+        mContact = Contact.getContact(this, mPhoneNumber);
+        if (mContact == null || !mContact.existsInDatabase())
+        	this.finish();
+        
+        // set up the contact badge
+        UtilsContactBadge.setBadge(mContact, getMainView());
+
         // disable the Next button
         mNextButton.setEnabled(false);
         OnClickListener radioButtonListener = new OnClickListener() {
@@ -60,7 +75,9 @@ public class ActivityExchangeMethod extends ActivityAppState {
 			public void onClick(View v) {
 				if (mTextMessageRadioButton.isChecked()) {
 	    			Intent intent = new Intent(ActivityExchangeMethod.this, ActivityExchangeViaText.class);
-	    			intent.putExtra(ActivityExchangeViaText.OPTION_PHONE_NUMBER, mContact.getPhoneNumber());
+	    			intent.putExtra(ActivityExchangeViaText.OPTION_PHONE_NUMBER, mPhoneNumber);
+	    			intent.putExtra(ActivityExchangeViaText.OPTION_CONTACT_ID, mContactId);
+	    			intent.putExtra(ActivityExchangeViaText.OPTION_CONTACT_KEY, mContactKey);
 	    			startActivity(intent);
 				}
 			}

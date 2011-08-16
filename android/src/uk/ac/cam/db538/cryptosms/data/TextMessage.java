@@ -33,7 +33,7 @@ public class TextMessage extends Message {
 
 	// first part specific
 	private static final int LENGTH_FIRST_DATALENGTH = 2;
-	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.ENCRYPTION_OVERHEAD;
+	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.SYM_OVERHEAD;
 	
 	private static final int OFFSET_FIRST_DATALENGTH = OFFSET_ID + LENGTH_ID;
 	private static final int OFFSET_FIRST_ENCRYPTION = OFFSET_FIRST_DATALENGTH + LENGTH_FIRST_DATALENGTH;
@@ -49,11 +49,63 @@ public class TextMessage extends Message {
 	
 	public static final int LENGTH_PART_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGEBODY;
 
+	protected MessageData mStorage;
+    
 	public TextMessage(MessageData storage) {
-		super(storage);
+		super();
+		mStorage = storage;
 	}
 	
-	public CompressedText getText() throws StorageFileException, DataFormatException {
+    public MessageData getStorage() {
+    	return mStorage;
+    }
+    /**
+     * Returns the length of data stored in the storage file for this message
+     * @return
+     * @throws StorageFileException
+     */
+    public int getStoredDataLength() throws StorageFileException {
+    	int index = 0, length = 0;
+    	byte[] temp;
+    	try {
+			while ((temp = mStorage.getPartData(index++)) != null)
+				length += temp.length;
+    	} catch (IndexOutOfBoundsException e) {
+    		// ends this way
+    	}
+    	return length;
+    }
+	
+    /**
+     * Returns all the data stored in the storage file for this message
+     * @return
+     * @throws StorageFileException
+     */
+    public byte[] getStoredData() throws StorageFileException {
+    	int index = 0, length = 0;
+    	byte[] temp;
+    	ArrayList<byte[]> data = new ArrayList<byte[]>();
+    	
+    	try {
+			while ((temp = mStorage.getPartData(index++)) != null) {
+				length += temp.length;
+				data.add(temp);
+			}
+    	} catch (IndexOutOfBoundsException e) {
+    		// ends this way
+    	}
+		
+		temp = new byte[length];
+		index = 0;
+		for (byte[] part : data) {
+			System.arraycopy(part, 0, temp, index, part.length);
+			index += part.length;
+		}
+		
+		return temp;
+    }
+
+    public CompressedText getText() throws StorageFileException, DataFormatException {
 		return CompressedText.decode(
 			getStoredData(),
 			mStorage.getAscii() ? TextCharset.ASCII : TextCharset.UNICODE,
@@ -69,7 +121,7 @@ public class TextMessage extends Message {
 		int remains = data.length;
 		mStorage.setAscii(text.getCharset() == TextCharset.ASCII);
 		mStorage.setCompressed(text.isCompressed());
-		mStorage.setNumberOfParts(TextMessage.computeNumberOfMessageParts(text));
+		mStorage.setNumberOfParts(TextMessage.getPartsCount(text));
 		// save
 		while (remains > 0) {
 			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_MESSAGEBODY : LENGTH_PART_MESSAGEBODY);
@@ -102,12 +154,12 @@ public class TextMessage extends Message {
 		// get the data, add random data to fit the messages exactly and encrypt it
 		byte[] data = getStoredData();
 		Log.d(MyApplication.APP_TAG, "Text data: " + LowLevel.toHex(data));
-		int alignedLength = crypto.getAlignedLength(data.length);
+		int alignedLength = crypto.getSymmetricAlignedLength(data.length);
 		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
 		while (totalBytes <= alignedLength)
 			totalBytes += LENGTH_PART_MESSAGEBODY;
 
-		int alignedTotalBytes = totalBytes - (totalBytes % Encryption.AES_BLOCK_LENGTH);
+		int alignedTotalBytes = totalBytes - (totalBytes % Encryption.SYM_BLOCK_LENGTH);
 		data = LowLevel.wrapData(data, alignedTotalBytes);
 		Log.d(MyApplication.APP_TAG, "Aligned data: " + LowLevel.toHex(data));
 
@@ -162,8 +214,8 @@ public class TextMessage extends Message {
 	 * @throws StorageFileException 
 	 * @throws MessageException 
 	 */
-	public int computeNumberOfMessageParts() throws StorageFileException, DataFormatException, MessageException {
-		return computeNumberOfMessageParts(getText());
+	public int getPartsCount() throws StorageFileException, DataFormatException, MessageException {
+		return getPartsCount(getText());
 	}
 	
 	/**
@@ -174,8 +226,8 @@ public class TextMessage extends Message {
 	 * @throws StorageFileException 
 	 * @throws MessageException 
 	 */
-	public static int computeNumberOfMessageParts(CompressedText text) throws MessageException {
-		return computeNumberOfMessageParts(text.getData().length);
+	public static int getPartsCount(CompressedText text) throws MessageException {
+		return getPartsCount(text.getData().length);
 	}
 	
 	/**
@@ -186,8 +238,8 @@ public class TextMessage extends Message {
 	 * @throws StorageFileException 
 	 * @throws MessageException 
 	 */
-	public static int computeNumberOfMessageParts(int dataLength) throws MessageException {
-		dataLength = Encryption.getEncryption().getAlignedLength(dataLength);
+	public static int getPartsCount(int dataLength) throws MessageException {
+		dataLength = Encryption.getEncryption().getSymmetricAlignedLength(dataLength);
 		int count = 1; 
 		int remains = dataLength - LENGTH_FIRST_MESSAGEBODY;
 		while (remains > 0) {
@@ -204,7 +256,7 @@ public class TextMessage extends Message {
 	 * @param text
 	 * @return
 	 */
-	public static int remainingBytesInLastMessagePart(CompressedText text) {
+	public static int getRemainingBytes(CompressedText text) {
 		int length = text.getDataLength();
 		
 		int inThisMessage = length - LENGTH_FIRST_MESSAGEBODY;
@@ -212,107 +264,17 @@ public class TextMessage extends Message {
 			inThisMessage -= LENGTH_PART_MESSAGEBODY;
 		inThisMessage = -inThisMessage;
 
-		int untilEndOfBlock = (Encryption.AES_BLOCK_LENGTH - (length % Encryption.AES_BLOCK_LENGTH)) % Encryption.AES_BLOCK_LENGTH;
+		int untilEndOfBlock = (Encryption.SYM_BLOCK_LENGTH - (length % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
 		int remainsBytes = inThisMessage - untilEndOfBlock;
 		if (remainsBytes < 0)
 			remainsBytes += LENGTH_PART_MESSAGEBODY;
-		int remainsBlocks = remainsBytes / Encryption.AES_BLOCK_LENGTH;
+		int remainsBlocks = remainsBytes / Encryption.SYM_BLOCK_LENGTH;
 			
-		int remainsReal = (remainsBlocks * Encryption.AES_BLOCK_LENGTH) + untilEndOfBlock;
+		int remainsReal = (remainsBlocks * Encryption.SYM_BLOCK_LENGTH) + untilEndOfBlock;
 		
 		return remainsReal;
 	}
 
-	/**
-	 * Takes the byte arrays created by getBytes() method and sends 
-	 * them to the given phone number
-	 */
-	@Override
-	public void sendSMS(String phoneNumber, final Context context, final MessageSentListener listener)
-			throws StorageFileException, MessageException {
-		ArrayList<byte[]> dataSMS = getBytes();
-		final boolean[] sent = new boolean[dataSMS.size()];
-		final boolean[] notified = new boolean[dataSMS.size()];
-		final boolean[] error = new boolean[1];
-		error[0] = false;
-		for (int i = 0; i < dataSMS.size(); ++i)
-			sent[i] = notified[i] = false;
-
-		for (int i = 0; i < dataSMS.size(); ++i) {
-			final int index = i;
-			byte[] dataPart = dataSMS.get(i);
-			mStorage.setPartDelivered(i, false);
-			internalSmsSend(phoneNumber, dataPart, context,
-					new BroadcastReceiver() {
-						@Override
-						public void onReceive(Context context, Intent intent) {
-							Resources res = context.getResources();
-							
-							// SENT notification
-							notified[index] = true;
-							switch (getResultCode()) {
-							case Activity.RESULT_OK:
-								sent[index] = true;
-								boolean allSent = true;
-								for (boolean b : sent)
-									allSent = allSent && b;
-								if (allSent)
-									listener.onMessageSent();
-								break;
-							case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-								if (!error[0]) {
-									error[0] = true;
-									listener.onError(res.getString(R.string.error_sending_generic));
-								}
-								break;
-							case SmsManager.RESULT_ERROR_NO_SERVICE:
-								if (!error[0]) {
-									error[0] = true;
-									listener.onError(res.getString(R.string.error_sending_no_service));
-								}
-								break;
-							case SmsManager.RESULT_ERROR_NULL_PDU:
-								if (!error[0]) {
-									error[0] = true;
-									listener.onError(res.getString(R.string.error_sending_null_pdu));
-								}
-								break;
-							case SmsManager.RESULT_ERROR_RADIO_OFF:
-								if (!error[0]) {
-									error[0] = true;
-									listener.onError(res.getString(R.string.error_sending_radio_off));
-								}
-								break;
-							default: // ERROR
-								if (!error[0]) {
-									error[0] = true;
-									listener.onError(res.getString(R.string.error_sending_unknown));
-								}
-								break;
-							}
-
-							boolean allNotified = true, oneSent = false;
-							for (boolean b : notified)
-								allNotified = allNotified && b;
-							for (boolean b : sent)
-								oneSent = oneSent || b;
-							if (allNotified && oneSent) {
-								// it at least something was sent, increment the ID and session keys
-								SessionKeys keys;
-								try {
-									keys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
-									keys.incrementOut(1);
-									keys.saveToFile();
-								} catch (StorageFileException ex) {
-									State.fatalException(ex);
-									return;
-								}
-							}
-						}
-					});
-		}
-	}
-	
 	/**
 	 * Returns message ID for both first and following parts of text messages
 	 * @param data

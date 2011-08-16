@@ -136,7 +136,7 @@
 		            android:layout_weight="1.0"
 		            style="?android:attr/buttonStyle"
 		            android:nextFocusLeft="@+id/embedded_text_editor"
-		            android:text="@string/conversation_send"
+		            android:text="@string/send"
 		        />
 		
 		        <TextView
