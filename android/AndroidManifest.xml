@@ -32,7 +32,7 @@
 			android:name=".ui.ActivityExchangeMethod"
 			android:configChanges="orientation|keyboardHidden"/>
 		<activity 
-			android:name=".ui.TabContacts"
+			android:name=".ui.ActivityExchangeViaText"
 			android:configChanges="orientation|keyboardHidden"/>
 		<activity 
 			android:name=".ui.ActivityConversation"

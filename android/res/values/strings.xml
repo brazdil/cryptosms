@@ -504,6 +504,9 @@
     <string name="exchange_method_text_message">Text message</string>
     <string name="back">Back</string>
     <string name="next">Next</string>
+    <string name="exchange_text_details">The cryptographic keys will be sent via several text messages.</string>
+    <string name="exchange_text_warning">Warning: Standard text messaging rates apply</string>
+    <string name="exchange_text_count">Message count:</string>
 
 </resources>
 

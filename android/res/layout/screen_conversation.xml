@@ -19,7 +19,6 @@
 -->
 <LinearLayout 
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/screen_conversation"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@drawable/white_background"
@@ -27,7 +26,6 @@
 
 	<LinearLayout
 	    xmlns:android="http://schemas.android.com/apk/res/android"
-	    android:id="@+id/conversation_top_panel"
 	    android:background="#FF8F8F8F"
 	    android:orientation="horizontal"
 	    android:layout_width="fill_parent"
@@ -67,7 +65,7 @@
 	
 	    <ImageView
 	        android:layout_weight="0"
-	        android:id="@+id/conversation_icon"
+	        android:id="@+id/person_icon"
 	        android:layout_marginLeft="3dip"
 	        android:layout_marginRight="5dip"
 	        android:layout_gravity="center_vertical"
@@ -100,7 +98,6 @@
 		/>
 
 		<LinearLayout
-		    android:id="@+id/conversation_bottom_panel"
 		    android:orientation="horizontal"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
@@ -111,7 +108,7 @@
 		    android:background="@drawable/bottombar_landscape_565">
 		
 		    <EditText
-		        android:id="@+id/conversation_embedded_text_editor"
+		        android:id="@+id/text_editor"
 		        android:layout_width="0dip"
 		        android:layout_height="fill_parent"
 		        android:layout_weight="1.0"
@@ -127,13 +124,12 @@
 		    />
 		
 		    <LinearLayout
-		        android:id="@+id/conversation_button_with_counter"
 		        android:orientation="vertical"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content" >
 		
 		        <Button
-		            android:id="@+id/conversation_send_button"
+		            android:id="@+id/send"
 		            android:layout_marginLeft="5dip"
 		            android:layout_width="wrap_content"
 		            android:layout_height="wrap_content"
@@ -144,7 +140,7 @@
 		        />
 		
 		        <TextView
-		            android:id="@+id/conversation_text_counter"
+		            android:id="@+id/bytes_counter"
 		            android:layout_width="fill_parent"
 		            android:layout_height="wrap_content"
 		            android:gravity="center_horizontal|bottom"

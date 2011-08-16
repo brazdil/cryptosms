@@ -3,6 +3,8 @@ package uk.ac.cam.db538.cryptosms.ui;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import roboguice.inject.InjectView;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
@@ -51,13 +53,10 @@ public class ActivityLists extends ActivityAppState {
 	private static final String PARAMS_PHONE_NUMBER_PICKER_ID = "PARAMS_PHONE_NUMBER_PICKER_ID";
 	private static final String DIALOG_NO_PHONE_NUMBERS = "DIALOG_NO_PHONE_NUMBERS";
 
-	private TabHost mTabHost;
 	private LayoutInflater mInflater;
 	
-	private TabSpec mSpecRecent;
-	private ListView mListRecent;
-	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();
-	private ArrayAdapter<Conversation> mAdapterRecent;
+	@InjectView(R.id.tab_host)
+	private TabHost mTabHost;
 
 	private TabSpec mSpecContacts;
 	private ListView mListContacts;
@@ -65,15 +64,19 @@ public class ActivityLists extends ActivityAppState {
 	private ListItemContact mNewContactView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
 	
+	private TabSpec mSpecRecent;
+	private ListView mListRecent;
+	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();
+	private ArrayAdapter<Conversation> mAdapterRecent;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.screen_main);
+	    setContentView(R.layout.screen_lists);
 	    
 	    mInflater = getLayoutInflater();
 	    Resources res = getResources();
 	    
-	    mTabHost = (TabHost) findViewById(R.id.screen_main_tabhost);
 	    mTabHost.setup();
 	    
 	    // TAB OF CONTACTS
@@ -83,7 +86,7 @@ public class ActivityLists extends ActivityAppState {
 	                        	  	@Override
 									public View createTabContent(String tag) {
 	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Contacts list");
-	                        	  		mListContacts = (ListView) mInflater.inflate(R.layout.screen_main_listtab, mTabHost.getTabContentView(), false);
+	                        	  		mListContacts = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
 
 	                        	        // set appearance of list view
 	                        	        mListContacts.setFastScrollEnabled(true);
@@ -157,7 +160,7 @@ public class ActivityLists extends ActivityAppState {
 	                        	  	@Override
 									public View createTabContent(String tag) {
 	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Recent list");
-	                        	  		mListRecent = (ListView) mInflater.inflate(R.layout.screen_main_listtab, mTabHost.getTabContentView(), false);
+	                        	  		mListRecent = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
 	                        	        // set appearance of list view
 	                        		    mListRecent.setFastScrollEnabled(true);
 	                        	    	// create the adapter

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TabHost xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/screen_main_tabhost"
+    android:id="@+id/tab_host"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
     <LinearLayout

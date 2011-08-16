@@ -1,7 +1,6 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
 import roboguice.inject.InjectView;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -12,22 +11,20 @@ import android.widget.Toast;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 
-public class ActivityExchangeMethod extends ActivityAppState {
+public class ActivityExchangeViaText extends ActivityAppState {
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
 	
 	private Contact mContact;
 	
-	@InjectView(R.id.via_text)
-	RadioButton mTextMessageRadioButton;
 	@InjectView(R.id.back)
 	Button mBackButton;
-	@InjectView(R.id.next)
-	Button mNextButton;
+	@InjectView(R.id.send)
+	Button mSendButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_exchange_method);
+		setContentView(R.layout.screen_exchange_text_message);
 		
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
@@ -36,33 +33,18 @@ public class ActivityExchangeMethod extends ActivityAppState {
         mContact = Contact.getContact(this, getIntent().getExtras().getString(OPTION_PHONE_NUMBER));
         UtilsContactBadge.setBadge(mContact, getMainView());
         
-        // disable the Next button
-        mNextButton.setEnabled(false);
-        OnClickListener radioButtonListener = new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mNextButton.setEnabled(true);
-			}
-		};
-        mTextMessageRadioButton.setOnClickListener(radioButtonListener);
-        
         // back button
         mBackButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				ActivityExchangeMethod.this.onBackPressed();
+				ActivityExchangeViaText.this.onBackPressed();
 			}
 		});
 
-        // next button
-        mNextButton.setOnClickListener(new OnClickListener() {
+        // send button
+        mSendButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (mTextMessageRadioButton.isChecked()) {
-	    			Intent intent = new Intent(ActivityExchangeMethod.this, ActivityExchangeViaText.class);
-	    			intent.putExtra(ActivityExchangeViaText.OPTION_PHONE_NUMBER, mContact.getPhoneNumber());
-	    			startActivity(intent);
-				}
 			}
 		});
 	}

@@ -11,12 +11,20 @@
 		android:layout_height="wrap_content" 
 		android:text="@string/exchange_method_title" 
 		android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/title"/>
+	
+	<TextView 
+		android:layout_margin="5dp"
+		android:layout_width="fill_parent" 
+		android:layout_height="wrap_content" android:text="@string/exchange_text_details" android:id="@+id/details"/>
+	
+	<LinearLayout
+	  	xmlns:android="http://schemas.android.com/apk/res/android"
+	  	android:layout_margin="5dp"
+	  	android:layout_width="fill_parent"
+	  	android:layout_height="wrap_content" android:orientation="horizontal">
+		<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceMedium" android:id="@+id/sms_count_label" android:text="@string/exchange_text_count"></TextView>
+		<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceLarge" android:text="10" android:id="@+id/sms_count" android:layout_marginLeft="10dp"></TextView>
 		
-	<LinearLayout android:layout_width="fill_parent" android:layout_margin="5dp" android:orientation="vertical" android:layout_height="wrap_content">
-		<TextView android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/exchange_method_details" android:id="@+id/details" android:layout_margin="5dp"></TextView>
-		<RadioGroup android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">
-			<RadioButton android:layout_height="wrap_content" android:id="@+id/via_text" android:text="@string/exchange_method_text_message" android:layout_width="fill_parent"></RadioButton>
-		</RadioGroup>
 	</LinearLayout>
 
 	<LinearLayout
@@ -25,6 +33,8 @@
 	  android:gravity="bottom"
 	  android:layout_width="fill_parent"
 	  android:layout_height="fill_parent">
+	  
+		<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:textAppearance="?android:attr/textAppearanceSmall" android:id="@+id/warning" android:layout_margin="5dp" android:text="@string/exchange_text_warning" />
 	  
 		<LinearLayout
 		    xmlns:android="http://schemas.android.com/apk/res/android"
@@ -77,10 +87,9 @@
 				android:layout_width="wrap_content" android:id="@+id/back"/>
 				
 			<Button 
-				android:text="@string/next" 
 				android:layout_weight="1.0"
 				android:layout_height="fill_parent" 
-				android:layout_width="wrap_content" android:id="@+id/next"/>
+				android:layout_width="wrap_content" android:id="@+id/send" android:text="@string/conversation_send"/>
 	        
 	    </LinearLayout>
 	</LinearLayout>

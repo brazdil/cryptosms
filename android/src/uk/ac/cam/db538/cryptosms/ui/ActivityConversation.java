@@ -41,12 +41,12 @@ public class ActivityConversation extends ActivityAppState {
 	private Contact mContact;
 	private Conversation mConversation;
 	
-	@InjectView(R.id.conversation_send_button)
+	@InjectView(R.id.send)
     private Button mSendButton;
-	@InjectView(R.id.conversation_embedded_text_editor)
+	@InjectView(R.id.text_editor)
     private EditText mTextEditor;
-	@InjectView(R.id.conversation_text_counter)
-    private TextView mRemainsView;
+	@InjectView(R.id.bytes_counter)
+    private TextView mBytesCounterView;
     
 	private Context mContext = this;
     private boolean mErrorNoKeysShow;
@@ -89,12 +89,12 @@ public class ActivityConversation extends ActivityAppState {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
 				try {
-					mRemainsView.setText(TextMessage.remainingBytesInLastMessagePart(msg) + " (" + TextMessage.computeNumberOfMessageParts(msg) + ")");
+					mBytesCounterView.setText(TextMessage.remainingBytesInLastMessagePart(msg) + " (" + TextMessage.computeNumberOfMessageParts(msg) + ")");
 					mSendButton.setEnabled(true);
 				} catch (MessageException e) {
 					mSendButton.setEnabled(false);
 				}
-				mRemainsView.setVisibility(View.VISIBLE);
+				mBytesCounterView.setVisibility(View.VISIBLE);
 			}
 		});
 
