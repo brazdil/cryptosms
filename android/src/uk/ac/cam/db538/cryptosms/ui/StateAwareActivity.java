@@ -5,8 +5,6 @@ import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -19,7 +17,6 @@ public class StateAwareActivity extends Activity {
 	private ErrorOverlay mErrorOverlay;
 	private View mMainView;
 	private DialogManager mDialogManager = new DialogManager();
-	private Menu mOptionsMenu;
 	
 	// CONTENT STUFF
 	
@@ -114,7 +111,8 @@ public class StateAwareActivity extends Activity {
 	public void onPkiDisconnect() {
 		getErrorOverlay().modeDisconnected();
 		getErrorOverlay().show();
-		if (mOptionsMenu != null) mOptionsMenu.close();
+		this.closeContextMenu();
+		this.closeOptionsMenu();
 	}
 	
 	public void onPkiLogin() {
@@ -126,19 +124,22 @@ public class StateAwareActivity extends Activity {
 		getErrorOverlay().modeLogin();
 		getErrorOverlay().show();
         mDialogManager.saveState();
-        if (mOptionsMenu != null) mOptionsMenu.close();
+		this.closeContextMenu();
+		this.closeOptionsMenu();
 	}
 	
 	public void onPkiMissing() {
 		getErrorOverlay().modePkiMissing();
 		getErrorOverlay().show();
-		if (mOptionsMenu != null) mOptionsMenu.close();
+		this.closeContextMenu();
+		this.closeOptionsMenu();
 	}
 	
 	public void onFatalException(Exception ex) {
 		getErrorOverlay().modeFatalException(ex);
 		getErrorOverlay().show();
-		if (mOptionsMenu != null) mOptionsMenu.close();
+		this.closeContextMenu();
+		this.closeOptionsMenu();
 	}
 
 	// OVERRIDES
@@ -174,11 +175,8 @@ public class StateAwareActivity extends Activity {
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
-		mOptionsMenu = menu;
-		boolean loggedIn = Pki.isLoggedIn();
-		for (int i = 0; i < menu.size(); ++i)
-			menu.getItem(i).setVisible(loggedIn);
-		return super.onPrepareOptionsMenu(menu);
+		super.onPrepareOptionsMenu(menu);
+		return Pki.isLoggedIn();
 	}
 	
 	

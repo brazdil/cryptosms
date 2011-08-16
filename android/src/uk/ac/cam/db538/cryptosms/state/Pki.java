@@ -25,6 +25,9 @@ import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 public class Pki {
 	private static final String INTENT_PKI_LOGIN = "uk.ac.cam.dje38.pki.login";
 	private static final String INTENT_PKI_LOGOUT = "uk.ac.cam.dje38.pki.logout";
+	
+	private static final int TIMEOUT_DEFAULT = 60;
+	private static final int TIMEOUT_LOGIN_CHECK = 2;
 
 	private static PKIwrapper mPki = null;
 	private static Context mContext = null;
@@ -136,9 +139,15 @@ public class Pki {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				if (intent.getAction().equals(INTENT_PKI_LOGIN))
-					Pki.setLoggedIn(true);
-				else if (intent.getAction().equals(INTENT_PKI_LOGOUT))
+				if (intent.getAction().equals(INTENT_PKI_LOGIN)) {
+					try {
+						if (!Pki.isLoggedIn() && mPki.authorise())
+							Pki.setLoggedIn(true);
+					} catch (TimeoutException e) {
+					} catch (PKIErrorException e) {
+					} catch (NotConnectedException e) {
+					}
+				} else if (intent.getAction().equals(INTENT_PKI_LOGOUT))
 					Pki.setLoggedIn(false);
 			}
 		}, filterLogin);
