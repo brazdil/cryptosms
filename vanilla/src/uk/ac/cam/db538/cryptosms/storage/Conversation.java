@@ -9,10 +9,10 @@ import org.joda.time.format.DateTimeFormat;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.PhoneNumber;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 /**
  * 
@@ -150,7 +150,7 @@ public class Conversation implements Comparable<Conversation> {
 		synchronized (cacheConversation) {
 			cacheConversation.add(this);
 		}
-		notifyUpdate();
+		notifyChange();
 	}
 
 	// FUNCTIONS
@@ -327,7 +327,7 @@ public class Conversation implements Comparable<Conversation> {
 		synchronized (cacheConversation) {
 			cacheConversation.remove(this);
 		}
-		notifyUpdate();
+		notifyChange();
 		
 		// make this instance invalid
 		this.mEntryIndex = -1L;
@@ -461,7 +461,7 @@ public class Conversation implements Comparable<Conversation> {
 			conv.replaceSessionKeys(original, replacement);
 			conv = conv.getNextConversation();
 		}
-		notifyUpdate();
+		notifyChange();
 	}
 	
 	/**
@@ -576,19 +576,23 @@ public class Conversation implements Comparable<Conversation> {
 	
 	// LISTENERS
 	
-	private static ArrayList<ConversationUpdateListener> mGlobalListeners = new ArrayList<ConversationUpdateListener>();
+	private static ArrayList<ConversationsChangeListener> mGlobalListeners = new ArrayList<ConversationsChangeListener>();
 	
-	public static interface ConversationUpdateListener {
+	public static interface ConversationsChangeListener {
 		public void onUpdate();
 	}
 	
-	private static void notifyUpdate() {
-		for (ConversationUpdateListener listener: mGlobalListeners) 
+	private static void notifyChange() {
+		for (ConversationsChangeListener listener: mGlobalListeners) 
 			listener.onUpdate();
 	}
 	
-	public static void addUpdateListener(ConversationUpdateListener listener) {
+	public static void addListener(ConversationsChangeListener listener) {
 		mGlobalListeners.add(listener);
+	}
+	
+	public static void removeListener(ConversationsChangeListener listener) {
+		mGlobalListeners.remove(listener);
 	}
 
 	@Override

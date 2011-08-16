@@ -17,11 +17,11 @@ public class EncryptionNone implements EncryptionInterface {
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key)
 			throws EncryptionException {
-		byte[] dataDecrypted = LowLevel.cutData(data, Encryption.ENCRYPTION_OVERHEAD, data.length - Encryption.ENCRYPTION_OVERHEAD);
-		byte[] hashSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
+		byte[] dataDecrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, data.length - Encryption.SYM_OVERHEAD);
+		byte[] hashSaved = LowLevel.cutData(data, 0, Encryption.SYM_MAC_LENGTH);
 		byte[] hashReal = getHash(dataDecrypted);
 		
-		for (int i = 0; i < Encryption.MAC_LENGTH; ++i)
+		for (int i = 0; i < Encryption.SYM_MAC_LENGTH; ++i)
 			if (hashSaved[i] != hashReal[i])
 				throw new EncryptionException(new Exception(LowLevel.toHex(dataDecrypted)));
 		return dataDecrypted;
@@ -36,13 +36,13 @@ public class EncryptionNone implements EncryptionInterface {
 	@Override
 	public byte[] encryptSymmetric(byte[] data, byte[] key)
 			throws EncryptionException {
-		int alignedLength = Encryption.getEncryption().getAlignedLength(data.length);
-		byte[] buffer = new byte[alignedLength + Encryption.MAC_LENGTH + Encryption.IV_LENGTH];
+		int alignedLength = Encryption.getEncryption().getSymmetricAlignedLength(data.length);
+		byte[] buffer = new byte[alignedLength + Encryption.SYM_MAC_LENGTH + Encryption.SYM_IV_LENGTH];
 		data = LowLevel.wrapData(data, alignedLength);
-		System.arraycopy(getHash(data), 0, buffer, 0, Encryption.MAC_LENGTH);
-		for (int i = 0; i < Encryption.IV_LENGTH; ++i)
-			buffer[Encryption.MAC_LENGTH + i] = (byte) 0x49;
-		System.arraycopy(data, 0, buffer, Encryption.ENCRYPTION_OVERHEAD, alignedLength);
+		System.arraycopy(getHash(data), 0, buffer, 0, Encryption.SYM_MAC_LENGTH);
+		for (int i = 0; i < Encryption.SYM_IV_LENGTH; ++i)
+			buffer[Encryption.SYM_MAC_LENGTH + i] = (byte) 0x49;
+		System.arraycopy(data, 0, buffer, Encryption.SYM_OVERHEAD, alignedLength);
 		return buffer;
 	}
 
@@ -66,13 +66,13 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 
 	@Override
-	public int getAlignedLength(int length) {
-		return length + (Encryption.AES_BLOCK_LENGTH - (length % Encryption.AES_BLOCK_LENGTH)) % Encryption.AES_BLOCK_LENGTH;
+	public int getSymmetricAlignedLength(int length) {
+		return length + (Encryption.SYM_BLOCK_LENGTH - (length % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
 	}
 
 	@Override
-	public int getEncryptedLength(int length) {
-		return getAlignedLength(length) + Encryption.ENCRYPTION_OVERHEAD;
+	public int getSymmetricEncryptedLength(int length) {
+		return getSymmetricAlignedLength(length) + Encryption.SYM_OVERHEAD;
 	}
 
 	@Override
@@ -96,5 +96,35 @@ public class EncryptionNone implements EncryptionInterface {
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn)
 			throws EncryptionException {
 		return decryptSymmetric(data, null);
+	}
+
+	@Override
+	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId,
+			String contactKey) throws EncryptionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public byte[] decryptAsymmetric(byte[] dataEncrypted, long contactId,
+			String contactKey) throws EncryptionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public byte[] sign(byte[] dataEncrypted) throws EncryptionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getAsymmetricEncryptedLength(int length) {
+		return getAsymmetricAlignedLength(length);
+	}
+
+	@Override
+	public int getAsymmetricAlignedLength(int length) {
+		return length + (Encryption.ASYM_BLOCK_LENGTH - (length % Encryption.ASYM_BLOCK_LENGTH)) % Encryption.ASYM_BLOCK_LENGTH;
 	}
 }

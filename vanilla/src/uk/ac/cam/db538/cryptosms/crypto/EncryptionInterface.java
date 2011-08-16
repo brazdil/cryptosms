@@ -23,12 +23,18 @@ public interface EncryptionInterface {
 
 	public byte[] generateRandomData(int length);
 	public byte[] getHash(byte[] data);
-	public int getEncryptedLength(int length);
-	public int getAlignedLength(int length);
+	public int getSymmetricEncryptedLength(int length);
+	public int getSymmetricAlignedLength(int length);
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException;
 	public byte[] encryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException;
 	public byte[] encryptSymmetric(byte[] data, byte[] key) throws EncryptionException;
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException;
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException;
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException;
+	
+	public int getAsymmetricEncryptedLength(int length);
+	public int getAsymmetricAlignedLength(int length);
+	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId, String contactKey) throws EncryptionException;
+	public byte[] decryptAsymmetric(byte[] dataEncrypted, long contactId, String contactKey) throws EncryptionException;
+	public byte[] sign(byte[] data) throws EncryptionException;
 }

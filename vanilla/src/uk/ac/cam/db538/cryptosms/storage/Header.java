@@ -20,10 +20,10 @@ public class Header {
 	
 	// FILE FORMAT
 	private static final int LENGTH_PLAIN_HEADER = 4;
-	private static final int LENGTH_RANDOM_STUFF = Encryption.AES_BLOCK_LENGTH - LENGTH_PLAIN_HEADER; 	// for alignment
+	private static final int LENGTH_RANDOM_STUFF = Encryption.SYM_BLOCK_LENGTH - LENGTH_PLAIN_HEADER; 	// for alignment
 	private static final int OFFSET_ENCRYPTED_HEADER = LENGTH_PLAIN_HEADER + LENGTH_RANDOM_STUFF;  
 	private static final int LENGTH_ENCRYPTED_HEADER = Storage.ENCRYPTED_ENTRY_SIZE - OFFSET_ENCRYPTED_HEADER;
-	private static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.ENCRYPTION_OVERHEAD;
+	private static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.SYM_OVERHEAD;
 
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
 	private static final int OFFSET_FREEINDEX = OFFSET_CONVINDEX - 4;

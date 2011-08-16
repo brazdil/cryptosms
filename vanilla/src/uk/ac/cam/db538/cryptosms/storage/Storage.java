@@ -9,7 +9,7 @@ import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 public final class Storage {
 	static final int CHUNK_SIZE = 256;
 	static final int ALIGN_SIZE = 256 * 32; // 8KB
-	static final int ENCRYPTED_ENTRY_SIZE = CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD;
+	static final int ENCRYPTED_ENTRY_SIZE = CHUNK_SIZE - Encryption.SYM_OVERHEAD;
 	
 	// SINGLETON STUFF
 	

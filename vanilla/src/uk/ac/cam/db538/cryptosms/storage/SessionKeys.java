@@ -7,7 +7,7 @@ import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
-import uk.ac.cam.db538.cryptosms.utils.PhoneNumber;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 /**
  * 
@@ -20,7 +20,7 @@ public class SessionKeys {
 	// FILE FORMAT
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_SIMNUMBER = 32;
-	private static final int LENGTH_SESSIONKEY = Encryption.KEY_LENGTH;
+	private static final int LENGTH_SESSIONKEY = Encryption.SYM_KEY_LENGTH;
 	private static final int LENGTH_LASTID = 1;
 
 	private static final int OFFSET_FLAGS = 0;
@@ -38,59 +38,7 @@ public class SessionKeys {
 	
 	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;	
 	
-	public static class SimNumber {
-		private boolean mSerial;
-		private String mNumber;
-		
-		public SimNumber() {
-			setNumber("");
-			setSerial(false);
-		}
-		
-		public SimNumber(String number, boolean serial) {
-			setNumber(number);
-			setSerial(serial);
-		}
-		
-		public void setSerial(boolean serial) {
-			this.mSerial = serial;
-		}
-		
-		public boolean isSerial() {
-			return mSerial;
-		}
-		
-		public void setNumber(String number) {
-			this.mNumber = number;
-		}
-		
-		public String getNumber() {
-			return mNumber;
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			if (o == null)
-				return false;
-			
-			try {
-				SimNumber another = (SimNumber) o;
-				if (this.mSerial == another.mSerial) {
-					if (this.mSerial)
-						return (this.mNumber.compareTo(another.mNumber) == 0);
-					else
-						return PhoneNumber.compare(this.mNumber, another.mNumber);
-				}
-			} catch (Exception e) {
-			}
-			return false;
-		}
-		
-		@Override
-		public String toString() {
-			return mNumber;
-		}
-	}
+	
 	
 	// STATIC
 	
@@ -193,9 +141,9 @@ public class SessionKeys {
 			setKeysSent(false);
 			setKeysConfirmed(false);
 			setSimNumber(new SimNumber());
-			setSessionKey_Out(Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH));
+			setSessionKey_Out(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
 			setNextID_Out((byte) 0x00);
-			setSessionKey_In(Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH));
+			setSessionKey_In(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
 			setLastID_In((byte) 0x00);
 			setIndexParent(0L);
 			setIndexPrev(0L);
