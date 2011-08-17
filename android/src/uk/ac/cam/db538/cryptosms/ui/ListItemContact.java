@@ -82,59 +82,53 @@ public class ListItemContact extends RelativeLayout {
         mStatusView.setText(explain);
     }
 
-    public final void bind(Conversation conv) {
+    public final void bind(Conversation conv) throws StorageFileException {
     	setConversationHeader(conv);
     	
     	Context context = this.getContext();
     	Resources res = context.getResources();
 
-		try {
-			SessionKeys keys = StorageUtils.getSessionKeysForSim(conv);
-	    	if (keys != null) {
-	    		switch(keys.getStatus()) {
-	    		default:
-	    		case SENDING_KEYS:
-	    			mStatusView.setText(res.getString(R.string.item_contacts_sending_keys));
-	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_something));
-	    			break;
-	    		case SENDING_CONFIRMATION:
-	    			mStatusView.setText(res.getString(R.string.item_contacts_sending_confirmation));
-	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_something));
-	    			break;
-	    		case WAITING_FOR_REPLY:
-	    			mStatusView.setText(res.getString(R.string.item_contacts_waiting_for_reply));
-	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_waiting_for_reply));
-	    			break;
-	    		case KEYS_EXCHANGED:
-	    			mStatusView.setText(res.getString(R.string.item_contacts_keys_exchanged));
-	    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_keys_exchanged));
-	    			break;
-	    		}
-	    	}
-	    	else {
-	    		mStatusView.setText(res.getString(R.string.item_contacts_keys_error));
-	    		mIconView.setImageDrawable(context.getResources().getDrawable(R.drawable.item_contacts_keys_error));
-	    	}
-	    	
-	    	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
-	    	if (contact.getName().length() > 0)
-	    		mFromView.setText(contact.getName());
-	    	else
-	    		mFromView.setText(contact.getPhoneNumber());
-	        mIconView.setVisibility(VISIBLE);
+		SessionKeys keys = StorageUtils.getSessionKeysForSim(conv);
+    	if (keys != null) {
+    		switch(keys.getStatus()) {
+    		default:
+    		case SENDING_KEYS:
+    			mStatusView.setText(res.getString(R.string.item_contacts_sending_keys));
+    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_something));
+    			break;
+    		case SENDING_CONFIRMATION:
+    			mStatusView.setText(res.getString(R.string.item_contacts_sending_confirmation));
+    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_sending_something));
+    			break;
+    		case WAITING_FOR_REPLY:
+    			mStatusView.setText(res.getString(R.string.item_contacts_waiting_for_reply));
+    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_waiting_for_reply));
+    			break;
+    		case KEYS_EXCHANGED:
+    			mStatusView.setText(res.getString(R.string.item_contacts_keys_exchanged));
+    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_keys_exchanged));
+    			break;
+    		}
+    	}
+    	else {
+    		mStatusView.setText(res.getString(R.string.item_contacts_keys_error));
+    		mIconView.setImageDrawable(context.getResources().getDrawable(R.drawable.item_contacts_keys_error));
+    	}
+    	
+    	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
+    	if (contact.getName().length() > 0)
+    		mFromView.setText(contact.getName());
+    	else
+    		mFromView.setText(contact.getPhoneNumber());
+        mIconView.setVisibility(VISIBLE);
 
-	    	Drawable avatarDrawable = contact.getAvatar(context, MyApplication.getSingleton().getDefaultContactImage());
-            if (contact.existsInDatabase()) {
-                mAvatarView.assignContactUri(contact.getUri());
-            } else {
-                mAvatarView.assignContactFromPhone(conv.getPhoneNumber(), true);
-            }
-	        mAvatarView.setImageDrawable(avatarDrawable);
-	        mAvatarView.setVisibility(View.VISIBLE);
-	        
-		} catch (StorageFileException ex) {
-			State.fatalException(ex);
-			return;
-		}
-    }
+    	Drawable avatarDrawable = contact.getAvatar(context, MyApplication.getSingleton().getDefaultContactImage());
+        if (contact.existsInDatabase()) {
+            mAvatarView.assignContactUri(contact.getUri());
+        } else {
+            mAvatarView.assignContactFromPhone(conv.getPhoneNumber(), true);
+        }
+        mAvatarView.setImageDrawable(avatarDrawable);
+        mAvatarView.setVisibility(View.VISIBLE);
+	}
 }

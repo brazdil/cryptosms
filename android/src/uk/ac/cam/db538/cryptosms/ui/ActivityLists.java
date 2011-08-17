@@ -199,9 +199,13 @@ public class ActivityLists extends ActivityAppState {
 	                        						row = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
 	                        					else
 	                        						row = (ListItemContact) convertView;
-	                        				    
-	                        					row.bind(getItem(position));
-	                        					return row;
+	                        					
+	                        				    try {
+	                        				    	row.bind(getItem(position));
+	                        				    } catch (StorageFileException e) {
+	                        				    	State.fatalException(e);
+	                        				    }
+                        				    	return row;
 	                        				}
 	                        			};
 	                        			// prepare for context menus

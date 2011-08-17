@@ -96,12 +96,21 @@ public class ActivityExchangeViaText extends ActivityAppState {
         mSendButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-		    	getDialogManager().showDialog(DIALOG_SENDING, null);
-				
 				// generate session keys
-				final KeysMessage keysMessage = new KeysMessage(mContactId, mContactKey);
+				final KeysMessage keysMessage;
+				try {
+					keysMessage = new KeysMessage(mContactId, mContactKey);
+				} catch (StorageFileException e) {
+					State.fatalException(e);
+					return;
+				} catch (EncryptionException e) {
+					State.fatalException(e);
+					return;
+				}
 
-				// send the message
+		    	getDialogManager().showDialog(DIALOG_SENDING, null);
+
+		    	// send the message
 				try {
 					mCancelled = false;
 					keysMessage.sendSMS(mPhoneNumber, ActivityExchangeViaText.this, new MessageSendingListener() {

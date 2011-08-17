@@ -188,29 +188,25 @@ public class UtilsSimIssues {
 	/**
 	 * Lets the user transfer some of the existing keys to different SIM / phone number
 	 * @param context
+	 * @throws StorageFileException 
 	 */
-	public static void moveSessionKeys(Context context, DialogManager dialogManager) {
+	public static void moveSessionKeys(Context context, DialogManager dialogManager) throws StorageFileException {
 		//TODO: Nicer import!!!
 		// Let the user choose which contacts, etc...
 		SimNumber simNumber = SimCard.getSingleton().getPhoneNumber();
 		if (simNumber == null) // no SIM or Airplane mode
 			return;
 		
-		try {
-			ArrayList<SimNumber> phoneNumbers = Conversation.filterOutNumber(
-													Conversation.filterOnlyPhoneNumbers(
-			                                        	Conversation.getAllSimNumbersStored()
-			                                        ),
-			                                        simNumber
-			                                    );
-			if (phoneNumbers.size() > 0)
-				moveSessionKeys(dialogManager);
-			else
-				dialogManager.showDialog(DIALOG_NO_SESSION_KEYS, null);
-		} catch (StorageFileException ex) {
-			State.fatalException(ex);
-			return;
-		}
+		ArrayList<SimNumber> phoneNumbers = Conversation.filterOutNumber(
+												Conversation.filterOnlyPhoneNumbers(
+		                                        	Conversation.getAllSimNumbersStored()
+		                                        ),
+		                                        simNumber
+		                                    );
+		if (phoneNumbers.size() > 0)
+			moveSessionKeys(dialogManager);
+		else
+			dialogManager.showDialog(DIALOG_NO_SESSION_KEYS, null);
 	}
 	
 	public static void moveSessionKeys(DialogManager dialogManager) {

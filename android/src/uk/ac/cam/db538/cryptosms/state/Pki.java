@@ -17,6 +17,7 @@ import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.BadInputException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
@@ -329,6 +330,8 @@ public class Pki {
 				} catch (DeclinedException e) {
 					throw new PkiNotReadyException();
 				} catch (PKIErrorException e) {
+					throw new PkiNotReadyException();
+				} catch (BadInputException e) {
 					throw new PkiNotReadyException();
 				}
 			} else

@@ -150,17 +150,18 @@ public class ErrorOverlay extends RelativeLayout {
         });
 		mTopButton.setText(R.string.report);
 
-		mBottomButton.setOnClickListener(new OnClickListener(){
-			@Override
-			public void onClick(View v) {
-				// kill the app
-				System.runFinalizersOnExit(true);
-	            System.exit(0);			
-			}
-        });
-		mBottomButton.setText(R.string.quit);
+//		mBottomButton.setOnClickListener(new OnClickListener(){
+//			@Override
+//			public void onClick(View v) {
+//				// kill the app
+////				System.runFinalizersOnExit(true);
+////	            System.exit(0);			
+//				android.os.Process.killProcess(android.os.Process.myPid());
+//			}
+//        });
+//		mBottomButton.setText(R.string.quit);
 		
 		mTopButton.setVisibility(VISIBLE);
-		mBottomButton.setVisibility(VISIBLE);
+		mBottomButton.setVisibility(GONE);
 	}
 }

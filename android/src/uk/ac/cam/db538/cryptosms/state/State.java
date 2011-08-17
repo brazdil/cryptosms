@@ -56,11 +56,13 @@ public class State {
 	}
 
 	public static void notifyDisconnect() {
+		notifyLogout();
 		for (StateChangeListener listener : mListeners)
 			listener.onDisconnect();
 	}
 	
 	public static void notifyPkiMissing() {
+		notifyDisconnect();
 		for (StateChangeListener listener : mListeners)
 			listener.onPkiMissing();
 	}
@@ -73,6 +75,7 @@ public class State {
 	}
 	
 	public static void fatalException(Exception ex) {
+		notifyDisconnect();
 		mFatalException = ex;
 		for (StateChangeListener listener : mListeners)
 			listener.onFatalException(ex);

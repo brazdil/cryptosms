@@ -135,8 +135,9 @@ public class Pending {
 	 * @param context
 	 * @param database
 	 * @throws ProcessingException 
+	 * @throws StorageFileException 
 	 */
-	public static void processPending(Context context) throws ProcessingException {
+	public static void processPending(Context context) throws ProcessingException, StorageFileException {
 		DbPendingAdapter database = new DbPendingAdapter(context);
 		database.open();
 		ArrayList<Pending> listPending = database.getAllEntries();
@@ -158,13 +159,7 @@ public class Pending {
 				listPending.remove(pendingFirst);
 				
 				// do we have Session Keys for this person?
-				SessionKeys keys = null;
-				try {
-					keys = StorageUtils.getSessionKeysForSim(Conversation.getConversation(pendingFirst.getSender()));
-				} catch (StorageFileException ex) {
-					State.fatalException(ex);
-					return;
-				}
+				SessionKeys keys = StorageUtils.getSessionKeysForSim(Conversation.getConversation(pendingFirst.getSender()));
 				
 				if (keys != null) {
 					int ID = TextMessage.getMessageID(pendingFirst.getData());

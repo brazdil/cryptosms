@@ -33,7 +33,7 @@ public class KeysMessage extends Message {
 	private byte[] mKeyOut, mKeyIn;
 	private byte mId;
 	
-	public KeysMessage(long contactId, String contactKey) {
+	public KeysMessage(long contactId, String contactKey) throws StorageFileException, EncryptionException {
 		mKeyOut = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
 		mKeyIn = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
 		
@@ -42,23 +42,15 @@ public class KeysMessage extends Message {
 		System.arraycopy(mKeyOut, 0, data, 0, Encryption.SYM_KEY_LENGTH);
 		System.arraycopy(mKeyIn, 0, data, Encryption.SYM_KEY_LENGTH, Encryption.SYM_KEY_LENGTH);
 		
-		try {
-			// encrypt and sign
-			mDataEncryptedAndSigned = 
-				Encryption.getEncryption().sign(
-					Encryption.getEncryption().encryptAsymmetric(data, contactId, contactKey)
-				);
-			
-			// get an ID for this keys
-			mId = Header.getHeader().incrementKeyId();
-			Header.getHeader().saveToFile();
-		} catch (EncryptionException e) {
-			State.fatalException(e);
-			return;
-		} catch (StorageFileException e) {
-			State.fatalException(e);
-			return;
-		}
+		// encrypt and sign
+		mDataEncryptedAndSigned = 
+			Encryption.getEncryption().sign(
+				Encryption.getEncryption().encryptAsymmetric(data, contactId, contactKey)
+			);
+		
+		// get an ID for this keys
+		mId = Header.getHeader().incrementKeyId();
+		Header.getHeader().saveToFile();
 	}
 	
 	public byte[] getKeyOut() {

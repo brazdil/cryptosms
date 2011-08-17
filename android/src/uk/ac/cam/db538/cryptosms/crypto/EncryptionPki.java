@@ -3,10 +3,10 @@ package uk.ac.cam.db538.cryptosms.crypto;
 import uk.ac.cam.db538.crypto.AesCbc;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.Pki.PkiNotReadyException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.BadInputException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.DeclinedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
@@ -183,6 +183,8 @@ public final class EncryptionPki implements EncryptionInterface {
 			throw new EncryptionException(e);
 		} catch (NotConnectedException e) {
 			throw new EncryptionException(e);
+		} catch (BadInputException e) {
+			throw new EncryptionException(e);
 		}
 	}
 
@@ -212,6 +214,8 @@ public final class EncryptionPki implements EncryptionInterface {
 		} catch (DeclinedException e) {
 			throw new EncryptionException(e);
 		} catch (NotConnectedException e) {
+			throw new EncryptionException(e);
+		} catch (BadInputException e) {
 			throw new EncryptionException(e);
 		}
 	}

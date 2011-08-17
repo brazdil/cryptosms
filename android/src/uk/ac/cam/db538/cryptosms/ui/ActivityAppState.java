@@ -179,6 +179,10 @@ public class ActivityAppState extends RoboActivity {
 		super.onPrepareOptionsMenu(menu);
 		return Pki.isLoggedIn();
 	}
-	
-	
+
+	@Override
+	public void onBackPressed() {
+		if (Pki.isLoggedIn())
+			super.onBackPressed();
+	}
 }
