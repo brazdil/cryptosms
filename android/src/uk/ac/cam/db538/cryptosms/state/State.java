@@ -28,8 +28,10 @@ public class State {
 			if (Pki.isLoggedIn()) {
 				listener.onLogin();
 				listener.onSimState();
-			}
-		}
+			} else
+				listener.onLogout();
+		} else
+			listener.onDisconnect();
 	}
 	
 	public static void removeListener(StateChangeListener listener) {

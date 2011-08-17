@@ -297,7 +297,6 @@ public class ActivityLists extends ActivityAppState {
 			}
 		});
         UtilsSimIssues.prepareDialogs(getDialogManager(), this);
-        UtilsKeyExchange.prepareDialogs(getDialogManager(), this);
 	}
 	
 	private long mTempContactId;

@@ -4,20 +4,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.telephony.SmsManager;
 import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
-import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -27,10 +19,6 @@ import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.CompressedText.TextCharset;
 
 public class TextMessage extends Message {
-	// same for all parts
-	private static final int LENGTH_ID = 1;
-	private static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
-
 	// first part specific
 	private static final int LENGTH_FIRST_DATALENGTH = 2;
 	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.SYM_OVERHEAD;

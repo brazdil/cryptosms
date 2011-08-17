@@ -19,8 +19,11 @@ import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 
 public abstract class Message {
+	// same for all messages
 	protected static final int LENGTH_HEADER = 1;
 	protected static final int OFFSET_HEADER = 0;
+	protected static final int LENGTH_ID = 1;
+	protected static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
 
 	public static class MessageException extends Exception {
 		private static final long serialVersionUID = 4922446456153260918L;
