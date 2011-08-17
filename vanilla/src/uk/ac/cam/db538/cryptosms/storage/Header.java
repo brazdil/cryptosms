@@ -25,6 +25,7 @@ public class Header {
 	private static final int LENGTH_ENCRYPTED_HEADER = Storage.ENCRYPTED_ENTRY_SIZE - OFFSET_ENCRYPTED_HEADER;
 	private static final int LENGTH_ENCRYPTED_HEADER_WITH_OVERHEAD = LENGTH_ENCRYPTED_HEADER + Encryption.SYM_OVERHEAD;
 
+	private static final int OFFSET_KEYID = 0;
 	private static final int OFFSET_CONVINDEX = LENGTH_ENCRYPTED_HEADER - 4;
 	private static final int OFFSET_FREEINDEX = OFFSET_CONVINDEX - 4;
 	
@@ -61,6 +62,7 @@ public class Header {
 	}
 	
 	// INTERNAL FIELDS
+	private byte mKeyId;
 	private long mIndexEmpty;
 	private long mIndexConversations;
 	private int mVersion;
@@ -96,12 +98,14 @@ public class Header {
 			}
 			
 			// set fields
+			setKeyId(dataPlain[OFFSET_KEYID]);
 			setVersion(version);
 			setIndexEmpty(LowLevel.getUnsignedInt(dataPlain, OFFSET_FREEINDEX));
 			setIndexConversations(LowLevel.getUnsignedInt(dataPlain, OFFSET_CONVINDEX));
 		}
 		else {
 			// default values			
+			setKeyId((byte) 0);
 			setVersion(CURRENT_VERSION);
 			setIndexEmpty(0L);
 			setIndexConversations(0L);
@@ -116,7 +120,8 @@ public class Header {
 	 */
 	public void saveToFile() throws StorageFileException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
-		headerBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_ENCRYPTED_HEADER - 8));
+		headerBuffer.put(getKeyId());
+		headerBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_ENCRYPTED_HEADER - 9));
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexEmpty())); 
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexConversations()));
 		
@@ -226,5 +231,17 @@ public class Header {
 			throw new IndexOutOfBoundsException();
 		
 		mVersion = version;
+	}
+
+	byte getKeyId() {
+		return mKeyId;
+	}
+
+	void setKeyId(byte keyId) {
+		mKeyId = keyId;
+	}
+
+	public byte incrementKeyId() {
+		return mKeyId++;
 	}
 }

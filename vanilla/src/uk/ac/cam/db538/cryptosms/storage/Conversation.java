@@ -61,6 +61,7 @@ public class Conversation implements Comparable<Conversation> {
 		// create a new one
 		Conversation conv = new Conversation(Empty.getEmptyIndex(), false);
 		Header.getHeader().attachConversation(conv);
+		notifyChange();
 		return conv;
 	}	
 	
@@ -150,7 +151,6 @@ public class Conversation implements Comparable<Conversation> {
 		synchronized (cacheConversation) {
 			cacheConversation.add(this);
 		}
-		notifyChange();
 	}
 
 	// FUNCTIONS
@@ -216,7 +216,8 @@ public class Conversation implements Comparable<Conversation> {
 	}
 
 	/**
-	 * Attach new SessionKeys object to the conversation.
+	 * Attaches new SessionKeys object to the conversation.
+	 * Deletes other SessionKeys already attached with the same simNumber. 
 	 * @param keys
 	 * @throws StorageFileException
 	 */
@@ -234,7 +235,7 @@ public class Conversation implements Comparable<Conversation> {
 		this.setIndexSessionKeys(keys.getEntryIndex());
 		this.saveToFile();
 	}
-
+	
 	/**
 	 * Attach new MessageData object to the conversation 
 	 * @param msg
@@ -411,6 +412,25 @@ public class Conversation implements Comparable<Conversation> {
 		}
 	}
 	
+	/**
+	 * Goes through all the SessionKeys assigned with the Conversation
+	 * and deletes those that match the simNumber in parameter,
+	 * Nothing happens if none are found.
+	 * @param simNumber
+	 * @throws StorageFileException
+	 */
+	public void deleteSessionKeys(SimNumber simNumber) throws StorageFileException {
+		SessionKeys temp, keys = getFirstSessionKeys();
+		while (keys != null) {
+			temp = keys.getNextSessionKeys();
+			if (keys.getSimNumber().equals(simNumber))
+				keys.delete();
+			keys = temp;
+		}
+		notifyChange();
+	}
+
+
 	public DateTime getTimeStamp() {
 		MessageData firstMessage = null;
 		try {
