@@ -7,7 +7,7 @@ import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
-import uk.ac.cam.db538.cryptosms.data.Message.MessageSentListener;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
@@ -119,7 +119,7 @@ public class ActivityConversation extends ActivityAppState {
 						final TextMessage msg = new TextMessage(MessageData.createMessageData(mConversation));
 						msg.setText(CompressedText.createFromString(mTextEditor.getText().toString()));
 						// send it
-						msg.sendSMS(mContact.getPhoneNumber(), ActivityConversation.this, new MessageSentListener() {
+						msg.sendSMS(mContact.getPhoneNumber(), ActivityConversation.this, new MessageSendingListener() {
 							@Override
 							public void onMessageSent() {
 								pd.cancel();

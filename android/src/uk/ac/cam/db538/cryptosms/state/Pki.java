@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
+import android.widget.Toast;
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
@@ -27,7 +29,7 @@ public class Pki {
 	private static final String INTENT_PKI_LOGOUT = "uk.ac.cam.dje38.pki.logout";
 	
 	private static final int TIMEOUT_DEFAULT = 60;
-	private static final int TIMEOUT_LOGIN_CHECK = 2;
+	private static final int TIMEOUT_LOGIN_CHECK = 4;
 
 	private static PKIwrapper mPki = null;
 	private static Context mContext = null;
@@ -146,6 +148,7 @@ public class Pki {
 							Pki.setLoggedIn(true);
 					} catch (TimeoutException e) {
 						Log.d(MyApplication.APP_TAG, "Timeout");
+						Toast.makeText(context, context.getResources().getString(R.string.timeout), Toast.LENGTH_SHORT).show();
 					} catch (PKIErrorException e) {
 						Log.d(MyApplication.APP_TAG, "Error");
 					} catch (NotConnectedException e) {

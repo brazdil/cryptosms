@@ -507,6 +507,12 @@
     <string name="exchange_text_details">The cryptographic keys will be sent via several text messages.</string>
     <string name="exchange_text_warning">Warning: Standard text messaging rates apply</string>
     <string name="exchange_text_count">Message count:</string>
+    <string name="reset_encryption">Reset encryption</string>
+    <string name="invalidate_encryption">Invalidate encryption</string>
+    <string name="delete_conversation">Delete conversation</string>
+    <string name="timeout">Timeout</string>
+    <string name="invalidate_confirm">Do you really want to invalidate this encryption session?</string>
+    <string name="pki_key_picker_empty">There are not any public keys assigned to this person. Please use the Public Keys application to store them.</string>
 
 </resources>
 

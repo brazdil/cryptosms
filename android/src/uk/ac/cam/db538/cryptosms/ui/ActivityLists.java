@@ -23,12 +23,16 @@ import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,12 +41,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TabHost;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.TabHost.TabContentFactory;
 import android.widget.TabHost.TabSpec;
 
 public class ActivityLists extends ActivityAppState {
 	private static final int ACTIVITY_NEW_CONTACT = 1;
+	private static final int ACTIVITY_CHOOSE_KEY = 2;
 	
 	private static final String TAB_RECENT = "RECENT";
 	private static final String TAB_CONTACTS = "CONTACTS";
@@ -53,6 +59,8 @@ public class ActivityLists extends ActivityAppState {
 	private static final String PARAMS_PHONE_NUMBER_PICKER_ID = "PARAMS_PHONE_NUMBER_PICKER_ID";
 	private static final String PARAMS_PHONE_NUMBER_PICKER_KEY_NAME = "PARAMS_PHONE_NUMBER_PICKER_KEY_NAME";
 	private static final String DIALOG_NO_PHONE_NUMBERS = "DIALOG_NO_PHONE_NUMBERS";
+	private static final String DIALOG_CONFIRM_INVALIDATION = "DIALOG_CONFIRM_INVALIDATION";
+	private static final String PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER = "PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER";
 
 	private LayoutInflater mInflater;
 	
@@ -82,6 +90,52 @@ public class ActivityLists extends ActivityAppState {
 	    
 	    mTabHost.setup();
 	    
+	    // TAB OF RECENT CONVERSATIONS
+	    mSpecRecent = mTabHost.newTabSpec(TAB_RECENT)
+	                          .setIndicator(res.getString(R.string.tab_recent), res.getDrawable(R.drawable.tab_recent))
+	                          .setContent(new TabContentFactory() {
+	                        	  	@Override
+									public View createTabContent(String tag) {
+	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Recent list");
+	                        	  		mListRecent = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	        // set appearance of list view
+	                        		    mListRecent.setFastScrollEnabled(true);
+	                        	    	// create the adapter
+	                        	    	mAdapterRecent = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mRecent) {
+	                        	    		@Override
+	                        				public View getView(int position, View convertView, ViewGroup parent) {
+	                        					ListItemRecent row;
+
+	                        					if (convertView == null)
+	                        						row = (ListItemRecent) mInflater.inflate(R.layout.item_main_recent, mListRecent, false);
+	                        					else
+	                        						row = (ListItemRecent) convertView;
+	                        				    
+	                        					row.bind(getItem(position));
+	                        					return row;
+	                        				}
+	                        			};
+	                        			// specify what to do when clicked on items
+	                        			mListRecent.setOnItemClickListener(new OnItemClickListener() {
+	                        				@Override
+	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
+	                        					ListItemRecent item = (ListItemRecent) view;
+	                        					Conversation conv;
+	                        		    		if ((conv = item.getConversationHeader()) != null) {
+	                        			    		// clicked on a conversation
+	                        	    				startConversation(conv);
+	                        		    		}
+	                        				}
+	                        			});
+	                        			// prepare for context menus
+	                        			ActivityLists.this.registerForContextMenu(mListRecent);
+	                        			return mListRecent;
+									}
+	                          });
+	    mTabHost.addTab(mSpecRecent);
+	    // force it to inflate the UI
+	    mTabHost.setCurrentTabByTag(TAB_RECENT);
+
 	    // TAB OF CONTACTS
 	    mSpecContacts = mTabHost.newTabSpec(TAB_CONTACTS)
 	                          	.setIndicator(res.getString(R.string.tab_contacts), res.getDrawable(R.drawable.tab_contacts))
@@ -150,55 +204,18 @@ public class ActivityLists extends ActivityAppState {
 	                        					return row;
 	                        				}
 	                        			};
+	                        			// prepare for context menus
+	                        			ActivityLists.this.registerForContextMenu(mListContacts);
 	                        			return mListContacts;
 									}
 	                          	});
 	    mTabHost.addTab(mSpecContacts);
+	    // force it to inflate the UI
 	    mTabHost.setCurrentTabByTag(TAB_CONTACTS);
 	    
-	    // TAB OF RECENT CONVERSATIONS
-	    mSpecRecent = mTabHost.newTabSpec(TAB_RECENT)
-	                          .setIndicator(res.getString(R.string.tab_recent), res.getDrawable(R.drawable.tab_recent))
-	                          .setContent(new TabContentFactory() {
-	                        	  	@Override
-									public View createTabContent(String tag) {
-	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Recent list");
-	                        	  		mListRecent = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
-	                        	        // set appearance of list view
-	                        		    mListRecent.setFastScrollEnabled(true);
-	                        	    	// create the adapter
-	                        	    	mAdapterRecent = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mRecent) {
-	                        	    		@Override
-	                        				public View getView(int position, View convertView, ViewGroup parent) {
-	                        					ListItemRecent row;
-
-	                        					if (convertView == null)
-	                        						row = (ListItemRecent) mInflater.inflate(R.layout.item_main_recent, mListRecent, false);
-	                        					else
-	                        						row = (ListItemRecent) convertView;
-	                        				    
-	                        					row.bind(getItem(position));
-	                        					return row;
-	                        				}
-	                        			};
-	                        			// specify what to do when clicked on items
-	                        			mListRecent.setOnItemClickListener(new OnItemClickListener() {
-	                        				@Override
-	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
-	                        					ListItemRecent item = (ListItemRecent) view;
-	                        					Conversation conv;
-	                        		    		if ((conv = item.getConversationHeader()) != null) {
-	                        			    		// clicked on a conversation
-	                        	    				startConversation(conv);
-	                        		    		}
-	                        				}
-	                        			});
-	                        			return mListRecent;
-									}
-	                          });
-	    mTabHost.addTab(mSpecRecent);
+	    // select the Recent tab
 	    mTabHost.setCurrentTabByTag(TAB_RECENT);
-
+	    
 	    // PREPARE DIALOGS
 		getDialogManager().addBuilder(new DialogBuilder() {
 			@Override
@@ -223,7 +240,7 @@ public class ActivityLists extends ActivityAppState {
 				    	   @Override
 				    	   public void onClick(DialogInterface dialog, int item) {
 				    		   Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
-				    		   exchangeKeys(contactId, phoneNumber.getPhoneNumber(), keyName);
+				    		   startKeyExchange(contactId, phoneNumber.getPhoneNumber(), keyName);
 				    	   }
 				       })
 				       .create();
@@ -250,8 +267,41 @@ public class ActivityLists extends ActivityAppState {
 				return DIALOG_NO_PHONE_NUMBERS;
 			}
 		});
+		getDialogManager().addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				final String phoneNumber = params.getString(PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER);
+				
+				return new AlertDialog.Builder(ActivityLists.this)
+				       .setTitle(R.string.invalidate_encryption)
+				       .setMessage(R.string.invalidate_confirm)
+				       .setPositiveButton(R.string.yes, new OnClickListener() {
+							@Override
+							public void onClick(DialogInterface arg0, int arg1) {
+								try {
+									Conversation conv = Conversation.getConversation(phoneNumber);
+									conv.deleteSessionKeys(SimCard.getSingleton().getNumber());
+								} catch (StorageFileException e) {
+									State.fatalException(e);
+									return;
+								}
+							}
+				       })
+				       .setNegativeButton(R.string.no, new DummyOnClickListener())
+				       .create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_CONFIRM_INVALIDATION;
+			}
+		});
         UtilsSimIssues.prepareDialogs(getDialogManager(), this);
+        UtilsKeyExchange.prepareDialogs(getDialogManager(), this);
 	}
+	
+	private long mTempContactId;
+	private String mTempPhoneNumber;
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -272,7 +322,7 @@ public class ActivityLists extends ActivityAppState {
     					params.putLong(PARAMS_PHONE_NUMBER_PICKER_ID, contactId);
     					getDialogManager().showDialog(DIALOG_PHONE_NUMBER_PICKER, params);
     				} else if (phoneNumbers.size() == 1) {
-    					exchangeKeys(contactId, phoneNumbers.get(0).getPhoneNumber(), contactKey);
+    					startKeyExchange(contactId, phoneNumbers.get(0).getPhoneNumber(), contactKey);
     				} else {
     					// no phone numbers assigned to the contact
     					getDialogManager().showDialog(DIALOG_NO_PHONE_NUMBERS, null);
@@ -280,10 +330,68 @@ public class ActivityLists extends ActivityAppState {
     			}
     		}
     		break;
+    	case ACTIVITY_CHOOSE_KEY:
+    		if (resultCode == Activity.RESULT_OK) {
+    			String keyName = data.getStringExtra("result");
+				startKeyExchange(mTempContactId, mTempPhoneNumber, keyName);
+    		}
+    		break;
     	}
     }
 
     @Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+		if (v == mListContacts && info.id != -1) { 
+			MenuInflater inflater = getMenuInflater();
+			inflater.inflate(R.menu.lists_contacts_context, menu);	
+		} else if (v == mListRecent) {
+		}
+	}
+
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+//		try {
+			AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+			if (info.targetView instanceof ListItemContact && info.id != -1) {
+				Conversation conv = ((ListItemContact) info.targetView).getConversationHeader();
+				switch (item.getItemId()) {
+				case R.id.resend_keys:
+					Contact contact = Contact.getContact(this, conv.getPhoneNumber());
+					mTempContactId = contact.getId();
+					mTempPhoneNumber = contact.getPhoneNumber();
+					
+	    			// pick a key from PKI
+					Intent intent = new Intent(MyApplication.PKI_KEY_PICKER);
+			        intent.putExtra("contact", contact.getId());
+			        intent.putExtra("empty", this.getResources().getString(R.string.pki_key_picker_empty) );
+					try {
+						startActivityForResult(intent, ACTIVITY_CHOOSE_KEY);
+    				} catch(ActivityNotFoundException e) {
+    					Pki.disconnect();
+    					State.notifyPkiMissing();
+    				}
+					return true;
+				case R.id.invalidate:
+					Bundle params = new Bundle();
+					params.putString(PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER, conv.getPhoneNumber());
+					getDialogManager().showDialog(DIALOG_CONFIRM_INVALIDATION, params);
+					return true;
+				}
+			} else if (info.targetView instanceof ListItemRecent) {
+				switch (item.getItemId()) {
+				}
+			}
+			return super.onContextItemSelected(item);
+//		} catch (StorageFileException e) {
+//			State.fatalException(e);
+//			return true;
+//		}
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		
@@ -308,9 +416,8 @@ public class ActivityLists extends ActivityAppState {
 		UtilsSimIssues.handleSimIssues(this, getDialogManager());
 		
 		// check SIM availability
-		Log.d(MyApplication.APP_TAG, "Updating");
-		mConversationChangeListener.onUpdate();
 		if (SimCard.getSingleton().isNumberAvailable()) {
+			mConversationChangeListener.onUpdate();
 			mListContacts.setAdapter(mAdapterContacts);
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
 		} else {
@@ -352,7 +459,7 @@ public class ActivityLists extends ActivityAppState {
 		startActivity(intent);
 	}	
 	
-	private void exchangeKeys(long contactId, String phoneNumber, String keyName) {
+	private void startKeyExchange(long contactId, String phoneNumber, String keyName) {
 		Intent intent = new Intent(ActivityLists.this, ActivityExchangeMethod.class);
 		intent.putExtra(ActivityExchangeMethod.OPTION_CONTACT_ID, contactId);
 		intent.putExtra(ActivityExchangeMethod.OPTION_PHONE_NUMBER, phoneNumber);
@@ -368,6 +475,8 @@ public class ActivityLists extends ActivityAppState {
 				// update lists
 	    		mRecent.clear();
 				mContacts.clear();
+				
+				Log.d(MyApplication.APP_TAG, "Updating");
 				
 	    		Conversation conv = Header.getHeader().getFirstConversation();
 	    		while (conv != null) {

@@ -34,7 +34,7 @@ public abstract class Message {
 		}
 	}
 	
-	public static interface MessageSentListener {
+	public static interface MessageSendingListener {
 		public void onMessageSent();
 		public boolean onPartSent(int index);
 		public void onError(String message);
@@ -70,7 +70,7 @@ public abstract class Message {
 	 * Takes the byte arrays created by getBytes() method and sends 
 	 * them to the given phone number
 	 */
-	public void sendSMS(final String phoneNumber, Context context, final MessageSentListener listener)
+	public void sendSMS(final String phoneNumber, Context context, final MessageSendingListener listener)
 			throws StorageFileException, MessageException, EncryptionException {
 		final ArrayList<byte[]> dataSms = getBytes();
 		
