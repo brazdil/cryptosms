@@ -120,7 +120,7 @@ public class Header {
 	 */
 	public void saveToFile() throws StorageFileException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
-		headerBuffer.put(getKeyId());
+		headerBuffer.put(mKeyId);
 		headerBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_ENCRYPTED_HEADER - 9));
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexEmpty())); 
 		headerBuffer.put(LowLevel.getBytesUnsignedInt(this.getIndexConversations()));
@@ -233,12 +233,12 @@ public class Header {
 		mVersion = version;
 	}
 
-	byte getKeyId() {
-		return mKeyId;
+	int getKeyId() {
+		return LowLevel.getUnsignedByte(mKeyId);
 	}
 
-	void setKeyId(byte keyId) {
-		mKeyId = keyId;
+	void setKeyId(int keyId) {
+		mKeyId = LowLevel.getBytesUnsignedByte(keyId);
 	}
 
 	public byte incrementKeyId() {
