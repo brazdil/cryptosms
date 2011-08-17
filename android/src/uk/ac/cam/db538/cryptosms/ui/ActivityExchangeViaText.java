@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
 import roboguice.inject.InjectView;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -141,7 +142,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 								return;
 							}
 							// go back
-							ActivityExchangeViaText.this.startActivity(new Intent(ActivityExchangeViaText.this, ActivityLists.class));
+							Log.d(MyApplication.APP_TAG, "finishing");
+							ActivityExchangeViaText.this.setResult(Activity.RESULT_OK);
+							ActivityExchangeViaText.this.finish();
 						}
 						
 						@Override

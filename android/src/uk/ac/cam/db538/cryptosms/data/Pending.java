@@ -205,12 +205,4 @@ public class Pending {
 					
 		} while (found);
 	}
-	
-	/**
-	 * Remove messages that have been here for too long
-	 * @param database
-	 */
-	public static void clearPending(DbPendingAdapter database) {
-		// TODO: implement
-	}
 }

@@ -183,7 +183,6 @@ public class ActivityLists extends ActivityAppState {
 	                        						try {
 	                        							startActivityForResult(intent, ACTIVITY_NEW_CONTACT);
 	                        	    				} catch(ActivityNotFoundException e) {
-	                        	    					Pki.disconnect();
 	                        	    					State.notifyPkiMissing();
 	                        	    				}
 	                        		    		}
@@ -309,6 +308,7 @@ public class ActivityLists extends ActivityAppState {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
+
     	if (!Pki.isLoggedIn())
     		return;
     	
@@ -373,7 +373,6 @@ public class ActivityLists extends ActivityAppState {
 					try {
 						startActivityForResult(intent, ACTIVITY_CHOOSE_KEY);
     				} catch(ActivityNotFoundException e) {
-    					Pki.disconnect();
     					State.notifyPkiMissing();
     				}
 					return true;

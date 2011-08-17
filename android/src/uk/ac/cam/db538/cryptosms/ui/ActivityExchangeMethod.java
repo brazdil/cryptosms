@@ -1,6 +1,9 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import java.util.ArrayList;
+
 import roboguice.inject.InjectView;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -10,11 +13,14 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.state.Pki;
 
 public class ActivityExchangeMethod extends ActivityAppState {
 	public static final String OPTION_CONTACT_ID = "CONTACT_ID";
 	public static final String OPTION_CONTACT_KEY = "CONTACT_KEY";
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
+	
+	private static final int ACTIVITY_TEXT_MESSAGE = 1;
 	
 	private Contact mContact;
 	
@@ -78,10 +84,24 @@ public class ActivityExchangeMethod extends ActivityAppState {
 	    			intent.putExtra(ActivityExchangeViaText.OPTION_PHONE_NUMBER, mPhoneNumber);
 	    			intent.putExtra(ActivityExchangeViaText.OPTION_CONTACT_ID, mContactId);
 	    			intent.putExtra(ActivityExchangeViaText.OPTION_CONTACT_KEY, mContactKey);
-	    			startActivity(intent);
+	    			startActivityForResult(intent, ACTIVITY_TEXT_MESSAGE);
 				}
 			}
 		});
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+    	if (!Pki.isLoggedIn())
+    		return;
+	
+    	switch (requestCode) {
+    	case ACTIVITY_TEXT_MESSAGE:
+    		if (resultCode == Activity.RESULT_OK) 
+    			this.finish();
+    		break;
+    	}
 	}
 	
 }
