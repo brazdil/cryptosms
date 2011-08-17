@@ -1,7 +1,5 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.util.ArrayList;
-
 import roboguice.inject.InjectView;
 import android.app.Activity;
 import android.content.Intent;

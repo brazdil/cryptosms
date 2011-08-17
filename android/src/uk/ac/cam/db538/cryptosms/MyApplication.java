@@ -1,9 +1,6 @@
 package uk.ac.cam.db538.cryptosms;
 
 import java.io.File;
-import java.util.List;
-
-import com.google.inject.Module;
 
 import roboguice.application.RoboApplication;
 
@@ -12,7 +9,6 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
-import android.app.Application;
 import android.app.Notification;
 import android.content.Context;
 import android.content.res.Resources;
