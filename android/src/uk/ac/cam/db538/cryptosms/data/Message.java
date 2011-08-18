@@ -16,6 +16,7 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public abstract class Message {
 	// same for all messages
@@ -23,6 +24,8 @@ public abstract class Message {
 	protected static final int OFFSET_HEADER = 0;
 	protected static final int LENGTH_ID = 1;
 	protected static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
+	protected static final int LENGTH_PART_INDEX = 1;
+	protected static final int OFFSET_PART_INDEX = OFFSET_ID + LENGTH_ID;;
 
 	public static class MessageException extends Exception {
 		private static final long serialVersionUID = 4922446456153260918L;
@@ -137,4 +140,29 @@ public abstract class Message {
     	else
     		return MessageType.UNKNOWN;
     }
+
+	/**
+	 * Returns message ID for both first and following parts of text messages
+	 * @param data
+	 * @return
+	 */
+	public static int getMessageID(byte[] data) {
+		return LowLevel.getUnsignedByte(data[OFFSET_ID]);
+	}
+	
+	/**
+	 * Expects encrypted data of both first and non-first part of text message 
+	 * and returns its index
+	 * @param data
+	 * @return
+	 */
+	public static int getMessageIndex(byte[] data) {
+		switch (getMessageType(data)) {
+		case MESSAGE_FIRST:
+		case KEYS_FIRST:
+			return (short) 0;
+		default:
+			return LowLevel.getUnsignedByte(data[OFFSET_PART_INDEX]);
+		}
+	}
 }

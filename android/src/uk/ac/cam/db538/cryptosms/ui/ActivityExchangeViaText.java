@@ -73,12 +73,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
         	this.finish();
         
         // number of texts
-        try {
-			mSmsCountView.setText(Integer.toString(KeysMessage.getPartsCount()));
-		} catch (MessageException e) {
-			State.fatalException(e);
-			return;
-		}
+		mSmsCountView.setText(Integer.toString(KeysMessage.getPartsCount()));
         
         // set up the contact badge
         UtilsContactBadge.setBadge(mContact, getMainView());
@@ -189,11 +184,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 				pd.setCancelable(false);
 				pd.setMessage(res.getString(R.string.sending));
 				pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				try {
-					pd.setMax(KeysMessage.getPartsCount());
-				} catch (MessageException e) {
-					// should not happen, ever...
-				}
+				pd.setMax(KeysMessage.getPartsCount());
 				return pd;
 			}
 			

@@ -8,6 +8,9 @@ import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
+import uk.ac.cam.db538.cryptosms.data.PendingParser;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseData;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
@@ -54,6 +57,7 @@ public class ActivityLists extends ActivityAppState {
 	private static final String TAB_CONTACTS = "CONTACTS";
 
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
+	private static final int MENU_PROCESS_PENDING = MENU_MOVE_SESSIONS + 1;
 	
 	private static final String DIALOG_PHONE_NUMBER_PICKER = "DIALOG_PHONE_NUMBER_PICKER";
 	private static final String PARAMS_PHONE_NUMBER_PICKER_ID = "PARAMS_PHONE_NUMBER_PICKER_ID";
@@ -323,6 +327,7 @@ public class ActivityLists extends ActivityAppState {
     				if (phoneNumbers.size() > 1) {
     					Bundle params = new Bundle();
     					params.putLong(PARAMS_PHONE_NUMBER_PICKER_ID, contactId);
+    					params.putString(PARAMS_PHONE_NUMBER_PICKER_KEY_NAME, contactKey);
     					getDialogManager().showDialog(DIALOG_PHONE_NUMBER_PICKER, params);
     				} else if (phoneNumbers.size() == 1) {
     					startKeyExchange(contactId, phoneNumbers.get(0).getPhoneNumber(), contactKey);
@@ -405,6 +410,20 @@ public class ActivityLists extends ActivityAppState {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
 				UtilsSimIssues.moveSessionKeys(getDialogManager());                                 
+				return true;
+			}
+		});
+		MenuItem menuProcessPending = menu.add(idGroup, MENU_PROCESS_PENDING, Menu.NONE, res.getString(R.string.menu_process_pending));
+		menuProcessPending.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+			@Override
+			public boolean onMenuItemClick(MenuItem item) {
+				DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
+				database.open();
+				try {
+					PendingParser.parsePending(database);
+				} finally {
+					database.close();
+				}
 				return true;
 			}
 		});

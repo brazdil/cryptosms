@@ -264,38 +264,6 @@ public class TextMessage extends Message {
 	}
 
 	/**
-	 * Returns message ID for both first and following parts of text messages
-	 * @param data
-	 * @return
-	 */
-	public static int getMessageID(byte[] data) {
-		return LowLevel.getUnsignedByte(data[OFFSET_ID]);
-	}
-	
-	/**
-	 * Expects encrypted data of the first part of text message 
-	 * and returns the data length stored in all the parts
-	 * @param data
-	 * @return
-	 */
-	public static int getMessageDataLength(byte[] data) {
-		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_DATALENGTH);
-	}
-
-	/**
-	 * Expects encrypted data of bot first and non-first part of text message 
-	 * and returns its index
-	 * @param data
-	 * @return
-	 */
-	public static int getMessageIndex(byte[] data) {
-		if (getMessageType(data) == MessageType.MESSAGE_FIRST)
-			return (short) 0;
-		else
-			return LowLevel.getUnsignedByte(data[OFFSET_PART_INDEX]);
-	}
-	
-	/**
 	 * Returns stored encrypted data for both first and following parts of text messages
 	 * @param data
 	 * @return
@@ -345,4 +313,15 @@ public class TextMessage extends Message {
 		}
 		return prev;
 	}
+
+	/**
+	 * Expects encrypted data of the first part of text message 
+	 * and returns the data length stored in all the parts
+	 * @param data
+	 * @return
+	 */
+	public static int getMessageDataLength(byte[] data) {
+		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_DATALENGTH);
+	}
+
 }

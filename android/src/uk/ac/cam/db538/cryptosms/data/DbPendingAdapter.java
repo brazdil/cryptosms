@@ -2,7 +2,10 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
 
+import org.joda.time.format.ISODateTimeFormat;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 import android.content.ContentValues;
@@ -29,6 +32,10 @@ public class DbPendingAdapter {
 	public static final int COLUMN_TIMESTAMP = 2;
 	public static final String KEY_DATA = "data"; 
 	public static final int COLUMN_DATA = 3;
+	public static final String KEY_TYPE = "type"; 
+	public static final int COLUMN_TYPE = 4;
+	public static final String KEY_MSG_ID = "msgId"; 
+	public static final int COLUMN_MSG_ID = 5;
   
   	// SQL Statement to create a new database
 	private static final String DATABASE_CREATE_TABLE = "create table " + 
@@ -36,7 +43,9 @@ public class DbPendingAdapter {
 		" integer primary key autoincrement, " +
 		KEY_SENDER + " text not null, " + 
 		KEY_TIMESTAMP + " datetime not null, " +
-		KEY_DATA + " blob not null);";
+		KEY_DATA + " blob not null, " +
+		KEY_TYPE + " integer, " +
+		KEY_MSG_ID + " integer );";
 
   	// Variable to hold the database instance
 	private SQLiteDatabase mDatabase;
@@ -62,8 +71,10 @@ public class DbPendingAdapter {
 	private ContentValues getValues(Pending pending) {
 		ContentValues values = new ContentValues();
 		values.put(KEY_SENDER, pending.getSender());
-		values.put(KEY_TIMESTAMP, pending.getTimeStamp().format3339(false));
+		values.put(KEY_TIMESTAMP, ISODateTimeFormat.dateTime().print(pending.getTimeStamp()));
 		values.put(KEY_DATA, pending.getData());
+		values.put(KEY_TYPE, pending.getType().ordinal());
+		values.put(KEY_MSG_ID, pending.getId());
 		Log.d(MyApplication.APP_TAG, "Putting into database: " + LowLevel.toHex(pending.getData()));
 		return values;
 	}
@@ -72,17 +83,22 @@ public class DbPendingAdapter {
 		ArrayList<Pending> list = new ArrayList<Pending>(); 
 		if (cursor.moveToFirst()) {
 			do {
-				Time time = new Time();
-				time.parse3339(cursor.getString(COLUMN_TIMESTAMP));
+				MessageType type = MessageType.UNKNOWN;
+				try {
+					type = MessageType.values()[cursor.getInt(COLUMN_TYPE)];
+				} catch (IndexOutOfBoundsException e) {
+				}
+				
 				Pending pending = new Pending(
 						cursor.getString(COLUMN_SENDER),
-						time,
-						cursor.getBlob(COLUMN_DATA)
+						ISODateTimeFormat.dateTimeParser().parseDateTime(cursor.getString(COLUMN_TIMESTAMP)),
+						cursor.getBlob(COLUMN_DATA),
+						type,
+						(byte) cursor.getInt(COLUMN_MSG_ID)
 					);
 				pending.setRowIndex(cursor.getLong(COLUMN_ID));
 				Log.d(MyApplication.APP_TAG, "Retrieving from database: " + LowLevel.toHex(pending.getData()));
 				list.add(pending);
-				
 			} while (cursor.moveToNext());
 		}
 		return list;
@@ -111,31 +127,34 @@ public class DbPendingAdapter {
 		else
 			return null;
 	}
-
-	public ArrayList<Pending> getEntry(String sender) {
+	
+	private ArrayList<Pending> getAllMatchingEntries(String where) {
 		Cursor cursor = mDatabase.query(DATABASE_TABLE, 
-				                        null,
-				                        KEY_SENDER + "='" + sender + "'",
-				                        null,
-				                        null,
-				                        null,
-				                        null);
+		                                null,
+		                                where,
+		                                null,
+		                                null,
+		                                null,
+		                                null);
 		ArrayList<Pending> result = getPending(cursor);
 		cursor.close();
 		return result;
 	}
 
 	public ArrayList<Pending> getAllEntries() {
-		Cursor cursor = mDatabase.query(DATABASE_TABLE, 
-				                        null,
-				                        null,
-				                        null,
-				                        null,
-				                        null,
-				                        null);
-		ArrayList<Pending> result = getPending(cursor);
-		cursor.close();
-		return result;
+		return getAllMatchingEntries(null);
+	}
+	
+	public ArrayList<Pending> getAllSenderEntries(String sender) {
+		return getAllMatchingEntries(KEY_SENDER + "='" + sender + "'");
+	}
+
+	public ArrayList<Pending> getAllFirstParts() {
+		return getAllMatchingEntries(KEY_TYPE + " IN ( " + MessageType.MESSAGE_FIRST.ordinal() + ", " + MessageType.KEYS_FIRST.ordinal() + ")");
+	}
+
+	public ArrayList<Pending> getAllParts(String sender, MessageType type, int id) {
+		return getAllMatchingEntries(KEY_SENDER + "='" + sender + "' AND " + KEY_TYPE + "=" + type.ordinal() + " AND " + KEY_MSG_ID + "=" + id);
 	}
 
 	public boolean updateEntry(Pending pending) {

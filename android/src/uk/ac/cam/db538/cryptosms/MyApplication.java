@@ -1,13 +1,16 @@
 package uk.ac.cam.db538.cryptosms;
 
 import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
 
 import roboguice.application.RoboApplication;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import android.app.Notification;
 import android.content.Context;
@@ -64,14 +67,24 @@ public class MyApplication extends RoboApplication {
 //		File file = new File(storageFile);
 //		if (file.exists())
 //			file.delete();
-		File file2 = new File(context.getFilesDir().getAbsolutePath() + "/../databases/pending.db");
-		if (file2.exists())
-			file2.delete();
+//		File file2 = new File(context.getFilesDir().getAbsolutePath() + "/../databases/pending.db");
+//		if (file2.exists())
+//			file2.delete();
 		
 		Storage.setFilename(storageFile);
 		
 		Pki.init(this.getApplicationContext());
 		SimCard.init(this.getApplicationContext());
+		
+		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+			@Override
+			public void uncaughtException(Thread thread, Throwable ex) {
+				if (ex instanceof WrongKeyDecryptionException) {
+					// TODO: do special notification in State
+					State.fatalException((WrongKeyDecryptionException) ex);
+				}
+			}
+		});
 	}
 	
 	public Notification getNotification() {

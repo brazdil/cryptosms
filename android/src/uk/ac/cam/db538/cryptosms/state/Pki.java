@@ -186,7 +186,7 @@ public class Pki {
 	public static void connect() {
 		try {
 			if (mPki != null) {
-				mPki.setTimeout(60);
+				mPki.setTimeout(TIMEOUT_DEFAULT);
 				mPki.connect(new ConnectionListener() {
 					
 					@Override
@@ -328,19 +328,9 @@ public class Pki {
 			} else
 				return mMasterKey;
 		} else if (isConnected() && forceLogIn) {
-			try {
-				if (mPki.authorise()) 
-					// no need to alter our own login information - broadcast will be sent by PKI
-					return getMasterKey(false, generateAllow);
-				else
-					throw new PkiNotReadyException();
-			} catch (TimeoutException e) {
-				throw new PkiNotReadyException();
-			} catch (PKIErrorException e) {
-				throw new PkiNotReadyException();
-			} catch (NotConnectedException e) {
-				throw new PkiNotReadyException();
-			}
+			Pki.login(true);
+			// no need to alter our own login information - broadcast will be sent by PKI
+			return getMasterKey(false, generateAllow);
 		} else
 			throw new PkiNotReadyException();
 	}

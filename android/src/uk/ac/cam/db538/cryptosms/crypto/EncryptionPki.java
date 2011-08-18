@@ -108,9 +108,9 @@ public final class EncryptionPki implements EncryptionInterface {
 		// save everything
 		byte[] result = new byte[dataEncrypted.length + Encryption.SYM_OVERHEAD];
 		// MAC
-		System.arraycopy(mac, 0, result, 0, Encryption.SYM_MAC_LENGTH);
+		System.arraycopy(mac, 0, result, 0, Encryption.MAC_LENGTH);
 		// IV 
-		System.arraycopy(iv, 0, result, Encryption.SYM_MAC_LENGTH, Encryption.SYM_IV_LENGTH);
+		System.arraycopy(iv, 0, result, Encryption.MAC_LENGTH, Encryption.SYM_IV_LENGTH);
 		//data
 		System.arraycopy(dataEncrypted, 0, result, Encryption.SYM_OVERHEAD, dataEncrypted.length);
 		
@@ -152,8 +152,8 @@ public final class EncryptionPki implements EncryptionInterface {
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
 		// cut the file up
-		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.SYM_MAC_LENGTH);
-		byte[] iv = LowLevel.cutData(data, Encryption.SYM_MAC_LENGTH, Encryption.SYM_IV_LENGTH);
+		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
+		byte[] iv = LowLevel.cutData(data, Encryption.MAC_LENGTH, Encryption.SYM_IV_LENGTH);
 		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, data.length - Encryption.SYM_OVERHEAD);
 		
 		// decrypt
@@ -162,19 +162,24 @@ public final class EncryptionPki implements EncryptionInterface {
 		byte[] macReal = getHash(dataDecrypted);
 		
 		// compare MACs
-		boolean isCorrect = true;
-		for (int i = 0; i < Encryption.SYM_MAC_LENGTH; ++i)
-			isCorrect = isCorrect && macSaved[i] == macReal[i];
-		if (isCorrect)
+		if (compareMACs(macSaved, macReal))
 			return dataDecrypted;
 		else
-			throw new EncryptionException(new WrongKeyException());
+			throw new WrongKeyDecryptionException();
 	}
 
 	@Override
 	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId, String contactKey) throws EncryptionException {
 		try {
-			return Pki.getPkiWrapper().encryptAsymmetric(dataPlain, contactId, contactKey);
+			// encrypt through PKI
+			byte[] dataEncrypted = Pki.getPkiWrapper().encryptAsymmetric(dataPlain, contactId, contactKey);
+			// allocate buffer for result
+			byte[] result = new byte[dataEncrypted.length + Encryption.ASYM_OVERHEAD];
+			// copy encrypted stuff across 
+			System.arraycopy(dataEncrypted, 0, result, 0, dataEncrypted.length);
+			// append a MAC
+			System.arraycopy(getHash(dataPlain), 0, result, dataEncrypted.length, Encryption.MAC_LENGTH);
+			return result;
 		} catch (TimeoutException e) {
 			throw new EncryptionException(e);
 		} catch (PKIErrorException e) {
@@ -187,12 +192,42 @@ public final class EncryptionPki implements EncryptionInterface {
 			throw new EncryptionException(e);
 		}
 	}
+	
+	private boolean compareMACs(byte[] saved, byte[] actual) {
+		// compare MACs
+		boolean isCorrect = true;
+		for (int i = 0; i < Encryption.MAC_LENGTH; ++i)
+			isCorrect = isCorrect && saved[i] == actual[i];
+		return isCorrect;
+	}
 
 	@Override
-	public byte[] decryptAsymmetric(byte[] dataEncrypted, long contactId,
-			String contactKey) throws EncryptionException {
-		// TODO Auto-generated method stub
-		return null;
+	public byte[] decryptAsymmetric(byte[] dataEncrypted) throws EncryptionException {
+		try {
+			int dataLength = dataEncrypted.length - Encryption.ASYM_OVERHEAD;
+			// cut the file up
+			byte[] data = LowLevel.cutData(dataEncrypted, 0, dataLength);
+			byte[] macSaved = LowLevel.cutData(dataEncrypted, dataLength, Encryption.MAC_LENGTH);
+			// decrypt
+			byte[] dataDecrypted = Pki.getPkiWrapper().decryptAsymmetric(data);
+			// generate new MAC
+			byte[] macReal = getHash(dataDecrypted);
+			
+			if (compareMACs(macSaved, macReal))
+				return dataDecrypted;
+			else
+				throw new WrongKeyDecryptionException();
+		} catch (TimeoutException e) {
+			throw new EncryptionException(e);
+		} catch (PKIErrorException e) {
+			throw new EncryptionException(e);
+		} catch (DeclinedException e) {
+			throw new EncryptionException(e);
+		} catch (NotConnectedException e) {
+			throw new EncryptionException(e);
+		} catch (BadInputException e) {
+			throw new EncryptionException(e);
+		}
 	}
 
 	@Override
@@ -218,6 +253,34 @@ public final class EncryptionPki implements EncryptionInterface {
 		} catch (BadInputException e) {
 			throw new EncryptionException(e);
 		}
+	}
+
+	@Override
+	public byte[] verify(byte[] signedData, long contactId)
+			throws EncryptionException {
+		int unsignedLength = signedData.length - Encryption.ASYM_SIGNATURE_LENGTH;
+		byte[] unsignedData = LowLevel.cutData(signedData, 0, unsignedLength);
+		byte[] signature = LowLevel.cutData(signedData, unsignedLength, Encryption.ASYM_SIGNATURE_LENGTH);
+		
+		boolean verified = false;
+		try {
+			verified = Pki.getPkiWrapper().verify(signature, unsignedData, contactId);
+		} catch (TimeoutException e) {
+			new EncryptionException(e);
+		} catch (PKIErrorException e) {
+			new EncryptionException(e);
+		} catch (DeclinedException e) {
+			new EncryptionException(e);
+		} catch (NotConnectedException e) {
+			new EncryptionException(e);
+		} catch (BadInputException e) {
+			new EncryptionException(e);
+		}
+		
+		if (verified)
+			return unsignedData;
+		else
+			throw new WrongKeyDecryptionException();
 	}
 
 	@Override

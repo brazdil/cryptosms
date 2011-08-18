@@ -28,6 +28,9 @@ public class DataSmsReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 	    Resources res = context.getResources();
 		
+		DbPendingAdapter database = new DbPendingAdapter(context);
+		database.open();
+
 		if (intent.getAction().equals(SMS_RECEIVED)) {
 			// check the port number
 			String[] uri = intent.getDataString().split(":");
@@ -42,8 +45,6 @@ public class DataSmsReceiver extends BroadcastReceiver {
 					for (int i = 0; i < pdus.length; ++i)
 						messages[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
 
-					DbPendingAdapter database = new DbPendingAdapter(context);
-					database.open();
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
@@ -71,9 +72,10 @@ public class DataSmsReceiver extends BroadcastReceiver {
 							notificationManager.notify(MyApplication.NOTIFICATION_ID, notification);
 						}
 					}
-					database.close();
 				}
 			}
 		}
+		
+		database.close();
 	}
 }

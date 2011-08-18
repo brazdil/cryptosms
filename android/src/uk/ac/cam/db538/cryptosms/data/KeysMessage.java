@@ -21,23 +21,27 @@ public class KeysMessage extends Message {
 	public static final int LENGTH_FIRST_DATA = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_DATA;
 	
 	// following parts specific
-	private static final int LENGTH_PART_INDEX = 1;
-	
-	private static final int OFFSET_PART_INDEX = OFFSET_ID + LENGTH_ID;;
 	private static final int OFFSET_PART_DATA = OFFSET_PART_INDEX + LENGTH_PART_INDEX;
 	
 	public static final int LENGTH_PART_DATA = MessageData.LENGTH_MESSAGE - OFFSET_PART_DATA;
 	
+	public static final int LENGTH_KEYS = 2 * Encryption.SYM_KEY_LENGTH;
+	
 	private byte[] mDataEncryptedAndSigned;
 	private byte[] mKeyOut, mKeyIn;
 	private byte mId;
+	
+	public KeysMessage(byte[] keyOut, byte[] keyIn) {
+		mKeyOut = keyOut;
+		mKeyIn = keyIn;
+	}
 	
 	public KeysMessage(long contactId, String contactKey) throws StorageFileException, EncryptionException {
 		mKeyOut = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
 		mKeyIn = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
 		
 		// generate a pair of keys 
-		byte[] data = new byte[2 * Encryption.SYM_KEY_LENGTH];
+		byte[] data = new byte[LENGTH_KEYS];
 		System.arraycopy(mKeyOut, 0, data, 0, Encryption.SYM_KEY_LENGTH);
 		System.arraycopy(mKeyIn, 0, data, Encryption.SYM_KEY_LENGTH, Encryption.SYM_KEY_LENGTH);
 		
@@ -78,7 +82,7 @@ public class KeysMessage extends Message {
 		Log.d(MyApplication.APP_TAG, "Keys data: " + LowLevel.toHex(mDataEncryptedAndSigned));
 		
 		// align to fit data messages exactly
-		int alignedLength = crypto.getAsymmetricAlignedLength(mDataEncryptedAndSigned.length);
+		int alignedLength = mDataEncryptedAndSigned.length;
 		int totalBytes = LENGTH_FIRST_DATA;
 		while (totalBytes <= alignedLength)
 			totalBytes += LENGTH_PART_DATA;
@@ -112,19 +116,20 @@ public class KeysMessage extends Message {
 		return list;
 	}
 	
+	public static int getEncryptedDataLength() {
+		int dataLength = LENGTH_KEYS;
+		dataLength = Encryption.getEncryption().getAsymmetricAlignedLength(dataLength);
+		dataLength += Encryption.MAC_LENGTH;
+		dataLength += Encryption.ASYM_SIGNATURE_LENGTH;
+		return dataLength;
+	}
+	
 	/**
 	 * Returns the number of messages necessary to send given number of bytes
 	 * @return
-	 * @throws DataFormatException 
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 * @throws MessageException 
 	 */
-	public static int getPartsCount() throws MessageException {
-		int dataLength = 2 * Encryption.SYM_KEY_LENGTH;
-		dataLength = Encryption.getEncryption().getAsymmetricAlignedLength(dataLength);
-		dataLength += Encryption.ASYM_SIGNATURE_LENGTH;
-		
+	public static int getPartsCount() {
+		int dataLength = getEncryptedDataLength();
 		int count = 1; 
 		int remains = dataLength - LENGTH_FIRST_DATA;
 		while (remains > 0) {
@@ -132,7 +137,7 @@ public class KeysMessage extends Message {
 			remains -= LENGTH_PART_DATA;
 		}
 		if (count > 255)
-			throw new MessageException("Message too long!");
+			return 255;
 		return count;
 	}
 	
@@ -168,13 +173,11 @@ public class KeysMessage extends Message {
 	 * @param index
 	 * @return
 	 */
-	public static int getExpectedDataLength(int totalDataLength, int index) {
-		int prev = 0, count = LENGTH_FIRST_DATA;
-		while (count < totalDataLength && index-- > 0) {
-			prev = count;
-			count += LENGTH_PART_DATA;
-		}
-		return totalDataLength - prev;
+	public static int getDataPartLength(int index) {
+		if (index == 0)
+			return LENGTH_FIRST_DATA;
+		else 
+			return LENGTH_PART_DATA;
 	}
 
 	/**
@@ -183,12 +186,14 @@ public class KeysMessage extends Message {
 	 * @param index
 	 * @return
 	 */
-	public static int getExpectedDataOffset(int totalDataLength, int index) {
-		int prev = 0, count = LENGTH_FIRST_DATA;
-		while (count < totalDataLength && index-- > 0) {
-			prev = count;
-			count += LENGTH_PART_DATA;
-		}
-		return prev;
+	public static int getDataPartOffset(int index) {
+		if (index == 0)
+			return 0;
+		else
+			return LENGTH_FIRST_DATA + (index - 1) * LENGTH_PART_DATA;
+	}
+
+	public static int getTotalDataLength() {
+		return getDataPartOffset(getPartsCount());
 	}
 }
