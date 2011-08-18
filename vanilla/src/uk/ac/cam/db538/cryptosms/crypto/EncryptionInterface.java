@@ -1,10 +1,10 @@
 package uk.ac.cam.db538.cryptosms.crypto;
 
 public interface EncryptionInterface {
-	public static class WrongKeyException extends Exception {
+	public static class WrongKeyDecryptionException extends RuntimeException {
 		private static final long serialVersionUID = 7462739153684558050L;
 		
-		public WrongKeyException() {
+		public WrongKeyDecryptionException() {
 			super("Wrong key exception");
 		}
 	}
@@ -35,6 +35,7 @@ public interface EncryptionInterface {
 	public int getAsymmetricEncryptedLength(int length);
 	public int getAsymmetricAlignedLength(int length);
 	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId, String contactKey) throws EncryptionException;
-	public byte[] decryptAsymmetric(byte[] dataEncrypted, long contactId, String contactKey) throws EncryptionException;
+	public byte[] decryptAsymmetric(byte[] dataEncrypted) throws EncryptionException;
 	public byte[] sign(byte[] data) throws EncryptionException;
+	public byte[] verify(byte[] data, long contactId) throws EncryptionException;
 }
