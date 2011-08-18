@@ -53,8 +53,9 @@ public class ActivityLists extends ActivityAppState {
 	private static final int ACTIVITY_NEW_CONTACT = 1;
 	private static final int ACTIVITY_CHOOSE_KEY = 2;
 	
-	private static final String TAB_RECENT = "RECENT";
+	private static final String TAB_CONVERSATIONS = "CONVERSATIONS";
 	private static final String TAB_CONTACTS = "CONTACTS";
+	private static final String TAB_EVENTS = "EVENTS";
 
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 	private static final int MENU_PROCESS_PENDING = MENU_MOVE_SESSIONS + 1;
@@ -71,17 +72,22 @@ public class ActivityLists extends ActivityAppState {
 	@InjectView(R.id.tab_host)
 	private TabHost mTabHost;
 
+	private TabSpec mSpecConversations;
+	private ListView mListConversations;
+	private ArrayList<Conversation> mConversations = new ArrayList<Conversation>();
+	private ArrayAdapter<Conversation> mAdapterConversations;
+
 	private TabSpec mSpecContacts;
 	private ListView mListContacts;
 	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();
 	private ListItemContact mNewContactView;
 	private ArrayAdapter<Conversation> mAdapterContacts;
 	
-	private TabSpec mSpecRecent;
-	private ListView mListRecent;
-	private ArrayList<Conversation> mRecent = new ArrayList<Conversation>();
-	private ArrayAdapter<Conversation> mAdapterRecent;
-
+	private TabSpec mSpecEvents;
+	private ListView mListEvents;
+	private ArrayList<PendingParseData> mEvents = new ArrayList<PendingParseData>();
+	private ArrayAdapter<PendingParseData> mAdapterEvents;
+	
 	// TODO: listen to contact name changes
 	
 	@Override
@@ -95,35 +101,34 @@ public class ActivityLists extends ActivityAppState {
 	    mTabHost.setup();
 	    
 	    // TAB OF RECENT CONVERSATIONS
-	    mSpecRecent = mTabHost.newTabSpec(TAB_RECENT)
-	                          .setIndicator(res.getString(R.string.tab_recent), res.getDrawable(R.drawable.tab_recent))
+	    mSpecConversations = mTabHost.newTabSpec(TAB_CONVERSATIONS)
+	                          .setIndicator(res.getString(R.string.tab_conversations), res.getDrawable(R.drawable.tab_recent))
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
-	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Recent list");
-	                        	  		mListRecent = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	  		mListConversations = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
 	                        	        // set appearance of list view
-	                        		    mListRecent.setFastScrollEnabled(true);
+	                        		    mListConversations.setFastScrollEnabled(true);
 	                        	    	// create the adapter
-	                        	    	mAdapterRecent = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mRecent) {
+	                        	    	mAdapterConversations = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mConversations) {
 	                        	    		@Override
 	                        				public View getView(int position, View convertView, ViewGroup parent) {
-	                        					ListItemRecent row;
+	                        					ListItemConversation row;
 
 	                        					if (convertView == null)
-	                        						row = (ListItemRecent) mInflater.inflate(R.layout.item_main_recent, mListRecent, false);
+	                        						row = (ListItemConversation) mInflater.inflate(R.layout.item_main_conversation, mListConversations, false);
 	                        					else
-	                        						row = (ListItemRecent) convertView;
+	                        						row = (ListItemConversation) convertView;
 	                        				    
 	                        					row.bind(getItem(position));
 	                        					return row;
 	                        				}
 	                        			};
 	                        			// specify what to do when clicked on items
-	                        			mListRecent.setOnItemClickListener(new OnItemClickListener() {
+	                        			mListConversations.setOnItemClickListener(new OnItemClickListener() {
 	                        				@Override
 	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
-	                        					ListItemRecent item = (ListItemRecent) view;
+	                        					ListItemConversation item = (ListItemConversation) view;
 	                        					Conversation conv;
 	                        		    		if ((conv = item.getConversationHeader()) != null) {
 	                        			    		// clicked on a conversation
@@ -132,13 +137,13 @@ public class ActivityLists extends ActivityAppState {
 	                        				}
 	                        			});
 	                        			// prepare for context menus
-	                        			ActivityLists.this.registerForContextMenu(mListRecent);
-	                        			return mListRecent;
+	                        			ActivityLists.this.registerForContextMenu(mListConversations);
+	                        			return mListConversations;
 									}
 	                          });
-	    mTabHost.addTab(mSpecRecent);
+	    mTabHost.addTab(mSpecConversations);
 	    // force it to inflate the UI
-	    mTabHost.setCurrentTabByTag(TAB_RECENT);
+	    mTabHost.setCurrentTabByTag(TAB_CONVERSATIONS);
 
 	    // TAB OF CONTACTS
 	    mSpecContacts = mTabHost.newTabSpec(TAB_CONTACTS)
@@ -146,7 +151,6 @@ public class ActivityLists extends ActivityAppState {
 	                          	.setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
-	                        	  		Log.d(MyApplication.APP_TAG, "Creating the Contacts list");
 	                        	  		mListContacts = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
 
 	                        	        // set appearance of list view
@@ -219,9 +223,48 @@ public class ActivityLists extends ActivityAppState {
 	    mTabHost.addTab(mSpecContacts);
 	    // force it to inflate the UI
 	    mTabHost.setCurrentTabByTag(TAB_CONTACTS);
+
+	    // TAB OF EVENTS
+	    mSpecEvents = mTabHost.newTabSpec(TAB_EVENTS)
+	                          .setIndicator(res.getString(R.string.tab_events))
+	                          .setContent(new TabContentFactory() {
+	                        	  	@Override
+									public View createTabContent(String tag) {
+	                        	  		mListEvents = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	        // set appearance of list view
+	                        		    mListEvents.setFastScrollEnabled(true);
+	                        	    	// create the adapter
+	                        	    	mAdapterEvents = new ArrayAdapter<PendingParseData>(ActivityLists.this, R.layout.item_main_contacts, mEvents) {
+	                        	    		@Override
+	                        				public View getView(int position, View convertView, ViewGroup parent) {
+	                        					ListItemEvent row;
+
+	                        					if (convertView == null)
+	                        						row = (ListItemEvent) mInflater.inflate(R.layout.item_main_event, mListEvents, false);
+	                        					else
+	                        						row = (ListItemEvent) convertView;
+	                        				    
+	                        					row.bind(getItem(position));
+	                        					return row;
+	                        				}
+	                        			};
+	                        			// specify what to do when clicked on items
+	                        			mListEvents.setOnItemClickListener(new OnItemClickListener() {
+	                        				@Override
+	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
+	                        				}
+	                        			});
+	                        			// prepare for context menus
+	                        			ActivityLists.this.registerForContextMenu(mListEvents);
+	                        			return mListEvents;
+									}
+	                          });
+	    mTabHost.addTab(mSpecEvents);
+	    // force it to inflate the UI
+	    mTabHost.setCurrentTabByTag(TAB_EVENTS);
 	    
 	    // select the Recent tab
-	    mTabHost.setCurrentTabByTag(TAB_RECENT);
+	    mTabHost.setCurrentTabByTag(TAB_CONVERSATIONS);
 	    
 	    // PREPARE DIALOGS
 		getDialogManager().addBuilder(new DialogBuilder() {
@@ -355,7 +398,7 @@ public class ActivityLists extends ActivityAppState {
 		if (v == mListContacts && info.id != -1) { 
 			MenuInflater inflater = getMenuInflater();
 			inflater.inflate(R.menu.lists_contacts_context, menu);	
-		} else if (v == mListRecent) {
+		} else if (v == mListConversations) {
 		}
 	}
 
@@ -387,7 +430,7 @@ public class ActivityLists extends ActivityAppState {
 					getDialogManager().showDialog(DIALOG_CONFIRM_INVALIDATION, params);
 					return true;
 				}
-			} else if (info.targetView instanceof ListItemRecent) {
+			} else if (info.targetView instanceof ListItemConversation) {
 				switch (item.getItemId()) {
 				}
 			}
@@ -417,13 +460,7 @@ public class ActivityLists extends ActivityAppState {
 		menuProcessPending.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
-				database.open();
-				try {
-					PendingParser.parsePending(database);
-				} finally {
-					database.close();
-				}
+				ActivityLists.this.onNewEvent();
 				return true;
 			}
 		});
@@ -445,21 +482,44 @@ public class ActivityLists extends ActivityAppState {
 			mListContacts.setAdapter(null);
 	        mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
 	    }
+		
+		onNewEvent();
 	}
 
 	@Override
 	public void onPkiLogin() {
 		super.onPkiLogin();
 		Log.d(MyApplication.APP_TAG, "Login");
-		mListRecent.setAdapter(mAdapterRecent);
+		mListConversations.setAdapter(mAdapterConversations);
 		mListContacts.setAdapter(mAdapterContacts);
 	}
 
 	@Override
 	public void onPkiLogout() {
 		super.onPkiLogout();
-		mListRecent.setAdapter(null);
+		mListConversations.setAdapter(null);
 		mListContacts.setAdapter(null);
+	}
+
+	@Override
+	public void onNewEvent() {
+		super.onNewEvent();
+		// check SIM card availability
+		if (SimCard.getSingleton().isNumberAvailable()) {
+			// parse pending stuff
+			DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
+			database.open();
+			try {
+				mEvents.clear();
+				PendingParser.parsePending(database, mEvents);
+			} finally {
+				database.close();
+			}
+			mAdapterEvents.notifyDataSetChanged();
+			mListEvents.setAdapter(mAdapterEvents);
+		} else {
+			mListEvents.setAdapter(null);
+	    }
 	}
 
 	@Override
@@ -478,7 +538,7 @@ public class ActivityLists extends ActivityAppState {
 		Intent intent = new Intent(ActivityLists.this, ActivityConversation.class);
 		intent.putExtra(ActivityConversation.OPTION_PHONE_NUMBER, conv.getPhoneNumber());
 		startActivity(intent);
-	}	
+	}
 	
 	private void startKeyExchange(long contactId, String phoneNumber, String keyName) {
 		Intent intent = new Intent(ActivityLists.this, ActivityExchangeMethod.class);
@@ -487,14 +547,14 @@ public class ActivityLists extends ActivityAppState {
 		intent.putExtra(ActivityExchangeMethod.OPTION_CONTACT_KEY, keyName);
 		startActivity(intent);
 	}
-
+	
 	private ConversationsChangeListener mConversationChangeListener = new ConversationsChangeListener() {
 		
 		@Override
 		public void onUpdate() {
 			try {
 				// update lists
-	    		mRecent.clear();
+	    		mConversations.clear();
 				mContacts.clear();
 				
 				Log.d(MyApplication.APP_TAG, "Updating");
@@ -502,16 +562,16 @@ public class ActivityLists extends ActivityAppState {
 	    		Conversation conv = Header.getHeader().getFirstConversation();
 	    		while (conv != null) {
 	    			if (conv.getFirstMessageData() != null)
-	    				mRecent.add(conv);
+	    				mConversations.add(conv);
 					if (StorageUtils.hasKeysForSim(conv))
 						mContacts.add(conv);
 	    			conv = conv.getNextConversation();
 	    		}
 
-	    		Collections.sort(mRecent, Collections.reverseOrder());
+	    		Collections.sort(mConversations, Collections.reverseOrder());
 	    		// TODO: sort the contacts by name
 	    		
-	    		mAdapterRecent.notifyDataSetChanged();
+	    		mAdapterConversations.notifyDataSetChanged();
 	    		mAdapterContacts.notifyDataSetChanged();
 			} catch (StorageFileException ex) {
 				State.fatalException(ex);

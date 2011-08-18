@@ -120,8 +120,10 @@ public class Pki {
 
 		@Override
 		public void onSimState() {
-			// TODO Auto-generated method stub
-			
+		}
+
+		@Override
+		public void onNewEvent() {
 		}
 	};
 	

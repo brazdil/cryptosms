@@ -98,6 +98,11 @@ public class ActivityAppState extends RoboActivity {
 		public void onConnect() {
 			ActivityAppState.this.onPkiConnect();
 		}
+
+		@Override
+		public void onNewEvent() {
+			ActivityAppState.this.onNewEvent();
+		}
 	};
 	
 	public void onSimState() {
@@ -133,6 +138,10 @@ public class ActivityAppState extends RoboActivity {
 		getErrorOverlay().show();
 		this.closeContextMenu();
 		this.closeOptionsMenu();
+	}
+
+	public void onNewEvent() {
+		
 	}
 	
 	public void onFatalException(Exception ex) {

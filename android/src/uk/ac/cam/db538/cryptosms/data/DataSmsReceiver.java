@@ -2,6 +2,7 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.ui.ActivityLists;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
@@ -70,6 +71,7 @@ public class DataSmsReceiver extends BroadcastReceiver {
 							notification.when = System.currentTimeMillis();
 							
 							notificationManager.notify(MyApplication.NOTIFICATION_ID, notification);
+							State.notifyNewEvent();
 						}
 					}
 				}

@@ -182,8 +182,7 @@ public class PendingParser {
 		return null;
 	}
 
-	public static ArrayList<PendingParseData> parsePending(DbPendingAdapter database) {
-		ArrayList<PendingParseData> result = new ArrayList<PendingParseData>();
+	public static void parsePending(DbPendingAdapter database, ArrayList<PendingParseData> result) {
 		// have the pending messages sorted into groups by their type and ID
 		ArrayList<ArrayList<Pending>> idGroups = getMatchingParts(database);
 		for(ArrayList<Pending> idGroup : idGroups) {
@@ -207,7 +206,6 @@ public class PendingParser {
 				}
 			}
 		}
-		return result;
 	}
 
 }

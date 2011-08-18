@@ -23,6 +23,7 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseData;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
@@ -38,11 +39,12 @@ import android.view.View;
 import android.widget.QuickContactBadge;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.RelativeLayout.LayoutParams;
 
 /**
  * This class manages the view for given conversation.
  */
-public class ListItemRecent extends RelativeLayout {
+public class ListItemEvent extends RelativeLayout {
     private TextView mSubjectView;
     private TextView mFromView;
     private TextView mDateView;
@@ -50,13 +52,13 @@ public class ListItemRecent extends RelativeLayout {
     private View mErrorIndicator;
     private QuickContactBadge mAvatarView;
 
-    private Conversation mConversationHeader;
+    private PendingParseData mParseData;
 
-    public ListItemRecent(Context context) {
+    public ListItemEvent(Context context) {
         super(context);
     }
 
-    public ListItemRecent(Context context, AttributeSet attrs) {
+    public ListItemEvent(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -64,20 +66,20 @@ public class ListItemRecent extends RelativeLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
 
-        mFromView = (TextView) findViewById(R.id.recent_from);
-        mSubjectView = (TextView) findViewById(R.id.recent_subject);
-        mDateView = (TextView) findViewById(R.id.recent_date);
-        mDeliveryPendingView = findViewById(R.id.recent_attachment);
-        mErrorIndicator = findViewById(R.id.recent_error);
-        mAvatarView = (QuickContactBadge) findViewById(R.id.recent_avatar);
+        mFromView = (TextView) findViewById(R.id.from);
+        mSubjectView = (TextView) findViewById(R.id.subject);
+        mDateView = (TextView) findViewById(R.id.date);
+        mDeliveryPendingView = findViewById(R.id.attachment);
+        mErrorIndicator = findViewById(R.id.error);
+        mAvatarView = (QuickContactBadge) findViewById(R.id.avatar);
     }
 
-    private void setConversationHeader(Conversation conv) {
-    	mConversationHeader = conv;
+    private void setParseData(PendingParseData parseData) {
+    	mParseData = parseData;
     }
 
-	public Conversation getConversationHeader() {
-    	return mConversationHeader;
+	public PendingParseData getParseData() {
+    	return mParseData;
     }
 
 /*    private CharSequence formatMessage(ConversationListItemData ch) {
@@ -138,46 +140,43 @@ public class ListItemRecent extends RelativeLayout {
 		return new String();
 	}
 
-
-    public final void bind(final Conversation conv) {
+    public final void bind(final PendingParseData parseData) {
     	Context context = this.getContext();
     	Resources res = context.getResources();
-        setConversationHeader(conv);
+        setParseData(parseData);
         
         boolean hasError = false; 
         boolean hasNoEncryption = false;
         
         setBackgroundDrawable(
-        	(conv.getMarkedUnread()) ?
-        		res.getDrawable(R.drawable.conversation_item_background_unread) :
-        		res.getDrawable(R.drawable.conversation_item_background_read)
+    		res.getDrawable(R.drawable.conversation_item_background_read)
         );
 
         LayoutParams attachmentLayout = (LayoutParams)mDeliveryPendingView.getLayoutParams();
         if (hasError) {
-            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.recent_error);
+            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.error);
         } else {
-            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.recent_date);
+            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.date);
         }
 
         LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
-        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasNoEncryption ? R.id.recent_attachment :
-            (hasError ? R.id.recent_error : R.id.recent_date));
+        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasNoEncryption ? R.id.attachment :
+            (hasError ? R.id.error : R.id.date));
 
         mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
 
-        mDeliveryPendingView.setVisibility(hasNoEncryption ? VISIBLE : GONE);
-        mDateView.setText(conv.getFormattedTime());
+//        mDeliveryPendingView.setVisibility(hasNoEncryption ? VISIBLE : GONE);
+//        mDateView.setText(conv.getFormattedTime());
 
-    	Contact contact = Contact.getContact(context, conv.getPhoneNumber());
+    	Contact contact = Contact.getContact(context, parseData.getIdGroup().get(0).getSender());
         mFromView.setText(contact.getName());
-        mSubjectView.setText(getPreview(conv));
+        mSubjectView.setText(parseData.getResult().name());
 
     	Drawable avatarDrawable = contact.getAvatar(context, MyApplication.getSingleton().getDefaultContactImage());
         if (contact.existsInDatabase()) {
             mAvatarView.assignContactUri(contact.getUri());
         } else {
-            mAvatarView.assignContactFromPhone(conv.getPhoneNumber(), true);
+            mAvatarView.assignContactFromPhone(contact.getPhoneNumber(), true);
         }
         mAvatarView.setImageDrawable(avatarDrawable);
         mAvatarView.setVisibility(View.VISIBLE);

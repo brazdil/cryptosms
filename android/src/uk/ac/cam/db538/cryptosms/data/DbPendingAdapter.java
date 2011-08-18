@@ -75,7 +75,6 @@ public class DbPendingAdapter {
 		values.put(KEY_DATA, pending.getData());
 		values.put(KEY_TYPE, pending.getType().ordinal());
 		values.put(KEY_MSG_ID, pending.getId());
-		Log.d(MyApplication.APP_TAG, "Putting into database: " + LowLevel.toHex(pending.getData()));
 		return values;
 	}
 	
@@ -97,7 +96,6 @@ public class DbPendingAdapter {
 						(byte) cursor.getInt(COLUMN_MSG_ID)
 					);
 				pending.setRowIndex(cursor.getLong(COLUMN_ID));
-				Log.d(MyApplication.APP_TAG, "Retrieving from database: " + LowLevel.toHex(pending.getData()));
 				list.add(pending);
 			} while (cursor.moveToNext());
 		}

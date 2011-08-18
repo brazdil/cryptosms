@@ -16,6 +16,7 @@ import android.app.Notification;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 public class MyApplication extends RoboApplication {
 	private static short SMS_PORT; 
@@ -75,16 +76,18 @@ public class MyApplication extends RoboApplication {
 		
 		Pki.init(this.getApplicationContext());
 		SimCard.init(this.getApplicationContext());
-		
-		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-			@Override
-			public void uncaughtException(Thread thread, Throwable ex) {
-				if (ex instanceof WrongKeyDecryptionException) {
-					// TODO: do special notification in State
-					State.fatalException((WrongKeyDecryptionException) ex);
-				}
-			}
-		});
+
+		// TODO: get this to work!!!
+//		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+//			@Override
+//			public void uncaughtException(Thread thread, Throwable ex) {
+//				if (ex instanceof WrongKeyDecryptionException) {
+//					// TODO: do special notification in State
+//					State.fatalException((WrongKeyDecryptionException) ex);
+//				} else
+//					System.exit(0);
+//			}
+//		});
 	}
 	
 	public Notification getNotification() {

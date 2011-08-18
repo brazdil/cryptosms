@@ -436,7 +436,7 @@
     <string name="item_contacts_waiting_for_reply">Waiting for confirmation...</string>
     <string name="item_contacts_keys_exchanged">Encryption active</string><string name="item_contacts_sending_confirmation">Accepting handshake...</string>
     <string name="item_contacts_keys_error">Error! Encryption data not found</string>
-    <string name="tab_recent">Recent</string>
+    <string name="tab_conversations">Conversations</string>
     <string name="tab_contacts">Contacts</string>
     <string name="tab_contacts_new_contact">New contact</string>
     <string name="tab_contacts_new_contact_details">Establish new secure connection</string>
@@ -514,6 +514,7 @@
     <string name="invalidate_confirm">Do you really want to invalidate this encryption session?</string>
     <string name="pki_key_picker_empty">There are not any public keys assigned to this person. Please use the Public Keys application to store them.</string>
     <string name="menu_process_pending">Process pending</string>
+    <string name="tab_events">Events</string>
 
 </resources>
 
