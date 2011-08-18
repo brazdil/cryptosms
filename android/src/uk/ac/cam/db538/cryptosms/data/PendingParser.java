@@ -27,12 +27,12 @@ public class PendingParser {
 	 * @author db538
 	 *
 	 */
-	public static class PendingParseData {
+	public static class Event {
 		private ArrayList<Pending> mIdGroup;
 		private PendingParseResult mResult;
 		private Message mMessage;
 		
-		PendingParseData(ArrayList<Pending> idGroup, PendingParseResult result, Message message) {
+		Event(ArrayList<Pending> idGroup, PendingParseResult result, Message message) {
 			mIdGroup = idGroup;
 			mResult = result;
 			mMessage = message;
@@ -82,20 +82,20 @@ public class PendingParser {
 		return result;
 	}
 	
-	private static PendingParseData parseKeysMessage(ArrayList<Pending> idGroup) {
+	private static Event parseKeysMessage(ArrayList<Pending> idGroup) {
 		// check the sender
 		Contact contact = Contact.getContact(MyApplication.getSingleton().getApplicationContext(), idGroup.get(0).getSender());
 		if (!contact.existsInDatabase())
-			return new PendingParseData(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
+			return new Event(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
 
 		// check we have all the parts
 		// there shouldn't be more than 6 of them
 		int groupSize = idGroup.size();
 		int expectedGroupSize = KeysMessage.getPartsCount(); 
 		if (groupSize < expectedGroupSize || groupSize <= 0)
-			return new PendingParseData(idGroup, PendingParseResult.MISSING_PARTS, null);
+			return new Event(idGroup, PendingParseResult.MISSING_PARTS, null);
 		else if (groupSize > expectedGroupSize)
-			return new PendingParseData(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
+			return new Event(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
 		
 		// get the data
 		byte[][] dataParts = new byte[groupSize][];
@@ -113,18 +113,18 @@ public class PendingParser {
 					// if it's not a first message, but it's got index 0
 					if (Message.getMessageType(dataPart) != MessageType.KEYS_FIRST && index == 0)
 						// sounds like rubbish to me
-						return new PendingParseData(idGroup, PendingParseResult.CORRUPTED_DATA, null);
+						return new Event(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 				} else
 					// more parts of the same index
-					return new PendingParseData(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
+					return new Event(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
 			} else
 				// index is bigger than the number of messages in ID group
 				// therefore some parts have to be missing or the data is corrupted
-				return new PendingParseData(idGroup, PendingParseResult.MISSING_PARTS, null);
+				return new Event(idGroup, PendingParseResult.MISSING_PARTS, null);
 		}
 		// the array was filled with data, so check that there aren't any missing
 		if (filledParts != expectedGroupSize)
-			return new PendingParseData(idGroup, PendingParseResult.MISSING_PARTS, null);
+			return new Event(idGroup, PendingParseResult.MISSING_PARTS, null);
 		
 		// lets put the data together
 		byte[] dataEncryptedSigned = new byte[KeysMessage.getTotalDataLength()];
@@ -136,7 +136,7 @@ public class PendingParser {
 				byte[] relevantData = KeysMessage.getMessageData(dataParts[i]);
 				System.arraycopy(relevantData, 0, dataEncryptedSigned, KeysMessage.getDataPartOffset(i), KeysMessage.getDataPartLength(i));
 			} catch (RuntimeException e) {
-				return new PendingParseData(idGroup, PendingParseResult.CORRUPTED_DATA, null);
+				return new Event(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 			}
 		}
 		
@@ -148,9 +148,9 @@ public class PendingParser {
 		try {
 			 dataEncrypted = Encryption.getEncryption().verify(dataEncryptedSigned, contact.getId());
 		} catch (EncryptionException e) {
-			return new PendingParseData(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
+			return new Event(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
 		} catch (WrongKeyDecryptionException e) {
-			return new PendingParseData(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
+			return new Event(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
 		}
 		
 		// now decrypt the data
@@ -158,17 +158,17 @@ public class PendingParser {
 		try {
 			dataDecrypted = Encryption.getEncryption().decryptAsymmetric(dataEncrypted);
 		} catch (EncryptionException e) {
-			return new PendingParseData(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+			return new Event(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
 		} catch (WrongKeyDecryptionException e) {
-			return new PendingParseData(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+			return new Event(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
 		}
 		
 		// check the length
 		if (dataDecrypted.length != KeysMessage.LENGTH_KEYS)
-			return new PendingParseData(idGroup, PendingParseResult.CORRUPTED_DATA, null);
+			return new Event(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 		
 		// all seems to be fine, so just retrieve the keys and return the result
-		return new PendingParseData(idGroup, 
+		return new Event(idGroup, 
 		                            PendingParseResult.OK, 
 		                            new KeysMessage(
 		                            	// we have to swap the keys
@@ -178,17 +178,18 @@ public class PendingParser {
 		                            ));
 	}
 	
-	private static PendingParseData parseTextMessage(ArrayList<Pending> idGroup) {
+	private static Event parseTextMessage(ArrayList<Pending> idGroup) {
 		return null;
 	}
 
-	public static void parsePending(DbPendingAdapter database, ArrayList<PendingParseData> result) {
+	public static ArrayList<Event> parsePending(DbPendingAdapter database) {
+		ArrayList<Event> result = new ArrayList<Event>();
 		// have the pending messages sorted into groups by their type and ID
 		ArrayList<ArrayList<Pending>> idGroups = getMatchingParts(database);
 		for(ArrayList<Pending> idGroup : idGroups) {
 			// check that there are not too many parts
 			if (idGroup.size() > 255)
-				result.add(new PendingParseData(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
+				result.add(new Event(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
 			else {
 				// find the first part (usually first in the list)
 				boolean firstFound = false; 
@@ -206,6 +207,7 @@ public class PendingParser {
 				}
 			}
 		}
+		return result;
 	}
 
 }

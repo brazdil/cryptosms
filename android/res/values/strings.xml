@@ -515,6 +515,8 @@
     <string name="pki_key_picker_empty">There are not any public keys assigned to this person. Please use the Public Keys application to store them.</string>
     <string name="menu_process_pending">Process pending</string>
     <string name="tab_events">Events</string>
+    <string name="clear_pending">Clear pending</string>
+    <string name="clear_pending_details">Delete all messages waiting to be processed</string>
 
 </resources>
 

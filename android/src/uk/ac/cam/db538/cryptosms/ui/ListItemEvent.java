@@ -23,7 +23,7 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseData;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
@@ -52,7 +52,7 @@ public class ListItemEvent extends RelativeLayout {
     private View mErrorIndicator;
     private QuickContactBadge mAvatarView;
 
-    private PendingParseData mParseData;
+    private Event mParseData;
 
     public ListItemEvent(Context context) {
         super(context);
@@ -74,11 +74,11 @@ public class ListItemEvent extends RelativeLayout {
         mAvatarView = (QuickContactBadge) findViewById(R.id.avatar);
     }
 
-    private void setParseData(PendingParseData parseData) {
+    private void setParseData(Event parseData) {
     	mParseData = parseData;
     }
 
-	public PendingParseData getParseData() {
+	public Event getParseData() {
     	return mParseData;
     }
 
@@ -140,7 +140,15 @@ public class ListItemEvent extends RelativeLayout {
 		return new String();
 	}
 
-    public final void bind(final PendingParseData parseData) {
+    /**
+     * Only used for header binding.
+     */
+    public void bind(String title, String explain) {
+        mFromView.setText(title);
+        mSubjectView.setText(explain);
+    }
+
+    public final void bind(final Event parseData) {
     	Context context = this.getContext();
     	Resources res = context.getResources();
         setParseData(parseData);

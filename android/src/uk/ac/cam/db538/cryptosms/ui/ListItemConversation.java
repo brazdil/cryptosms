@@ -23,7 +23,7 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseData;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;

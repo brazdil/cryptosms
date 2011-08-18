@@ -10,7 +10,7 @@ import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.PendingParser;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseData;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
@@ -29,6 +29,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -74,19 +75,17 @@ public class ActivityLists extends ActivityAppState {
 
 	private TabSpec mSpecConversations;
 	private ListView mListConversations;
-	private ArrayList<Conversation> mConversations = new ArrayList<Conversation>();
-	private ArrayAdapter<Conversation> mAdapterConversations;
+	private AdapterConversations mAdapterConversations;
 
 	private TabSpec mSpecContacts;
 	private ListView mListContacts;
-	private ArrayList<Conversation> mContacts = new ArrayList<Conversation>();
 	private ListItemContact mNewContactView;
-	private ArrayAdapter<Conversation> mAdapterContacts;
+	private AdapterContacts mAdapterContacts;
 	
 	private TabSpec mSpecEvents;
 	private ListView mListEvents;
-	private ArrayList<PendingParseData> mEvents = new ArrayList<PendingParseData>();
-	private ArrayAdapter<PendingParseData> mAdapterEvents;
+	private ListItemEvent mClearPendingView;
+	private AdapterEvents mAdapterEvents;
 	
 	// TODO: listen to contact name changes
 	
@@ -110,21 +109,8 @@ public class ActivityLists extends ActivityAppState {
 	                        	        // set appearance of list view
 	                        		    mListConversations.setFastScrollEnabled(true);
 	                        	    	// create the adapter
-	                        	    	mAdapterConversations = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mConversations) {
-	                        	    		@Override
-	                        				public View getView(int position, View convertView, ViewGroup parent) {
-	                        					ListItemConversation row;
-
-	                        					if (convertView == null)
-	                        						row = (ListItemConversation) mInflater.inflate(R.layout.item_main_conversation, mListConversations, false);
-	                        					else
-	                        						row = (ListItemConversation) convertView;
-	                        				    
-	                        					row.bind(getItem(position));
-	                        					return row;
-	                        				}
-	                        			};
-	                        			// specify what to do when clicked on items
+	                        	    	mAdapterConversations = new AdapterConversations(mInflater, mListConversations); 
+	                        	    	//specify what to do when clicked on items
 	                        			mListConversations.setOnItemClickListener(new OnItemClickListener() {
 	                        				@Override
 	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
@@ -156,7 +142,7 @@ public class ActivityLists extends ActivityAppState {
 	                        	        // set appearance of list view
 	                        	        mListContacts.setFastScrollEnabled(true);
 	                        	        // the New contact header
-	                        			mNewContactView = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
+	                        			mNewContactView = (ListItemContact) mInflater.inflate(R.layout.item_main_contact, mListContacts, false);
 	                        			mListContacts.addHeaderView(mNewContactView, null, true);
 	                        			// specify what to do when clicked on items
 	                        			mListContacts.setOnItemClickListener(new OnItemClickListener() {
@@ -197,24 +183,7 @@ public class ActivityLists extends ActivityAppState {
 	                        				}
 	                        			});
 	                        	    	// create the adapter
-	                        	    	mAdapterContacts = new ArrayAdapter<Conversation>(ActivityLists.this, R.layout.item_main_contacts, mContacts) {
-	                        	    		@Override
-	                        				public View getView(int position, View convertView, ViewGroup parent) {
-	                        					ListItemContact row;
-
-	                        					if (convertView == null)
-	                        						row = (ListItemContact) mInflater.inflate(R.layout.item_main_contacts, mListContacts, false);
-	                        					else
-	                        						row = (ListItemContact) convertView;
-	                        					
-	                        				    try {
-	                        				    	row.bind(getItem(position));
-	                        				    } catch (StorageFileException e) {
-	                        				    	State.fatalException(e);
-	                        				    }
-                        				    	return row;
-	                        				}
-	                        			};
+	                        	    	mAdapterContacts = new AdapterContacts(mInflater, mListContacts);
 	                        			// prepare for context menus
 	                        			ActivityLists.this.registerForContextMenu(mListContacts);
 	                        			return mListContacts;
@@ -233,21 +202,11 @@ public class ActivityLists extends ActivityAppState {
 	                        	  		mListEvents = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
 	                        	        // set appearance of list view
 	                        		    mListEvents.setFastScrollEnabled(true);
+	                        	        // the Clear pending header
+	                        			mClearPendingView = (ListItemEvent) mInflater.inflate(R.layout.item_main_event, mListEvents, false);
+	                        			mListEvents.addHeaderView(mClearPendingView, null, true);
 	                        	    	// create the adapter
-	                        	    	mAdapterEvents = new ArrayAdapter<PendingParseData>(ActivityLists.this, R.layout.item_main_contacts, mEvents) {
-	                        	    		@Override
-	                        				public View getView(int position, View convertView, ViewGroup parent) {
-	                        					ListItemEvent row;
-
-	                        					if (convertView == null)
-	                        						row = (ListItemEvent) mInflater.inflate(R.layout.item_main_event, mListEvents, false);
-	                        					else
-	                        						row = (ListItemEvent) convertView;
-	                        				    
-	                        					row.bind(getItem(position));
-	                        					return row;
-	                        				}
-	                        			};
+	                        	    	mAdapterEvents = new AdapterEvents(mInflater, mListEvents);
 	                        			// specify what to do when clicked on items
 	                        			mListEvents.setOnItemClickListener(new OnItemClickListener() {
 	                        				@Override
@@ -475,15 +434,19 @@ public class ActivityLists extends ActivityAppState {
 		
 		// check SIM availability
 		if (SimCard.getSingleton().isNumberAvailable()) {
-			mConversationChangeListener.onUpdate();
+			mListEvents.setAdapter(mAdapterEvents);
 			mListContacts.setAdapter(mAdapterContacts);
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
+    		mClearPendingView.bind(getString(R.string.clear_pending), getString(R.string.clear_pending_details));
+    		
+			new ConversationsUpdateTask().execute();
+			new EventsUpdateTask().execute();
 		} else {
+			mListEvents.setAdapter(null);
 			mListContacts.setAdapter(null);
 	        mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
+	        mClearPendingView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
 	    }
-		
-		onNewEvent();
 	}
 
 	@Override
@@ -492,6 +455,7 @@ public class ActivityLists extends ActivityAppState {
 		Log.d(MyApplication.APP_TAG, "Login");
 		mListConversations.setAdapter(mAdapterConversations);
 		mListContacts.setAdapter(mAdapterContacts);
+		mListEvents.setAdapter(mAdapterEvents);
 	}
 
 	@Override
@@ -499,27 +463,13 @@ public class ActivityLists extends ActivityAppState {
 		super.onPkiLogout();
 		mListConversations.setAdapter(null);
 		mListContacts.setAdapter(null);
+		mListEvents.setAdapter(null);
 	}
 
 	@Override
 	public void onNewEvent() {
 		super.onNewEvent();
-		// check SIM card availability
-		if (SimCard.getSingleton().isNumberAvailable()) {
-			// parse pending stuff
-			DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
-			database.open();
-			try {
-				mEvents.clear();
-				PendingParser.parsePending(database, mEvents);
-			} finally {
-				database.close();
-			}
-			mAdapterEvents.notifyDataSetChanged();
-			mListEvents.setAdapter(mAdapterEvents);
-		} else {
-			mListEvents.setAdapter(null);
-	    }
+		new EventsUpdateTask().execute();
 	}
 
 	@Override
@@ -552,31 +502,67 @@ public class ActivityLists extends ActivityAppState {
 		
 		@Override
 		public void onUpdate() {
+			new ConversationsUpdateTask().execute();
+		}
+	};
+	
+	private class ConversationsUpdateTask extends AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... arg0) {
 			try {
 				// update lists
-	    		mConversations.clear();
-				mContacts.clear();
-				
-				Log.d(MyApplication.APP_TAG, "Updating");
+				ArrayList<Conversation> listConversations = new ArrayList<Conversation>();
+				ArrayList<Conversation> listContacts = new ArrayList<Conversation>();
 				
 	    		Conversation conv = Header.getHeader().getFirstConversation();
 	    		while (conv != null) {
 	    			if (conv.getFirstMessageData() != null)
-	    				mConversations.add(conv);
+	    				listConversations.add(conv);
 					if (StorageUtils.hasKeysForSim(conv))
-						mContacts.add(conv);
+						listContacts.add(conv);
 	    			conv = conv.getNextConversation();
 	    		}
 
-	    		Collections.sort(mConversations, Collections.reverseOrder());
+	    		Collections.sort(listConversations, Collections.reverseOrder());
 	    		// TODO: sort the contacts by name
 	    		
-	    		mAdapterConversations.notifyDataSetChanged();
-	    		mAdapterContacts.notifyDataSetChanged();
+	    		mAdapterConversations.setList(listConversations);
+	    		mAdapterContacts.setList(listContacts);
 			} catch (StorageFileException ex) {
 				State.fatalException(ex);
-				return;
+				return null;
 			}
+			return null;
 		}
-	};
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+    		mAdapterConversations.notifyDataSetChanged();
+    		mAdapterContacts.notifyDataSetChanged();
+		}
+	}
+
+	private class EventsUpdateTask extends AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			// parse pending stuff
+			DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
+			database.open();
+			try {
+				mAdapterEvents.setList(PendingParser.parsePending(database));
+			} finally {
+				database.close();
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+			mAdapterEvents.notifyDataSetChanged();
+		}
+	}
 }
