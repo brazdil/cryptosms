@@ -47,13 +47,10 @@
 
     <ImageView 
         android:id="@+id/contacts_icon"
-        android:layout_marginTop="2dip"
-        android:layout_marginBottom="10dip"
-        android:layout_marginLeft="5dip"
+		android:layout_centerInParent="true"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
         android:visibility="gone"
         android:src="@drawable/item_contacts_keys_error" />
 

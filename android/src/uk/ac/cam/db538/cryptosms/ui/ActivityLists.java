@@ -102,7 +102,7 @@ public class ActivityLists extends ActivityAppState {
 	    
 	    // TAB OF RECENT CONVERSATIONS
 	    mSpecConversations = mTabHost.newTabSpec(TAB_CONVERSATIONS)
-	                          .setIndicator(res.getString(R.string.tab_conversations), res.getDrawable(R.drawable.tab_recent))
+	                          .setIndicator(res.getString(R.string.tab_conversations), res.getDrawable(R.drawable.tab_conversations))
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
@@ -226,7 +226,7 @@ public class ActivityLists extends ActivityAppState {
 
 	    // TAB OF EVENTS
 	    mSpecEvents = mTabHost.newTabSpec(TAB_EVENTS)
-	                          .setIndicator(res.getString(R.string.tab_events))
+	                          .setIndicator(res.getString(R.string.tab_events), res.getDrawable(R.drawable.tab_events))
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {

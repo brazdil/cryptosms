@@ -48,7 +48,7 @@ public class ListItemConversation extends RelativeLayout {
     private TextView mSubjectView;
     private TextView mFromView;
     private TextView mDateView;
-    private View mDeliveryPendingView;
+    private View mNoEncryptionView;
     private View mErrorIndicator;
     private QuickContactBadge mAvatarView;
 
@@ -69,7 +69,7 @@ public class ListItemConversation extends RelativeLayout {
         mFromView = (TextView) findViewById(R.id.from);
         mSubjectView = (TextView) findViewById(R.id.subject);
         mDateView = (TextView) findViewById(R.id.date);
-        mDeliveryPendingView = findViewById(R.id.attachment);
+        mNoEncryptionView = findViewById(R.id.no_encryption);
         mErrorIndicator = findViewById(R.id.error);
         mAvatarView = (QuickContactBadge) findViewById(R.id.avatar);
     }
@@ -155,7 +155,7 @@ public class ListItemConversation extends RelativeLayout {
         		res.getDrawable(R.drawable.conversation_item_background_read)
         );
 
-        LayoutParams attachmentLayout = (LayoutParams)mDeliveryPendingView.getLayoutParams();
+        LayoutParams attachmentLayout = (LayoutParams)mNoEncryptionView.getLayoutParams();
         if (hasError) {
             attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.error);
         } else {
@@ -168,7 +168,7 @@ public class ListItemConversation extends RelativeLayout {
 
         mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
 
-        mDeliveryPendingView.setVisibility(hasNoEncryption ? VISIBLE : GONE);
+        mNoEncryptionView.setVisibility(hasNoEncryption ? VISIBLE : GONE);
         mDateView.setText(conv.getFormattedTime());
 
     	Contact contact = Contact.getContact(context, conv.getPhoneNumber());

@@ -15,7 +15,7 @@
 -->
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_selected="true" android:state_pressed="false" android:drawable="@drawable/tab_recent_selected" />
-    <item android:drawable="@drawable/tab_recent_unselected" />
+    <item android:state_selected="true" android:state_pressed="false" android:drawable="@drawable/tab_events_selected" />
+    <item android:drawable="@drawable/tab_events_unselected" />
 </selector>
 
