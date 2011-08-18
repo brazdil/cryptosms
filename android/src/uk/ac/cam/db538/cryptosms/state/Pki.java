@@ -139,15 +139,10 @@ public class Pki {
 				if (intent.getAction().equals(INTENT_PKI_LOGIN)) {
 					mPki.setTimeout(TIMEOUT_LOGIN_CHECK);
 					try {
-						if (mPki.authorise())
-							Pki.setLoggedIn(true);
-					} catch (TimeoutException e) {
-						Log.d(MyApplication.APP_TAG, "Timeout");
-						Toast.makeText(context, context.getResources().getString(R.string.timeout), Toast.LENGTH_SHORT).show();
-					} catch (PKIErrorException e) {
-						Log.d(MyApplication.APP_TAG, "Error");
-					} catch (NotConnectedException e) {
-						Log.d(MyApplication.APP_TAG, "Not Connected");
+						Pki.getMasterKey(true); // calls authorize
+						Pki.setLoggedIn(true);
+					} catch (PkiNotReadyException e) {
+						// if this happens then setLoggedIn didn't
 					}
 					mPki.setTimeout(TIMEOUT_DEFAULT);
 				} else if (intent.getAction().equals(INTENT_PKI_LOGOUT))
@@ -295,8 +290,10 @@ public class Pki {
 			mLoggedIn = value;
 			if (mLoggedIn) 
 				State.notifyLogin();
-			else
+			else {
+				mMasterKey = null; // forget the master key
 				State.notifyLogout();
+			}
 		}
 	}
 	
