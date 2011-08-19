@@ -302,7 +302,6 @@ public class Pki {
 	
 	public static byte[] getMasterKey(boolean forceLogIn) throws PkiNotReadyException {
 		byte[] key = getMasterKey(forceLogIn, true);
-		Log.d(MyApplication.APP_TAG, "MasterKey: " + LowLevel.toHex(key));
 		return key;
 	}
 	

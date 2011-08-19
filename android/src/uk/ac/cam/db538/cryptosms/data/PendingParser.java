@@ -2,6 +2,8 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
 
+import org.joda.time.DateTime;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
@@ -12,7 +14,7 @@ import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class PendingParser {
 	public static enum PendingParseResult {
-		OK,
+		OK_KEYS_MESSAGE,
 		MISSING_PARTS,
 		REDUNDANT_PARTS,
 		COULD_NOT_DECRYPT,
@@ -27,15 +29,24 @@ public class PendingParser {
 	 * @author db538
 	 *
 	 */
-	public static class Event {
+	public static class Event implements Comparable<Event> {
 		private ArrayList<Pending> mIdGroup;
 		private PendingParseResult mResult;
 		private Message mMessage;
+		private DateTime mTimeStamp;
 		
 		Event(ArrayList<Pending> idGroup, PendingParseResult result, Message message) {
 			mIdGroup = idGroup;
 			mResult = result;
 			mMessage = message;
+
+			DateTime timeStamp = new DateTime(0);
+			for (Pending p : mIdGroup) {
+				DateTime thisStamp = p.getTimeStamp();
+				if (thisStamp.compareTo(timeStamp) > 0)
+					timeStamp = thisStamp;
+			}
+			mTimeStamp = timeStamp;
 		}
 		
 		public ArrayList<Pending> getIdGroup() {
@@ -48,6 +59,15 @@ public class PendingParser {
 		
 		public Message getMessage() {
 			return mMessage;
+		}
+		
+		public DateTime getTimestamp() {
+			return mTimeStamp;
+		}
+
+		@Override
+		public int compareTo(Event another) {
+			return this.getTimestamp().compareTo(another.getTimestamp());
 		}
 	}
 	
@@ -169,7 +189,7 @@ public class PendingParser {
 		
 		// all seems to be fine, so just retrieve the keys and return the result
 		return new Event(idGroup, 
-		                            PendingParseResult.OK, 
+		                            PendingParseResult.OK_KEYS_MESSAGE, 
 		                            new KeysMessage(
 		                            	// we have to swap the keys
 		                            	// the other guy's out-key is my in-key...

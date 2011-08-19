@@ -518,6 +518,14 @@
     <string name="clear_pending">Clear pending</string>
     <string name="clear_pending_details">Delete all messages waiting to be processed</string>
     <string name="loading">Loading...</string>
+    <string name="parse_ok_keys_message">Handshake request</string>
+    <string name="parse_corrupted_data">Corrupted data</string>
+    <string name="parse_could_not_decrypt">Could not decrypt</string>
+    <string name="parse_could_not_verify">Missing public key</string>
+    <string name="parse_missing_parts">Data incomplete...</string>
+    <string name="parse_no_session_keys">Encryption not active</string>
+    <string name="parse_redundant_parts">Redundant data</string>
+    <string name="parse_unknown_sender">Unknown sender</string>
 
 </resources>
 

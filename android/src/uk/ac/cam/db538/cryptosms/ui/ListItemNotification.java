@@ -19,6 +19,8 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.zip.DataFormatException;
 
+import org.joda.time.format.DateTimeFormat;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
@@ -177,8 +179,39 @@ public class ListItemNotification extends RelativeLayout {
 //        mDateView.setText(conv.getFormattedTime());
 
     	Contact contact = Contact.getContact(context, parseData.getIdGroup().get(0).getSender());
-        mFromView.setText(contact.getName());
-        mSubjectView.setText(parseData.getResult().name());
+    	if (contact.getName() != null && contact.getName().length() > 0)
+    		mFromView.setText(contact.getName());
+    	else
+    		mFromView.setText(contact.getPhoneNumber());
+        
+    	switch (parseData.getResult()) {
+    	case OK_KEYS_MESSAGE:
+        	mSubjectView.setText(res.getString(R.string.parse_ok_keys_message));
+        	break;
+    	case CORRUPTED_DATA:
+        	mSubjectView.setText(res.getString(R.string.parse_corrupted_data));
+        	break;
+    	case COULD_NOT_DECRYPT:
+        	mSubjectView.setText(res.getString(R.string.parse_could_not_decrypt));
+        	break;
+    	case COULD_NOT_VERIFY:
+        	mSubjectView.setText(res.getString(R.string.parse_could_not_verify));
+        	break;
+    	case MISSING_PARTS:
+        	mSubjectView.setText(res.getString(R.string.parse_missing_parts));
+        	break;
+    	case NO_SESSION_KEYS:
+        	mSubjectView.setText(res.getString(R.string.parse_no_session_keys));
+        	break;
+    	case REDUNDANT_PARTS:
+        	mSubjectView.setText(res.getString(R.string.parse_redundant_parts));
+        	break;
+    	case UNKNOWN_SENDER:
+        	mSubjectView.setText(res.getString(R.string.parse_unknown_sender));
+        	break;
+    	}
+        
+        mDateView.setText(UtilsTextFormat.formatDateTime(parseData.getTimestamp()));
 
     	Drawable avatarDrawable = contact.getAvatar(context, MyApplication.getSingleton().getDefaultContactImage());
         if (contact.existsInDatabase()) {

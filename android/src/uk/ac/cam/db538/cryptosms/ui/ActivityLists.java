@@ -609,6 +609,7 @@ public class ActivityLists extends ActivityAppState {
 			database.open();
 			try {
 				mAdapterNotifications.setList(PendingParser.parsePending(database));
+				Collections.sort(mAdapterNotifications.getList(), Collections.reverseOrder());
 			} finally {
 				database.close();
 			}
