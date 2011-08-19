@@ -2,11 +2,13 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 import roboguice.inject.InjectView;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.PendingParser;
@@ -75,15 +77,18 @@ public class ActivityLists extends ActivityAppState {
 
 	private TabSpec mSpecConversations;
 	private ListView mListConversations;
+	private View mListConversationsLoading;
 	private AdapterConversations mAdapterConversations;
 
 	private TabSpec mSpecContacts;
 	private ListView mListContacts;
+	private View mListContactsLoading;
 	private ListItemContact mNewContactView;
 	private AdapterContacts mAdapterContacts;
 	
 	private TabSpec mSpecEvents;
 	private ListView mListEvents;
+	private View mListEventsLoading;
 	private ListItemEvent mClearPendingView;
 	private AdapterEvents mAdapterEvents;
 	
@@ -105,7 +110,9 @@ public class ActivityLists extends ActivityAppState {
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
-	                        	  		mListConversations = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	  		View layout = mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	  		mListConversations = (ListView) layout.findViewById(android.R.id.list);
+	                        	  		mListConversationsLoading = layout.findViewById(R.id.loadingState);
 	                        	        // set appearance of list view
 	                        		    mListConversations.setFastScrollEnabled(true);
 	                        	    	// create the adapter
@@ -124,7 +131,7 @@ public class ActivityLists extends ActivityAppState {
 	                        			});
 	                        			// prepare for context menus
 	                        			ActivityLists.this.registerForContextMenu(mListConversations);
-	                        			return mListConversations;
+	                        			return layout;
 									}
 	                          });
 	    mTabHost.addTab(mSpecConversations);
@@ -137,8 +144,9 @@ public class ActivityLists extends ActivityAppState {
 	                          	.setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
-	                        	  		mListContacts = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
-
+	                        	  		View layout = mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	  		mListContacts = (ListView) layout.findViewById(android.R.id.list);
+	                        	  		mListContactsLoading = layout.findViewById(R.id.loadingState);
 	                        	        // set appearance of list view
 	                        	        mListContacts.setFastScrollEnabled(true);
 	                        	        // the New contact header
@@ -186,7 +194,7 @@ public class ActivityLists extends ActivityAppState {
 	                        	    	mAdapterContacts = new AdapterContacts(mInflater, mListContacts);
 	                        			// prepare for context menus
 	                        			ActivityLists.this.registerForContextMenu(mListContacts);
-	                        			return mListContacts;
+	                        			return layout;
 									}
 	                          	});
 	    mTabHost.addTab(mSpecContacts);
@@ -199,7 +207,9 @@ public class ActivityLists extends ActivityAppState {
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
-	                        	  		mListEvents = (ListView) mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	  		View layout = mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
+	                        	  		mListEvents = (ListView) layout.findViewById(android.R.id.list);
+	                        	  		mListEventsLoading = layout.findViewById(R.id.loadingState);
 	                        	        // set appearance of list view
 	                        		    mListEvents.setFastScrollEnabled(true);
 	                        	        // the Clear pending header
@@ -215,7 +225,7 @@ public class ActivityLists extends ActivityAppState {
 	                        			});
 	                        			// prepare for context menus
 	                        			ActivityLists.this.registerForContextMenu(mListEvents);
-	                        			return mListEvents;
+	                        			return layout;
 									}
 	                          });
 	    mTabHost.addTab(mSpecEvents);
@@ -439,8 +449,8 @@ public class ActivityLists extends ActivityAppState {
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
     		mClearPendingView.bind(getString(R.string.clear_pending), getString(R.string.clear_pending_details));
     		
-			new ConversationsUpdateTask().execute();
-			new EventsUpdateTask().execute();
+    		updateConversations();
+    		updateEvents();
 		} else {
 			mListEvents.setAdapter(null);
 			mListContacts.setAdapter(null);
@@ -469,7 +479,7 @@ public class ActivityLists extends ActivityAppState {
 	@Override
 	public void onNewEvent() {
 		super.onNewEvent();
-		new EventsUpdateTask().execute();
+		updateEvents();
 	}
 
 	@Override
@@ -502,19 +512,39 @@ public class ActivityLists extends ActivityAppState {
 		
 		@Override
 		public void onUpdate() {
-			new ConversationsUpdateTask().execute();
+			updateConversations();
 		}
 	};
 	
+	private void updateConversations() {
+		synchronized(mAdapterConversations) {
+			new ConversationsUpdateTask().execute();
+		}
+	}
+	
 	private class ConversationsUpdateTask extends AsyncTask<Void, Void, Void> {
-
+		private Exception mException = null;
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			if (mAdapterConversations.getList() == null || mAdapterConversations.getList().size() == 0) {
+				mListConversationsLoading.setVisibility(View.VISIBLE);
+				mListConversations.setVisibility(View.GONE);
+			}
+			if (mAdapterContacts.getList() == null || mAdapterContacts.getList().size() == 0) {
+				mListContactsLoading.setVisibility(View.VISIBLE);
+				mListContacts.setVisibility(View.GONE);
+			}
+		}
+		
 		@Override
 		protected Void doInBackground(Void... arg0) {
+			// update lists
+			ArrayList<Conversation> listConversations = new ArrayList<Conversation>();
+			ArrayList<Conversation> listContacts = new ArrayList<Conversation>();
+
 			try {
-				// update lists
-				ArrayList<Conversation> listConversations = new ArrayList<Conversation>();
-				ArrayList<Conversation> listContacts = new ArrayList<Conversation>();
-				
 	    		Conversation conv = Header.getHeader().getFirstConversation();
 	    		while (conv != null) {
 	    			if (conv.getFirstMessageData() != null)
@@ -524,27 +554,53 @@ public class ActivityLists extends ActivityAppState {
 	    			conv = conv.getNextConversation();
 	    		}
 
-	    		Collections.sort(listConversations, Collections.reverseOrder());
-	    		// TODO: sort the contacts by name
-	    		
-	    		mAdapterConversations.setList(listConversations);
-	    		mAdapterContacts.setList(listContacts);
 			} catch (StorageFileException ex) {
-				State.fatalException(ex);
-				return null;
+				if (ex.getCause() instanceof EncryptionException) {
+					// don't really care
+					// probably Pki not ready
+				} else
+					mException = ex;
 			}
+    		Collections.sort(listConversations, Collections.reverseOrder());
+    		// TODO: sort the contacts by name
+    		
+    		mAdapterConversations.setList(listConversations);
+    		mAdapterContacts.setList(listContacts);
 			return null;
 		}
 
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
-    		mAdapterConversations.notifyDataSetChanged();
-    		mAdapterContacts.notifyDataSetChanged();
+			if (mException == null) {
+				mAdapterConversations.notifyDataSetChanged();
+				mAdapterContacts.notifyDataSetChanged();
+				mListConversationsLoading.setVisibility(View.GONE);
+				mListConversations.setVisibility(View.VISIBLE);
+				mListContactsLoading.setVisibility(View.GONE);
+				mListContacts.setVisibility(View.VISIBLE);
+			} else {
+				State.fatalException(mException);
+				return;
+			}
+		}
+	}
+
+	private void updateEvents() {
+		synchronized(mAdapterEvents) {
+			new EventsUpdateTask().execute();
 		}
 	}
 
 	private class EventsUpdateTask extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			if (mAdapterEvents.getList() == null || mAdapterEvents.getList().size() == 0) {
+				mListEventsLoading.setVisibility(View.VISIBLE);
+				mListEvents.setVisibility(View.GONE);
+			}
+		}
 
 		@Override
 		protected Void doInBackground(Void... arg0) {
@@ -563,6 +619,8 @@ public class ActivityLists extends ActivityAppState {
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
 			mAdapterEvents.notifyDataSetChanged();
+			mListEventsLoading.setVisibility(View.GONE);
+			mListEvents.setVisibility(View.VISIBLE);
 		}
 	}
 }

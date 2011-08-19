@@ -59,4 +59,8 @@ public class AdapterEvents extends BaseAdapter {
 	public void setList(ArrayList<Event> list) {
 		mList = list;
 	}
+	
+	public ArrayList<Event> getList() {
+		return mList;
+	}
 }

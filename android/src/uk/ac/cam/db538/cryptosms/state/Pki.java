@@ -5,11 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
-import android.widget.Toast;
 import uk.ac.cam.db538.cryptosms.MyApplication;
-import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.BadInputException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
@@ -300,7 +299,9 @@ public class Pki {
 	}
 	
 	public static byte[] getMasterKey(boolean forceLogIn) throws PkiNotReadyException {
-		return getMasterKey(forceLogIn, true);
+		byte[] key = getMasterKey(forceLogIn, true);
+		Log.d(MyApplication.APP_TAG, "MasterKey: " + LowLevel.toHex(key));
+		return key;
 	}
 	
 	public static byte[] getMasterKey(boolean forceLogIn, boolean generateAllow) throws PkiNotReadyException {

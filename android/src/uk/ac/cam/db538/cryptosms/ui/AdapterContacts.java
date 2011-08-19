@@ -67,4 +67,8 @@ public class AdapterContacts extends BaseAdapter {
 	public void setList(ArrayList<Conversation> list) {
 		mList = list;
 	}
+
+	public ArrayList<Conversation> getList() {
+		return mList;
+	}
 }

@@ -517,6 +517,7 @@
     <string name="tab_events">Events</string>
     <string name="clear_pending">Clear pending</string>
     <string name="clear_pending_details">Delete all messages waiting to be processed</string>
+    <string name="loading">Loading...</string>
 
 </resources>
 

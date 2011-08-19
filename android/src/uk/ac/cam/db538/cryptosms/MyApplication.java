@@ -58,6 +58,33 @@ public class MyApplication extends RoboApplication {
 		
 		mDefaultContactImage = getResources().getDrawable(R.drawable.ic_contact_picture);
 		
+		final UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+			private void logException(Throwable ex) {
+				Log.e(APP_TAG, "Exception: " + ex.getClass().getName());
+				Log.e(APP_TAG, "Message: " + ex.getMessage());
+				Log.e(APP_TAG, "Stack: ");
+				for (StackTraceElement element : ex.getStackTrace())
+					Log.e(APP_TAG, element.toString());
+				if (ex.getCause() != null) {
+					Log.e(APP_TAG, "Cause: ");
+					logException(ex.getCause());
+				}
+			}
+			
+			@Override
+			public void uncaughtException(Thread thread, Throwable ex) {
+				if ((ex instanceof WrongKeyDecryptionException) ||
+					(ex instanceof RuntimeException && ex.getCause() instanceof WrongKeyDecryptionException)) {
+					// TODO: Handle better
+					logException(ex);
+					State.fatalException((WrongKeyDecryptionException) ex);
+				}
+				else
+					defaultHandler.uncaughtException(thread, ex);
+			}
+		});
+
 		Preferences.initSingleton(context);
 		if (Encryption.getEncryption() == null)
 			Encryption.setEncryption(new EncryptionPki());
@@ -76,18 +103,6 @@ public class MyApplication extends RoboApplication {
 		
 		Pki.init(this.getApplicationContext());
 		SimCard.init(this.getApplicationContext());
-
-		// TODO: get this to work!!!
-//		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-//			@Override
-//			public void uncaughtException(Thread thread, Throwable ex) {
-//				if (ex instanceof WrongKeyDecryptionException) {
-//					// TODO: do special notification in State
-//					State.fatalException((WrongKeyDecryptionException) ex);
-//				} else
-//					System.exit(0);
-//			}
-//		});
 	}
 	
 	public Notification getNotification() {
