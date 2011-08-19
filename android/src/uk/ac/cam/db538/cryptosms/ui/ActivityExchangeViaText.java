@@ -149,17 +149,13 @@ public class ActivityExchangeViaText extends ActivityAppState {
 							getDialogManager().showDialog(DIALOG_SENDING_ERROR, params);
 						}
 
+						private int mCounterFinished = 0;
+						
 						@Override
-						public boolean onPartSent(int index) {
-							if (!Pki.isLoggedIn()) {
-								mCancelled = true;
-								return false;
-							}
-							
+						public void onPartSent(int index) {
 							ProgressDialog pd = (ProgressDialog) getDialogManager().getDialog(DIALOG_SENDING);
-							if (pd != null) 
-								pd.setProgress(index + 1);
-							return true;
+							if (pd != null)
+								pd.setProgress(mCounterFinished++);
 						}
 					});
 				} catch (StorageFileException e) {

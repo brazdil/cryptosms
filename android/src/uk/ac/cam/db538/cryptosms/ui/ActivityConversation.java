@@ -140,7 +140,7 @@ public class ActivityConversation extends ActivityAppState {
 							boolean keyIncremented = false;
 
 							@Override
-							public boolean onPartSent(int index) {
+							public void onPartSent(int index) {
 								if (!keyIncremented) {
 									// it at least something was sent, increment the ID and session keys
 									SessionKeys keys;
@@ -150,12 +150,10 @@ public class ActivityConversation extends ActivityAppState {
 										keys.saveToFile();
 									} catch (StorageFileException ex) {
 										State.fatalException(ex);
-										return false;
+										return;
 									}
 									keyIncremented = true;
 								}
-								
-								return true;
 							}
 						});
 					} catch (StorageFileException ex) {

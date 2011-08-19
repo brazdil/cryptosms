@@ -1,7 +1,8 @@
-package uk.ac.cam.db538.cryptosms.data;
+package uk.ac.cam.db538.cryptosms;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
+import uk.ac.cam.db538.cryptosms.data.Pending;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.ui.ActivityLists;

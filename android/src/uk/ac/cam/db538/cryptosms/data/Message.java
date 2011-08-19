@@ -41,7 +41,7 @@ public abstract class Message {
 	
 	public static interface MessageSendingListener {
 		public void onMessageSent();
-		public boolean onPartSent(int index);
+		public void onPartSent(int index);
 		public void onError(String message);
 	}
 	
@@ -59,18 +59,10 @@ public abstract class Message {
 	}
 	
     private static final String SENT_SMS_ACTION = "CRYPTOSMS_SMS_SENT"; 
-    
-    private void internalSmsSend(String phoneNumber, byte[] data, Context context) {
-    	Intent sentIntent = new Intent(SENT_SMS_ACTION);
-    	PendingIntent sentPI = PendingIntent.getBroadcast(
-    								context.getApplicationContext(), 0, 
-    								sentIntent, 0);
-    	// send the data
-    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), data, sentPI, null);
-    }
+    private static long mMessageCounter = 0;
 
     public abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
-
+    
 	/**
 	 * Takes the byte arrays created by getBytes() method and sends 
 	 * them to the given phone number
@@ -78,53 +70,59 @@ public abstract class Message {
 	public void sendSMS(final String phoneNumber, Context context, final MessageSendingListener listener)
 			throws StorageFileException, MessageException, EncryptionException {
 		final ArrayList<byte[]> dataSms = getBytes();
-		
-		context.registerReceiver(new BroadcastReceiver() {
-			private int indexLast = 0;
-			
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				Resources res = context.getResources();
-				// check that it arrived OK
-				switch (getResultCode()) {
-				case Activity.RESULT_OK:
-					Log.d(MyApplication.APP_TAG, "Sent " + indexLast);
-					if (listener.onPartSent(indexLast)) {
-						++indexLast;
-						if (indexLast < dataSms.size())
-							internalSmsSend(phoneNumber, dataSms.get(indexLast), context);
-						else {
-							context.unregisterReceiver(this);
+		int size = dataSms.size();
+		final boolean[] deliveryConfirms = new boolean[size];
+		for (int i = 0; i < size; ++i) {
+			String intentName = SENT_SMS_ACTION + (mMessageCounter++);
+			final int intentIndex = i;
+			context.registerReceiver(new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					Resources res = context.getResources();
+					context.unregisterReceiver(this);
+					// check that it arrived OK
+					switch (getResultCode()) {
+					case Activity.RESULT_OK:
+						Log.d(MyApplication.APP_TAG, "Sent " + intentIndex);
+						// notify and save
+						deliveryConfirms[intentIndex] = true;
+						listener.onPartSent(intentIndex);
+						// check we have all
+						boolean all = true;
+						for (boolean b : deliveryConfirms)
+							all = all && b;
+						if (all)
 							listener.onMessageSent();
-						}
-					} else 
-						context.unregisterReceiver(this);
-					break;
-				case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-					context.unregisterReceiver(this);
-					listener.onError(res.getString(R.string.error_sending_generic));
-					break;
-				case SmsManager.RESULT_ERROR_NO_SERVICE:
-					context.unregisterReceiver(this);
-					listener.onError(res.getString(R.string.error_sending_no_service));
-					break;
-				case SmsManager.RESULT_ERROR_NULL_PDU:
-					context.unregisterReceiver(this);
-					listener.onError(res.getString(R.string.error_sending_null_pdu));
-					break;
-				case SmsManager.RESULT_ERROR_RADIO_OFF:
-					context.unregisterReceiver(this);
-					listener.onError(res.getString(R.string.error_sending_radio_off));
-					break;
-				default: // ERROR
-					context.unregisterReceiver(this);
-					listener.onError(res.getString(R.string.error_sending_unknown));
-					break;
+						break;
+					case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+						listener.onError(res.getString(R.string.error_sending_generic));
+						break;
+					case SmsManager.RESULT_ERROR_NO_SERVICE:
+						listener.onError(res.getString(R.string.error_sending_no_service));
+						break;
+					case SmsManager.RESULT_ERROR_NULL_PDU:
+						listener.onError(res.getString(R.string.error_sending_null_pdu));
+						break;
+					case SmsManager.RESULT_ERROR_RADIO_OFF:
+						listener.onError(res.getString(R.string.error_sending_radio_off));
+						break;
+					default: // ERROR
+						listener.onError(res.getString(R.string.error_sending_unknown));
+						break;
+					}
 				}
-			}
-		}, new IntentFilter(SENT_SMS_ACTION));
+			}, new IntentFilter(intentName));
 		
-		internalSmsSend(phoneNumber, dataSms.get(0), context);
+	    	Intent sentIntent = new Intent(intentName);
+	    	PendingIntent sentPI = PendingIntent.getBroadcast(
+	    								context.getApplicationContext(), 0, 
+	    								sentIntent, 0);
+	    	
+	    	Log.d(MyApplication.APP_TAG, sentIntent.toString());
+	    	
+	    	// send the data
+	    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), dataSms.get(i), sentPI, null);
+		}
 	}
     
     public static MessageType getMessageType(byte[] data) {
