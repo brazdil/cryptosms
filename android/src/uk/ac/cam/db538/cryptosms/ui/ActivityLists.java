@@ -58,7 +58,7 @@ public class ActivityLists extends ActivityAppState {
 	
 	private static final String TAB_CONVERSATIONS = "CONVERSATIONS";
 	private static final String TAB_CONTACTS = "CONTACTS";
-	private static final String TAB_EVENTS = "EVENTS";
+	private static final String TAB_NOTIFICATIONS = "NOTIFICATIONS";
 
 	private static final int MENU_MOVE_SESSIONS = Menu.FIRST;
 	private static final int MENU_PROCESS_PENDING = MENU_MOVE_SESSIONS + 1;
@@ -86,11 +86,11 @@ public class ActivityLists extends ActivityAppState {
 	private ListItemContact mNewContactView;
 	private AdapterContacts mAdapterContacts;
 	
-	private TabSpec mSpecEvents;
-	private ListView mListEvents;
-	private View mListEventsLoading;
-	private ListItemEvent mClearPendingView;
-	private AdapterEvents mAdapterEvents;
+	private TabSpec mSpecNotifications;
+	private ListView mListNotifications;
+	private View mListNotificationsLoading;
+	private ListItemNotification mClearPendingView;
+	private AdapterNotifications mAdapterNotifications;
 	
 	// TODO: listen to contact name changes
 	
@@ -202,35 +202,35 @@ public class ActivityLists extends ActivityAppState {
 	    mTabHost.setCurrentTabByTag(TAB_CONTACTS);
 
 	    // TAB OF EVENTS
-	    mSpecEvents = mTabHost.newTabSpec(TAB_EVENTS)
-	                          .setIndicator(res.getString(R.string.tab_events), res.getDrawable(R.drawable.tab_events))
+	    mSpecNotifications = mTabHost.newTabSpec(TAB_NOTIFICATIONS)
+	                          .setIndicator(res.getString(R.string.tab_notifications), res.getDrawable(R.drawable.tab_events))
 	                          .setContent(new TabContentFactory() {
 	                        	  	@Override
 									public View createTabContent(String tag) {
 	                        	  		View layout = mInflater.inflate(R.layout.view_listtab, mTabHost.getTabContentView(), false);
-	                        	  		mListEvents = (ListView) layout.findViewById(android.R.id.list);
-	                        	  		mListEventsLoading = layout.findViewById(R.id.loadingState);
+	                        	  		mListNotifications = (ListView) layout.findViewById(android.R.id.list);
+	                        	  		mListNotificationsLoading = layout.findViewById(R.id.loadingState);
 	                        	        // set appearance of list view
-	                        		    mListEvents.setFastScrollEnabled(true);
+	                        		    mListNotifications.setFastScrollEnabled(true);
 	                        	        // the Clear pending header
-	                        			mClearPendingView = (ListItemEvent) mInflater.inflate(R.layout.item_main_event, mListEvents, false);
-	                        			mListEvents.addHeaderView(mClearPendingView, null, true);
+	                        			mClearPendingView = (ListItemNotification) mInflater.inflate(R.layout.item_main_notification, mListNotifications, false);
+	                        			mListNotifications.addHeaderView(mClearPendingView, null, true);
 	                        	    	// create the adapter
-	                        	    	mAdapterEvents = new AdapterEvents(mInflater, mListEvents);
+	                        	    	mAdapterNotifications = new AdapterNotifications(mInflater, mListNotifications);
 	                        			// specify what to do when clicked on items
-	                        			mListEvents.setOnItemClickListener(new OnItemClickListener() {
+	                        			mListNotifications.setOnItemClickListener(new OnItemClickListener() {
 	                        				@Override
 	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
 	                        				}
 	                        			});
 	                        			// prepare for context menus
-	                        			ActivityLists.this.registerForContextMenu(mListEvents);
+	                        			ActivityLists.this.registerForContextMenu(mListNotifications);
 	                        			return layout;
 									}
 	                          });
-	    mTabHost.addTab(mSpecEvents);
+	    mTabHost.addTab(mSpecNotifications);
 	    // force it to inflate the UI
-	    mTabHost.setCurrentTabByTag(TAB_EVENTS);
+	    mTabHost.setCurrentTabByTag(TAB_NOTIFICATIONS);
 	    
 	    // select the Recent tab
 	    mTabHost.setCurrentTabByTag(TAB_CONVERSATIONS);
@@ -444,7 +444,7 @@ public class ActivityLists extends ActivityAppState {
 		
 		// check SIM availability
 		if (SimCard.getSingleton().isNumberAvailable()) {
-			mListEvents.setAdapter(mAdapterEvents);
+			mListNotifications.setAdapter(mAdapterNotifications);
 			mListContacts.setAdapter(mAdapterContacts);
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
     		mClearPendingView.bind(getString(R.string.clear_pending), getString(R.string.clear_pending_details));
@@ -452,7 +452,7 @@ public class ActivityLists extends ActivityAppState {
     		updateConversations();
     		updateEvents();
 		} else {
-			mListEvents.setAdapter(null);
+			mListNotifications.setAdapter(null);
 			mListContacts.setAdapter(null);
 	        mNewContactView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
 	        mClearPendingView.bind(getString(R.string.tab_contacts_not_available), getString(R.string.tab_contacts_not_available_details));
@@ -465,7 +465,7 @@ public class ActivityLists extends ActivityAppState {
 		Log.d(MyApplication.APP_TAG, "Login");
 		mListConversations.setAdapter(mAdapterConversations);
 		mListContacts.setAdapter(mAdapterContacts);
-		mListEvents.setAdapter(mAdapterEvents);
+		mListNotifications.setAdapter(mAdapterNotifications);
 	}
 
 	@Override
@@ -473,7 +473,7 @@ public class ActivityLists extends ActivityAppState {
 		super.onPkiLogout();
 		mListConversations.setAdapter(null);
 		mListContacts.setAdapter(null);
-		mListEvents.setAdapter(null);
+		mListNotifications.setAdapter(null);
 	}
 
 	@Override
@@ -587,7 +587,7 @@ public class ActivityLists extends ActivityAppState {
 	}
 
 	private void updateEvents() {
-		synchronized(mAdapterEvents) {
+		synchronized(mAdapterNotifications) {
 			new EventsUpdateTask().execute();
 		}
 	}
@@ -596,9 +596,9 @@ public class ActivityLists extends ActivityAppState {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			if (mAdapterEvents.getList() == null || mAdapterEvents.getList().size() == 0) {
-				mListEventsLoading.setVisibility(View.VISIBLE);
-				mListEvents.setVisibility(View.GONE);
+			if (mAdapterNotifications.getList() == null || mAdapterNotifications.getList().size() == 0) {
+				mListNotificationsLoading.setVisibility(View.VISIBLE);
+				mListNotifications.setVisibility(View.GONE);
 			}
 		}
 
@@ -608,7 +608,7 @@ public class ActivityLists extends ActivityAppState {
 			DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
 			database.open();
 			try {
-				mAdapterEvents.setList(PendingParser.parsePending(database));
+				mAdapterNotifications.setList(PendingParser.parsePending(database));
 			} finally {
 				database.close();
 			}
@@ -618,9 +618,9 @@ public class ActivityLists extends ActivityAppState {
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
-			mAdapterEvents.notifyDataSetChanged();
-			mListEventsLoading.setVisibility(View.GONE);
-			mListEvents.setVisibility(View.VISIBLE);
+			mAdapterNotifications.notifyDataSetChanged();
+			mListNotificationsLoading.setVisibility(View.GONE);
+			mListNotifications.setVisibility(View.VISIBLE);
 		}
 	}
 }

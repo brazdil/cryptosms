@@ -10,12 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public class AdapterEvents extends BaseAdapter {
+public class AdapterNotifications extends BaseAdapter {
 	private ArrayList<Event> mList;
 	private LayoutInflater mInflater;
 	private ViewGroup mRoot;
 	
-	public AdapterEvents(LayoutInflater inflater, ViewGroup root) {
+	public AdapterNotifications(LayoutInflater inflater, ViewGroup root) {
 		mInflater = inflater;
 		mRoot = root;
 	}
@@ -46,11 +46,11 @@ public class AdapterEvents extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		ListItemEvent row;
+		ListItemNotification row;
 		if (convertView == null)
-			row = (ListItemEvent) mInflater.inflate(R.layout.item_main_event, mRoot, false);
+			row = (ListItemNotification) mInflater.inflate(R.layout.item_main_notification, mRoot, false);
 		else
-			row = (ListItemEvent) convertView;
+			row = (ListItemNotification) convertView;
 		if (mList != null)
 			row.bind((Event)getItem(position));
 		return row;

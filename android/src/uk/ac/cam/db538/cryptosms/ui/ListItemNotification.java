@@ -44,7 +44,7 @@ import android.widget.RelativeLayout.LayoutParams;
 /**
  * This class manages the view for given conversation.
  */
-public class ListItemEvent extends RelativeLayout {
+public class ListItemNotification extends RelativeLayout {
     private TextView mSubjectView;
     private TextView mFromView;
     private TextView mDateView;
@@ -54,11 +54,11 @@ public class ListItemEvent extends RelativeLayout {
 
     private Event mParseData;
 
-    public ListItemEvent(Context context) {
+    public ListItemNotification(Context context) {
         super(context);
     }
 
-    public ListItemEvent(Context context, AttributeSet attrs) {
+    public ListItemNotification(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 

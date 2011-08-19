@@ -23,9 +23,12 @@ public class MyApplication extends RoboApplication {
 	public static final int NOTIFICATION_ID = 1;
 	public static final String APP_TAG = "CRYPTOSMS";
 	public static final String STORAGE_FILE_NAME = "storage.db";
+	
 	public static final String PKI_PACKAGE = "uk.ac.cam.dje38.pki";
 	public static final String PKI_CONTACT_PICKER = "uk.ac.cam.dje38.pki.picker";
 	public static final String PKI_KEY_PICKER = "uk.ac.cam.dje38.pki.keypicker";
+	public static final String PKI_LOGIN = "uk.ac.cam.dje38.pki.login";
+	
 	public static final String NEWLINE = System.getProperty("line.separator");
 	public static final String[] REPORT_EMAILS = new String[] { "db538@cam.ac.uk" }; // TODO: create new email!
 	

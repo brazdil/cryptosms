@@ -137,6 +137,7 @@ public class Pki {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
+				Log.d(MyApplication.APP_TAG, "Intent: " + intent.getAction());
 				if (intent.getAction().equals(INTENT_PKI_LOGIN)) {
 					mPki.setTimeout(TIMEOUT_LOGIN_CHECK);
 					try {
@@ -241,6 +242,7 @@ public class Pki {
 	}
 	
 	public static void login(boolean force) {
+		Log.d(MyApplication.APP_TAG, "Login: " + (isConnected() ? "connected" : "disconnected") + ", " + (isLoggedIn() ? "logged in" : "logged out") + ", " + (force ? "forced" : "unforced") );
 		if (isConnected() && !isLoggedIn()) {
 			if (force) {
 				try {
@@ -252,7 +254,7 @@ public class Pki {
 				}
 			} else {
 				setLoggedIn(false);
-				Intent intent = new Intent("uk.ac.cam.dje38.pki.login");
+				Intent intent = new Intent(MyApplication.PKI_LOGIN);
 				mContext.startService(intent);
 			}
 		} else if (isLoggedIn())

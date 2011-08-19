@@ -21,7 +21,6 @@ import uk.ac.cam.db538.cryptosms.data.KeysMessage;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
-import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
@@ -90,6 +89,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
         mSendButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				mSendButton.setEnabled(false);
+				mBackButton.setEnabled(false);
+				
 				// generate session keys
 				final KeysMessage keysMessage;
 				try {
@@ -147,6 +149,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 							Bundle params = new Bundle();
 							params.putString(PARAM_SENDING_ERROR, message);
 							getDialogManager().showDialog(DIALOG_SENDING_ERROR, params);
+
+							mSendButton.setEnabled(true);
+							mBackButton.setEnabled(true);
 						}
 
 						private int mCounterFinished = 0;
