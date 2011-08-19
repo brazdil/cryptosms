@@ -3,7 +3,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 public class AdapterNotifications extends BaseAdapter {
-	private ArrayList<Event> mList;
+	private ArrayList<ParseResult> mList;
 	private LayoutInflater mInflater;
 	private ViewGroup mRoot;
 	
@@ -52,15 +52,15 @@ public class AdapterNotifications extends BaseAdapter {
 		else
 			row = (ListItemNotification) convertView;
 		if (mList != null)
-			row.bind((Event)getItem(position));
+			row.bind((ParseResult)getItem(position));
 		return row;
 	}
 	
-	public void setList(ArrayList<Event> list) {
+	public void setList(ArrayList<ParseResult> list) {
 		mList = list;
 	}
 	
-	public ArrayList<Event> getList() {
+	public ArrayList<ParseResult> getList() {
 		return mList;
 	}
 }

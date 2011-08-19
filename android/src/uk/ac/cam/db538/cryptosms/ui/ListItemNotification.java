@@ -25,7 +25,7 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
@@ -54,7 +54,7 @@ public class ListItemNotification extends RelativeLayout {
     private View mErrorIndicator;
     private QuickContactBadge mAvatarView;
 
-    private Event mParseData;
+    private ParseResult mParseData;
 
     public ListItemNotification(Context context) {
         super(context);
@@ -76,11 +76,11 @@ public class ListItemNotification extends RelativeLayout {
         mAvatarView = (QuickContactBadge) findViewById(R.id.avatar);
     }
 
-    private void setParseData(Event parseData) {
+    private void setParseData(ParseResult parseData) {
     	mParseData = parseData;
     }
 
-	public Event getParseData() {
+	public ParseResult getParseData() {
     	return mParseData;
     }
 
@@ -150,7 +150,7 @@ public class ListItemNotification extends RelativeLayout {
         mSubjectView.setText(explain);
     }
 
-    public final void bind(final Event parseData) {
+    public final void bind(final ParseResult parseData) {
     	Context context = this.getContext();
     	Resources res = context.getResources();
         setParseData(parseData);

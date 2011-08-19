@@ -3,7 +3,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;

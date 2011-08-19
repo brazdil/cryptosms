@@ -289,6 +289,7 @@ public class Pki {
 	}
 	
 	static void setLoggedIn(boolean value, boolean forceNotify) {
+		Log.d(MyApplication.APP_TAG, "Set login: " + Boolean.toString(value));
 		if (mLoggedIn != value || forceNotify) {
 			mLoggedIn = value;
 			if (mLoggedIn) 

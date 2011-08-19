@@ -33,10 +33,6 @@ public class ActivityExchangeViaText extends ActivityAppState {
 	public static final String OPTION_CONTACT_KEY = "CONTACT_KEY";
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
 	
-	private static final String DIALOG_SENDING = "DIALOG_EXCHANGE_SENDING";
-	private static final String DIALOG_SENDING_ERROR = "DIALOG_EXCHANGE_SENDING_ERROR";
-	private static final String PARAM_SENDING_ERROR = "PARAM_EXCHANGE_SENDING_ERROR";
-	
 	private static boolean mCancelled = false;
 	
 	private Contact mContact;
@@ -104,7 +100,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 					return;
 				}
 
-		    	getDialogManager().showDialog(DIALOG_SENDING, null);
+				Bundle params = new Bundle();
+				params.putInt(UtilsSendMessage.PARAM_SENDING_MULTIPART_MAX, KeysMessage.getPartsCount());
+		    	getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART, params);
 
 		    	// send the message
 				try {
@@ -113,7 +111,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 						@Override
 						public void onMessageSent() {
 							Log.d(MyApplication.APP_TAG, "Sent all!");
-							getDialogManager().dismissDialog(DIALOG_SENDING);
+							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
 							
 							try {
 								Conversation conv = Conversation.getConversation(mPhoneNumber);
@@ -144,11 +142,11 @@ public class ActivityExchangeViaText extends ActivityAppState {
 						
 						@Override
 						public void onError(String message) {
-							getDialogManager().dismissDialog(DIALOG_SENDING);
+							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
 							
 							Bundle params = new Bundle();
-							params.putString(PARAM_SENDING_ERROR, message);
-							getDialogManager().showDialog(DIALOG_SENDING_ERROR, params);
+							params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, message);
+							getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_ERROR, params);
 
 							mSendButton.setEnabled(true);
 							mBackButton.setEnabled(true);
@@ -158,9 +156,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 						
 						@Override
 						public void onPartSent(int index) {
-							ProgressDialog pd = (ProgressDialog) getDialogManager().getDialog(DIALOG_SENDING);
+							ProgressDialog pd = (ProgressDialog) getDialogManager().getDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
 							if (pd != null)
-								pd.setProgress(mCounterFinished++);
+								pd.setProgress(++mCounterFinished);
 						}
 					});
 				} catch (StorageFileException e) {
@@ -177,42 +175,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 		});
         
         // prepare dialogs
-        getDialogManager().addBuilder(new DialogBuilder() {
-			@Override
-			public Dialog onBuild(Bundle params) {
-				Resources res = ActivityExchangeViaText.this.getResources();
-				ProgressDialog pd = new ProgressDialog(ActivityExchangeViaText.this);
-				pd.setCancelable(false);
-				pd.setMessage(res.getString(R.string.sending));
-				pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				pd.setMax(KeysMessage.getPartsCount());
-				return pd;
-			}
-			
-			@Override
-			public String getId() {
-				return DIALOG_SENDING;
-			}
-		});
-        
-        getDialogManager().addBuilder(new DialogBuilder() {
-			@Override
-			public Dialog onBuild(Bundle params) {
-				String error = params.getString(PARAM_SENDING_ERROR);
-				Resources res = ActivityExchangeViaText.this.getResources();
-				
-				return new AlertDialog.Builder(ActivityExchangeViaText.this)
-				       .setTitle(res.getString(R.string.error_sms_service))
-				       .setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + error)
-				       .setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
-				       .create();
-			}
-			
-			@Override
-			public String getId() {
-				return DIALOG_SENDING_ERROR;
-			}
-		});
+        UtilsSendMessage.prepareDialogs(getDialogManager(), this);
 	}
 
 	@Override
@@ -220,7 +183,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 		super.onPkiLogin();
 		if (mCancelled) {
 			mCancelled = false;
-			getDialogManager().dismissDialog(DIALOG_SENDING);
+			getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
 		}
 	}
 }

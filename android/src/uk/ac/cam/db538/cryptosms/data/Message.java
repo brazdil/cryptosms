@@ -45,14 +45,16 @@ public abstract class Message {
 		public void onError(String message);
 	}
 	
-	protected static final byte HEADER_KEYS_FIRST = (byte) 0x00;	// no bits set
-	protected static final byte HEADER_KEYS_PART = (byte) 0x40;	// second bit set
-	protected static final byte HEADER_MESSAGE_FIRST = (byte) 0x80;		// first bit set
-	protected static final byte HEADER_MESSAGE_PART = (byte) 0xC0;			// first and second bit set
+	protected static final byte HEADER_KEYS_FIRST = (byte) 0x00;
+	protected static final byte HEADER_KEYS_PART = (byte) 0x10;
+	protected static final byte HEADER_CONFIRM = (byte) 0x20;
+	protected static final byte HEADER_MESSAGE_FIRST = (byte) 0x30;
+	protected static final byte HEADER_MESSAGE_PART = (byte) 0x40;
 	
 	public static enum MessageType {
 		KEYS_FIRST,
 		KEYS_PART,
+		CONFIRM,
 		MESSAGE_FIRST,
 		MESSAGE_PART,
 		UNKNOWN
@@ -126,11 +128,13 @@ public abstract class Message {
 	}
     
     public static MessageType getMessageType(byte[] data) {
-    	byte headerType = (byte) (data[0] & 0xC0); // takes first two bits only
+    	byte headerType = (byte) (data[0] & 0xF0); // takes first two bits only
     	if (headerType == HEADER_KEYS_FIRST)
     		return MessageType.KEYS_FIRST;
     	else if (headerType == HEADER_KEYS_PART)
     		return MessageType.KEYS_PART;
+    	else if (headerType == HEADER_CONFIRM)
+    		return MessageType.CONFIRM;
     	else if (headerType == HEADER_MESSAGE_FIRST)
     		return MessageType.MESSAGE_FIRST;
     	else if (headerType == HEADER_MESSAGE_PART)

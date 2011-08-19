@@ -17,7 +17,7 @@ import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class KeysMessage extends Message {
 	// first part specific
-	private static final int OFFSET_FIRST_DATA = OFFSET_ID + LENGTH_ID;;
+	private static final int OFFSET_FIRST_DATA = OFFSET_ID + LENGTH_ID;
 	public static final int LENGTH_FIRST_DATA = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_DATA;
 	
 	// following parts specific

@@ -96,7 +96,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	 * @throws EncryptionException
 	 */
 	@Override
-	public byte[] encryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
+	public byte[] encryptSymmetric(byte[] data, byte[] key) {
 		// align data for MAC checking
 		data = LowLevel.wrapData(data, getSymmetricAlignedLength(data.length));
 		// generate everything

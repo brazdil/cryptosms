@@ -9,22 +9,32 @@ import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.data.ConfirmMessage;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
+import uk.ac.cam.db538.cryptosms.data.KeysMessage;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.data.PendingParser;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.Event;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
+import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
-import uk.ac.cam.db538.cryptosms.storage.Conversation.ConversationsChangeListener;
+import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -69,6 +79,7 @@ public class ActivityLists extends ActivityAppState {
 	private static final String DIALOG_NO_PHONE_NUMBERS = "DIALOG_NO_PHONE_NUMBERS";
 	private static final String DIALOG_CONFIRM_INVALIDATION = "DIALOG_CONFIRM_INVALIDATION";
 	private static final String PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER = "PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER";
+	private static final String DIALOG_ACCEPT_KEYS_AND_CONFIRM = "DIALOG_ACCEPT_KEYS_AND_CONFIRM";
 
 	private LayoutInflater mInflater;
 	
@@ -91,6 +102,8 @@ public class ActivityLists extends ActivityAppState {
 	private View mListNotificationsLoading;
 	private ListItemNotification mClearPendingView;
 	private AdapterNotifications mAdapterNotifications;
+	
+	private ParseResult mNotificationsContextMenuItem;
 	
 	// TODO: listen to contact name changes
 	
@@ -315,6 +328,98 @@ public class ActivityLists extends ActivityAppState {
 				return DIALOG_CONFIRM_INVALIDATION;
 			}
 		});
+		getDialogManager().addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				
+				return new AlertDialog.Builder(ActivityLists.this)
+				       .setCancelable(false)
+				       .setTitle(R.string.accept_and_confirm)
+				       .setMessage(R.string.accept_and_confirm_details)
+				       .setPositiveButton(R.string.ok, new OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								// check the input
+								if (mNotificationsContextMenuItem == null ||
+									mNotificationsContextMenuItem.getResult() != PendingParser.PendingParseResult.OK_KEYS_MESSAGE ||
+									! (mNotificationsContextMenuItem.getMessage() instanceof KeysMessage))
+									return;
+								
+								final KeysMessage keysMsg = (KeysMessage) mNotificationsContextMenuItem.getMessage();
+								final String phoneNumber = mNotificationsContextMenuItem.getSender();
+
+								ActivityLists.this.getDialogManager().dismissDialog(getId());
+								ActivityLists.this.getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING, null);
+								
+								// send confirmation
+								ConfirmMessage confirm = new ConfirmMessage(keysMsg.getKeyOut());
+								try {
+									confirm.sendSMS(phoneNumber, ActivityLists.this, new MessageSendingListener() {
+
+										@Override
+										public void onMessageSent() {
+											// save the keys
+											try {
+												Conversation conv = Conversation.getConversation(phoneNumber);
+												if (conv == null) {
+													conv = Conversation.createConversation();
+													conv.setPhoneNumber(phoneNumber);
+													// will get saved while session keys 
+													// are attached
+												}
+												SimNumber simNumber = SimCard.getSingleton().getNumber();
+												conv.deleteSessionKeys(simNumber);
+												SessionKeys keys = SessionKeys.createSessionKeys(conv);
+												keys.setSimNumber(simNumber);
+												keys.setSessionKey_Out(keysMsg.getKeyOut());
+												keys.setSessionKey_In(keysMsg.getKeyIn());
+												keys.incrementOut(1);
+												keys.setKeysSent(true);
+												keys.setKeysConfirmed(true);
+												keys.saveToFile();
+											} catch (StorageFileException ex) {
+												State.fatalException(ex);
+												return;
+											}
+											
+											ActivityLists.this.getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
+										}
+
+										@Override
+										public void onPartSent(int index) {
+										}
+
+										@Override
+										public void onError(String message) {
+											ActivityLists.this.getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
+											Bundle params = new Bundle();
+											params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, message);
+											getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_ERROR, params);
+										}
+										
+									});
+								} catch (StorageFileException e) {
+									State.fatalException(e);
+									return;
+								} catch (MessageException e) {
+									State.fatalException(e);
+									return;
+								} catch (EncryptionException e) {
+									State.fatalException(e);
+									return;
+								}
+							}
+						})
+						.setNegativeButton(R.string.cancel, new DummyOnClickListener())
+						.create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_ACCEPT_KEYS_AND_CONFIRM;
+			}
+		});
+        UtilsSendMessage.prepareDialogs(getDialogManager(), this);
         UtilsSimIssues.prepareDialogs(getDialogManager(), this);
 	}
 	
@@ -364,50 +469,62 @@ public class ActivityLists extends ActivityAppState {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-		if (v == mListContacts && info.id != -1) { 
+		Log.d(MyApplication.APP_TAG, "Item: " + info.id);
+		if (v == mListContacts && info.id >= 0) { 
 			MenuInflater inflater = getMenuInflater();
 			inflater.inflate(R.menu.lists_contacts_context, menu);	
 		} else if (v == mListConversations) {
+		} else if (v == mListNotifications && info.id >= 0) {
+			MenuInflater inflater = getMenuInflater();
+			mNotificationsContextMenuItem = (ParseResult) mAdapterNotifications.getItem((int)info.id);
+			switch (mNotificationsContextMenuItem.getResult()) {
+			case OK_KEYS_MESSAGE:
+				inflater.inflate(R.menu.lists_notifications_context_keys, menu);
+				break;
+			default:
+				inflater.inflate(R.menu.lists_notifications_context, menu);
+				break;
+			}
 		}
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-//		try {
-			AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-			if (info.targetView instanceof ListItemContact && info.id != -1) {
-				Conversation conv = ((ListItemContact) info.targetView).getConversationHeader();
-				switch (item.getItemId()) {
-				case R.id.resend_keys:
-					Contact contact = Contact.getContact(this, conv.getPhoneNumber());
-					mTempContactId = contact.getId();
-					mTempPhoneNumber = contact.getPhoneNumber();
-					
-	    			// pick a key from PKI
-					Intent intent = new Intent(MyApplication.PKI_KEY_PICKER);
-			        intent.putExtra("contact", contact.getId());
-			        intent.putExtra("empty", this.getResources().getString(R.string.pki_key_picker_empty) );
-					try {
-						startActivityForResult(intent, ACTIVITY_CHOOSE_KEY);
-    				} catch(ActivityNotFoundException e) {
-    					State.notifyPkiMissing();
-    				}
-					return true;
-				case R.id.invalidate:
-					Bundle params = new Bundle();
-					params.putString(PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER, conv.getPhoneNumber());
-					getDialogManager().showDialog(DIALOG_CONFIRM_INVALIDATION, params);
-					return true;
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+		if (info.targetView instanceof ListItemContact && info.id != -1) {
+			Conversation conv = ((ListItemContact) info.targetView).getConversationHeader();
+			switch (item.getItemId()) {
+			case R.id.resend_keys:
+				Contact contact = Contact.getContact(this, conv.getPhoneNumber());
+				mTempContactId = contact.getId();
+				mTempPhoneNumber = contact.getPhoneNumber();
+				
+    			// pick a key from PKI
+				Intent intent = new Intent(MyApplication.PKI_KEY_PICKER);
+		        intent.putExtra("contact", contact.getId());
+		        intent.putExtra("empty", this.getResources().getString(R.string.pki_key_picker_empty) );
+				try {
+					startActivityForResult(intent, ACTIVITY_CHOOSE_KEY);
+				} catch(ActivityNotFoundException e) {
+					State.notifyPkiMissing();
 				}
-			} else if (info.targetView instanceof ListItemConversation) {
-				switch (item.getItemId()) {
-				}
+				return true;
+			case R.id.invalidate:
+				Bundle params = new Bundle();
+				params.putString(PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER, conv.getPhoneNumber());
+				getDialogManager().showDialog(DIALOG_CONFIRM_INVALIDATION, params);
+				return true;
 			}
-			return super.onContextItemSelected(item);
-//		} catch (StorageFileException e) {
-//			State.fatalException(e);
-//			return true;
-//		}
+		} else if (info.targetView instanceof ListItemConversation) {
+			switch (item.getItemId()) {
+			}
+		} else if (info.targetView instanceof ListItemNotification) {
+			switch (item.getItemId()) {
+			case R.id.accept:
+				getDialogManager().showDialog(DIALOG_ACCEPT_KEYS_AND_CONFIRM, null);
+			}
+		}
+		return super.onContextItemSelected(item);
 	}
 
 	@Override
@@ -485,13 +602,13 @@ public class ActivityLists extends ActivityAppState {
 	@Override
 	protected void onStart() {
 		super.onStart();
-		Conversation.addListener(mConversationChangeListener);
+		Storage.addListener(mConversationChangeListener);
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
-		Conversation.removeListener(mConversationChangeListener);
+		Storage.removeListener(mConversationChangeListener);
 	}
 
 	private void startConversation(Conversation conv) {
@@ -508,7 +625,7 @@ public class ActivityLists extends ActivityAppState {
 		startActivity(intent);
 	}
 	
-	private ConversationsChangeListener mConversationChangeListener = new ConversationsChangeListener() {
+	private StorageChangeListener mConversationChangeListener = new StorageChangeListener() {
 		
 		@Override
 		public void onUpdate() {

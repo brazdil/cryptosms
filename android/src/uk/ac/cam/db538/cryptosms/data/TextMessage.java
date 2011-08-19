@@ -47,6 +47,7 @@ public class TextMessage extends Message {
     public MessageData getStorage() {
     	return mStorage;
     }
+    
     /**
      * Returns the length of data stored in the storage file for this message
      * @return
@@ -151,22 +152,18 @@ public class TextMessage extends Message {
 		data = LowLevel.wrapData(data, alignedTotalBytes);
 		Log.d(MyApplication.APP_TAG, "Aligned data: " + LowLevel.toHex(data));
 
-		try {
-			data = crypto.encryptSymmetric(data, keys.getSessionKey_Out());
-			Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(data));
-			Log.d(MyApplication.APP_TAG, "Session key: " + LowLevel.toHex(keys.getSessionKey_Out()));
-		} catch (EncryptionException e1) {
-			throw new MessageException(e1.getMessage());
-		}
+		data = crypto.encryptSymmetric(data, keys.getSessionKey_Out());
+		Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(data));
+		Log.d(MyApplication.APP_TAG, "Session key: " + LowLevel.toHex(keys.getSessionKey_Out()));
 		totalBytes += LENGTH_FIRST_ENCRYPTION; 
 		data = LowLevel.wrapData(data, totalBytes);
 		
 		// first message (always)
 		byte header = HEADER_MESSAGE_FIRST;
 		if (mStorage.getAscii())
-			header |= (byte) 0x20;
+			header |= (byte) 0x08;
 		if (mStorage.getCompressed())
-			header |= (byte) 0x10;
+			header |= (byte) 0x04;
 		buf.put(header);
 		buf.put(keys.getNextID_Out());
 		buf.put(LowLevel.getBytesUnsignedShort(getStoredDataLength()));

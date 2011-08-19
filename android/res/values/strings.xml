@@ -526,6 +526,9 @@
     <string name="parse_no_session_keys">Encryption not active</string>
     <string name="parse_redundant_parts">Redundant data</string>
     <string name="parse_unknown_sender">Unknown sender</string>
+    <string name="discard">Discard</string>
+    <string name="accept_and_confirm">Accept and confirm</string>
+    <string name="accept_and_confirm_details">The handshake will be accepted and a confirming text message sent back.</string>
 
 </resources>
 
