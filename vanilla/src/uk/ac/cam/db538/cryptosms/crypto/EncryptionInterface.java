@@ -18,6 +18,7 @@ public interface EncryptionInterface {
 		
 		public EncryptionException(Exception e) {
 			super("Encryption exception: " + e.getClass().getName() + " (" + e.getMessage() + ")");
+			initCause(e);
 		}
 	}
 

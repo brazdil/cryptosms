@@ -16,5 +16,6 @@ public class StorageFileException extends Exception {
 
 	public StorageFileException(Exception e) {
 		super(e.getMessage());
+		initCause(e);
 	}
 }
