@@ -6,8 +6,8 @@ import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SimNumber;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import uk.ac.cam.db538.cryptosms.CustomAsserts;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionNone;
@@ -22,8 +22,8 @@ public class SessionKeys_Test extends TestCase {
 		EncryptionNone.initEncryption();
 		Common.clearStorageFile();
 		
-		sessionKey_Out = Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH);
-		sessionKey_In = Encryption.getEncryption().generateRandomData(Encryption.KEY_LENGTH);
+		sessionKey_Out = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
+		sessionKey_In = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
 	}
 
 	protected void tearDown() throws Exception {

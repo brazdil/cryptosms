@@ -74,7 +74,7 @@ public class Empty_Test extends TestCase {
 		byte[] dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(dataEncrypted);
 		
 		// check the indices
-		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - Encryption.ENCRYPTION_OVERHEAD - 4), indexNext);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - Encryption.SYM_OVERHEAD - 4), indexNext);
 	}
 
 	public void testParseData() throws StorageFileException, IOException, EncryptionException {

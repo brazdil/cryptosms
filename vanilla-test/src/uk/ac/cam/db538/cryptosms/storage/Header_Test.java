@@ -28,6 +28,7 @@ public class Header_Test extends TestCase {
 	public void testConstruction() throws StorageFileException, IOException {
 		// create a header
 		Header header = Header.createHeader();
+		header.setKeyId(123);
 		header.setVersion(12);
 		header.setIndexEmpty(13L);
 		header.setIndexConversations(15L);
@@ -37,6 +38,7 @@ public class Header_Test extends TestCase {
 		Header.forceClearCache();
 		header = Header.getHeader();
 		
+		assertEquals(header.getKeyId(), 123);
 		assertEquals(header.getVersion(), 12);
 		assertEquals(header.getIndexEmpty(), 13L);
 		assertEquals(header.getIndexConversations(), 15L);
@@ -84,8 +86,10 @@ public class Header_Test extends TestCase {
 		long indexFree = 25L;
 		long indexConversation = 13L;
 		int version = 32;
+		int keyId = 244;
 		
 		Header header = Header.createHeader();
+		header.setKeyId(keyId);
 		header.setIndexEmpty(indexFree);
 		header.setIndexConversations(indexConversation);
 		header.setVersion(version);
@@ -107,19 +111,24 @@ public class Header_Test extends TestCase {
 		buf.put(dataAll, 16, Storage.CHUNK_SIZE - 16);
 		byte[] dataPlain = Encryption.getEncryption().decryptSymmetricWithMasterKey(buf.array());
 		
+		// check the keyId
+		assertEquals(LowLevel.getUnsignedByte(dataPlain[0]), keyId);
+		
 		// check the indices
-		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.ENCRYPTION_OVERHEAD - 8), indexFree);
-		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.ENCRYPTION_OVERHEAD - 4), indexConversation);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.SYM_OVERHEAD - 8), indexFree);
+		assertEquals(LowLevel.getUnsignedInt(dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.SYM_OVERHEAD - 4), indexConversation);
 	}
 
 	public void testParseData() throws IOException, StorageFileException, EncryptionException {
 		long indexFree = 25L;
 		long indexConversation = 13L;
 		int version = 17;
+		int keyId = 244;
 		
-		byte[] dataPlain = new byte[Storage.CHUNK_SIZE - 16 - Encryption.ENCRYPTION_OVERHEAD];
-		System.arraycopy(LowLevel.getBytesUnsignedInt(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.ENCRYPTION_OVERHEAD - 8, 4);
-		System.arraycopy(LowLevel.getBytesUnsignedInt(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.ENCRYPTION_OVERHEAD - 4, 4);
+		byte[] dataPlain = new byte[Storage.CHUNK_SIZE - 16 - Encryption.SYM_OVERHEAD];
+		dataPlain[0] = (byte)keyId;
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexFree), 0, dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.SYM_OVERHEAD - 8, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(indexConversation), 0, dataPlain, Storage.CHUNK_SIZE - 16 - Encryption.SYM_OVERHEAD - 4, 4);
 		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(dataPlain);
 		
 		byte[] dataAll = new byte[Storage.CHUNK_SIZE];
@@ -146,6 +155,7 @@ public class Header_Test extends TestCase {
 		Header header = null;
 		try {
 			header = Header.getHeader();
+			assertEquals(keyId, header.getKeyId());
 			assertEquals(indexFree, header.getIndexEmpty());
 			assertEquals(indexConversation, header.getIndexConversations());
 			assertEquals(version, header.getVersion());

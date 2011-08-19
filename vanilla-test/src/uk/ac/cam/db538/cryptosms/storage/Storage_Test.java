@@ -23,6 +23,7 @@ public class Storage_Test extends TestCase {
 
 	public void testCreateFile() {
 		try {
+			Header.getHeader();
 			// and file's size should be aligned as specified
 			assertEquals(new File(Common.TESTING_FILE).length(), Storage.ALIGN_SIZE);
 
