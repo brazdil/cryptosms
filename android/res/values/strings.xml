@@ -531,6 +531,10 @@
     <string name="accept_and_confirm_details">The handshake will be accepted and a confirming text message sent back.</string>
     <string name="parse_internal_error">Internal error</string>
     <string name="parse_ok_confirm_message">Handshake confirmation</string>
+    <string name="notifications_clear_pending">Discard notification</string>
+    <string name="notifications_clear_pending_details">Do you really want to discard this notification?</string>
+    <string name="notifications_clear_all_pending">Clear pending notifications</string>
+    <string name="notifications_clear_all_pending_details">Do you really want to clear all the pending notifications?</string>
 
 </resources>
 

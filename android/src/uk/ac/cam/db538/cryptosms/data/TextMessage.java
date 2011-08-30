@@ -10,6 +10,7 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -317,4 +318,7 @@ public class TextMessage extends Message {
 		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_DATALENGTH);
 	}
 
+	public static ParseResult parseTextMessage(ArrayList<Pending> idGroup) {
+		return null;
+	}
 }

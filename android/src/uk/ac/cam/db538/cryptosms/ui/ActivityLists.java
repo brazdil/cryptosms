@@ -2,7 +2,6 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
 
 import roboguice.inject.InjectView;
 
@@ -17,11 +16,10 @@ import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.data.PendingParser;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
-import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
-import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
@@ -35,7 +33,6 @@ import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -52,10 +49,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.AdapterView.AdapterContextMenuInfo;
@@ -81,7 +76,9 @@ public class ActivityLists extends ActivityAppState {
 	private static final String DIALOG_CONFIRM_INVALIDATION = "DIALOG_CONFIRM_INVALIDATION";
 	private static final String PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER = "PARAMS_CONFIRM_INVALIDATION_PHONE_NUMBER";
 	private static final String DIALOG_ACCEPT_KEYS_AND_CONFIRM = "DIALOG_ACCEPT_KEYS_AND_CONFIRM";
-
+	private static final String DIALOG_CLEAR_PENDING = "DIALOG_CLEAR_PENDING";
+	private static final String DIALOG_CLEAR_ALL_PENDING = "DIALOG_CLEAR_ALL_PENDING";
+	
 	private LayoutInflater mInflater;
 	
 	@InjectView(R.id.tab_host)
@@ -169,22 +166,11 @@ public class ActivityLists extends ActivityAppState {
 	                        			// specify what to do when clicked on items
 	                        			mListContacts.setOnItemClickListener(new OnItemClickListener() {
 	                        				@Override
-	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
+	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int position, long id) {
 	                        					if (!SimCard.getSingleton().isNumberAvailable())
 	                        						return;
 	                        					
-	                        					ListItemContact item = (ListItemContact) view;
-	                        					Conversation conv;
-	                        		    		if ((conv = item.getConversationHeader()) != null) {
-	                        			    		// clicked on a conversation
-	                        						try {
-	                        							if (StorageUtils.hasKeysExchangedForSim(conv))
-	                        			    				startConversation(conv);
-	                        						} catch (StorageFileException ex) {
-	                        							State.fatalException(ex);
-	                        							return;
-	                        						}
-	                        		    		} else {
+	                        		    		if (id < 0) {
 	                        		    			// clicked on the header
 	                        		    			Context context = ActivityLists.this;
 	                        		    			Resources res = context.getResources();
@@ -201,6 +187,17 @@ public class ActivityLists extends ActivityAppState {
 	                        	    				} catch(ActivityNotFoundException e) {
 	                        	    					State.notifyPkiMissing();
 	                        	    				}
+	                        		    		} else {
+	                        			    		// clicked on a conversation
+		                        					ListItemContact item = (ListItemContact) view;
+		                        					Conversation conv = item.getConversationHeader();
+	                        						try {
+	                        							if (StorageUtils.hasKeysExchangedForSim(conv))
+	                        			    				startConversation(conv);
+	                        						} catch (StorageFileException ex) {
+	                        							State.fatalException(ex);
+	                        							return;
+	                        						}
 	                        		    		}
 	                        				}
 	                        			});
@@ -234,7 +231,13 @@ public class ActivityLists extends ActivityAppState {
 	                        			// specify what to do when clicked on items
 	                        			mListNotifications.setOnItemClickListener(new OnItemClickListener() {
 	                        				@Override
-	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int arg2, long arg3) {
+	                        				public void onItemClick(AdapterView<?> adapterView, View view,	int position, long id) {
+	                        		    		if (id < 0) {
+	                        		    			// clicked on the Clear Pending header
+	                        		    			getDialogManager().showDialog(DIALOG_CLEAR_ALL_PENDING, null);
+	                        		    		} else {
+	                        			    		// TODO: clicked on a notification
+	                        		    		}
 	                        				}
 	                        			});
 	                        			// prepare for context menus
@@ -348,7 +351,7 @@ public class ActivityLists extends ActivityAppState {
 								
 								final KeysMessage keysMsg = (KeysMessage) mNotificationsContextMenuItem.getMessage();
 								final String phoneNumber = mNotificationsContextMenuItem.getSender();
-
+								
 								ActivityLists.this.getDialogManager().dismissDialog(getId());
 								ActivityLists.this.getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING, null);
 								
@@ -385,6 +388,9 @@ public class ActivityLists extends ActivityAppState {
 												return;
 											}
 											
+											// remove id group from database
+											removeParseResult(mNotificationsContextMenuItem);
+											
 											ActivityLists.this.getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
 										}
 
@@ -420,6 +426,63 @@ public class ActivityLists extends ActivityAppState {
 			@Override
 			public String getId() {
 				return DIALOG_ACCEPT_KEYS_AND_CONFIRM;
+			}
+		});
+		getDialogManager().addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				Resources res = ActivityLists.this.getResources();
+				return new AlertDialog.Builder(ActivityLists.this)
+					   .setTitle(res.getString(R.string.notifications_clear_pending))
+					   .setMessage(res.getString(R.string.notifications_clear_pending_details))
+					   .setNegativeButton(res.getString(R.string.no), new DummyOnClickListener())
+					   .setPositiveButton(res.getString(R.string.yes), new OnClickListener() {
+							
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								// check the input
+								if (mNotificationsContextMenuItem == null)
+									return;
+								
+								removeParseResult(mNotificationsContextMenuItem);
+							}
+					   })
+					   .create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_CLEAR_PENDING;
+			}
+		});
+		getDialogManager().addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				Resources res = ActivityLists.this.getResources();
+				return new AlertDialog.Builder(ActivityLists.this)
+					   .setTitle(res.getString(R.string.notifications_clear_all_pending))
+					   .setMessage(res.getString(R.string.notifications_clear_all_pending_details))
+					   .setNegativeButton(res.getString(R.string.no), new DummyOnClickListener())
+					   .setPositiveButton(res.getString(R.string.yes), new OnClickListener() {
+							
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
+								database.open();
+								try {
+									database.clear();
+								} finally {
+									database.close();
+								}
+								updateEvents();
+							}
+					   })
+					   .create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_CLEAR_ALL_PENDING;
 			}
 		});
         UtilsSendMessage.prepareDialogs(getDialogManager(), this);
@@ -525,6 +588,8 @@ public class ActivityLists extends ActivityAppState {
 			switch (item.getItemId()) {
 			case R.id.accept:
 				getDialogManager().showDialog(DIALOG_ACCEPT_KEYS_AND_CONFIRM, null);
+			case R.id.discard:
+				getDialogManager().showDialog(DIALOG_CLEAR_PENDING, null);
 			}
 		}
 		return super.onContextItemSelected(item);
@@ -628,6 +693,18 @@ public class ActivityLists extends ActivityAppState {
 		startActivity(intent);
 	}
 	
+	private void removeParseResult(ParseResult parseResult) {
+		DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
+		database.open();
+		try {
+			parseResult.removeFromDb(database);			
+		} finally {
+			database.close();
+		}
+		mAdapterNotifications.getList().remove(mNotificationsContextMenuItem);
+		mAdapterNotifications.notifyDataSetChanged();
+	}
+	
 	private StorageChangeListener mConversationChangeListener = new StorageChangeListener() {
 		
 		@Override
@@ -713,6 +790,10 @@ public class ActivityLists extends ActivityAppState {
 	}
 
 	private class EventsUpdateTask extends AsyncTask<Void, Void, Void> {
+
+		private ArrayList<ParseResult> mParseResults = null;
+		private DbPendingAdapter mDatabase;
+
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
@@ -720,18 +801,18 @@ public class ActivityLists extends ActivityAppState {
 				mListNotificationsLoading.setVisibility(View.VISIBLE);
 				mListNotifications.setVisibility(View.GONE);
 			}
+			mDatabase = new DbPendingAdapter(ActivityLists.this);
 		}
-
+		
 		@Override
 		protected Void doInBackground(Void... arg0) {
 			// parse pending stuff
-			DbPendingAdapter database = new DbPendingAdapter(ActivityLists.this);
-			database.open();
+			mDatabase.open();
 			try {
-				mAdapterNotifications.setList(PendingParser.parsePending(database));
-				Collections.sort(mAdapterNotifications.getList(), Collections.reverseOrder());
+				mParseResults = PendingParser.parsePending(mDatabase);
+				Collections.sort(mParseResults, Collections.reverseOrder());
 			} finally {
-				database.close();
+				mDatabase.close();
 			}
 			return null;
 		}
@@ -739,9 +820,28 @@ public class ActivityLists extends ActivityAppState {
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
+			boolean doUpdateConversations = false;
+			mDatabase.open();
+			try {
+				for (ParseResult parseResult : mParseResults) {
+					if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
+						parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
+						mParseResults.remove(parseResult);
+						parseResult.removeFromDb(mDatabase);
+						doUpdateConversations = true;
+					}
+				}
+			} finally {
+				mDatabase.close();
+			}
+			
+			mAdapterNotifications.setList(mParseResults);
 			mAdapterNotifications.notifyDataSetChanged();
 			mListNotificationsLoading.setVisibility(View.GONE);
 			mListNotifications.setVisibility(View.VISIBLE);
+			
+			if (doUpdateConversations)
+				updateConversations();
 		}
 	}
 }

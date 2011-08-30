@@ -13,6 +13,7 @@ import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.ui.ActivityLists;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class PendingParser {
@@ -82,6 +83,11 @@ public class PendingParser {
 			else
 				return null;
 		}
+		
+		public void removeFromDb(DbPendingAdapter database) {
+			for (Pending p : mIdGroup)
+				database.removeEntry(p);
+		}
 	}
 	
 	public static ArrayList<ParseResult> parsePending(DbPendingAdapter database) {
@@ -92,27 +98,18 @@ public class PendingParser {
 			// check that there are not too many parts
 			if (idGroup.size() > 255)
 				result.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
-			else {
-				// find the first part (usually first in the list)
-				boolean firstFound = false; 
-				for (Pending p : idGroup) {
-					if (!firstFound && p.getIndex() == 0) {
-						firstFound = true;
-						switch (p.getType()) {
-						case KEYS:
-							result.add(KeysMessage.parseKeysMessage(idGroup));
-							break;
-						case TEXT:
-//							result.add(parseTextMessage(idGroup));
-							break;
-						case CONFIRM:
-							result.add(ConfirmMessage.parseConfirmMessage(idGroup));
-							break;
-						}
-					}
+			else if (idGroup.size() > 0) {
+				switch (idGroup.get(0).getType()) {
+				case KEYS:
+					result.add(KeysMessage.parseKeysMessage(idGroup));
+					break;
+				case TEXT:
+					result.add(TextMessage.parseTextMessage(idGroup));
+					break;
+				case CONFIRM:
+					result.add(ConfirmMessage.parseConfirmMessage(idGroup));
+					break;
 				}
-				if (!firstFound)
-					result.add(new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null));
 			}
 		}
 		return result;

@@ -187,6 +187,10 @@ public class DbPendingAdapter {
 	public boolean updateEntry(Pending pending) {
 		return mDatabase.update(DATABASE_TABLE, getValues(pending), KEY_ID + "=" + pending.getRowIndex(), null) > 0;
 	}
+	
+	public void clear() {
+		mDatabase.execSQL("DELETE FROM '" + DATABASE_TABLE + "'; VACUUM;");
+	}
 
 	private static class DbPendingHelper extends SQLiteOpenHelper {
 

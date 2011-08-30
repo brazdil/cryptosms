@@ -136,7 +136,7 @@ public class KeysMessage extends Message {
 			return new ParseResult(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
 
 		// check we have all the parts
-		// there shouldn't be more than 6 of them
+		// there shouldn't be more than 7 of them
 		int groupSize = idGroup.size();
 		int expectedGroupSize = KeysMessage.getPartsCount(); 
 		if (groupSize < expectedGroupSize || groupSize <= 0)
