@@ -30,6 +30,7 @@ import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
+import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -352,6 +353,8 @@ public class ActivityLists extends ActivityAppState {
 								ActivityLists.this.getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING, null);
 								
 								// send confirmation
+								Log.d(MyApplication.APP_TAG, "Encrypting with " + LowLevel.toHex(keysMsg.getKeyOut()));
+								Log.d(MyApplication.APP_TAG, "NOT encrypting with " + LowLevel.toHex(keysMsg.getKeyIn()));
 								ConfirmMessage confirm = new ConfirmMessage(keysMsg.getKeyOut());
 								try {
 									confirm.sendSMS(phoneNumber, ActivityLists.this, new MessageSendingListener() {

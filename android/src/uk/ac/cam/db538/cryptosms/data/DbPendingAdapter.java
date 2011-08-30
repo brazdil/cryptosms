@@ -148,7 +148,7 @@ public class DbPendingAdapter {
 	}
 
 	public ArrayList<Pending> getAllFirstParts() {
-		return getAllMatchingEntries(KEY_TYPE + " IN ( " + MessageType.MESSAGE_FIRST.ordinal() + ", " + MessageType.KEYS_FIRST.ordinal() + ")");
+		return getAllMatchingEntries(KEY_TYPE + " IN ( " + MessageType.MESSAGE_FIRST.ordinal() + ", " + MessageType.KEYS_FIRST.ordinal() + ", " + MessageType.CONFIRM.ordinal() + ")");
 	}
 
 	public ArrayList<Pending> getAllParts(String sender, MessageType type, int id) {

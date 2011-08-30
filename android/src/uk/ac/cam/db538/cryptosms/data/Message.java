@@ -57,7 +57,8 @@ public abstract class Message {
 		CONFIRM,
 		MESSAGE_FIRST,
 		MESSAGE_PART,
-		UNKNOWN
+		UNKNOWN,
+		NONE
 	}
 	
     private static final String SENT_SMS_ACTION = "CRYPTOSMS_SMS_SENT"; 

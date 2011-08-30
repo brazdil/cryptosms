@@ -188,6 +188,9 @@ public class ListItemNotification extends RelativeLayout {
     	case OK_KEYS_MESSAGE:
         	mSubjectView.setText(res.getString(R.string.parse_ok_keys_message));
         	break;
+    	case OK_CONFIRM_MESSAGE:
+        	mSubjectView.setText(res.getString(R.string.parse_ok_confirm_message));
+        	break;
     	case CORRUPTED_DATA:
         	mSubjectView.setText(res.getString(R.string.parse_corrupted_data));
         	break;
@@ -208,6 +211,9 @@ public class ListItemNotification extends RelativeLayout {
         	break;
     	case UNKNOWN_SENDER:
         	mSubjectView.setText(res.getString(R.string.parse_unknown_sender));
+        	break;
+    	case INTERNAL_ERROR:
+    		mSubjectView.setText(res.getString(R.string.parse_internal_error));
         	break;
     	}
         

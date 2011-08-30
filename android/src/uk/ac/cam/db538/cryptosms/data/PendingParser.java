@@ -10,18 +10,24 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class PendingParser {
 	public static enum PendingParseResult {
 		OK_KEYS_MESSAGE,
+		OK_TEXT_MESSAGE,
+		OK_CONFIRM_MESSAGE,
 		MISSING_PARTS,
 		REDUNDANT_PARTS,
 		COULD_NOT_DECRYPT,
 		COULD_NOT_VERIFY,
 		CORRUPTED_DATA,
 		NO_SESSION_KEYS,
-		UNKNOWN_SENDER
+		UNKNOWN_SENDER,
+		INTERNAL_ERROR
 	}
 
 	/**
@@ -94,7 +100,7 @@ public class PendingParser {
 		ArrayList<Pending> firstParts = database.getAllFirstParts();
 		for(Pending firstPart : firstParts) {
 			// figure out the type of other parts
-			MessageType type = MessageType.UNKNOWN;
+			MessageType type = MessageType.NONE;
 			if (firstPart.getType() == MessageType.MESSAGE_FIRST)
 				type = MessageType.MESSAGE_PART;
 			else if (firstPart.getType() == MessageType.KEYS_FIRST)
@@ -229,6 +235,9 @@ public class PendingParser {
 						} else if (type == MessageType.MESSAGE_FIRST) {
 							firstFound = true;
 							result.add(parseTextMessage(idGroup));
+						} else if (type == MessageType.CONFIRM) {
+							firstFound = true;
+							result.add(ConfirmMessage.parseConfirmMessage(idGroup));
 						}
 					}
 				}

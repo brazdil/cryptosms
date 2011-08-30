@@ -95,12 +95,12 @@ public class MyApplication extends RoboApplication {
 		String storageFile = context.getFilesDir().getAbsolutePath() + "/" + MyApplication.STORAGE_FILE_NAME;
 
 		//TODO: Just For Testing!!!
-//		File file = new File(storageFile);
-//		if (file.exists())
-//			file.delete();
-//		File file2 = new File(context.getFilesDir().getAbsolutePath() + "/../databases/pending.db");
-//		if (file2.exists())
-//			file2.delete();
+		File file = new File(storageFile);
+		if (file.exists())
+			file.delete();
+		File file2 = new File(context.getFilesDir().getAbsolutePath() + "/../databases/pending.db");
+		if (file2.exists())
+			file2.delete();
 		
 		Storage.setFilename(storageFile);
 		

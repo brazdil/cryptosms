@@ -529,6 +529,8 @@
     <string name="discard">Discard</string>
     <string name="accept_and_confirm">Accept and confirm</string>
     <string name="accept_and_confirm_details">The handshake will be accepted and a confirming text message sent back.</string>
+    <string name="parse_internal_error">Internal error</string>
+    <string name="parse_ok_confirm_message">Handshake confirmation</string>
 
 </resources>
 

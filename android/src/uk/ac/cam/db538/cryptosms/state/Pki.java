@@ -23,7 +23,7 @@ public class Pki {
 	private static final String INTENT_PKI_LOGOUT = "uk.ac.cam.dje38.pki.logout";
 	
 	private static final int TIMEOUT_DEFAULT = 60;
-	private static final int TIMEOUT_LOGIN_CHECK = 4;
+	private static final int TIMEOUT_LOGIN_CHECK = 5;
 
 	private static PKIwrapper mPki = null;
 	private static Context mContext = null;
