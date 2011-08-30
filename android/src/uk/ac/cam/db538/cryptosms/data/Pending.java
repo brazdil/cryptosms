@@ -22,30 +22,30 @@ public class Pending {
 	private String mSender;
 	private DateTime mTimeStamp;
 	private byte[] mData;
-	private MessageType mType;
-	private int mId;
 	private long mRowIndex;
 	
 	public Pending(String sender, byte[] data) {
-		this(sender, data, Message.getMessageType(data), Message.getMessageID(data));
+		this(sender, new DateTime(System.currentTimeMillis()), data);
 	}
 	
-	public Pending(String sender, byte[] data, MessageType type, int id) {
-		this(sender, new DateTime(System.currentTimeMillis()), data, type, id);
-	}
-	
-	public Pending(String sender, DateTime timeStamp, byte[] data, MessageType type, int id) {
+	public Pending(String sender, DateTime timeStamp, byte[] data) {
 		mTimeStamp = timeStamp;
 		mSender = sender;
 		mData = data;
-		mType = type;
-		mId = id;
 	}
 	
-	public MessageType getMessageType() {
+	public MessageType getType() {
 		return Message.getMessageType(mData);
 	}
 	
+	public int getIndex() {
+		return Message.getMessageIndex(mData);
+	}
+
+	public int getId() {
+		return Message.getMessageId(mData);
+	}
+
 	public String getSender() {
 		return mSender;
 	}
@@ -68,22 +68,6 @@ public class Pending {
 	
 	public void setData(byte[] data) {
 		this.mData = data;
-	}
-
-	public MessageType getType() {
-		return mType;
-	}
-	
-	public void setType(MessageType type) {
-		this.mType = type;
-	}
-	
-	public int getId() {
-		return mId;
-	}
-	
-	public void setId(int id) {
-		this.mId = id;
 	}
 
 	public void setRowIndex(long rowIndex) {

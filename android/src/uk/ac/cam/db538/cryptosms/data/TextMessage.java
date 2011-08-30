@@ -23,18 +23,15 @@ public class TextMessage extends Message {
 	private static final int LENGTH_FIRST_DATALENGTH = 2;
 	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.SYM_OVERHEAD;
 	
-	private static final int OFFSET_FIRST_DATALENGTH = OFFSET_ID + LENGTH_ID;
+	private static final int OFFSET_FIRST_DATALENGTH = OFFSET_INDEX + LENGTH_INDEX;
 	private static final int OFFSET_FIRST_ENCRYPTION = OFFSET_FIRST_DATALENGTH + LENGTH_FIRST_DATALENGTH;
 	private static final int OFFSET_FIRST_MESSAGEBODY = OFFSET_FIRST_ENCRYPTION + LENGTH_FIRST_ENCRYPTION;
 	
 	public static final int LENGTH_FIRST_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
 	
 	// following parts specific
-	private static final int LENGTH_PART_INDEX = 1;
 	
-	private static final int OFFSET_PART_INDEX = OFFSET_ID + LENGTH_ID;
-	private static final int OFFSET_PART_MESSAGEBODY = OFFSET_PART_INDEX + LENGTH_PART_INDEX;
-	
+	private static final int OFFSET_PART_MESSAGEBODY = OFFSET_INDEX + LENGTH_INDEX;
 	public static final int LENGTH_PART_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGEBODY;
 
 	protected MessageData mStorage;
@@ -159,7 +156,7 @@ public class TextMessage extends Message {
 		data = LowLevel.wrapData(data, totalBytes);
 		
 		// first message (always)
-		byte header = HEADER_MESSAGE_FIRST;
+		byte header = HEADER_TEXT;
 		if (mStorage.getAscii())
 			header |= (byte) 0x08;
 		if (mStorage.getCompressed())
@@ -172,7 +169,6 @@ public class TextMessage extends Message {
 		Log.d(MyApplication.APP_TAG, "SMS data: " + LowLevel.toHex(buf.array()));
 		
 		offset = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
-		header = HEADER_MESSAGE_PART;
 		try {
 			while (true) {
 				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
@@ -266,7 +262,7 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static byte[] getMessageData(byte[] data) {
-		if (getMessageType(data) == MessageType.MESSAGE_FIRST)
+		if (getMessageIndex(data) == 0)
 			return LowLevel.cutData(data, OFFSET_FIRST_MESSAGEBODY, LENGTH_FIRST_MESSAGEBODY);
 		else
 			return LowLevel.cutData(data, OFFSET_PART_MESSAGEBODY, LENGTH_PART_MESSAGEBODY);

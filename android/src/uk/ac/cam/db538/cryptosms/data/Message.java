@@ -15,6 +15,7 @@ import android.util.Log;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
@@ -24,8 +25,10 @@ public abstract class Message {
 	protected static final int OFFSET_HEADER = 0;
 	protected static final int LENGTH_ID = 1;
 	protected static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
-	protected static final int LENGTH_PART_INDEX = 1;
-	protected static final int OFFSET_PART_INDEX = OFFSET_ID + LENGTH_ID;;
+	protected static final int LENGTH_INDEX = 1;
+	protected static final int OFFSET_INDEX = OFFSET_ID + LENGTH_ID;;
+	protected static final int OFFSET_DATA = OFFSET_INDEX + LENGTH_INDEX;
+	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
 
 	public static class MessageException extends Exception {
 		private static final long serialVersionUID = 4922446456153260918L;
@@ -45,18 +48,14 @@ public abstract class Message {
 		public void onError(String message);
 	}
 	
-	protected static final byte HEADER_KEYS_FIRST = (byte) 0x00;
-	protected static final byte HEADER_KEYS_PART = (byte) 0x10;
-	protected static final byte HEADER_CONFIRM = (byte) 0x20;
-	protected static final byte HEADER_MESSAGE_FIRST = (byte) 0x30;
-	protected static final byte HEADER_MESSAGE_PART = (byte) 0x40;
+	protected static final byte HEADER_KEYS = (byte) 0x00;
+	protected static final byte HEADER_CONFIRM = (byte) 0x10;
+	protected static final byte HEADER_TEXT = (byte) 0x20;
 	
 	public static enum MessageType {
-		KEYS_FIRST,
-		KEYS_PART,
+		KEYS,
 		CONFIRM,
-		MESSAGE_FIRST,
-		MESSAGE_PART,
+		TEXT,
 		UNKNOWN,
 		NONE
 	}
@@ -130,16 +129,12 @@ public abstract class Message {
     
     public static MessageType getMessageType(byte[] data) {
     	byte headerType = (byte) (data[0] & 0xF0); // takes first two bits only
-    	if (headerType == HEADER_KEYS_FIRST)
-    		return MessageType.KEYS_FIRST;
-    	else if (headerType == HEADER_KEYS_PART)
-    		return MessageType.KEYS_PART;
+    	if (headerType == HEADER_KEYS)
+    		return MessageType.KEYS;
     	else if (headerType == HEADER_CONFIRM)
     		return MessageType.CONFIRM;
-    	else if (headerType == HEADER_MESSAGE_FIRST)
-    		return MessageType.MESSAGE_FIRST;
-    	else if (headerType == HEADER_MESSAGE_PART)
-    		return MessageType.MESSAGE_PART;
+    	else if (headerType == HEADER_TEXT)
+    		return MessageType.TEXT;
     	else
     		return MessageType.UNKNOWN;
     }
@@ -149,7 +144,7 @@ public abstract class Message {
 	 * @param data
 	 * @return
 	 */
-	public static int getMessageID(byte[] data) {
+	public static int getMessageId(byte[] data) {
 		return LowLevel.getUnsignedByte(data[OFFSET_ID]);
 	}
 	
@@ -160,12 +155,25 @@ public abstract class Message {
 	 * @return
 	 */
 	public static int getMessageIndex(byte[] data) {
-		switch (getMessageType(data)) {
-		case MESSAGE_FIRST:
-		case KEYS_FIRST:
-			return (short) 0;
-		default:
-			return LowLevel.getUnsignedByte(data[OFFSET_PART_INDEX]);
-		}
+		return LowLevel.getUnsignedByte(data[OFFSET_INDEX]);
+	}
+	
+	/**
+	 * Returns stored encrypted data for both first and following parts of text messages
+	 * @param data
+	 * @return
+	 */
+	public static byte[] getMessageData(byte[] data) {
+		return LowLevel.cutData(data, OFFSET_DATA, LENGTH_DATA);
+	}
+	
+	/**
+	 * Returns the offset of relevant data expected in given message part
+	 * @param dataLength
+	 * @param index
+	 * @return
+	 */
+	public static int getDataPartOffset(int index) {
+		return index * LENGTH_DATA;
 	}
 }

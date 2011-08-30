@@ -1,19 +1,21 @@
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.joda.time.format.ISODateTimeFormat;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+import uk.ac.cam.db538.cryptosms.utils.PhoneNumber;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.*;
 import android.database.sqlite.*;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
-import android.text.format.Time;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 public class DbPendingAdapter {
@@ -32,10 +34,6 @@ public class DbPendingAdapter {
 	public static final int COLUMN_TIMESTAMP = 2;
 	public static final String KEY_DATA = "data"; 
 	public static final int COLUMN_DATA = 3;
-	public static final String KEY_TYPE = "type"; 
-	public static final int COLUMN_TYPE = 4;
-	public static final String KEY_MSG_ID = "msgId"; 
-	public static final int COLUMN_MSG_ID = 5;
   
   	// SQL Statement to create a new database
 	private static final String DATABASE_CREATE_TABLE = "create table " + 
@@ -43,9 +41,7 @@ public class DbPendingAdapter {
 		" integer primary key autoincrement, " +
 		KEY_SENDER + " text not null, " + 
 		KEY_TIMESTAMP + " datetime not null, " +
-		KEY_DATA + " blob not null, " +
-		KEY_TYPE + " integer, " +
-		KEY_MSG_ID + " integer );";
+		KEY_DATA + " blob not null );";
 
   	// Variable to hold the database instance
 	private SQLiteDatabase mDatabase;
@@ -73,28 +69,17 @@ public class DbPendingAdapter {
 		values.put(KEY_SENDER, pending.getSender());
 		values.put(KEY_TIMESTAMP, ISODateTimeFormat.dateTime().print(pending.getTimeStamp()));
 		values.put(KEY_DATA, pending.getData());
-		values.put(KEY_TYPE, pending.getType().ordinal());
-		values.put(KEY_MSG_ID, pending.getId());
 		return values;
 	}
 	
 	private ArrayList<Pending> getPending(Cursor cursor) {
-		ArrayList<Pending> list = new ArrayList<Pending>(); 
+		ArrayList<Pending> list = new ArrayList<Pending>(cursor.getCount()); 
 		if (cursor.moveToFirst()) {
 			do {
-				MessageType type = MessageType.UNKNOWN;
-				try {
-					type = MessageType.values()[cursor.getInt(COLUMN_TYPE)];
-				} catch (IndexOutOfBoundsException e) {
-				}
-				
 				Pending pending = new Pending(
 						cursor.getString(COLUMN_SENDER),
 						ISODateTimeFormat.dateTimeParser().parseDateTime(cursor.getString(COLUMN_TIMESTAMP)),
-						cursor.getBlob(COLUMN_DATA),
-						type,
-						(byte) cursor.getInt(COLUMN_MSG_ID)
-					);
+						cursor.getBlob(COLUMN_DATA));
 				pending.setRowIndex(cursor.getLong(COLUMN_ID));
 				list.add(pending);
 			} while (cursor.moveToNext());
@@ -146,13 +131,57 @@ public class DbPendingAdapter {
 	public ArrayList<Pending> getAllSenderEntries(String sender) {
 		return getAllMatchingEntries(KEY_SENDER + "='" + sender + "'");
 	}
-
-	public ArrayList<Pending> getAllFirstParts() {
-		return getAllMatchingEntries(KEY_TYPE + " IN ( " + MessageType.MESSAGE_FIRST.ordinal() + ", " + MessageType.KEYS_FIRST.ordinal() + ", " + MessageType.CONFIRM.ordinal() + ")");
-	}
-
-	public ArrayList<Pending> getAllParts(String sender, MessageType type, int id) {
-		return getAllMatchingEntries(KEY_SENDER + "='" + sender + "' AND " + KEY_TYPE + "=" + type.ordinal() + " AND " + KEY_MSG_ID + "=" + id);
+	
+	public ArrayList<ArrayList<Pending>> getAllIdGroups() {
+		ArrayList<Pending> allEntries = getAllEntries();
+		Comparator<Pending> comparatorMain = new Comparator<Pending>() {
+			@Override
+			public int compare(Pending object1, Pending object2) {
+				// level 1 - senders 
+				if (PhoneNumber.compare(object1.getSender(), object2.getSender())) {
+					// level 2 - types
+					MessageType type1 = object1.getType();
+					MessageType type2 = object2.getType();
+					if (type1.equals(type2)) {
+						// level 3 - ids
+						return object1.getId() - object2.getId();
+					} else
+						return type1.compareTo(type2);
+				} else
+					return object1.getSender().compareToIgnoreCase(object2.getSender()); 
+			}
+		};
+//		Comparator<Pending> comparatorIndex = new Comparator<Pending>() {
+//			@Override
+//			public int compare(Pending object1, Pending object2) {
+//				return object1.getIndex() - object2.getIndex();
+//			}
+//		};
+		
+		// sort the entries according to their 
+		// 1) sender
+		// 2) type
+		// 3) ID
+		// 4) index
+		Collections.sort(allEntries, comparatorMain);
+		
+		// now divide into groups
+		ArrayList<ArrayList<Pending>> idGroups = new ArrayList<ArrayList<Pending>>();
+		ArrayList<Pending> thisIdGroup = null;
+		Pending lastItem = null;
+		
+		for (Pending p : allEntries) {
+			// do we need to create a new id group?
+			if (lastItem == null || comparatorMain.compare(lastItem, p) != 0) {
+				thisIdGroup = new ArrayList<Pending>();
+				idGroups.add(thisIdGroup);
+			}
+			// add item into id group
+			thisIdGroup.add(p);
+			lastItem = p;
+		}
+		
+		return idGroups;
 	}
 
 	public boolean updateEntry(Pending pending) {
