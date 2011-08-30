@@ -18,16 +18,13 @@ import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class ConfirmMessage extends Message {
-	
-	public static final byte[] MESSAGE = LowLevel.fromHex("FACECABBAGEB00BAGE");
-	
 	private byte[] mDataEncrypted;
 	private byte[] mSmsData;
 	
-	public ConfirmMessage(byte[] key) {
+	public ConfirmMessage(byte[] key, byte[] nonce) {
 		mDataEncrypted =
 				LowLevel.wrapData(
-					Encryption.getEncryption().encryptSymmetric(MESSAGE, key),
+					Encryption.getEncryption().encryptSymmetric(nonce, key),
 					LENGTH_DATA);
 
 		mSmsData = new byte[MessageData.LENGTH_MESSAGE];
@@ -35,8 +32,7 @@ public class ConfirmMessage extends Message {
 		mSmsData[OFFSET_ID] = 0x00;
 		mSmsData[OFFSET_INDEX] = 0x00;
 		System.arraycopy(mDataEncrypted, 0, mSmsData, OFFSET_DATA, LENGTH_DATA);
-
-	}
+ 	}
 
 	@Override
 	public ArrayList<byte[]> getBytes() throws StorageFileException,
@@ -52,7 +48,7 @@ public class ConfirmMessage extends Message {
 	 * @return
 	 */
 	public static byte[] getEncryptedData(byte[] data) {
-		return LowLevel.cutData(data, OFFSET_DATA, Encryption.getEncryption().getSymmetricEncryptedLength(MESSAGE.length));
+		return LowLevel.cutData(data, OFFSET_DATA, Encryption.getEncryption().getSymmetricEncryptedLength(Encryption.SYM_CONFIRM_NONCE_LENGTH));
 	}
 
 	/**
@@ -111,12 +107,13 @@ public class ConfirmMessage extends Message {
 		}
 		
 		// check that it's long enough
-		if (dataDecrypted.length < ConfirmMessage.MESSAGE.length)
+		if (dataDecrypted.length < Encryption.SYM_CONFIRM_NONCE_LENGTH)
 			return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 		
 		// check that it contains the right bytes
-		for (int i = 0; i < ConfirmMessage.MESSAGE.length; ++i)
-			if (dataDecrypted[i] != ConfirmMessage.MESSAGE[i])
+		byte[] nonce = keys.getConfirmationNonce();
+		for (int i = 0; i < Encryption.SYM_CONFIRM_NONCE_LENGTH; ++i)
+			if (dataDecrypted[i] != nonce[i])
 				return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 		
 		// if we got this far, everything is fine and the keys are confirmed

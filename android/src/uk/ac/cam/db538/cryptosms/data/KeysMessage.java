@@ -7,10 +7,8 @@ import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
-import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.storage.Header;
@@ -19,25 +17,28 @@ import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class KeysMessage extends Message {
-	public static final int LENGTH_KEYS = 2 * Encryption.SYM_KEY_LENGTH;
+	public static final int LENGTH_CONTENT = 2 * Encryption.SYM_KEY_LENGTH + Encryption.SYM_CONFIRM_NONCE_LENGTH;
 	
 	private byte[] mDataEncryptedAndSigned;
-	private byte[] mKeyOut, mKeyIn;
+	private byte[] mKeyOut, mKeyIn, mNonce;
 	private byte mId;
 	
-	public KeysMessage(byte[] keyOut, byte[] keyIn) {
+	public KeysMessage(byte[] keyOut, byte[] keyIn, byte[] nonce) {
 		mKeyOut = keyOut;
 		mKeyIn = keyIn;
+		mNonce = nonce;
 	}
 	
 	public KeysMessage(long contactId, String contactKey) throws StorageFileException, EncryptionException {
 		mKeyOut = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
 		mKeyIn = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
+		mNonce = Encryption.getEncryption().generateRandomData(Encryption.SYM_CONFIRM_NONCE_LENGTH);
 		
 		// generate a pair of keys 
-		byte[] data = new byte[LENGTH_KEYS];
+		byte[] data = new byte[LENGTH_CONTENT];
 		System.arraycopy(mKeyOut, 0, data, 0, Encryption.SYM_KEY_LENGTH);
 		System.arraycopy(mKeyIn, 0, data, Encryption.SYM_KEY_LENGTH, Encryption.SYM_KEY_LENGTH);
+		System.arraycopy(mNonce, 0, data, 2 * Encryption.SYM_KEY_LENGTH, Encryption.SYM_CONFIRM_NONCE_LENGTH);
 		
 		// encrypt and sign
 		mDataEncryptedAndSigned = 
@@ -56,6 +57,10 @@ public class KeysMessage extends Message {
 	
 	public byte[] getKeyIn() {
 		return mKeyIn;
+	}
+
+	public byte[] getNonce() {
+		return mNonce;
 	}
 
 	/**
@@ -100,7 +105,7 @@ public class KeysMessage extends Message {
 	}
 	
 	public static int getEncryptedDataLength() {
-		int dataLength = LENGTH_KEYS;
+		int dataLength = LENGTH_CONTENT;
 		dataLength = Encryption.getEncryption().getAsymmetricAlignedLength(dataLength);
 		dataLength += Encryption.MAC_LENGTH;
 		dataLength += Encryption.ASYM_SIGNATURE_LENGTH;
@@ -207,7 +212,7 @@ public class KeysMessage extends Message {
 		}
 		
 		// check the length
-		if (dataDecrypted.length != KeysMessage.LENGTH_KEYS)
+		if (dataDecrypted.length != KeysMessage.LENGTH_CONTENT)
 			return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 		
 		// all seems to be fine, so just retrieve the keys and return the result
@@ -217,7 +222,8 @@ public class KeysMessage extends Message {
 		                            	// we have to swap the keys
 		                            	// the other guy's out-key is my in-key...
 		                            	LowLevel.cutData(dataDecrypted, Encryption.SYM_KEY_LENGTH, Encryption.SYM_KEY_LENGTH),
-		                            	LowLevel.cutData(dataDecrypted, 0, Encryption.SYM_KEY_LENGTH)
+		                            	LowLevel.cutData(dataDecrypted, 0, Encryption.SYM_KEY_LENGTH),
+		                            	LowLevel.cutData(dataDecrypted, 2 * Encryption.SYM_KEY_LENGTH, Encryption.SYM_CONFIRM_NONCE_LENGTH)
 		                            ));
 	}
 }

@@ -126,6 +126,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 								SessionKeys keys = SessionKeys.createSessionKeys(conv);
 								keys.setSessionKey_Out(keysMessage.getKeyOut());
 								keys.setSessionKey_In(keysMessage.getKeyIn());
+								keys.setConfirmationNonce(keysMessage.getNonce());
 								keys.setSimNumber(simNumber);
 								keys.setKeysSent(true);
 								keys.setKeysConfirmed(false);

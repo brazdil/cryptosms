@@ -358,7 +358,7 @@ public class ActivityLists extends ActivityAppState {
 								// send confirmation
 								Log.d(MyApplication.APP_TAG, "Encrypting with " + LowLevel.toHex(keysMsg.getKeyOut()));
 								Log.d(MyApplication.APP_TAG, "NOT encrypting with " + LowLevel.toHex(keysMsg.getKeyIn()));
-								ConfirmMessage confirm = new ConfirmMessage(keysMsg.getKeyOut());
+								ConfirmMessage confirm = new ConfirmMessage(keysMsg.getKeyOut(), keysMsg.getNonce());
 								try {
 									confirm.sendSMS(phoneNumber, ActivityLists.this, new MessageSendingListener() {
 
@@ -588,8 +588,10 @@ public class ActivityLists extends ActivityAppState {
 			switch (item.getItemId()) {
 			case R.id.accept:
 				getDialogManager().showDialog(DIALOG_ACCEPT_KEYS_AND_CONFIRM, null);
+				break;
 			case R.id.discard:
 				getDialogManager().showDialog(DIALOG_CLEAR_PENDING, null);
+				break;
 			}
 		}
 		return super.onContextItemSelected(item);
