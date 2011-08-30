@@ -3,6 +3,7 @@ package uk.ac.cam.db538.cryptosms.storage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 
@@ -143,6 +144,27 @@ public final class Storage {
 		}
 	}
 
+	// LISTENERS
+	
+	private static ArrayList<StorageChangeListener> mGlobalListeners = new ArrayList<StorageChangeListener>();
+	
+	public static interface StorageChangeListener {
+		public void onUpdate();
+	}
+	
+	static void notifyChange() {
+		for (StorageChangeListener listener: mGlobalListeners) 
+			listener.onUpdate();
+	}
+	
+	public static void addListener(StorageChangeListener listener) {
+		mGlobalListeners.add(listener);
+	}
+	
+	public static void removeListener(StorageChangeListener listener) {
+		mGlobalListeners.remove(listener);
+	}
+	
 	// FOR TESTING ONLY
 	static void freeSingleton() {
 		if (mSingleton != null)

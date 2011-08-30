@@ -28,7 +28,7 @@ public interface EncryptionInterface {
 	public int getSymmetricAlignedLength(int length);
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException;
 	public byte[] encryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException;
-	public byte[] encryptSymmetric(byte[] data, byte[] key) throws EncryptionException;
+	public byte[] encryptSymmetric(byte[] data, byte[] key);
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException;
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException;
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException;

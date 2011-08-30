@@ -34,8 +34,7 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 
 	@Override
-	public byte[] encryptSymmetric(byte[] data, byte[] key)
-			throws EncryptionException {
+	public byte[] encryptSymmetric(byte[] data, byte[] key) {
 		int alignedLength = Encryption.getEncryption().getSymmetricAlignedLength(data.length);
 		byte[] buffer = new byte[alignedLength + Encryption.MAC_LENGTH + Encryption.SYM_IV_LENGTH];
 		data = LowLevel.wrapData(data, alignedLength);

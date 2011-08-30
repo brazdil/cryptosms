@@ -36,10 +36,10 @@ public class SessionKeys {
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
 	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
-	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;	
+	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;
 	
-	
-	
+	public static final byte DEFAULT_ID = 0x00;
+		
 	// STATIC
 	
 	private static ArrayList<SessionKeys> cacheSessionKeys = new ArrayList<SessionKeys>();
@@ -142,9 +142,9 @@ public class SessionKeys {
 			setKeysConfirmed(false);
 			setSimNumber(new SimNumber());
 			setSessionKey_Out(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
-			setNextID_Out((byte) 0x00);
+			setNextID_Out(DEFAULT_ID);
 			setSessionKey_In(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
-			setLastID_In((byte) 0x00);
+			setLastID_In(DEFAULT_ID);
 			setIndexParent(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);

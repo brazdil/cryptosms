@@ -61,7 +61,7 @@ public class Conversation implements Comparable<Conversation> {
 		// create a new one
 		Conversation conv = new Conversation(Empty.getEmptyIndex(), false);
 		Header.getHeader().attachConversation(conv);
-		notifyChange();
+		Storage.notifyChange();
 		return conv;
 	}	
 	
@@ -328,7 +328,7 @@ public class Conversation implements Comparable<Conversation> {
 		synchronized (cacheConversation) {
 			cacheConversation.remove(this);
 		}
-		notifyChange();
+		Storage.notifyChange();
 		
 		// make this instance invalid
 		this.mEntryIndex = -1L;
@@ -427,7 +427,7 @@ public class Conversation implements Comparable<Conversation> {
 				keys.delete();
 			keys = temp;
 		}
-		notifyChange();
+		Storage.notifyChange();
 	}
 
 
@@ -481,7 +481,7 @@ public class Conversation implements Comparable<Conversation> {
 			conv.replaceSessionKeys(original, replacement);
 			conv = conv.getNextConversation();
 		}
-		notifyChange();
+		Storage.notifyChange();
 	}
 	
 	/**
@@ -594,27 +594,6 @@ public class Conversation implements Comparable<Conversation> {
 		this.mIndexNext = indexNext;
 	}
 	
-	// LISTENERS
-	
-	private static ArrayList<ConversationsChangeListener> mGlobalListeners = new ArrayList<ConversationsChangeListener>();
-	
-	public static interface ConversationsChangeListener {
-		public void onUpdate();
-	}
-	
-	private static void notifyChange() {
-		for (ConversationsChangeListener listener: mGlobalListeners) 
-			listener.onUpdate();
-	}
-	
-	public static void addListener(ConversationsChangeListener listener) {
-		mGlobalListeners.add(listener);
-	}
-	
-	public static void removeListener(ConversationsChangeListener listener) {
-		mGlobalListeners.remove(listener);
-	}
-
 	@Override
 	public int compareTo(Conversation another) {
 		try {
