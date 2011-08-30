@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
@@ -104,8 +105,8 @@ public class Header {
 			setIndexConversations(LowLevel.getUnsignedInt(dataPlain, OFFSET_CONVINDEX));
 		}
 		else {
-			// default values			
-			setKeyId((byte) 0);
+			// default values
+			setKeyId((byte) (new Random().nextInt()));
 			setVersion(CURRENT_VERSION);
 			setIndexEmpty(0L);
 			setIndexConversations(0L);

@@ -21,6 +21,7 @@ public class SessionKeys {
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_SIMNUMBER = 32;
 	private static final int LENGTH_SESSIONKEY = Encryption.SYM_KEY_LENGTH;
+	private static final int LENGTH_CONFIRMATION_NONCE = Encryption.SYM_CONFIRM_NONCE_LENGTH; 
 	private static final int LENGTH_LASTID = 1;
 
 	private static final int OFFSET_FLAGS = 0;
@@ -29,8 +30,9 @@ public class SessionKeys {
 	private static final int OFFSET_NEXTID_OUTGOING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
 	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_NEXTID_OUTGOING + LENGTH_LASTID;
 	private static final int OFFSET_LASTID_INCOMING = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
+	private static final int OFFSET_CONFIRMATION_NONCE = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
 	
-	private static final int OFFSET_RANDOMDATA = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
+	private static final int OFFSET_RANDOMDATA = OFFSET_CONFIRMATION_NONCE + LENGTH_CONFIRMATION_NONCE;
 
 	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
@@ -91,6 +93,7 @@ public class SessionKeys {
 	private byte mNextID_Out;
 	private byte[] mSessionKey_In;
 	private byte mLastID_In;
+	private byte[] mConfirmationNonce;
 	private long mIndexParent;
 	private long mIndexPrev;
 	private long mIndexNext;
@@ -120,18 +123,14 @@ public class SessionKeys {
 			boolean keysConfirmed = ((flags & (1 << 6)) == 0) ? false : true;
 			boolean simSerial = ((flags & (1 << 5)) == 0) ? false : true;
 
-			byte[] dataSessionKey_Out = new byte[LENGTH_SESSIONKEY];
-			System.arraycopy(dataPlain, OFFSET_SESSIONKEY_OUTGOING, dataSessionKey_Out, 0, LENGTH_SESSIONKEY);
-			byte[] dataSessionKey_In = new byte[LENGTH_SESSIONKEY];
-			System.arraycopy(dataPlain, OFFSET_SESSIONKEY_INCOMING, dataSessionKey_In, 0, LENGTH_SESSIONKEY);
-			
 			setKeysSent(keysSent);
 			setKeysConfirmed(keysConfirmed);
 			setSimNumber(new SimNumber(Charset.fromAscii8(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
-			setSessionKey_Out(dataSessionKey_Out);
+			setSessionKey_Out(LowLevel.cutData(dataPlain, OFFSET_SESSIONKEY_OUTGOING, LENGTH_SESSIONKEY));
 			setNextID_Out(dataPlain[OFFSET_NEXTID_OUTGOING]);
-			setSessionKey_In(dataSessionKey_In);
+			setSessionKey_In(LowLevel.cutData(dataPlain, OFFSET_SESSIONKEY_INCOMING, LENGTH_SESSIONKEY));
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
+			setConfirmationNonce(LowLevel.cutData(dataPlain, OFFSET_CONFIRMATION_NONCE, LENGTH_CONFIRMATION_NONCE));
 			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
@@ -145,6 +144,7 @@ public class SessionKeys {
 			setNextID_Out(DEFAULT_ID);
 			setSessionKey_In(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
 			setLastID_In(DEFAULT_ID);
+			setConfirmationNonce(Encryption.getEncryption().generateRandomData(Encryption.SYM_CONFIRM_NONCE_LENGTH));
 			setIndexParent(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);
@@ -179,11 +179,12 @@ public class SessionKeys {
 		// phone number
 		keysBuffer.put(Charset.toAscii8(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
 		
-		// session keys and last IDs
+		// session keys and last IDs and confirmation nonce
 		keysBuffer.put(this.mSessionKey_Out);
 		keysBuffer.put((byte) this.mNextID_Out);
 		keysBuffer.put(this.mSessionKey_In);
 		keysBuffer.put((byte) this.mLastID_In);
+		keysBuffer.put(this.mConfirmationNonce);
 		
 		// random data
 		keysBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_RANDOMDATA));
@@ -379,6 +380,14 @@ public class SessionKeys {
 	
 	public void setLastID_In(byte lastID_In) {
 		mLastID_In = lastID_In;
+	}
+
+	public byte[] getConfirmationNonce() {
+		return mConfirmationNonce;
+	}
+
+	public void setConfirmationNonce(byte[] confirmationNonce) {
+		mConfirmationNonce = confirmationNonce;
 	}
 
 	long getIndexPrev() {
