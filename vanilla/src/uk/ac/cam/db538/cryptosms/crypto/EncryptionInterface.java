@@ -1,5 +1,7 @@
 package uk.ac.cam.db538.cryptosms.crypto;
 
+import java.security.SecureRandom;
+
 public interface EncryptionInterface {
 	public static class WrongKeyDecryptionException extends RuntimeException {
 		private static final long serialVersionUID = 7462739153684558050L;
@@ -22,7 +24,9 @@ public interface EncryptionInterface {
 		}
 	}
 
+	public SecureRandom getRandom();
 	public byte[] generateRandomData(int length);
+	
 	public byte[] getHash(byte[] data);
 	public int getSymmetricEncryptedLength(int length);
 	public int getSymmetricAlignedLength(int length);

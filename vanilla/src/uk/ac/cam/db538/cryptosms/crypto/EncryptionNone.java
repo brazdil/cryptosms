@@ -8,10 +8,19 @@ import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class EncryptionNone implements EncryptionInterface {
 	private static final String HASHING_ALGORITHM = "SHA-256";
-	private static SecureRandom mRandom = null;
-
+	
 	public static void initEncryption() {
 		Encryption.setEncryption(new EncryptionNone());
+	}
+	
+	private SecureRandom mRandom = null;
+
+	public EncryptionNone() {
+        try {
+            mRandom = SecureRandom.getInstance("SHA1PRNG");
+        } catch (NoSuchAlgorithmException e){
+            throw new RuntimeException("No secure random available!");
+        }
 	}
 	
 	@Override
@@ -53,12 +62,6 @@ public class EncryptionNone implements EncryptionInterface {
 
 	@Override
 	public byte[] generateRandomData(int length) {
-		if (mRandom == null)
-			try {
-				mRandom = SecureRandom.getInstance("SHA1PRNG");
-			} catch (NoSuchAlgorithmException e) {
-				throw new RuntimeException(e);
-			}
 		byte[] data = new byte[length];
 		mRandom.nextBytes(data);
 		return data;
@@ -128,5 +131,10 @@ public class EncryptionNone implements EncryptionInterface {
 			throws EncryptionException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public SecureRandom getRandom() {
+		return mRandom;
 	}
 }
