@@ -1,5 +1,7 @@
 package uk.ac.cam.db538.cryptosms.crypto;
 
+import java.security.SecureRandom;
+
 import uk.ac.cam.db538.crypto.AesCbc;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
@@ -291,6 +293,11 @@ public final class EncryptionPki implements EncryptionInterface {
 	@Override
 	public int getAsymmetricAlignedLength(int length) {
 		return mEncryptionNone.getAsymmetricAlignedLength(length);	
+	}
+
+	@Override
+	public SecureRandom getRandom() {
+		return mEncryptionNone.getRandom();
 	}
 
 //	public boolean testEncryption() throws EncryptionException {
