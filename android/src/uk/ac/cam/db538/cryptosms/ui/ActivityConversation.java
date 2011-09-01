@@ -1,5 +1,9 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
@@ -25,6 +29,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -49,6 +54,10 @@ public class ActivityConversation extends ActivityAppState {
     private EditText mTextEditor;
 	@InjectView(R.id.bytes_counter)
     private TextView mBytesCounterView;
+	@InjectView(R.id.history)
+	private ListViewMessage mListMessageHistory;
+	
+	private AdapterMessages mAdapterMessageHistory;
     
 	private Context mContext = this;
     private boolean mErrorNoKeysShow;
@@ -124,6 +133,7 @@ public class ActivityConversation extends ActivityAppState {
 							public void onMessageSent() {
 								pd.cancel();
 								mTextEditor.setText("");
+								updateMessageHistory();
 							}
 							
 							@Override
@@ -135,6 +145,7 @@ public class ActivityConversation extends ActivityAppState {
 								.setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + message)
 								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
 								.show();
+								updateMessageHistory();
 							}
 							
 							boolean keyIncremented = false;
@@ -169,6 +180,13 @@ public class ActivityConversation extends ActivityAppState {
 				}
 			}
         });
+        
+        // set appearance of list view
+	    mListMessageHistory.setFastScrollEnabled(true);
+    	// create the adapter
+	    mAdapterMessageHistory = new AdapterMessages(getLayoutInflater(), mListMessageHistory);
+		// prepare for context menus
+		registerForContextMenu(mListMessageHistory);
 	
         // prepare dialogs
         getDialogManager().addBuilder(new DialogBuilder() {
@@ -211,11 +229,19 @@ public class ActivityConversation extends ActivityAppState {
 		modeEnabled(false);
 		Pki.login(false);
 	}
+	
+	@Override
+	public void onPkiLogin() {
+		super.onPkiLogin();
+		updateMessageHistory();
+		mListMessageHistory.setAdapter(mAdapterMessageHistory);
+	}
 
 	@Override
 	public void onPkiLogout() {
-		super.onPkiLogout();
+		mListMessageHistory.setAdapter(null);
 		modeEnabled(false);
+		super.onPkiLogout();
 	}
 
 	@Override
@@ -242,6 +268,61 @@ public class ActivityConversation extends ActivityAppState {
 		} catch (StorageFileException ex) {
 			State.fatalException(ex);
 			return;
+		}
+	}
+
+	private void updateMessageHistory() {
+		synchronized(mAdapterMessageHistory) {
+			new MessageHistoryUpdateTask().execute();
+		}
+	}
+
+	private class MessageHistoryUpdateTask extends AsyncTask<Void, Void, Void> {
+
+		private ArrayList<TextMessage> mTextMessages = null;
+		private Exception mException = null;
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+//			if (mAdapterMessageHistory.getList() == null || mAdapterMessageHistory.getList().size() == 0) {
+//				mListNotificationsLoading.setVisibility(View.VISIBLE);
+//				mListNotifications.setVisibility(View.GONE);
+//			}
+		}
+		
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			try {
+				ArrayList<MessageData> allMessageData = mConversation.getMessages();
+				Collections.sort(allMessageData, new Comparator<MessageData>() {
+					@Override
+					public int compare(MessageData arg0, MessageData arg1) {
+						return arg0.getTimeStamp().compareTo(arg1.getTimeStamp());
+					}
+				});
+				mTextMessages = new ArrayList<TextMessage>(allMessageData.size());
+				for (MessageData storage : allMessageData)
+					mTextMessages.add(new TextMessage(storage));
+			} catch (StorageFileException ex) {
+				mException = ex;
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+			
+			if (mException != null) {
+				State.fatalException(mException);
+				return;
+			}
+
+			mAdapterMessageHistory.setList(mTextMessages);
+			mAdapterMessageHistory.notifyDataSetChanged();
+//			mListNotificationsLoading.setVisibility(View.GONE);
+//			mListNotifications.setVisibility(View.VISIBLE);
 		}
 	}
 }

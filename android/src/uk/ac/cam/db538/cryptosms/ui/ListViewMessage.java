@@ -32,21 +32,21 @@ public final class ListViewMessage extends ListView {
     
     @Override
     public boolean onKeyShortcut(int keyCode, KeyEvent event) {
-/*        switch (keyCode) {
-        case KeyEvent.KEYCODE_C:
-            MessageListItem view = (MessageListItem)getSelectedView();
-            if (view == null) {
-                break;
-            }
-            MessageItem item = view.getMessageItem();
-            if (item != null && item.isSms()) {
-                ClipboardManager clip =
-                    (ClipboardManager)getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                clip.setText(item.mBody);
-                return true;
-            }
-            break;
-        }*/
+//        switch (keyCode) {
+//        case KeyEvent.KEYCODE_C:
+//            MessageListItem view = (MessageListItem)getSelectedView();
+//            if (view == null) {
+//                break;
+//            }
+//            MessageItem item = view.getMessageItem();
+//            if (item != null && item.isSms()) {
+//                ClipboardManager clip =
+//                    (ClipboardManager)getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+//                clip.setText(item.mBody);
+//                return true;
+//            }
+//            break;
+//        }
 
         return super.onKeyShortcut(keyCode, event);
     }
