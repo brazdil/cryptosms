@@ -14,8 +14,9 @@ public class Encryption {
 	public static final int ASYM_SIGNATURE_LENGTH = ASYM_KEY_LENGTH;
 	public static final int ASYM_OVERHEAD = MAC_LENGTH;
 	
-	public static final int DH_MIN_MODULUS_BITLENGTH = 3076;
+	public static final int DH_MIN_MODULUS_BITLENGTH = 3072;
 	public static final int DH_MIN_KEYMAX_BITLENGTH = 256;
+	public static final int DH_PRIME_CERTAINTY = 256;
 
 	private static EncryptionInterface mEncryption = null;
 	
