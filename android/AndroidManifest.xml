@@ -12,7 +12,7 @@
     	android:icon="@drawable/icon" 
     	android:label="@string/app_label"
     	android:name=".MyApplication"> 	
-    	<receiver android:name=".DataSmsReceiver">
+    	<receiver android:name=".data.DataSmsReceiver">
 			<intent-filter>
         		<action android:name="android.intent.action.DATA_SMS_RECEIVED" />
           		<data android:scheme="sms" />

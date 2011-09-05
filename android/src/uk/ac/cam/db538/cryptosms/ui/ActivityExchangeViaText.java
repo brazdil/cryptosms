@@ -29,8 +29,6 @@ import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 public class ActivityExchangeViaText extends ActivityAppState {
-	public static final String OPTION_CONTACT_ID = "CONTACT_ID";
-	public static final String OPTION_CONTACT_KEY = "CONTACT_KEY";
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
 	
 	private static boolean mCancelled = false;
@@ -57,10 +55,8 @@ public class ActivityExchangeViaText extends ActivityAppState {
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         // set up the recipient
-        mContactId = getIntent().getExtras().getLong(OPTION_CONTACT_ID, -1L);
         mPhoneNumber = getIntent().getExtras().getString(OPTION_PHONE_NUMBER);
-        mContactKey = getIntent().getExtras().getString(OPTION_CONTACT_KEY);
-        if (mContactId == -1L || mPhoneNumber == null || mContactKey == null)
+        if (mContactId == -1L || mPhoneNumber == null)
         	this.finish();
 
         mContact = Contact.getContact(this, mPhoneNumber, mContactId);
@@ -91,11 +87,8 @@ public class ActivityExchangeViaText extends ActivityAppState {
 				// generate session keys
 				final KeysMessage keysMessage;
 				try {
-					keysMessage = new KeysMessage(mContactId, mContactKey);
+					keysMessage = new KeysMessage();
 				} catch (StorageFileException e) {
-					State.fatalException(e);
-					return;
-				} catch (EncryptionException e) {
 					State.fatalException(e);
 					return;
 				}
@@ -124,9 +117,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 								SimNumber simNumber = SimCard.getSingleton().getNumber();
 								conv.deleteSessionKeys(simNumber);
 								SessionKeys keys = SessionKeys.createSessionKeys(conv);
-								keys.setSessionKey_Out(keysMessage.getKeyOut());
-								keys.setSessionKey_In(keysMessage.getKeyIn());
-								keys.setConfirmationNonce(keysMessage.getNonce());
+								keys.setPrivateKey(keysMessage.getPrivateKey());
+								keys.setKeysId(keysMessage.getId());
+								Log.d(MyApplication.APP_TAG, "KeyId: " + keysMessage.getId());
 								keys.setSimNumber(simNumber);
 								keys.setKeysSent(true);
 								keys.setKeysConfirmed(false);

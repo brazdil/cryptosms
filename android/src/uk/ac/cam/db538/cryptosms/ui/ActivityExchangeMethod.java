@@ -14,17 +14,13 @@ import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 
 public class ActivityExchangeMethod extends ActivityAppState {
-	public static final String OPTION_CONTACT_ID = "CONTACT_ID";
-	public static final String OPTION_CONTACT_KEY = "CONTACT_KEY";
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
 	
 	private static final int ACTIVITY_TEXT_MESSAGE = 1;
 	
 	private Contact mContact;
 	
-	private long mContactId;
 	private String mPhoneNumber;
-	private String mContactKey;
 	
 	@InjectView(R.id.via_text)
 	RadioButton mTextMessageRadioButton;
@@ -42,10 +38,8 @@ public class ActivityExchangeMethod extends ActivityAppState {
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         // set up the recipient
-        mContactId = getIntent().getExtras().getLong(OPTION_CONTACT_ID, -1L);
         mPhoneNumber = getIntent().getExtras().getString(OPTION_PHONE_NUMBER);
-        mContactKey = getIntent().getExtras().getString(OPTION_CONTACT_KEY);
-        if (mContactId == -1L || mPhoneNumber == null || mContactKey == null)
+        if (mPhoneNumber == null)
         	this.finish();
         
         mContact = Contact.getContact(this, mPhoneNumber);
@@ -80,8 +74,6 @@ public class ActivityExchangeMethod extends ActivityAppState {
 				if (mTextMessageRadioButton.isChecked()) {
 	    			Intent intent = new Intent(ActivityExchangeMethod.this, ActivityExchangeViaText.class);
 	    			intent.putExtra(ActivityExchangeViaText.OPTION_PHONE_NUMBER, mPhoneNumber);
-	    			intent.putExtra(ActivityExchangeViaText.OPTION_CONTACT_ID, mContactId);
-	    			intent.putExtra(ActivityExchangeViaText.OPTION_CONTACT_KEY, mContactKey);
 	    			startActivityForResult(intent, ACTIVITY_TEXT_MESSAGE);
 				}
 			}

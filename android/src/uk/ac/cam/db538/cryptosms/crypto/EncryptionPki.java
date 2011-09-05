@@ -1,8 +1,9 @@
 package uk.ac.cam.db538.cryptosms.crypto;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 
-import uk.ac.cam.db538.crypto.AesCbc;
+import uk.ac.cam.db538.cryptosms.crypto.AesCbc;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.state.Pki;
@@ -184,12 +185,7 @@ public final class EncryptionPki implements EncryptionInterface {
 			byte[] signature = Pki.getPkiWrapper().sign(data);
 			if (signature.length != Encryption.ASYM_SIGNATURE_LENGTH)
 				throw new EncryptionException();
-				
-			byte[] signedData = new byte[data.length + Encryption.ASYM_SIGNATURE_LENGTH];
-			System.arraycopy(data, 0, signedData, 0, data.length);
-			System.arraycopy(signature, 0, signedData, data.length, Encryption.ASYM_SIGNATURE_LENGTH);
-			
-			return signedData;
+			return signature;
 		} catch (TimeoutException e) {
 			throw new EncryptionException(e);
 		} catch (PKIErrorException e) {
@@ -204,35 +200,30 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	@Override
-	public byte[] verify(byte[] signedData, long contactId)
+	public boolean verify(byte[] data, byte[] signature, long contactId)
 			throws EncryptionException {
-		int unsignedLength = signedData.length - Encryption.ASYM_SIGNATURE_LENGTH;
-		byte[] unsignedData = LowLevel.cutData(signedData, 0, unsignedLength);
-		byte[] signature = LowLevel.cutData(signedData, unsignedLength, Encryption.ASYM_SIGNATURE_LENGTH);
-		
-		boolean verified = false;
 		try {
-			verified = Pki.getPkiWrapper().verify(signature, unsignedData, contactId);
+			return Pki.getPkiWrapper().verify(signature, data, contactId);
 		} catch (TimeoutException e) {
-			new EncryptionException(e);
+			throw new EncryptionException(e);
 		} catch (PKIErrorException e) {
-			new EncryptionException(e);
+			throw new EncryptionException(e);
 		} catch (DeclinedException e) {
-			new EncryptionException(e);
+			throw new EncryptionException(e);
 		} catch (NotConnectedException e) {
-			new EncryptionException(e);
+			throw new EncryptionException(e);
 		} catch (BadInputException e) {
-			new EncryptionException(e);
+			throw new EncryptionException(e);
 		}
-		
-		if (verified)
-			return unsignedData;
-		else
-			throw new WrongKeyDecryptionException();
 	}
 
 	@Override
 	public SecureRandom getRandom() {
 		return mEncryptionNone.getRandom();
+	}
+
+	@Override
+	public MessageDigest getHashingFunction() {
+		return mEncryptionNone.getHashingFunction();
 	}
 }

@@ -2,13 +2,13 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 
 import roboguice.inject.InjectView;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.cryptosms.data.ConfirmMessage;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.KeysMessage;
@@ -259,7 +259,6 @@ public class ActivityLists extends ActivityAppState {
 				Resources res = ActivityLists.this.getResources();
 				
 				final long contactId = params.getLong(PARAMS_PHONE_NUMBER_PICKER_ID);
-				final String keyName = params.getString(PARAMS_PHONE_NUMBER_PICKER_KEY_NAME);
 				
 				// get phone numbers associated with the contact
 				final ArrayList<Contact.PhoneNumber> phoneNumbers = 
@@ -276,7 +275,7 @@ public class ActivityLists extends ActivityAppState {
 				    	   @Override
 				    	   public void onClick(DialogInterface dialog, int item) {
 				    		   Contact.PhoneNumber phoneNumber = phoneNumbers.get(item);
-				    		   startKeyExchange(contactId, phoneNumber.getPhoneNumber(), keyName);
+				    		   startKeyExchange(phoneNumber.getPhoneNumber());
 				    	   }
 				       })
 				       .create();
@@ -345,7 +344,7 @@ public class ActivityLists extends ActivityAppState {
 							public void onClick(DialogInterface dialog, int which) {
 								// check the input
 								if (mNotificationsContextMenuItem == null ||
-									mNotificationsContextMenuItem.getResult() != PendingParser.PendingParseResult.OK_KEYS_MESSAGE ||
+									mNotificationsContextMenuItem.getResult() != PendingParser.PendingParseResult.OK_HANDSHAKE_MESSAGE ||
 									! (mNotificationsContextMenuItem.getMessage() instanceof KeysMessage))
 									return;
 								
@@ -356,11 +355,10 @@ public class ActivityLists extends ActivityAppState {
 								ActivityLists.this.getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING, null);
 								
 								// send confirmation
-								Log.d(MyApplication.APP_TAG, "Encrypting with " + LowLevel.toHex(keysMsg.getKeyOut()));
-								Log.d(MyApplication.APP_TAG, "NOT encrypting with " + LowLevel.toHex(keysMsg.getKeyIn()));
-								ConfirmMessage confirm = new ConfirmMessage(keysMsg.getKeyOut(), keysMsg.getNonce());
+//								Log.d(MyApplication.APP_TAG, "Encrypting with " + LowLevel.toHex(keysMsg.getKeyOut()));
+//								Log.d(MyApplication.APP_TAG, "NOT encrypting with " + LowLevel.toHex(keysMsg.getKeyIn()));
 								try {
-									confirm.sendSMS(phoneNumber, ActivityLists.this, new MessageSendingListener() {
+									keysMsg.sendSMS(phoneNumber, ActivityLists.this, new MessageSendingListener() {
 
 										@Override
 										public void onMessageSent() {
@@ -379,7 +377,10 @@ public class ActivityLists extends ActivityAppState {
 												keys.setSimNumber(simNumber);
 												keys.setSessionKey_Out(keysMsg.getKeyOut());
 												keys.setSessionKey_In(keysMsg.getKeyIn());
-												keys.incrementOut(1);
+								                keys.setNextID_Out((byte) 0);
+								                keys.setLastID_In((byte) 0);
+												Log.d(MyApplication.APP_TAG, "Key out: " + LowLevel.toHex(keys.getSessionKey_Out()));
+												Log.d(MyApplication.APP_TAG, "Key in: " + LowLevel.toHex(keys.getSessionKey_In()));
 												keys.setKeysSent(true);
 												keys.setKeysConfirmed(true);
 												keys.saveToFile();
@@ -489,7 +490,6 @@ public class ActivityLists extends ActivityAppState {
         UtilsSimIssues.prepareDialogs(getDialogManager(), this);
 	}
 	
-	private long mTempContactId;
 	private String mTempPhoneNumber;
 
     @Override
@@ -513,7 +513,7 @@ public class ActivityLists extends ActivityAppState {
     					params.putString(PARAMS_PHONE_NUMBER_PICKER_KEY_NAME, contactKey);
     					getDialogManager().showDialog(DIALOG_PHONE_NUMBER_PICKER, params);
     				} else if (phoneNumbers.size() == 1) {
-    					startKeyExchange(contactId, phoneNumbers.get(0).getPhoneNumber(), contactKey);
+    					startKeyExchange(phoneNumbers.get(0).getPhoneNumber());
     				} else {
     					// no phone numbers assigned to the contact
     					getDialogManager().showDialog(DIALOG_NO_PHONE_NUMBERS, null);
@@ -523,8 +523,7 @@ public class ActivityLists extends ActivityAppState {
     		break;
     	case ACTIVITY_CHOOSE_KEY:
     		if (resultCode == Activity.RESULT_OK) {
-    			String keyName = data.getStringExtra("result");
-				startKeyExchange(mTempContactId, mTempPhoneNumber, keyName);
+				startKeyExchange(mTempPhoneNumber);
     		}
     		break;
     	}
@@ -544,7 +543,7 @@ public class ActivityLists extends ActivityAppState {
 			MenuInflater inflater = getMenuInflater();
 			mNotificationsContextMenuItem = (ParseResult) mAdapterNotifications.getItem((int)info.id);
 			switch (mNotificationsContextMenuItem.getResult()) {
-			case OK_KEYS_MESSAGE:
+			case OK_HANDSHAKE_MESSAGE:
 				inflater.inflate(R.menu.lists_notifications_context_keys, menu);
 				break;
 			default:
@@ -562,7 +561,6 @@ public class ActivityLists extends ActivityAppState {
 			switch (item.getItemId()) {
 			case R.id.resend_keys:
 				Contact contact = Contact.getContact(this, conv.getPhoneNumber());
-				mTempContactId = contact.getId();
 				mTempPhoneNumber = contact.getPhoneNumber();
 				
     			// pick a key from PKI
@@ -687,11 +685,9 @@ public class ActivityLists extends ActivityAppState {
 		startActivity(intent);
 	}
 	
-	private void startKeyExchange(long contactId, String phoneNumber, String keyName) {
+	private void startKeyExchange(String phoneNumber) {
 		Intent intent = new Intent(ActivityLists.this, ActivityExchangeMethod.class);
-		intent.putExtra(ActivityExchangeMethod.OPTION_CONTACT_ID, contactId);
 		intent.putExtra(ActivityExchangeMethod.OPTION_PHONE_NUMBER, phoneNumber);
-		intent.putExtra(ActivityExchangeMethod.OPTION_CONTACT_KEY, keyName);
 		startActivity(intent);
 	}
 	
@@ -761,7 +757,14 @@ public class ActivityLists extends ActivityAppState {
 					mException = ex;
 			}
     		Collections.sort(listConversations, Collections.reverseOrder());
-    		// TODO: sort the contacts by name
+    		Collections.sort(listContacts, new Comparator<Conversation>() {
+				@Override
+				public int compare(Conversation conv1, Conversation conv2) {
+					Contact contact1 = Contact.getContact(ActivityLists.this, conv1.getPhoneNumber());
+					Contact contact2 = Contact.getContact(ActivityLists.this, conv2.getPhoneNumber());
+					return contact1.compareTo(contact2);
+				}
+			});
     		
     		mAdapterConversations.setList(listConversations);
     		mAdapterContacts.setList(listContacts);

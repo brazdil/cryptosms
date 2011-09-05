@@ -22,6 +22,7 @@ import java.util.zip.DataFormatException;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.state.State;
@@ -122,9 +123,10 @@ public class ListItemConversation extends RelativeLayout {
 		}
 		
 		if (firstMessageData != null) {
-			TextMessage message = new TextMessage(firstMessageData);
+			TextMessage message = null;
 			CompressedText text = null;
-;			try {
+			try {
+				message = new TextMessage(firstMessageData);
 				text = message.getText();
 			} catch (StorageFileException ex) {
 				State.fatalException(ex);

@@ -521,7 +521,7 @@
     <string name="parse_ok_keys_message">Handshake request</string>
     <string name="parse_corrupted_data">Corrupted data</string>
     <string name="parse_could_not_decrypt">Could not decrypt</string>
-    <string name="parse_could_not_verify">Missing public key</string>
+    <string name="parse_could_not_verify">Authentication failed</string>
     <string name="parse_missing_parts">Data incomplete...</string>
     <string name="parse_no_session_keys">Encryption not active</string>
     <string name="parse_redundant_parts">Redundant data</string>

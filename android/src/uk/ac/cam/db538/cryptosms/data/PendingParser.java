@@ -18,7 +18,7 @@ import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class PendingParser {
 	public static enum PendingParseResult {
-		OK_KEYS_MESSAGE,
+		OK_HANDSHAKE_MESSAGE,
 		OK_TEXT_MESSAGE,
 		OK_CONFIRM_MESSAGE,
 		MISSING_PARTS,
@@ -100,14 +100,12 @@ public class PendingParser {
 				result.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
 			else if (idGroup.size() > 0) {
 				switch (idGroup.get(0).getType()) {
-				case KEYS:
+				case HANDSHAKE:
+				case CONFIRM:
 					result.add(KeysMessage.parseKeysMessage(idGroup));
 					break;
 				case TEXT:
 					result.add(TextMessage.parseTextMessage(idGroup));
-					break;
-				case CONFIRM:
-					result.add(ConfirmMessage.parseConfirmMessage(idGroup));
 					break;
 				}
 			}

@@ -22,7 +22,7 @@ import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telephony.PhoneNumberUtils;
 
-public class Contact {
+public class Contact implements Comparable<Contact> {
 	
     private static final String CALLER_ID_SELECTION = "PHONE_NUMBERS_EQUAL(" + Phone.NUMBER
             + ",?) AND " + Data.MIMETYPE + "='" + Phone.CONTENT_ITEM_TYPE + "'"
@@ -335,4 +335,11 @@ public class Contact {
         phones.close();
         return list;
     }
+
+	@Override
+	public int compareTo(Contact another) {
+		String nameThis = (this.existsInDatabase() ? this.getName() : this.getPhoneNumber());
+		String nameAnother = (another.existsInDatabase() ? another.getName() : another.getPhoneNumber());
+		return nameThis.compareToIgnoreCase(nameAnother);
+	}
 }

@@ -35,7 +35,9 @@ public class TextMessage extends Message {
 	private static final int OFFSET_PART_MESSAGEBODY = OFFSET_INDEX + LENGTH_INDEX;
 	public static final int LENGTH_PART_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGEBODY;
 
-	protected MessageData mStorage;
+	private MessageData mStorage;
+	private SessionKeys mKeys;
+	private byte mId;
     
 	public TextMessage(MessageData storage) {
 		super();
@@ -127,65 +129,67 @@ public class TextMessage extends Message {
 	 * @throws MessageException 
 	 */
 	@Override
-	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException {
-		EncryptionInterface crypto = Encryption.getEncryption();
-		
-		ArrayList<byte[]> list = new ArrayList<byte[]>();
-		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-		int index = 0, offset;
-		
-		SessionKeys keys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
-		if (keys == null)
+	public byte[] getBytes() throws StorageFileException, MessageException, EncryptionException {
+		mKeys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
+		if (mKeys == null)
 			throw new MessageException("No keys found");
-		
-		// get the data, add random data to fit the messages exactly and encrypt it
-		byte[] data = getStoredData();
-		Log.d(MyApplication.APP_TAG, "Text data: " + LowLevel.toHex(data));
-		int alignedLength = crypto.getSymmetricAlignedLength(data.length);
-		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
-		while (totalBytes <= alignedLength)
-			totalBytes += LENGTH_PART_MESSAGEBODY;
+		mId = mKeys.getNextID_Out();
 
-		int alignedTotalBytes = totalBytes - (totalBytes % Encryption.SYM_BLOCK_LENGTH);
-		data = LowLevel.wrapData(data, alignedTotalBytes);
-		Log.d(MyApplication.APP_TAG, "Aligned data: " + LowLevel.toHex(data));
-
-		data = crypto.encryptSymmetric(data, keys.getSessionKey_Out());
-		Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(data));
-		Log.d(MyApplication.APP_TAG, "Session key: " + LowLevel.toHex(keys.getSessionKey_Out()));
-		totalBytes += LENGTH_FIRST_ENCRYPTION; 
-		data = LowLevel.wrapData(data, totalBytes);
-		
-		// first message (always)
-		byte header = HEADER_TEXT;
-		if (mStorage.getAscii())
-			header |= (byte) 0x08;
-		if (mStorage.getCompressed())
-			header |= (byte) 0x04;
-		buf.put(header);
-		buf.put(keys.getNextID_Out());
-		buf.put(LowLevel.getBytesUnsignedShort(getStoredDataLength()));
-		buf.put(LowLevel.cutData(data, 0, LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY));
-		list.add(buf.array());
-		Log.d(MyApplication.APP_TAG, "SMS data: " + LowLevel.toHex(buf.array()));
-		
-		offset = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
-		try {
-			while (true) {
-				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-				++index;
-				buf.put(header);
-				buf.put(keys.getNextID_Out());
-				buf.put(LowLevel.getBytesUnsignedByte(index));
-				buf.put(LowLevel.cutData(data, offset, LENGTH_PART_MESSAGEBODY));
-				offset += LENGTH_PART_MESSAGEBODY;
-				list.add(buf.array());
-			}
-		} catch (IndexOutOfBoundsException e) {
-			// end
-		}
-		
-		return list;
+//		EncryptionInterface crypto = Encryption.getEncryption();
+//		
+//		ArrayList<byte[]> list = new ArrayList<byte[]>();
+//		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
+//		int index = 0, offset;
+//		
+//		// get the data, add random data to fit the messages exactly and encrypt it
+//		byte[] data = getStoredData();
+//		Log.d(MyApplication.APP_TAG, "Text data: " + LowLevel.toHex(data));
+//		int alignedLength = crypto.getSymmetricAlignedLength(data.length);
+//		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
+//		while (totalBytes <= alignedLength)
+//			totalBytes += LENGTH_PART_MESSAGEBODY;
+//
+//		int alignedTotalBytes = totalBytes - (totalBytes % Encryption.SYM_BLOCK_LENGTH);
+//		data = LowLevel.wrapData(data, alignedTotalBytes);
+//		Log.d(MyApplication.APP_TAG, "Aligned data: " + LowLevel.toHex(data));
+//
+//		data = crypto.encryptSymmetric(data, keys.getSessionKey_Out());
+//		Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(data));
+//		Log.d(MyApplication.APP_TAG, "Session key: " + LowLevel.toHex(keys.getSessionKey_Out()));
+//		totalBytes += LENGTH_FIRST_ENCRYPTION; 
+//		data = LowLevel.wrapData(data, totalBytes);
+//		
+//		// first message (always)
+//		byte header = HEADER_TEXT;
+//		if (mStorage.getAscii())
+//			header |= (byte) 0x08;
+//		if (mStorage.getCompressed())
+//			header |= (byte) 0x04;
+//		buf.put(header);
+//		buf.put(keys.getNextID_Out());
+//		buf.put(LowLevel.getBytesUnsignedShort(getStoredDataLength()));
+//		buf.put(LowLevel.cutData(data, 0, LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY));
+//		list.add(buf.array());
+//		Log.d(MyApplication.APP_TAG, "SMS data: " + LowLevel.toHex(buf.array()));
+//		
+//		offset = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
+//		try {
+//			while (true) {
+//				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
+//				++index;
+//				buf.put(header);
+//				buf.put(keys.getNextID_Out());
+//				buf.put(LowLevel.getBytesUnsignedByte(index));
+//				buf.put(LowLevel.cutData(data, offset, LENGTH_PART_MESSAGEBODY));
+//				offset += LENGTH_PART_MESSAGEBODY;
+//				list.add(buf.array());
+//			}
+//		} catch (IndexOutOfBoundsException e) {
+//			// end
+//		}
+//		
+//		return list;
+		return null;
 	}
 	
 	/**
@@ -320,5 +324,28 @@ public class TextMessage extends Message {
 
 	public static ParseResult parseTextMessage(ArrayList<Pending> idGroup) {
 		return null;
+	}
+
+	@Override
+	public byte getHeader() {
+		return HEADER_TEXT;
+	}
+
+	@Override
+	public byte getId() {
+		return mId;
+	}
+
+	@Override
+	public int getMessagePartCount() {
+		try {
+			return getPartsCount();
+		} catch (StorageFileException e) {
+			return 0;
+		} catch (DataFormatException e) {
+			return 0;
+		} catch (MessageException e) {
+			return 0;
+		}
 	}
 }

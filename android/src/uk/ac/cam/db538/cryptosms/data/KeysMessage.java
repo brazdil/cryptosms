@@ -1,231 +1,292 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 
+import com.google.inject.internal.Join.JoinException;
+
 import android.util.Log;
+import android.widget.DialerFilter;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
-import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class KeysMessage extends Message {
-	public static final int LENGTH_CONTENT = 2 * Encryption.SYM_KEY_LENGTH + Encryption.SYM_CONFIRM_NONCE_LENGTH;
 	
-	private byte[] mDataEncryptedAndSigned;
-	private byte[] mKeyOut, mKeyIn, mNonce;
+	public static final int OFFSET_PUBLIC_KEY = 0;
+	public static final int OFFSET_SIGNATURE = EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY;
+	public static final int LENGTH_CONTENT = OFFSET_SIGNATURE + Encryption.ASYM_SIGNATURE_LENGTH;
+	
+	private byte[] mPublicKey;
+	private byte[] mPrivateKey;
 	private byte mId;
+
+	private byte[] mOtherPublicKey;
+	private byte mOtherId;
 	
-	public KeysMessage(byte[] keyOut, byte[] keyIn, byte[] nonce) {
-		mKeyOut = keyOut;
-		mKeyIn = keyIn;
-		mNonce = nonce;
-	}
+	private boolean mIsConfirmation;
 	
-	public KeysMessage(long contactId, String contactKey) throws StorageFileException, EncryptionException {
-		mKeyOut = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
-		mKeyIn = Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH);
-		mNonce = Encryption.getEncryption().generateRandomData(Encryption.SYM_CONFIRM_NONCE_LENGTH);
+	EllipticCurveDeffieHellman mECDH;
+	
+	public KeysMessage() throws StorageFileException {
+		mIsConfirmation = false;
 		
-		// generate a pair of keys 
-		byte[] data = new byte[LENGTH_CONTENT];
-		System.arraycopy(mKeyOut, 0, data, 0, Encryption.SYM_KEY_LENGTH);
-		System.arraycopy(mKeyIn, 0, data, Encryption.SYM_KEY_LENGTH, Encryption.SYM_KEY_LENGTH);
-		System.arraycopy(mNonce, 0, data, 2 * Encryption.SYM_KEY_LENGTH, Encryption.SYM_CONFIRM_NONCE_LENGTH);
-		
-		// encrypt and sign
-		mDataEncryptedAndSigned = 
-			Encryption.getEncryption().sign(
-					data
-				//Encryption.getEncryption().encryptAsymmetric(data, contactId, contactKey)
-			);
-		
-		// get an ID for this keys
+		// get an ID for these keys
 		mId = Header.getHeader().incrementKeyId();
 		Header.getHeader().saveToFile();
+		
+		mECDH = new EllipticCurveDeffieHellman();
+		mPublicKey = mECDH.getPublicKey();
+		mPrivateKey = mECDH.getPrivateKey();
+	}
+	
+	public KeysMessage(byte originalId, byte[] privateKey, byte otherId, byte[] otherPublicKey) {
+		mIsConfirmation = false;
+		
+		mId = originalId;
+		mECDH = new EllipticCurveDeffieHellman(privateKey);
+		mPublicKey = mECDH.getPublicKey();
+		mPrivateKey = mECDH.getPrivateKey();
+		
+		mOtherId = otherId;
+		mOtherPublicKey = otherPublicKey;
+	}
+	
+	public KeysMessage(byte otherId, byte[] otherPublicKey) throws StorageFileException {
+		mIsConfirmation = true;
+		
+		// get an ID for these keys
+		mId = Header.getHeader().incrementKeyId();
+		Header.getHeader().saveToFile();
+		
+		mECDH = new EllipticCurveDeffieHellman();
+		mPublicKey = mECDH.getPublicKey();
+		mPrivateKey = mECDH.getPrivateKey();
+
+		mOtherId = otherId;
+		mOtherPublicKey = otherPublicKey;
+	}
+	
+	public byte[] getPublicKey() {
+		return mPublicKey;
+	}
+	
+	public byte[] getPrivateKey() {
+		return mPrivateKey;
+	}
+	
+	private byte[] getKey(String prefix) {
+		return Encryption.getEncryption().getHash(
+				(prefix + mECDH.getSharedKey(mOtherPublicKey).toString()).getBytes() 
+			);
 	}
 	
 	public byte[] getKeyOut() {
-		return mKeyOut;
+		return getKey(mIsConfirmation ? "0" : "1");
 	}
 	
 	public byte[] getKeyIn() {
-		return mKeyIn;
+		return getKey(mIsConfirmation ? "1" : "0");
 	}
-
-	public byte[] getNonce() {
-		return mNonce;
+	
+	public boolean isConfirmation() {
+		return mIsConfirmation;
 	}
 
 	/**
 	 * Returns data ready to be sent via SMS
 	 * @return
-	 * @throws IOException 
 	 * @throws StorageFileException 
 	 * @throws MessageException 
+	 * @throws EncryptionException 
 	 */
 	@Override
-	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException {
-		ArrayList<byte[]> list = new ArrayList<byte[]>();
-		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-		
-		Log.d(MyApplication.APP_TAG, "Keys data: " + LowLevel.toHex(mDataEncryptedAndSigned));
-		
-		// align to fit data messages exactly
-		int alignedLength = mDataEncryptedAndSigned.length;
-		int totalBytes = 0;
-		do {
-			totalBytes += LENGTH_DATA;
-		} while (totalBytes <= alignedLength);
-		mDataEncryptedAndSigned = LowLevel.wrapData(mDataEncryptedAndSigned, totalBytes);
-
-		// create the message parts
-		int index = 0, offset = 0;
-		try {
-			while (true) {
-				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-				buf.put(HEADER_KEYS);
-				buf.put(mId);
-				buf.put(LowLevel.getBytesUnsignedByte(index++));
-				buf.put(LowLevel.cutData(mDataEncryptedAndSigned, offset, LENGTH_DATA));
-				offset += LENGTH_DATA;
-				list.add(buf.array());
-			}
-		} catch (IndexOutOfBoundsException e) {
-			// end
+	public byte[] getBytes() throws StorageFileException, MessageException, EncryptionException {
+		MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
+		Log.d(MyApplication.APP_TAG, "KEYS MESSAGE");
+		if (mIsConfirmation) {
+			hashing.update(getOtherHeader());
+			Log.d(MyApplication.APP_TAG, "Other header: " + getOtherHeader());
+			hashing.update(mOtherId);
+			Log.d(MyApplication.APP_TAG, "Other id: " + mOtherId);
+			hashing.update(mOtherPublicKey);
+			Log.d(MyApplication.APP_TAG, "Other public key: " + LowLevel.toHex(mOtherPublicKey));
 		}
-		
-		return list;
-	}
-	
-	public static int getEncryptedDataLength() {
-		int dataLength = LENGTH_CONTENT;
-		//dataLength = Encryption.getEncryption().getAsymmetricAlignedLength(dataLength);
-		dataLength += Encryption.MAC_LENGTH;
-		dataLength += Encryption.ASYM_SIGNATURE_LENGTH;
-		return dataLength;
-	}
-	
-	/**
-	 * Returns the number of messages necessary to send given number of bytes
-	 * @return
-	 */
-	public static int getPartsCount() {
-		int dataLength = getEncryptedDataLength();
-		int count = 0; 
-		int remains = dataLength;
-		do {
-			count++;
-			remains -= LENGTH_DATA;
-		} while (remains > 0);
-		
-		if (count > 255)
-			return 255;
-		return count;
-	}
-	
-	public static int getTotalDataLength() {
-		return getDataPartOffset(getPartsCount());
-	}
+		hashing.update(getHeader());
+		Log.d(MyApplication.APP_TAG, "Header: " + getHeader());
+		hashing.update(mId);
+		Log.d(MyApplication.APP_TAG, "Id: " + mId);
+		hashing.update(mPublicKey);
+		Log.d(MyApplication.APP_TAG, "Public key: " + LowLevel.toHex(mPublicKey));
 
+		byte[] hash = hashing.digest();
+		Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
+
+		byte[] signature = Encryption.getEncryption().sign(hash);
+		Log.d(MyApplication.APP_TAG, "Signature: " + LowLevel.toHex(signature));
+		
+		byte[] data = new byte[LENGTH_CONTENT];
+		System.arraycopy(mPublicKey, 0, data, 0, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
+		System.arraycopy(signature, 0, data, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
+		return data;
+	}
+	
 	public static ParseResult parseKeysMessage(ArrayList<Pending> idGroup) {
-		// check the sender
-		Contact contact = Contact.getContact(MyApplication.getSingleton().getApplicationContext(), idGroup.get(0).getSender());
-		if (!contact.existsInDatabase())
-			return new ParseResult(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
-
-		// check we have all the parts
-		// there shouldn't be more than 7 of them
-		int groupSize = idGroup.size();
-		int expectedGroupSize = KeysMessage.getPartsCount(); 
-		if (groupSize < expectedGroupSize || groupSize <= 0)
-			return new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null);
-		else if (groupSize > expectedGroupSize)
-			return new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
-		
-		// get the data
-		byte[][] dataParts = new byte[groupSize][];
-		int filledParts = 0;
-		for (Pending p : idGroup) {
-			byte[] dataPart = p.getData();
-			int index = KeysMessage.getMessageIndex(dataPart);
-			if (index >= 0 && index < idGroup.size()) {
-				// index is fine, check that there wasn't the same one already
-				if (dataParts[index] == null) {
-					// first time we stumbled upon this index
-					// store the message part data in the array
-					dataParts[index] = dataPart;
-					filledParts++;
-				} else
-					// more parts of the same index
-					return new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
-			} else
-				// index is bigger than the number of messages in ID group
-				// therefore some parts have to be missing or the data is corrupted
-				return new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null);
-		}
-		// the array was filled with data, so check that there aren't any missing
-		if (filledParts != expectedGroupSize)
-			return new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null);
-		
-		// lets put the data together
-		byte[] dataEncryptedSigned = new byte[KeysMessage.getTotalDataLength()];
-		for (int i = 0; i < expectedGroupSize; ++i) {
-			try {
-				// get the data 
-				// it can't be too long, thanks to getMessageData
-				// but it can be too short (throws IndexOutOfBounds exception
-				byte[] relevantData = KeysMessage.getMessageData(dataParts[i]);
-				System.arraycopy(relevantData, 0, dataEncryptedSigned, KeysMessage.getDataPartOffset(i), Message.LENGTH_DATA);
-			} catch (RuntimeException e) {
-				return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
-			}
-		}
-		
-		// cut out the rubbish part at the end
-		dataEncryptedSigned = LowLevel.cutData(dataEncryptedSigned, 0, KeysMessage.getEncryptedDataLength());
-		
-		// check the signature
-		byte[] dataEncrypted = null;
 		try {
-			 dataEncrypted = Encryption.getEncryption().verify(dataEncryptedSigned, contact.getId());
-		} catch (EncryptionException e) {
-			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
-		} catch (WrongKeyDecryptionException e) {
-			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
+			// check the sender
+			Contact contact = Contact.getContact(MyApplication.getSingleton().getApplicationContext(), idGroup.get(0).getSender());
+			if (!contact.existsInDatabase())
+				return new ParseResult(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
+	
+			byte[] dataJoined = null;
+			try {
+				dataJoined = joinParts(idGroup, getPartsCount());
+			} catch (JoiningException ex) {
+				return new ParseResult(idGroup, ex.getReason(), null);
+			}
+			
+			String sender = idGroup.get(0).getSender();
+			byte[] dataFirst = idGroup.get(0).getData();
+			byte header = getMessageHeader(dataFirst);
+			byte id = getMessageIdByte(dataFirst);
+			MessageType type = getMessageType(dataFirst);
+	
+			byte[] publicKey = LowLevel.cutData(dataJoined, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
+			byte[] signature = LowLevel.cutData(dataJoined, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
+	
+			if (type == MessageType.HANDSHAKE) {
+				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
+				Log.d(MyApplication.APP_TAG, "PARSING KEYS MESSAGE");
+				hashing.update(header);
+				Log.d(MyApplication.APP_TAG, "Second header:" + header);
+				hashing.update(id);
+				Log.d(MyApplication.APP_TAG, "Second id:" + id);
+				hashing.update(publicKey);
+				Log.d(MyApplication.APP_TAG, "Second public key:" + LowLevel.toHex(publicKey));
+				Log.d(MyApplication.APP_TAG, "Signature: " + LowLevel.toHex(signature));
+				
+				byte[] hash = hashing.digest();
+				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
+
+				// cut out the rubbish part at the end
+				dataJoined = LowLevel.cutData(dataJoined, 0, LENGTH_CONTENT);
+				
+				// check the signature
+				boolean signatureVerified = false;
+				try {
+					signatureVerified = Encryption.getEncryption().verify(hash, signature, contact.getId());
+				} catch (EncryptionException e) {
+				} catch (WrongKeyDecryptionException e) {
+				}
+				if (!signatureVerified)
+					return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
+				
+				// all seems to be fine, so just retrieve the keys and return the result
+				return new ParseResult(idGroup, 
+				                            PendingParseResult.OK_HANDSHAKE_MESSAGE, 
+				                            new KeysMessage(
+				                            	id,
+				                            	publicKey
+				                            ));
+			} else if (type == MessageType.CONFIRM) {
+				// find the session keys for this person
+				SessionKeys keys = Conversation.getConversation(sender).getSessionKeys(SimCard.getSingleton().getNumber());
+				if (keys == null)
+					return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
+				
+				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
+				Log.d(MyApplication.APP_TAG, "PARSING KEYS MESSAGE");
+				hashing.update(HEADER_HANDSHAKE);
+				Log.d(MyApplication.APP_TAG, "First header:" + HEADER_HANDSHAKE);
+				hashing.update(keys.getKeysId());
+				Log.d(MyApplication.APP_TAG, "First keys id:" + keys.getKeysId());
+				hashing.update(new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey());
+				Log.d(MyApplication.APP_TAG, "First public key:" + LowLevel.toHex(new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey()));
+				hashing.update(header);
+				Log.d(MyApplication.APP_TAG, "Second header:" + header);
+				hashing.update(id);
+				Log.d(MyApplication.APP_TAG, "Second id:" + id);
+				hashing.update(publicKey);
+				Log.d(MyApplication.APP_TAG, "Second public key:" + LowLevel.toHex(publicKey));
+				Log.d(MyApplication.APP_TAG, "Signature: " + LowLevel.toHex(signature));
+
+				byte[] hash = hashing.digest();
+				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
+				
+				// check the signature
+				boolean signatureVerified = false;
+				try {
+					signatureVerified = Encryption.getEncryption().verify(hash, signature, contact.getId());
+				} catch (EncryptionException e) {
+				} catch (WrongKeyDecryptionException e) {
+				}
+				if (!signatureVerified)
+					return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
+				
+				// all seems to be fine, so save the result
+                KeysMessage keysMsg = new KeysMessage(
+                    	keys.getKeysId(),
+                    	keys.getPrivateKey(),
+                    	id,
+                    	publicKey
+                    );
+                
+                keys.setSessionKey_Out(keysMsg.getKeyOut());
+                keys.setSessionKey_In(keysMsg.getKeyIn());
+				Log.d(MyApplication.APP_TAG, "Key out: " + LowLevel.toHex(keys.getSessionKey_Out()));
+				Log.d(MyApplication.APP_TAG, "Key in: " + LowLevel.toHex(keys.getSessionKey_In()));
+                keys.setNextID_Out((byte) 0);
+                keys.setLastID_In((byte) 0);
+                keys.setKeysConfirmed(true);
+                keys.saveToFile();
+				
+				return new ParseResult(idGroup, 
+				                       PendingParseResult.OK_CONFIRM_MESSAGE,
+				                       keysMsg);
+			} else
+				return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+		} catch (StorageFileException e) {
+			return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
 		}
-		
-		// now decrypt the data
-//		byte[] dataDecrypted = null;
-//		try {
-//			dataDecrypted = Encryption.getEncryption().decryptAsymmetric(dataEncrypted);
-//		} catch (EncryptionException e) {
-//			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
-//		} catch (WrongKeyDecryptionException e) {
-//			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
-//		}
-		byte[] dataDecrypted = dataEncrypted;
-		
-		// check the length
-		if (dataDecrypted.length != KeysMessage.LENGTH_CONTENT)
-			return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
-		
-		// all seems to be fine, so just retrieve the keys and return the result
-		return new ParseResult(idGroup, 
-		                            PendingParseResult.OK_KEYS_MESSAGE, 
-		                            new KeysMessage(
-		                            	// we have to swap the keys
-		                            	// the other guy's out-key is my in-key...
-		                            	LowLevel.cutData(dataDecrypted, Encryption.SYM_KEY_LENGTH, Encryption.SYM_KEY_LENGTH),
-		                            	LowLevel.cutData(dataDecrypted, 0, Encryption.SYM_KEY_LENGTH),
-		                            	LowLevel.cutData(dataDecrypted, 2 * Encryption.SYM_KEY_LENGTH, Encryption.SYM_CONFIRM_NONCE_LENGTH)
-		                            ));
 	}
+
+	@Override
+	public byte getHeader() {
+		if (mIsConfirmation)
+			return HEADER_CONFIRM;
+		else
+			return HEADER_HANDSHAKE;
+	}
+
+	public byte getOtherHeader() {
+		if (mIsConfirmation)
+			return HEADER_HANDSHAKE;
+		else
+			return HEADER_CONFIRM;
+	}
+
+	@Override
+	public byte getId() {
+		return mId;
+	}
+	
+	@Override
+	public int getMessagePartCount() {
+		return getPartsCount();
+	}
+
+	public static int getPartsCount() {
+		return LowLevel.roundUpDivision(LENGTH_CONTENT, LENGTH_DATA);
+	}
+
 }

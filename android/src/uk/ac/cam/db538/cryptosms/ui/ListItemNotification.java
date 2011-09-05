@@ -185,7 +185,7 @@ public class ListItemNotification extends RelativeLayout {
     		mFromView.setText(contact.getPhoneNumber());
         
     	switch (parseData.getResult()) {
-    	case OK_KEYS_MESSAGE:
+    	case OK_HANDSHAKE_MESSAGE:
         	mSubjectView.setText(res.getString(R.string.parse_ok_keys_message));
         	break;
     	case OK_CONFIRM_MESSAGE:
