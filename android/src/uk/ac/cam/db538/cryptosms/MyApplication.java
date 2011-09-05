@@ -1,23 +1,6 @@
 package uk.ac.cam.db538.cryptosms;
 
-import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
-import java.security.Security;
-import java.security.spec.ECFieldFp;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.EllipticCurve;
-
-import javax.crypto.KeyAgreement;
 
 import roboguice.application.RoboApplication;
 
@@ -48,10 +31,6 @@ public class MyApplication extends RoboApplication {
 	
 	public static final String NEWLINE = System.getProperty("line.separator");
 	public static final String[] REPORT_EMAILS = new String[] { "db538@cam.ac.uk" }; // TODO: create new email!
-	
-	static {
-	    Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
-	}
 	
 	private static MyApplication mSingleton;
 	
@@ -127,102 +106,6 @@ public class MyApplication extends RoboApplication {
 		
 		Pki.init(this.getApplicationContext());
 		SimCard.init(this.getApplicationContext());
-
-		KeyPairGenerator keyGen = null;
-		try {
-			keyGen = KeyPairGenerator.getInstance("ECDH", "SC");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    EllipticCurve curve = new EllipticCurve(new ECFieldFp(new BigInteger(
-	        "fffffffffffffffffffffffffffffffeffffffffffffffff", 16)), new BigInteger(
-	        "fffffffffffffffffffffffffffffffefffffffffffffffc", 16), new BigInteger(
-	        "fffffffffffffffffffffffffffffffefffffffffffffffc", 16));
-
-	    ECParameterSpec ecSpec = new ECParameterSpec(curve, new ECPoint(new BigInteger(
-	        "fffffffffffffffffffffffffffffffefffffffffffffffc", 16), new BigInteger(
-	        "fffffffffffffffffffffffffffffffefffffffffffffffc", 16)), new BigInteger(
-	        "fffffffffffffffffffffffffffffffefffffffffffffffc", 16), 1);
-
-	    try {
-			keyGen.initialize(ecSpec, new SecureRandom());
-		} catch (InvalidAlgorithmParameterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	    KeyAgreement aKeyAgree = null;
-		try {
-			aKeyAgree = KeyAgreement.getInstance("ECDH", "SC");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    KeyPair aPair = keyGen.generateKeyPair();
-	    KeyAgreement bKeyAgree = null;
-		try {
-			bKeyAgree = KeyAgreement.getInstance("ECDH", "SC");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    KeyPair bPair = keyGen.generateKeyPair();
-
-	    try {
-			aKeyAgree.init(aPair.getPrivate());
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    try {
-			bKeyAgree.init(bPair.getPrivate());
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	    try {
-			aKeyAgree.doPhase(bPair.getPublic(), true);
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    try {
-			bKeyAgree.doPhase(aPair.getPublic(), true);
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	    MessageDigest hash = null;
-		try {
-			hash = MessageDigest.getInstance("SHA1", "SC");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	    Log.d(APP_TAG, LowLevel.toHex(hash.digest(aKeyAgree.generateSecret())));
-	    Log.d(APP_TAG, LowLevel.toHex(hash.digest(bKeyAgree.generateSecret())));
 	}
 	
 	public Notification getNotification() {
