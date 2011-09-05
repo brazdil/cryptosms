@@ -41,5 +41,5 @@ public interface EncryptionInterface {
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException;
 	
 	public byte[] sign(byte[] data) throws EncryptionException;
-	public byte[] verify(byte[] data, long contactId) throws EncryptionException;
+	public boolean verify(byte[] data, byte[] signature, long contactId) throws EncryptionException;
 }

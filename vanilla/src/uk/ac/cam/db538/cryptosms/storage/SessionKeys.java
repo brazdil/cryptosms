@@ -3,6 +3,7 @@ package uk.ac.cam.db538.cryptosms.storage;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
@@ -21,18 +22,19 @@ public class SessionKeys {
 	private static final int LENGTH_FLAGS = 1;
 	private static final int LENGTH_SIMNUMBER = 32;
 	private static final int LENGTH_SESSIONKEY = Encryption.SYM_KEY_LENGTH;
-	private static final int LENGTH_CONFIRMATION_NONCE = Encryption.SYM_CONFIRM_NONCE_LENGTH; 
-	private static final int LENGTH_LASTID = 1;
+	private static final int LENGTH_PRIVATE_KEY = EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY; 
+	private static final int LENGTH_ID = 1;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_SIMNUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
 	private static final int OFFSET_SESSIONKEY_OUTGOING = OFFSET_SIMNUMBER + LENGTH_SIMNUMBER;
 	private static final int OFFSET_NEXTID_OUTGOING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
-	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_NEXTID_OUTGOING + LENGTH_LASTID;
+	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_NEXTID_OUTGOING + LENGTH_ID;
 	private static final int OFFSET_LASTID_INCOMING = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
-	private static final int OFFSET_CONFIRMATION_NONCE = OFFSET_LASTID_INCOMING + LENGTH_LASTID;
+	private static final int OFFSET_PRIVATE_KEY = OFFSET_LASTID_INCOMING + LENGTH_ID;
+	private static final int OFFSET_KEYS_ID = OFFSET_PRIVATE_KEY + LENGTH_PRIVATE_KEY;
 	
-	private static final int OFFSET_RANDOMDATA = OFFSET_CONFIRMATION_NONCE + LENGTH_CONFIRMATION_NONCE;
+	private static final int OFFSET_RANDOMDATA = OFFSET_KEYS_ID + LENGTH_ID;
 
 	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
@@ -93,7 +95,8 @@ public class SessionKeys {
 	private byte mNextID_Out;
 	private byte[] mSessionKey_In;
 	private byte mLastID_In;
-	private byte[] mConfirmationNonce;
+	private byte[] mPrivateKey;
+	private byte mKeysId;
 	private long mIndexParent;
 	private long mIndexPrev;
 	private long mIndexNext;
@@ -130,7 +133,8 @@ public class SessionKeys {
 			setNextID_Out(dataPlain[OFFSET_NEXTID_OUTGOING]);
 			setSessionKey_In(LowLevel.cutData(dataPlain, OFFSET_SESSIONKEY_INCOMING, LENGTH_SESSIONKEY));
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
-			setConfirmationNonce(LowLevel.cutData(dataPlain, OFFSET_CONFIRMATION_NONCE, LENGTH_CONFIRMATION_NONCE));
+			setPrivateKey(LowLevel.cutData(dataPlain, OFFSET_PRIVATE_KEY, LENGTH_PRIVATE_KEY));
+			setKeysId(dataPlain[OFFSET_KEYS_ID]);
 			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
@@ -144,7 +148,8 @@ public class SessionKeys {
 			setNextID_Out(DEFAULT_ID);
 			setSessionKey_In(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
 			setLastID_In(DEFAULT_ID);
-			setConfirmationNonce(Encryption.getEncryption().generateRandomData(Encryption.SYM_CONFIRM_NONCE_LENGTH));
+			setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
+			setKeysId((byte) 0x00);
 			setIndexParent(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);
@@ -184,7 +189,8 @@ public class SessionKeys {
 		keysBuffer.put((byte) this.mNextID_Out);
 		keysBuffer.put(this.mSessionKey_In);
 		keysBuffer.put((byte) this.mLastID_In);
-		keysBuffer.put(this.mConfirmationNonce);
+		keysBuffer.put(this.mPrivateKey);
+		keysBuffer.put(this.mKeysId);
 		
 		// random data
 		keysBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_RANDOMDATA));
@@ -382,12 +388,20 @@ public class SessionKeys {
 		mLastID_In = lastID_In;
 	}
 
-	public byte[] getConfirmationNonce() {
-		return mConfirmationNonce;
+	public byte[] getPrivateKey() {
+		return mPrivateKey;
 	}
 
-	public void setConfirmationNonce(byte[] confirmationNonce) {
-		mConfirmationNonce = confirmationNonce;
+	public void setPrivateKey(byte[] privateKey) {
+		mPrivateKey = privateKey;
+	}
+
+	public byte getKeysId() {
+		return mKeysId;
+	}
+
+	public void setKeysId(byte keysId) {
+		mKeysId = keysId;
 	}
 
 	long getIndexPrev() {

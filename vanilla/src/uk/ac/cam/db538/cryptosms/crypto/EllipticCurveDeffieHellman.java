@@ -17,7 +17,8 @@ import org.spongycastle.util.encoders.Hex;
 
 public class EllipticCurveDeffieHellman {
 	public static final int LENGTH_PUBLIC_KEY = 33;
-	
+	public static final int LENGTH_PRIVATE_KEY = 64;
+
 	public static final BigInteger ECDH_P = new BigInteger("0FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16);
 	public static final BigInteger ECDH_A = new BigInteger("0FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16);
 	public static final BigInteger ECDH_B = new BigInteger("05AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16);

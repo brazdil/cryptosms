@@ -101,10 +101,9 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 
 	@Override
-	public byte[] verify(byte[] data, long contactId)
+	public boolean verify(byte[] data, byte[] signature, long contactId)
 			throws EncryptionException {
-		// TODO Auto-generated method stub
-		return null;
+		return false;
 	}
 
 	@Override
