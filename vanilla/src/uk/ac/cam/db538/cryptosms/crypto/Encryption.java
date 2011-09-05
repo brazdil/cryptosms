@@ -9,15 +9,10 @@ public class Encryption {
 	public static final int SYM_OVERHEAD = SYM_IV_LENGTH + MAC_LENGTH;
 	public static final int SYM_CONFIRM_NONCE_LENGTH = Encryption.SYM_BLOCK_LENGTH;
 	
-	public static final int ASYM_KEY_LENGTH = 384;
+	public static final int ASYM_KEY_LENGTH = 60;
 	public static final int ASYM_BLOCK_LENGTH = ASYM_KEY_LENGTH;
 	public static final int ASYM_SIGNATURE_LENGTH = ASYM_KEY_LENGTH;
-	public static final int ASYM_OVERHEAD = MAC_LENGTH;
 	
-	public static final int DH_MIN_MODULUS_BITLENGTH = 3072;
-	public static final int DH_MIN_KEYMAX_BITLENGTH = 256;
-	public static final int DH_PRIME_CERTAINTY = 256;
-
 	private static EncryptionInterface mEncryption = null;
 	
 	public static EncryptionInterface getEncryption() {

@@ -14,7 +14,8 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 	
 	private SecureRandom mRandom = null;
-
+	private MessageDigest mHashingFunction = null;
+			
 	public EncryptionNone() {
         try {
             mRandom = SecureRandom.getInstance("SHA1PRNG");
@@ -79,13 +80,7 @@ public class EncryptionNone implements EncryptionInterface {
 
 	@Override
 	public byte[] getHash(byte[] data) {
-		try {
-			MessageDigest digester = MessageDigest.getInstance(HASHING_ALGORITHM);
-			return digester.digest(data);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		return null;
+		return getHashingFunction().digest(data);
 	}
 
 	@Override
@@ -115,5 +110,16 @@ public class EncryptionNone implements EncryptionInterface {
 	@Override
 	public SecureRandom getRandom() {
 		return mRandom;
+	}
+
+	@Override
+	public MessageDigest getHashingFunction() {
+		if (mHashingFunction == null) {
+			try {
+				mHashingFunction = MessageDigest.getInstance(HASHING_ALGORITHM);
+			} catch (NoSuchAlgorithmException e) {
+			}
+		}
+		return mHashingFunction;
 	}
 }

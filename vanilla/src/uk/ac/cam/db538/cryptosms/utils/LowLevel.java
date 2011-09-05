@@ -151,4 +151,8 @@ public class LowLevel {
 		}
 		return builder.toString();
 	}
+	
+	public static int roundUpDivision(int number, int divisor) {
+		return (number + divisor - 1) / divisor;
+	}
 }

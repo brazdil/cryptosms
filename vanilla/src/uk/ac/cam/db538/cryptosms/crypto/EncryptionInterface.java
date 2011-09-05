@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.cryptosms.crypto;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 public interface EncryptionInterface {
@@ -28,6 +29,8 @@ public interface EncryptionInterface {
 	public byte[] generateRandomData(int length);
 	
 	public byte[] getHash(byte[] data);
+	public MessageDigest getHashingFunction();
+	
 	public int getSymmetricEncryptedLength(int length);
 	public int getSymmetricAlignedLength(int length);
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException;
