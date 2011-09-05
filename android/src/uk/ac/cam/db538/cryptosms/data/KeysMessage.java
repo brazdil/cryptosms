@@ -43,7 +43,8 @@ public class KeysMessage extends Message {
 		// encrypt and sign
 		mDataEncryptedAndSigned = 
 			Encryption.getEncryption().sign(
-				Encryption.getEncryption().encryptAsymmetric(data, contactId, contactKey)
+					data
+				//Encryption.getEncryption().encryptAsymmetric(data, contactId, contactKey)
 			);
 		
 		// get an ID for this keys
@@ -106,7 +107,7 @@ public class KeysMessage extends Message {
 	
 	public static int getEncryptedDataLength() {
 		int dataLength = LENGTH_CONTENT;
-		dataLength = Encryption.getEncryption().getAsymmetricAlignedLength(dataLength);
+		//dataLength = Encryption.getEncryption().getAsymmetricAlignedLength(dataLength);
 		dataLength += Encryption.MAC_LENGTH;
 		dataLength += Encryption.ASYM_SIGNATURE_LENGTH;
 		return dataLength;
@@ -202,14 +203,15 @@ public class KeysMessage extends Message {
 		}
 		
 		// now decrypt the data
-		byte[] dataDecrypted = null;
-		try {
-			dataDecrypted = Encryption.getEncryption().decryptAsymmetric(dataEncrypted);
-		} catch (EncryptionException e) {
-			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
-		} catch (WrongKeyDecryptionException e) {
-			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
-		}
+//		byte[] dataDecrypted = null;
+//		try {
+//			dataDecrypted = Encryption.getEncryption().decryptAsymmetric(dataEncrypted);
+//		} catch (EncryptionException e) {
+//			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+//		} catch (WrongKeyDecryptionException e) {
+//			return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+//		}
+		byte[] dataDecrypted = dataEncrypted;
 		
 		// check the length
 		if (dataDecrypted.length != KeysMessage.LENGTH_CONTENT)
