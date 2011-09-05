@@ -2,8 +2,6 @@ package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.math.BigInteger;
 
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
-
 /**
  * Implements the underlying Diffie-Hellman cryptography.
  */

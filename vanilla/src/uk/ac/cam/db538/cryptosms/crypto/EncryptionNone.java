@@ -101,29 +101,8 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 
 	@Override
-	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId,
-			String contactKey) throws EncryptionException {
-		return null;
-	}
-
-	@Override
-	public byte[] decryptAsymmetric(byte[] dataEncrypted) throws EncryptionException {
-		return null;
-	}
-
-	@Override
 	public byte[] sign(byte[] dataEncrypted) throws EncryptionException {
 		return null;
-	}
-
-	@Override
-	public int getAsymmetricEncryptedLength(int length) {
-		return Encryption.ASYM_OVERHEAD + getAsymmetricAlignedLength(length);
-	}
-
-	@Override
-	public int getAsymmetricAlignedLength(int length) {
-		return length + (Encryption.ASYM_BLOCK_LENGTH - (length % Encryption.ASYM_BLOCK_LENGTH)) % Encryption.ASYM_BLOCK_LENGTH;
 	}
 
 	@Override

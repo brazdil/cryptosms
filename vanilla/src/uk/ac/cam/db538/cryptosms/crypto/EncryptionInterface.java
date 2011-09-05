@@ -37,10 +37,6 @@ public interface EncryptionInterface {
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException;
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException;
 	
-	public int getAsymmetricEncryptedLength(int length);
-	public int getAsymmetricAlignedLength(int length);
-	public byte[] encryptAsymmetric(byte[] dataPlain, long contactId, String contactKey) throws EncryptionException;
-	public byte[] decryptAsymmetric(byte[] dataEncrypted) throws EncryptionException;
 	public byte[] sign(byte[] data) throws EncryptionException;
 	public byte[] verify(byte[] data, long contactId) throws EncryptionException;
 }
