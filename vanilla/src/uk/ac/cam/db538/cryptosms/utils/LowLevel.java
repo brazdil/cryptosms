@@ -30,6 +30,18 @@ public class LowLevel {
 	}
 	
 	/**
+	 * Expects eight bytes and returns a long that's represented by the bytes.
+	 */
+	public static long getLong(byte[] data) {
+		long result = 0L;
+		for (int i = 0; i < 8; ++i) {
+			result <<= 8;
+			result |= (data[i] & 0xFF);
+		}
+		return result;
+	}
+
+	/**
 	 * Expects two bytes and returns a short
 	 */
 	public static int getUnsignedShort(byte[] data) {
@@ -78,6 +90,22 @@ public class LowLevel {
 	 */
 	public static byte getBytesUnsignedByte(int number) {
 		return (byte)(number & 0xFF);
+	}
+	
+	/**
+	 * Expects a long and returns a byte array of 8 elements with its big endian representation
+	 */
+	public static byte[] getBytesLong(long number) {
+		byte[] result = new byte[8];
+		result[0] = (byte) ((number >> 56) & 0xFF);
+		result[1] = (byte) ((number >> 48) & 0xFF);
+		result[2] = (byte) ((number >> 40) & 0xFF);
+		result[3] = (byte) ((number >> 32) & 0xFF);
+		result[4] = (byte) ((number >> 24) & 0xFF);
+		result[5] = (byte) ((number >> 16) & 0xFF);
+		result[6] = (byte) ((number >> 8) & 0xFF);
+		result[7] = (byte) (number & 0xFF);
+		return result;
 	}
 	
 	/**

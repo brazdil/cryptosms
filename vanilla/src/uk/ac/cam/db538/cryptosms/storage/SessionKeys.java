@@ -24,6 +24,7 @@ public class SessionKeys {
 	private static final int LENGTH_SESSIONKEY = Encryption.SYM_KEY_LENGTH;
 	private static final int LENGTH_PRIVATE_KEY = EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY; 
 	private static final int LENGTH_ID = 1;
+	private static final int LENGTH_TIMESTAMP = 8;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_SIMNUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
@@ -32,9 +33,9 @@ public class SessionKeys {
 	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_NEXTID_OUTGOING + LENGTH_ID;
 	private static final int OFFSET_LASTID_INCOMING = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
 	private static final int OFFSET_PRIVATE_KEY = OFFSET_LASTID_INCOMING + LENGTH_ID;
-	private static final int OFFSET_KEYS_ID = OFFSET_PRIVATE_KEY + LENGTH_PRIVATE_KEY;
+	private static final int OFFSET_TIMESTAMP = OFFSET_PRIVATE_KEY + LENGTH_PRIVATE_KEY;
 	
-	private static final int OFFSET_RANDOMDATA = OFFSET_KEYS_ID + LENGTH_ID;
+	private static final int OFFSET_RANDOMDATA = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
 
 	private static final int OFFSET_NEXTINDEX = Storage.ENCRYPTED_ENTRY_SIZE - 4;
 	private static final int OFFSET_PREVINDEX = OFFSET_NEXTINDEX - 4;
@@ -96,7 +97,7 @@ public class SessionKeys {
 	private byte[] mSessionKey_In;
 	private byte mLastID_In;
 	private byte[] mPrivateKey;
-	private byte mKeysId;
+	private long mTimeStamp;
 	private long mIndexParent;
 	private long mIndexPrev;
 	private long mIndexNext;
@@ -134,7 +135,7 @@ public class SessionKeys {
 			setSessionKey_In(LowLevel.cutData(dataPlain, OFFSET_SESSIONKEY_INCOMING, LENGTH_SESSIONKEY));
 			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
 			setPrivateKey(LowLevel.cutData(dataPlain, OFFSET_PRIVATE_KEY, LENGTH_PRIVATE_KEY));
-			setKeysId(dataPlain[OFFSET_KEYS_ID]);
+			setTimeStamp(LowLevel.getLong(LowLevel.cutData(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP)));
 			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
 			setIndexPrev(LowLevel.getUnsignedInt(dataPlain, OFFSET_PREVINDEX));
 			setIndexNext(LowLevel.getUnsignedInt(dataPlain, OFFSET_NEXTINDEX));
@@ -144,12 +145,12 @@ public class SessionKeys {
 			setKeysSent(false);
 			setKeysConfirmed(false);
 			setSimNumber(new SimNumber());
-			setSessionKey_Out(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
+			setSessionKey_Out(Encryption.getEncryption().generateRandomData(LENGTH_SESSIONKEY));
 			setNextID_Out(DEFAULT_ID);
-			setSessionKey_In(Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
+			setSessionKey_In(Encryption.getEncryption().generateRandomData(LENGTH_SESSIONKEY));
 			setLastID_In(DEFAULT_ID);
-			setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
-			setKeysId((byte) 0x00);
+			setPrivateKey(Encryption.getEncryption().generateRandomData(LENGTH_PRIVATE_KEY));
+			setTimeStamp(0L);
 			setIndexParent(0L);
 			setIndexPrev(0L);
 			setIndexNext(0L);
@@ -169,7 +170,7 @@ public class SessionKeys {
 	 * @throws StorageFileException
 	 */
 	public void saveToFile() throws StorageFileException {
-		ByteBuffer keysBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
+		byte[] keysBuffer = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
 		
 		// flags
 		byte flags = 0;
@@ -179,30 +180,31 @@ public class SessionKeys {
 			flags |= (byte) ((1 << 6) & 0xFF);
 		if (this.mSimNumber.isSerial())
 			flags |= (byte) ((1 << 5) & 0xFF);
-		keysBuffer.put(flags);
+		keysBuffer[OFFSET_FLAGS] = flags;
 		
 		// phone number
-		keysBuffer.put(Charset.toAscii8(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER));
+		System.arraycopy(Charset.toAscii8(this.mSimNumber.getNumber(), LENGTH_SIMNUMBER), 0, keysBuffer, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER);
 		
 		// session keys and last IDs and confirmation nonce
-		keysBuffer.put(this.mSessionKey_Out);
-		keysBuffer.put((byte) this.mNextID_Out);
-		keysBuffer.put(this.mSessionKey_In);
-		keysBuffer.put((byte) this.mLastID_In);
-		keysBuffer.put(this.mPrivateKey);
-		keysBuffer.put(this.mKeysId);
+		System.arraycopy(this.mSessionKey_Out, 0, keysBuffer, OFFSET_SESSIONKEY_OUTGOING, LENGTH_SESSIONKEY);
+		keysBuffer[OFFSET_NEXTID_OUTGOING] = (byte) this.mNextID_Out; 
+		System.arraycopy(this.mSessionKey_In, 0, keysBuffer, OFFSET_SESSIONKEY_INCOMING, LENGTH_SESSIONKEY);
+		keysBuffer[OFFSET_LASTID_INCOMING] = (byte) this.mLastID_In; 
+		System.arraycopy(this.mPrivateKey, 0, keysBuffer, OFFSET_PRIVATE_KEY, LENGTH_PRIVATE_KEY);
+		System.arraycopy(LowLevel.getBytesLong(this.mTimeStamp), 0, keysBuffer, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
 		
 		// random data
-		keysBuffer.put(Encryption.getEncryption().generateRandomData(LENGTH_RANDOMDATA));
+		System.arraycopy(Encryption.getEncryption().generateRandomData(LENGTH_RANDOMDATA), 0, keysBuffer, OFFSET_RANDOMDATA, LENGTH_RANDOMDATA);
 		
 		// indices
-		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexParent));
-		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexPrev));
-		keysBuffer.put(LowLevel.getBytesUnsignedInt(this.mIndexNext));
+		System.arraycopy(LowLevel.getBytesUnsignedInt(this.mIndexParent), 0, keysBuffer, OFFSET_PARENTINDEX, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(this.mIndexPrev), 0, keysBuffer, OFFSET_PREVINDEX, 4);
+		System.arraycopy(LowLevel.getBytesUnsignedInt(this.mIndexNext), 0, keysBuffer, OFFSET_NEXTINDEX, 4);
 		
+		// encrypt and save
 		byte[] dataEncrypted = null;
 		try {
-			dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(keysBuffer.array());
+			dataEncrypted = Encryption.getEncryption().encryptSymmetricWithMasterKey(keysBuffer);
 		} catch (EncryptionException e) {
 			throw new StorageFileException(e);
 		}
@@ -396,12 +398,12 @@ public class SessionKeys {
 		mPrivateKey = privateKey;
 	}
 
-	public byte getKeysId() {
-		return mKeysId;
+	public long getTimeStamp() {
+		return mTimeStamp;
 	}
 
-	public void setKeysId(byte keysId) {
-		mKeysId = keysId;
+	public void setTimeStamp(long timeStamp) {
+		mTimeStamp = timeStamp;
 	}
 
 	long getIndexPrev() {
