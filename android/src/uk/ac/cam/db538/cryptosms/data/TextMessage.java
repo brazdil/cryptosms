@@ -4,11 +4,17 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
+import android.util.Log;
+
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
+import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -96,11 +102,7 @@ public class TextMessage extends Message {
     }
 
     public CompressedText getText() throws StorageFileException, DataFormatException {
-		return CompressedText.decode(
-			getStoredData(),
-			mStorage.getAscii() ? TextCharset.ASCII : TextCharset.UNICODE,
-			mStorage.getCompressed()
-		);
+		return CompressedText.decode(getStoredData());	
 	}
 	
 	public void setText(CompressedText text) throws StorageFileException, MessageException {
@@ -122,6 +124,14 @@ public class TextMessage extends Message {
 		mStorage.saveToFile();
 	}
 	
+	private static int getLengthComplete(int len) {
+		len = Encryption.getEncryption().getSymmetricEncryptedLength(len);
+		len += LENGTH_FIRST_MESSAGE_LENGTH;
+		return len;
+	}
+	
+	private boolean mKeyIncremented = false;
+	
 	/**
 	 * Returns data ready to be sent via SMS
 	 * @return
@@ -134,56 +144,41 @@ public class TextMessage extends Message {
 		SessionKeys keys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
 		if (keys == null)
 			throw new MessageException("No keys found");
+		
+		mKeyIncremented = false;
 				
 		// get the data, add random data to fit the messages exactly and encrypt it
-		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetric(getStoredData(), keys.getSessionKey_Out());
-		byte[] dataComplete = new byte[LENGTH_FIRST_MESSAGE_LENGTH + dataEncrypted.length];
-		System.arraycopy(LowLevel.getBytesUnsignedShort(dataEncrypted.length), 0, dataComplete, OFFSET_FIRST_MESSAGE_LENGTH - OFFSET_DATA, LENGTH_FIRST_MESSAGE_LENGTH);
+		byte[] dataText = getStoredData();
+		int lengthText = dataText.length;
+		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetric(dataText, keys.getSessionKey_Out());
+		int lengthComplete = getLengthComplete(lengthText);
+		byte[] dataComplete = new byte[lengthComplete];
+		System.arraycopy(LowLevel.getBytesUnsignedShort(lengthText), 0, dataComplete, OFFSET_FIRST_MESSAGE_LENGTH - OFFSET_DATA, LENGTH_FIRST_MESSAGE_LENGTH);
 		System.arraycopy(dataEncrypted, 0, dataComplete, OFFSET_FIRST_MESSAGE_DATA - OFFSET_DATA, dataEncrypted.length);
 		
 		int countParts = LowLevel.roundUpDivision(dataComplete.length, LENGTH_DATA);
 		ArrayList<byte[]> listParts = new ArrayList<byte[]>(countParts);
 
 		byte id = keys.getNextID_Out();
-		long index = 0;
+		int index = 0;
+		
+		Log.d(MyApplication.APP_TAG, "ENCRYPT - " + id + " - " + LowLevel.toHex(keys.getSessionKey_Out()));
+		Log.d(MyApplication.APP_TAG, "DATA - " + LowLevel.toHex(dataEncrypted));
 		
 		for (int i = 0; i < countParts; ++i) {
-			int lengthDataPart = Math.min(LENGTH_DATA, dataComplete.length - i * LENGTH_DATA);
+			int lengthData = Math.min(LENGTH_DATA, dataComplete.length - i * LENGTH_DATA);
+			int lengthPart = OFFSET_DATA + lengthData;
+			byte[] dataPart = new byte[lengthPart];
+
+			dataPart[OFFSET_HEADER] = HEADER_TEXT;
+			dataPart[OFFSET_ID] = id;
+			dataPart[OFFSET_INDEX] = LowLevel.getBytesUnsignedByte(index++);
+			System.arraycopy(dataComplete, i * LENGTH_DATA, dataPart, OFFSET_DATA, lengthData);
 			
+			listParts.add(dataPart);
 		}
 		
-//		
-//		// first message (always)
-//		byte header = HEADER_TEXT;
-//		if (mStorage.getAscii())
-//			header |= (byte) 0x08;
-//		if (mStorage.getCompressed())
-//			header |= (byte) 0x04;
-//		buf.put(header);
-//		buf.put(keys.getNextID_Out());
-//		buf.put(LowLevel.getBytesUnsignedShort(getStoredDataLength()));
-//		buf.put(LowLevel.cutData(data, 0, LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY));
-//		list.add(buf.array());
-//		Log.d(MyApplication.APP_TAG, "SMS data: " + LowLevel.toHex(buf.array()));
-//		
-//		offset = LENGTH_FIRST_ENCRYPTION + LENGTH_FIRST_MESSAGEBODY;
-//		try {
-//			while (true) {
-//				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-//				++index;
-//				buf.put(header);
-//				buf.put(keys.getNextID_Out());
-//				buf.put(LowLevel.getBytesUnsignedByte(index));
-//				buf.put(LowLevel.cutData(data, offset, LENGTH_PART_MESSAGEBODY));
-//				offset += LENGTH_PART_MESSAGEBODY;
-//				list.add(buf.array());
-//			}
-//		} catch (IndexOutOfBoundsException e) {
-//			// end
-//		}
-//		
-//		return list;
-		return null;
+		return listParts;
 	}
 	
 	public static class JoiningException extends Exception {
@@ -258,6 +253,100 @@ public class TextMessage extends Message {
 		return dataJoined;
 	}
 
+	public static ParseResult parseTextMessage(ArrayList<Pending> idGroup) {
+		EncryptionInterface crypto = Encryption.getEncryption();
+		
+		try {
+			// check the sender
+			Contact contact = Contact.getContact(MyApplication.getSingleton().getApplicationContext(), idGroup.get(0).getSender());
+			if (!contact.existsInDatabase())
+				return new ParseResult(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
+			
+			String sender = idGroup.get(0).getSender();
+			
+			// find the keys
+			Conversation conv = Conversation.getConversation(sender);
+			if (conv == null)
+				return new ParseResult(idGroup, PendingParseResult.NO_SESSION_KEYS, null);
+			SessionKeys keys = conv.getSessionKeys(SimCard.getSingleton().getNumber());
+			if (keys == null)
+				return new ParseResult(idGroup, PendingParseResult.NO_SESSION_KEYS, null);
+			
+			// find the first part and retrieve the length of data
+			int dataLength = -1;
+			for (Pending p : idGroup)
+				if (getMessageIndex(p.getData()) == 0) {
+					dataLength = getMessageDataLength(p.getData());
+					break;
+				}
+			if (dataLength == -1)
+				// first part not found
+				return new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null);
+			
+			// join the parts
+			int countParts = LowLevel.roundUpDivision(dataLength, LENGTH_DATA);
+			byte[] dataJoined = null;
+			try {
+				dataJoined = joinParts(idGroup, countParts);
+			} catch (JoiningException ex) {
+				return new ParseResult(idGroup, ex.getReason(), null);
+			}
+			
+			// check the data length
+			if (dataLength > dataJoined.length)
+				return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
+			
+			// take just the good stuff
+			int offset = OFFSET_FIRST_MESSAGE_DATA - OFFSET_DATA;
+			byte[] dataEncrypted = LowLevel.cutData(dataJoined, offset, getLengthComplete(dataLength) - offset);
+			
+			Log.d(MyApplication.APP_TAG, "DATA - " + LowLevel.toHex(dataEncrypted));
+
+			// decrypt
+			byte[] dataDecrypted = null;
+			int lastId = keys.getLastID_In();
+			byte[] keyIn = keys.getSessionKey_In();
+			// try hashing the key until it fits
+			while (dataDecrypted == null && lastId <= 0xFF) {
+				Log.d(MyApplication.APP_TAG, "DECRYPT - " + lastId + " - " + LowLevel.toHex(keyIn));
+				try {
+					 dataDecrypted = crypto.decryptSymmetric(dataEncrypted, keyIn);
+				} catch (EncryptionException e) {
+					// this is bad
+					return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
+				} catch (WrongKeyDecryptionException e) {
+					// this is OK, we'll just try another one
+					keyIn = crypto.getHash(keyIn);
+					lastId++;
+				}
+			}
+			
+			// was it decrypted?
+			if (dataDecrypted == null)
+				return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+			
+			// take just the text part
+			dataDecrypted = LowLevel.cutData(dataDecrypted, 0, dataLength);
+			
+			// save to conversation			
+			MessageData msgData = MessageData.createMessageData(conv);
+			TextMessage msgText = new TextMessage(msgData);
+			try {
+				msgText.setText(CompressedText.decode(dataDecrypted));
+			} catch (MessageException e) {
+				return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
+			} catch (DataFormatException e) {
+				return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
+			}
+			
+			// looks good, return
+			return new ParseResult(idGroup, PendingParseResult.OK_TEXT_MESSAGE, msgText);
+			
+		} catch (StorageFileException ex) {
+			return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
+		}
+	}
+
 	protected static byte getMessageIdByte(byte[] data) {
 		return data[OFFSET_ID];
 	}
@@ -311,20 +400,31 @@ public class TextMessage extends Message {
 	 * @param data
 	 * @return
 	 */
-	public static int getMessageDataLength(byte[] data) {
+	protected static int getMessageDataLength(byte[] data) {
 		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_MESSAGE_LENGTH);
 	}
 
-	public static ParseResult parseTextMessage(ArrayList<Pending> idGroup) {
-		return null;
+	protected int getMessagePartCount(int dataLength) {
+		return LowLevel.roundUpDivision(dataLength - LENGTH_FIRST_DATA, LENGTH_PART_MESSAGE_DATA);
 	}
 
 	@Override
-	public byte getHeader() {
-		return HEADER_TEXT;
+	protected void onMessageSent(String phoneNumber)
+			throws StorageFileException {
 	}
-	
-	protected int getMessagePartCount(int dataLength) {
-		return 1 + LowLevel.roundUpDivision(dataLength - LENGTH_FIRST_DATA, LENGTH_PART_MESSAGE_DATA);
+
+	@Override
+	protected void onPartSent(String phoneNumber, int index)
+			throws StorageFileException {
+		if (!mKeyIncremented) {
+			// it at least something was sent, increment the ID and session keys
+			SessionKeys keys = StorageUtils.getSessionKeysForSim(this.getStorage().getParent());
+			if (keys != null) {
+				keys.incrementOut(1);
+				keys.saveToFile();
+				mKeyIncremented = true;
+			}
+		}
+		
 	}
 }

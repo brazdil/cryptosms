@@ -35,7 +35,7 @@
 			android:name=".ui.activity.ActivityExchangeViaText"
 			android:configChanges="orientation|keyboardHidden"/>
 		<activity 
-			android:name=".ui.activity.ActivityConversationversation"
+			android:name=".ui.activity.ActivityConversation"
 			android:configChanges="orientation|keyboardHidden"/>
     </application>
 </manifest>

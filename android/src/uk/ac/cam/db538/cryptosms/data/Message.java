@@ -39,12 +39,13 @@ public abstract class Message {
 	public static interface MessageSendingListener {
 		public void onMessageSent();
 		public void onPartSent(int index);
-		public void onError(String message);
+		public void onError(Exception ex);
 	}
 	
-	protected static final byte HEADER_HANDSHAKE = (byte) 0x00;
-	protected static final byte HEADER_CONFIRM = (byte) 0x10;
-	protected static final byte HEADER_TEXT = (byte) 0x20;
+	// USE ONLY THE TOP 4 BITS!!!
+	protected static final byte HEADER_HANDSHAKE = (byte) 0x10;
+	protected static final byte HEADER_CONFIRM = (byte) 0x20;
+	protected static final byte HEADER_TEXT = (byte) 0x30;
 	
 	public static enum MessageType {
 		HANDSHAKE,
@@ -57,8 +58,9 @@ public abstract class Message {
     private static final String SENT_SMS_ACTION = "CRYPTOSMS_SMS_SENT"; 
     private static long mMessageCounter = 0;
 
-    public abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
-    public abstract byte getHeader();
+    protected abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
+    protected abstract void onMessageSent(String phoneNumber) throws StorageFileException;
+    protected abstract void onPartSent(String phoneNumber, int index) throws StorageFileException;
     
 	/**
 	 * Takes the byte arrays created by getBytes() method and sends 
@@ -67,29 +69,7 @@ public abstract class Message {
 	public void sendSMS(final String phoneNumber, Context context, final MessageSendingListener listener)
 			throws StorageFileException, MessageException, EncryptionException {
 		final ArrayList<byte[]> dataSms = getBytes();
-		
-//		// align to fit message parts exactly
-//		int totalBytes = LENGTH_DATA * LowLevel.roundUpDivision(dataMessage.length, LENGTH_DATA);
-//		dataMessage = LowLevel.wrapData(dataMessage, totalBytes);
-//		
-//		// seperate into message parts
-//		ByteBuffer buf;
-//		int index = 0, offset = 0;
-//		byte header = getHeader(), id = getId();
-//		try {
-//			while (true) {
-//				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-//				buf.put(header);
-//				buf.put(id);
-//				buf.put(LowLevel.getBytesUnsignedByte(index++));
-//				buf.put(LowLevel.cutData(dataMessage, offset, LENGTH_DATA));
-//				offset += LENGTH_DATA;
-//				dataSms.add(buf.array());
-//			}
-//		} catch (IndexOutOfBoundsException e) {
-//			// end
-//		}
-		
+
 		// send
 		int size = dataSms.size();
 		final boolean[] deliveryConfirms = new boolean[size];
@@ -107,28 +87,39 @@ public abstract class Message {
 						Log.d(MyApplication.APP_TAG, "Sent " + intentIndex);
 						// notify and save
 						deliveryConfirms[intentIndex] = true;
-						listener.onPartSent(intentIndex);
+						try {
+							onPartSent(phoneNumber, intentIndex);
+							listener.onPartSent(intentIndex);
+						} catch (StorageFileException e) {
+							listener.onError(e);
+						}
 						// check we have all
 						boolean all = true;
 						for (boolean b : deliveryConfirms)
 							all = all && b;
-						if (all)
-							listener.onMessageSent();
+						if (all) {
+							try {
+								Message.this.onMessageSent(phoneNumber);
+								listener.onMessageSent();
+							} catch (StorageFileException e) {
+								listener.onError(e);
+							}
+						}
 						break;
 					case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-						listener.onError(res.getString(R.string.error_sending_generic));
+						listener.onError(new Exception(res.getString(R.string.error_sending_generic)));
 						break;
 					case SmsManager.RESULT_ERROR_NO_SERVICE:
-						listener.onError(res.getString(R.string.error_sending_no_service));
+						listener.onError(new Exception(res.getString(R.string.error_sending_no_service)));
 						break;
 					case SmsManager.RESULT_ERROR_NULL_PDU:
-						listener.onError(res.getString(R.string.error_sending_null_pdu));
+						listener.onError(new Exception(res.getString(R.string.error_sending_null_pdu)));
 						break;
 					case SmsManager.RESULT_ERROR_RADIO_OFF:
-						listener.onError(res.getString(R.string.error_sending_radio_off));
+						listener.onError(new Exception(res.getString(R.string.error_sending_radio_off)));
 						break;
 					default: // ERROR
-						listener.onError(res.getString(R.string.error_sending_unknown));
+						listener.onError(new Exception(res.getString(R.string.error_sending_unknown)));
 						break;
 					}
 				}
@@ -153,7 +144,7 @@ public abstract class Message {
 	}
 	
 	protected static byte getMessageHeader(byte[] data) {
-		return data[OFFSET_HEADER];
+		return (byte) (data[OFFSET_HEADER] & 0xF0);
 	}
     
 	public static MessageType getMessageType(byte[] data) {

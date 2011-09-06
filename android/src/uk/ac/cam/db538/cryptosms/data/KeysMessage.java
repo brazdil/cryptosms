@@ -3,6 +3,8 @@ package uk.ac.cam.db538.cryptosms.data;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 
+import android.util.Log;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
@@ -10,11 +12,13 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
+import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
+import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 public class KeysMessage extends Message {
 	
@@ -128,6 +132,7 @@ public class KeysMessage extends Message {
 		hashing.update(mPublicKey);
 
 		byte[] hash = hashing.digest();
+		Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 		byte[] signature = Encryption.getEncryption().sign(hash);
 		
 		byte[] data = new byte[OFFSET_DATA + LENGTH_CONTENT];
@@ -176,6 +181,7 @@ public class KeysMessage extends Message {
 				hashing.update(publicKey);
 				
 				byte[] hash = hashing.digest();
+				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -209,6 +215,7 @@ public class KeysMessage extends Message {
 				hashing.update(publicKey);
 
 				byte[] hash = hashing.digest();
+				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -251,22 +258,59 @@ public class KeysMessage extends Message {
 		return System.currentTimeMillis();
 	}
 
-	@Override
-	public byte getHeader() {
+	private byte getHeader() {
 		if (mIsConfirmation)
 			return HEADER_CONFIRM;
 		else
 			return HEADER_HANDSHAKE;
 	}
 
-	public byte getOtherHeader() {
+	private byte getOtherHeader() {
 		if (mIsConfirmation)
 			return HEADER_HANDSHAKE;
 		else
 			return HEADER_CONFIRM;
 	}
 
-	public static long getMessageTimeStamp(byte[] data) {
+	protected static long getMessageTimeStamp(byte[] data) {
 		return LowLevel.getLong(LowLevel.cutData(data, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
+	}
+
+	@Override
+	protected void onMessageSent(String phoneNumber) throws StorageFileException {
+		Conversation conv = Conversation.getConversation(phoneNumber);
+		if (conv == null) {
+			conv = Conversation.createConversation();
+			conv.setPhoneNumber(phoneNumber);
+			// will get saved while session keys 
+			// are attached
+		}
+		SimNumber simNumber = SimCard.getSingleton().getNumber();
+		conv.deleteSessionKeys(simNumber);
+
+		SessionKeys keys = SessionKeys.createSessionKeys(conv);
+		keys.setSimNumber(simNumber);
+
+		if (mIsConfirmation) {
+	        keys.setKeysSent(true);
+			keys.setKeysConfirmed(true);
+			keys.setSessionKey_Out(this.getKeyOut());
+			keys.setSessionKey_In(this.getKeyIn());
+            keys.setNextID_Out((byte) 0);
+            keys.setLastID_In((byte) 0);
+		} else {
+			keys.setKeysSent(true);
+			keys.setKeysConfirmed(false);
+			keys.setPrivateKey(getPrivateKey());
+			keys.setTimeStamp(getTimeStamp());
+			keys.saveToFile();
+		}
+		
+		keys.saveToFile();
+	}
+
+	@Override
+	protected void onPartSent(String phoneNumber, int index)
+			throws StorageFileException {
 	}
 }

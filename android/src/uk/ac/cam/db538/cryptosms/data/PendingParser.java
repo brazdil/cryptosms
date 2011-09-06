@@ -81,26 +81,36 @@ public class PendingParser {
 	}
 	
 	public static ArrayList<ParseResult> parsePending(DbPendingAdapter database) {
-		ArrayList<ParseResult> result = new ArrayList<ParseResult>();
+		ArrayList<ParseResult> results = new ArrayList<ParseResult>();
 		// have the pending messages sorted into groups by their type and ID
 		ArrayList<ArrayList<Pending>> idGroups = database.getAllIdGroups();
 		for(ArrayList<Pending> idGroup : idGroups) {
 			// check that there are not too many parts
 			if (idGroup.size() > 255)
-				result.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
+				results.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
 			else if (idGroup.size() > 0) {
 				switch (idGroup.get(0).getType()) {
 				case HANDSHAKE:
 				case CONFIRM:
-					result.add(KeysMessage.parseKeysMessage(idGroup));
+					results.add(KeysMessage.parseKeysMessage(idGroup));
 					break;
 				case TEXT:
-					result.add(TextMessage.parseTextMessage(idGroup));
+					results.add(TextMessage.parseTextMessage(idGroup));
+					// TODO: increment key ID to the lowest we decoded
 					break;
 				}
 			}
 		}
-		return result;
+		
+		for (ParseResult parseResult : results) {
+			if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
+				parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
+				results.remove(parseResult);
+				parseResult.removeFromDb(database);
+			}
+		}
+		
+		return results;
 	}
 
 }

@@ -143,34 +143,19 @@ public class ActivityConversation extends ActivityAppState {
 							}
 							
 							@Override
-							public void onError(String message) {
+							public void onError(Exception ex) {
 								pd.cancel();
 								// TODO: get rid of this!!!
 								new AlertDialog.Builder(ActivityConversation.this)
 								.setTitle(res.getString(R.string.error_sms_service))
-								.setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + message)
+								.setMessage(res.getString(R.string.error_sms_service_details) + "\nError: " + ex.getMessage())
 								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
 								.show();
 								updateMessageHistory();
 							}
 							
-							boolean keyIncremented = false;
-
 							@Override
 							public void onPartSent(int index) {
-								if (!keyIncremented) {
-									// it at least something was sent, increment the ID and session keys
-									SessionKeys keys;
-									try {
-										keys = StorageUtils.getSessionKeysForSim(msg.getStorage().getParent());
-										keys.incrementOut(1);
-										keys.saveToFile();
-									} catch (StorageFileException ex) {
-										State.fatalException(ex);
-										return;
-									}
-									keyIncremented = true;
-								}
 							}
 						});
 					} catch (StorageFileException ex) {

@@ -9,6 +9,7 @@ import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.KeysMessage;
@@ -371,31 +372,6 @@ public class ActivityLists extends ActivityAppState {
 
 										@Override
 										public void onMessageSent() {
-											// save the keys
-											try {
-												Conversation conv = Conversation.getConversation(phoneNumber);
-												if (conv == null) {
-													conv = Conversation.createConversation();
-													conv.setPhoneNumber(phoneNumber);
-													// will get saved while session keys 
-													// are attached
-												}
-												SimNumber simNumber = SimCard.getSingleton().getNumber();
-												conv.deleteSessionKeys(simNumber);
-												SessionKeys keys = SessionKeys.createSessionKeys(conv);
-												keys.setSimNumber(simNumber);
-												keys.setSessionKey_Out(keysMsg.getKeyOut());
-												keys.setSessionKey_In(keysMsg.getKeyIn());
-								                keys.setNextID_Out((byte) 0);
-								                keys.setLastID_In((byte) 0);
-								                keys.setKeysSent(true);
-												keys.setKeysConfirmed(true);
-												keys.saveToFile();
-											} catch (StorageFileException ex) {
-												State.fatalException(ex);
-												return;
-											}
-											
 											// remove id group from database
 											removeParseResult(mNotificationsContextMenuItem);
 											
@@ -407,10 +383,10 @@ public class ActivityLists extends ActivityAppState {
 										}
 
 										@Override
-										public void onError(String message) {
+										public void onError(Exception ex) {
 											ActivityLists.this.getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
 											Bundle params = new Bundle();
-											params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, message);
+											params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, ex.getMessage());
 											getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_ERROR, params);
 										}
 										
@@ -641,7 +617,6 @@ public class ActivityLists extends ActivityAppState {
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
     		mClearPendingView.bind(getString(R.string.clear_pending), getString(R.string.clear_pending_details));
     		
-    		updateConversations();
     		updateEvents();
 		} else {
 			mListNotifications.setAdapter(null);
@@ -760,8 +735,13 @@ public class ActivityLists extends ActivityAppState {
 				if (ex.getCause() instanceof EncryptionException) {
 					// don't really care
 					// probably Pki not ready
-				} else
+				} else {
 					mException = ex;
+					return null;
+				}
+			} catch (WrongKeyDecryptionException ex) {
+				mException = ex;
+				return null;
 			}
     		Collections.sort(listConversations, Collections.reverseOrder());
     		Collections.sort(listContacts, new Comparator<Conversation>() {
@@ -832,28 +812,12 @@ public class ActivityLists extends ActivityAppState {
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
-			boolean doUpdateConversations = false;
-			mDatabase.open();
-			try {
-				for (ParseResult parseResult : mParseResults) {
-					if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
-						parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
-						mParseResults.remove(parseResult);
-						parseResult.removeFromDb(mDatabase);
-						doUpdateConversations = true;
-					}
-				}
-			} finally {
-				mDatabase.close();
-			}
-			
 			mAdapterNotifications.setList(mParseResults);
 			mAdapterNotifications.notifyDataSetChanged();
 			mListNotificationsLoading.setVisibility(View.GONE);
 			mListNotifications.setVisibility(View.VISIBLE);
 			
-			if (doUpdateConversations)
-				updateConversations();
+			updateConversations();
 		}
 	}
 }

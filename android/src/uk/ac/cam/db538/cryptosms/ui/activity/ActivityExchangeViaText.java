@@ -96,38 +96,22 @@ public class ActivityExchangeViaText extends ActivityAppState {
 							Log.d(MyApplication.APP_TAG, "Sent all!");
 							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
 							
-							try {
-								Conversation conv = Conversation.getConversation(mPhoneNumber);
-								if (conv == null) {
-									conv = Conversation.createConversation();
-									conv.setPhoneNumber(mPhoneNumber);
-									// no need to save, because it will get saved while
-									// creating the session keys
-								}
-								SimNumber simNumber = SimCard.getSingleton().getNumber();
-								conv.deleteSessionKeys(simNumber);
-								SessionKeys keys = SessionKeys.createSessionKeys(conv);
-								keys.setPrivateKey(keysMessage.getPrivateKey());
-								keys.setTimeStamp(keysMessage.getTimeStamp());
-								keys.setSimNumber(simNumber);
-								keys.setKeysSent(true);
-								keys.setKeysConfirmed(false);
-								keys.saveToFile();
-							} catch (StorageFileException e) {
-								State.fatalException(e);
-								return;
-							}
 							// go back
 							ActivityExchangeViaText.this.setResult(Activity.RESULT_OK);
 							ActivityExchangeViaText.this.finish();
 						}
 						
 						@Override
-						public void onError(String message) {
+						public void onError(Exception ex) {
+							if (ex instanceof StorageFileException) {
+								State.fatalException(ex);
+								return;
+							}
+							
 							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
 							
 							Bundle params = new Bundle();
-							params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, message);
+							params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, ex.getMessage());
 							getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_ERROR, params);
 
 							mSendButton.setEnabled(true);
