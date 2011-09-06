@@ -379,8 +379,6 @@ public class ActivityLists extends ActivityAppState {
 												keys.setSessionKey_In(keysMsg.getKeyIn());
 								                keys.setNextID_Out((byte) 0);
 								                keys.setLastID_In((byte) 0);
-												Log.d(MyApplication.APP_TAG, "Key out: " + LowLevel.toHex(keys.getSessionKey_Out()));
-												Log.d(MyApplication.APP_TAG, "Key in: " + LowLevel.toHex(keys.getSessionKey_In()));
 												keys.setKeysSent(true);
 												keys.setKeysConfirmed(true);
 												keys.saveToFile();

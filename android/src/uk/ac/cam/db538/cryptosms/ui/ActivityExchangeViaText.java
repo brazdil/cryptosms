@@ -119,7 +119,6 @@ public class ActivityExchangeViaText extends ActivityAppState {
 								SessionKeys keys = SessionKeys.createSessionKeys(conv);
 								keys.setPrivateKey(keysMessage.getPrivateKey());
 								keys.setKeysId(keysMessage.getId());
-								Log.d(MyApplication.APP_TAG, "KeyId: " + keysMessage.getId());
 								keys.setSimNumber(simNumber);
 								keys.setKeysSent(true);
 								keys.setKeysConfirmed(false);
@@ -129,7 +128,6 @@ public class ActivityExchangeViaText extends ActivityAppState {
 								return;
 							}
 							// go back
-							Log.d(MyApplication.APP_TAG, "finishing");
 							ActivityExchangeViaText.this.setResult(Activity.RESULT_OK);
 							ActivityExchangeViaText.this.finish();
 						}

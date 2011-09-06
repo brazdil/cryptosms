@@ -116,24 +116,15 @@ public class KeysMessage extends Message {
 		Log.d(MyApplication.APP_TAG, "KEYS MESSAGE");
 		if (mIsConfirmation) {
 			hashing.update(getOtherHeader());
-			Log.d(MyApplication.APP_TAG, "Other header: " + getOtherHeader());
 			hashing.update(mOtherId);
-			Log.d(MyApplication.APP_TAG, "Other id: " + mOtherId);
 			hashing.update(mOtherPublicKey);
-			Log.d(MyApplication.APP_TAG, "Other public key: " + LowLevel.toHex(mOtherPublicKey));
 		}
 		hashing.update(getHeader());
-		Log.d(MyApplication.APP_TAG, "Header: " + getHeader());
 		hashing.update(mId);
-		Log.d(MyApplication.APP_TAG, "Id: " + mId);
 		hashing.update(mPublicKey);
-		Log.d(MyApplication.APP_TAG, "Public key: " + LowLevel.toHex(mPublicKey));
 
 		byte[] hash = hashing.digest();
-		Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
-
 		byte[] signature = Encryption.getEncryption().sign(hash);
-		Log.d(MyApplication.APP_TAG, "Signature: " + LowLevel.toHex(signature));
 		
 		byte[] data = new byte[LENGTH_CONTENT];
 		System.arraycopy(mPublicKey, 0, data, 0, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
@@ -166,17 +157,11 @@ public class KeysMessage extends Message {
 	
 			if (type == MessageType.HANDSHAKE) {
 				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
-				Log.d(MyApplication.APP_TAG, "PARSING KEYS MESSAGE");
 				hashing.update(header);
-				Log.d(MyApplication.APP_TAG, "Second header:" + header);
 				hashing.update(id);
-				Log.d(MyApplication.APP_TAG, "Second id:" + id);
 				hashing.update(publicKey);
-				Log.d(MyApplication.APP_TAG, "Second public key:" + LowLevel.toHex(publicKey));
-				Log.d(MyApplication.APP_TAG, "Signature: " + LowLevel.toHex(signature));
 				
 				byte[] hash = hashing.digest();
-				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 
 				// cut out the rubbish part at the end
 				dataJoined = LowLevel.cutData(dataJoined, 0, LENGTH_CONTENT);
@@ -205,23 +190,14 @@ public class KeysMessage extends Message {
 					return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
 				
 				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
-				Log.d(MyApplication.APP_TAG, "PARSING KEYS MESSAGE");
 				hashing.update(HEADER_HANDSHAKE);
-				Log.d(MyApplication.APP_TAG, "First header:" + HEADER_HANDSHAKE);
 				hashing.update(keys.getKeysId());
-				Log.d(MyApplication.APP_TAG, "First keys id:" + keys.getKeysId());
 				hashing.update(new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey());
-				Log.d(MyApplication.APP_TAG, "First public key:" + LowLevel.toHex(new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey()));
 				hashing.update(header);
-				Log.d(MyApplication.APP_TAG, "Second header:" + header);
 				hashing.update(id);
-				Log.d(MyApplication.APP_TAG, "Second id:" + id);
 				hashing.update(publicKey);
-				Log.d(MyApplication.APP_TAG, "Second public key:" + LowLevel.toHex(publicKey));
-				Log.d(MyApplication.APP_TAG, "Signature: " + LowLevel.toHex(signature));
 
 				byte[] hash = hashing.digest();
-				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -243,11 +219,11 @@ public class KeysMessage extends Message {
                 
                 keys.setSessionKey_Out(keysMsg.getKeyOut());
                 keys.setSessionKey_In(keysMsg.getKeyIn());
-				Log.d(MyApplication.APP_TAG, "Key out: " + LowLevel.toHex(keys.getSessionKey_Out()));
-				Log.d(MyApplication.APP_TAG, "Key in: " + LowLevel.toHex(keys.getSessionKey_In()));
                 keys.setNextID_Out((byte) 0);
                 keys.setLastID_In((byte) 0);
                 keys.setKeysConfirmed(true);
+                keys.setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
+                keys.setKeysId((byte) 0);
                 keys.saveToFile();
 				
 				return new ParseResult(idGroup, 
