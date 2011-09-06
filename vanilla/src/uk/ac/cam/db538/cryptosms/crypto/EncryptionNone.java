@@ -70,7 +70,7 @@ public class EncryptionNone implements EncryptionInterface {
 
 	@Override
 	public int getSymmetricAlignedLength(int length) {
-		return length + (Encryption.SYM_BLOCK_LENGTH - (length % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
+		return LowLevel.closestGreatestMultiple(length, Encryption.SYM_BLOCK_LENGTH);
 	}
 
 	@Override

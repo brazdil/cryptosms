@@ -181,6 +181,13 @@ public class LowLevel {
 	}
 	
 	public static int roundUpDivision(int number, int divisor) {
-		return (number + divisor - 1) / divisor;
+		if (number < divisor)
+			return 1;
+		else
+			return (number + divisor - 1) / divisor;
+	}
+	
+	public static int closestGreatestMultiple(int number, int multipleOf) {
+		return multipleOf * roundUpDivision(number, multipleOf);
 	}
 }
