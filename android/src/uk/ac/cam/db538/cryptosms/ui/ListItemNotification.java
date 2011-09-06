@@ -17,20 +17,10 @@
 
 package uk.ac.cam.db538.cryptosms.ui;
 
-import java.util.zip.DataFormatException;
-
-import org.joda.time.format.DateTimeFormat;
-
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
-import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
-import uk.ac.cam.db538.cryptosms.state.State;
-import uk.ac.cam.db538.cryptosms.storage.Conversation;
-import uk.ac.cam.db538.cryptosms.storage.MessageData;
-import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -41,7 +31,6 @@ import android.view.View;
 import android.widget.QuickContactBadge;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.RelativeLayout.LayoutParams;
 
 /**
  * This class manages the view for given conversation.
@@ -114,34 +103,6 @@ public class ListItemNotification extends RelativeLayout {
         return buf;
     }*/
 	
-	private String getPreview(Conversation conv) {
-		MessageData firstMessageData = null;
-		try {
-			firstMessageData = conv.getFirstMessageData();
-		} catch (StorageFileException ex) {
-			State.fatalException(ex);
-			return new String();
-		}
-		
-		if (firstMessageData != null) {
-			TextMessage message = new TextMessage(firstMessageData);
-			CompressedText text = null;
-;			try {
-				text = message.getText();
-			} catch (StorageFileException ex) {
-				State.fatalException(ex);
-				return new String();
-			} catch (DataFormatException ex) {
-				State.fatalException(ex);
-				return new String();
-			}
-			if (text != null)
-				return text.getMessage();
-		}
-		
-		return new String();
-	}
-
     /**
      * Only used for header binding.
      */

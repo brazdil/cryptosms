@@ -1,7 +1,6 @@
 package uk.ac.cam.db538.cryptosms.ui;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.KeysMessage;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
 import android.app.AlertDialog;
 import android.app.Dialog;

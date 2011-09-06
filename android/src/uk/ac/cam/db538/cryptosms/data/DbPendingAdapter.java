@@ -1,7 +1,6 @@
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -15,7 +14,6 @@ import android.content.Context;
 import android.database.*;
 import android.database.sqlite.*;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
-import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 public class DbPendingAdapter {

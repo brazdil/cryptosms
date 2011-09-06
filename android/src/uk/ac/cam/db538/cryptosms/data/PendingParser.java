@@ -4,18 +4,6 @@ import java.util.ArrayList;
 
 import org.joda.time.DateTime;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
-import uk.ac.cam.db538.cryptosms.crypto.Encryption;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
-import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
-import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
-import uk.ac.cam.db538.cryptosms.storage.Conversation;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
-import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.ui.ActivityLists;
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
-
 public class PendingParser {
 	public static enum PendingParseResult {
 		OK_HANDSHAKE_MESSAGE,

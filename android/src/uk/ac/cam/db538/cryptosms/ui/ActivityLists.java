@@ -28,7 +28,6 @@ import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.app.Activity;
 import android.app.AlertDialog;

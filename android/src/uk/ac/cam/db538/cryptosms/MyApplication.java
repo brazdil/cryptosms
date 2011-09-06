@@ -11,7 +11,6 @@ import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import android.app.Notification;
 import android.content.Context;
 import android.content.res.Resources;

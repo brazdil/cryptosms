@@ -2,10 +2,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import roboguice.inject.InjectView;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -25,7 +22,6 @@ import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 public class ActivityExchangeViaText extends ActivityAppState {
@@ -35,9 +31,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 	
 	private Contact mContact;
 
-	private long mContactId;
 	private String mPhoneNumber;
-	private String mContactKey;
 	
 	@InjectView(R.id.sms_count)
 	TextView mSmsCountView;
@@ -56,13 +50,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 
         // set up the recipient
         mPhoneNumber = getIntent().getExtras().getString(OPTION_PHONE_NUMBER);
-        if (mContactId == -1L || mPhoneNumber == null)
+        if (mPhoneNumber == null)
         	this.finish();
 
-        mContact = Contact.getContact(this, mPhoneNumber, mContactId);
-        if (mContact == null || !mContact.existsInDatabase())
-        	this.finish();
-        
         // number of texts
 		mSmsCountView.setText(Integer.toString(KeysMessage.getPartsCount()));
         

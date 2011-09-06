@@ -8,7 +8,6 @@ import android.util.Log;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.BadInputException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;

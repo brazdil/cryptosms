@@ -1,8 +1,6 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import org.joda.time.field.OffsetDateTimeField;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -18,11 +16,8 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public abstract class Message {
 	// same for all messages

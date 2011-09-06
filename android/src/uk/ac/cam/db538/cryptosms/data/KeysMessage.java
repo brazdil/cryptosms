@@ -2,9 +2,6 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Calendar;
-
-import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
