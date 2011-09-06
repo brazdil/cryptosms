@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import roboguice.inject.InjectView;
 import android.app.Activity;
@@ -12,6 +12,7 @@ import android.widget.RadioButton;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.state.Pki;
+import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
 
 public class ActivityExchangeMethod extends ActivityAppState {
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";

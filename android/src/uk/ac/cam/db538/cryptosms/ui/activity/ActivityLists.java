@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +27,17 @@ import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
+import uk.ac.cam.db538.cryptosms.ui.DialogManager;
+import uk.ac.cam.db538.cryptosms.ui.DummyOnClickListener;
+import uk.ac.cam.db538.cryptosms.ui.UtilsSendMessage;
+import uk.ac.cam.db538.cryptosms.ui.UtilsSimIssues;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
+import uk.ac.cam.db538.cryptosms.ui.adapter.AdapterContacts;
+import uk.ac.cam.db538.cryptosms.ui.adapter.AdapterConversations;
+import uk.ac.cam.db538.cryptosms.ui.adapter.AdapterNotifications;
+import uk.ac.cam.db538.cryptosms.ui.list.ListItemContact;
+import uk.ac.cam.db538.cryptosms.ui.list.ListItemConversation;
+import uk.ac.cam.db538.cryptosms.ui.list.ListItemNotification;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.app.Activity;
 import android.app.AlertDialog;

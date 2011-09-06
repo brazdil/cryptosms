@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +19,13 @@ import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
+import uk.ac.cam.db538.cryptosms.ui.DialogManager;
+import uk.ac.cam.db538.cryptosms.ui.DummyOnClickListener;
+import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
+import uk.ac.cam.db538.cryptosms.ui.UtilsSimIssues;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager.DialogBuilder;
+import uk.ac.cam.db538.cryptosms.ui.adapter.AdapterMessages;
+import uk.ac.cam.db538.cryptosms.ui.list.ListViewMessage;
 import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -103,13 +109,13 @@ public class ActivityConversation extends ActivityAppState {
 			public void afterTextChanged(Editable s) {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
-				try {
-					mBytesCounterView.setText(TextMessage.getRemainingBytes(msg) + " (" + TextMessage.getPartsCount(msg) + ")");
-					mSendButton.setEnabled(true);
-				} catch (MessageException e) {
-					mSendButton.setEnabled(false);
-				}
-				mBytesCounterView.setVisibility(View.VISIBLE);
+//				try {
+//					mBytesCounterView.setText(TextMessage.getRemainingBytes(msg) + " (" + TextMessage.getPartsCount(msg) + ")");
+//					mSendButton.setEnabled(true);
+//				} catch (MessageException e) {
+//					mSendButton.setEnabled(false);
+//				}
+//				mBytesCounterView.setVisibility(View.VISIBLE);
 			}
 		});
 

@@ -1,21 +1,22 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.adapter;
 
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
+import uk.ac.cam.db538.cryptosms.ui.list.ListItemNotification;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public class AdapterMessages extends BaseAdapter {
-	private ArrayList<TextMessage> mList;
+public class AdapterNotifications extends BaseAdapter {
+	private ArrayList<ParseResult> mList;
 	private LayoutInflater mInflater;
 	private ViewGroup mRoot;
 	
-	public AdapterMessages(LayoutInflater inflater, ViewGroup root) {
+	public AdapterNotifications(LayoutInflater inflater, ViewGroup root) {
 		mInflater = inflater;
 		mRoot = root;
 	}
@@ -46,21 +47,21 @@ public class AdapterMessages extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		ListItemMessage row;
+		ListItemNotification row;
 		if (convertView == null)
-			row = (ListItemMessage) mInflater.inflate(R.layout.item_message, mRoot, false);
+			row = (ListItemNotification) mInflater.inflate(R.layout.item_main_notification, mRoot, false);
 		else
-			row = (ListItemMessage) convertView;
+			row = (ListItemNotification) convertView;
 		if (mList != null)
-			row.bind((TextMessage)getItem(position));
+			row.bind((ParseResult)getItem(position));
 		return row;
 	}
 	
-	public void setList(ArrayList<TextMessage> list) {
+	public void setList(ArrayList<ParseResult> list) {
 		mList = list;
 	}
 	
-	public ArrayList<TextMessage> getList() {
+	public ArrayList<ParseResult> getList() {
 		return mList;
 	}
 }

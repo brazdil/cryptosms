@@ -1,21 +1,22 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.adapter;
 
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.ui.list.ListItemConversation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public class AdapterNotifications extends BaseAdapter {
-	private ArrayList<ParseResult> mList;
+public class AdapterConversations extends BaseAdapter {
+	private ArrayList<Conversation> mList;
 	private LayoutInflater mInflater;
 	private ViewGroup mRoot;
 	
-	public AdapterNotifications(LayoutInflater inflater, ViewGroup root) {
+	public AdapterConversations(LayoutInflater inflater, ViewGroup root) {
 		mInflater = inflater;
 		mRoot = root;
 	}
@@ -46,21 +47,21 @@ public class AdapterNotifications extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		ListItemNotification row;
+		ListItemConversation row;
 		if (convertView == null)
-			row = (ListItemNotification) mInflater.inflate(R.layout.item_main_notification, mRoot, false);
+			row = (ListItemConversation) mInflater.inflate(R.layout.item_main_conversation, mRoot, false);
 		else
-			row = (ListItemNotification) convertView;
+			row = (ListItemConversation) convertView;
 		if (mList != null)
-			row.bind((ParseResult)getItem(position));
+			row.bind((Conversation)getItem(position));
 		return row;
 	}
 	
-	public void setList(ArrayList<ParseResult> list) {
+	public void setList(ArrayList<Conversation> list) {
 		mList = list;
 	}
-	
-	public ArrayList<ParseResult> getList() {
+
+	public ArrayList<Conversation> getList() {
 		return mList;
 	}
 }

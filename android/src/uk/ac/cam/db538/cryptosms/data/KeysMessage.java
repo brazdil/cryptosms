@@ -27,8 +27,8 @@ public class KeysMessage extends Message {
 	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
 	
 	public static final int LENGTH_TIMESTAMP = 8;
-	public static final int OFFSET_PUBLIC_KEY = 0;
-	public static final int OFFSET_TIMESTAMP = EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY;
+	public static final int OFFSET_PUBLIC_KEY = OFFSET_DATA;
+	public static final int OFFSET_TIMESTAMP = OFFSET_PUBLIC_KEY + EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY;
 	public static final int OFFSET_SIGNATURE = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
 	public static final int LENGTH_CONTENT = OFFSET_SIGNATURE + Encryption.ASYM_SIGNATURE_LENGTH;
 	
@@ -130,7 +130,8 @@ public class KeysMessage extends Message {
 		byte[] hash = hashing.digest();
 		byte[] signature = Encryption.getEncryption().sign(hash);
 		
-		byte[] data = new byte[LENGTH_CONTENT];
+		byte[] data = new byte[OFFSET_DATA + LENGTH_CONTENT];
+		data[OFFSET_HEADER] = getHeader();
 		System.arraycopy(mPublicKey, 0, data, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
 		System.arraycopy(timeStampBytes, 0, data, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
 		System.arraycopy(signature, 0, data, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
@@ -147,18 +148,17 @@ public class KeysMessage extends Message {
 			if (!contact.existsInDatabase())
 				return new ParseResult(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
 
-			if (idGroup.size() != getPartsCount())
+			if (idGroup.size() != 1)
 				return new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
 			
 			byte[] dataAll = idGroup.get(0).getData();
-			byte[] dataRelevant = LowLevel.cutData(dataAll, OFFSET_DATA, LENGTH_DATA);
 			String sender = idGroup.get(0).getSender();
 			byte header = getMessageHeader(dataAll);
 			MessageType type = getMessageType(dataAll);
 	
-			byte[] publicKey = LowLevel.cutData(dataRelevant, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
-			byte[] timeStampBytes = LowLevel.cutData(dataRelevant, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
-			byte[] signature = LowLevel.cutData(dataRelevant, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
+			byte[] publicKey = LowLevel.cutData(dataAll, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
+			byte[] timeStampBytes = LowLevel.cutData(dataAll, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
+			byte[] signature = LowLevel.cutData(dataAll, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
 			
 			long timeStamp = LowLevel.getLong(timeStampBytes);
 			
@@ -176,9 +176,6 @@ public class KeysMessage extends Message {
 				hashing.update(publicKey);
 				
 				byte[] hash = hashing.digest();
-
-				// cut out the rubbish part at the end
-				dataRelevant = LowLevel.cutData(dataRelevant, 0, LENGTH_CONTENT);
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -267,15 +264,6 @@ public class KeysMessage extends Message {
 			return HEADER_HANDSHAKE;
 		else
 			return HEADER_CONFIRM;
-	}
-
-	@Override
-	public int getMessagePartCount() {
-		return getPartsCount();
-	}
-
-	public static int getPartsCount() {
-		return 1;
 	}
 
 	public static long getMessageTimeStamp(byte[] data) {

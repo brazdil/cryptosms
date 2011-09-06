@@ -1,9 +1,11 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import roboguice.activity.RoboActivity;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
+import uk.ac.cam.db538.cryptosms.ui.DialogManager;
+import uk.ac.cam.db538.cryptosms.ui.ErrorOverlay;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;

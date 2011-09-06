@@ -1,23 +1,22 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.adapter;
 
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.R;
-import uk.ac.cam.db538.cryptosms.state.State;
-import uk.ac.cam.db538.cryptosms.storage.Conversation;
-import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.ui.list.ListItemMessage;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public class AdapterContacts extends BaseAdapter {
-	private ArrayList<Conversation> mList;
+public class AdapterMessages extends BaseAdapter {
+	private ArrayList<TextMessage> mList;
 	private LayoutInflater mInflater;
 	private ViewGroup mRoot;
 	
-	public AdapterContacts(LayoutInflater inflater, ViewGroup root) {
+	public AdapterMessages(LayoutInflater inflater, ViewGroup root) {
 		mInflater = inflater;
 		mRoot = root;
 	}
@@ -48,26 +47,21 @@ public class AdapterContacts extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		ListItemContact row;
+		ListItemMessage row;
 		if (convertView == null)
-			row = (ListItemContact) mInflater.inflate(R.layout.item_main_contact, mRoot, false);
+			row = (ListItemMessage) mInflater.inflate(R.layout.item_message, mRoot, false);
 		else
-			row = (ListItemContact) convertView;
+			row = (ListItemMessage) convertView;
 		if (mList != null)
-			try {
-				row.bind((Conversation)getItem(position));
-			} catch (StorageFileException e) {
-				State.fatalException(e);
-				return row;
-			}
+			row.bind((TextMessage)getItem(position));
 		return row;
 	}
 	
-	public void setList(ArrayList<Conversation> list) {
+	public void setList(ArrayList<TextMessage> list) {
 		mList = list;
 	}
-
-	public ArrayList<Conversation> getList() {
+	
+	public ArrayList<TextMessage> getList() {
 		return mList;
 	}
 }

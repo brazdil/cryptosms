@@ -1,8 +1,7 @@
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import roboguice.inject.InjectView;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +21,8 @@ import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
+import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
+import uk.ac.cam.db538.cryptosms.ui.UtilsSendMessage;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 public class ActivityExchangeViaText extends ActivityAppState {
@@ -53,8 +54,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
         if (mPhoneNumber == null)
         	this.finish();
 
-        // number of texts
-		mSmsCountView.setText(Integer.toString(KeysMessage.getPartsCount()));
+        mContact = Contact.getContact(this, mPhoneNumber);
+        if (!mContact.existsInDatabase())
+        	this.finish();
         
         // set up the contact badge
         UtilsContactBadge.setBadge(mContact, getMainView());
@@ -83,9 +85,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 					return;
 				}
 
-				Bundle params = new Bundle();
-				params.putInt(UtilsSendMessage.PARAM_SENDING_MULTIPART_MAX, KeysMessage.getPartsCount());
-		    	getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART, params);
+		    	getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING, null);
 
 		    	// send the message
 				try {
@@ -94,7 +94,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 						@Override
 						public void onMessageSent() {
 							Log.d(MyApplication.APP_TAG, "Sent all!");
-							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
+							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
 							
 							try {
 								Conversation conv = Conversation.getConversation(mPhoneNumber);
@@ -124,7 +124,7 @@ public class ActivityExchangeViaText extends ActivityAppState {
 						
 						@Override
 						public void onError(String message) {
-							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
+							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
 							
 							Bundle params = new Bundle();
 							params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, message);
@@ -133,14 +133,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
 							mSendButton.setEnabled(true);
 							mBackButton.setEnabled(true);
 						}
-
-						private int mCounterFinished = 0;
 						
 						@Override
 						public void onPartSent(int index) {
-							ProgressDialog pd = (ProgressDialog) getDialogManager().getDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
-							if (pd != null)
-								pd.setProgress(++mCounterFinished);
 						}
 					});
 				} catch (StorageFileException e) {

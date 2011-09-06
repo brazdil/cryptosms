@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package uk.ac.cam.db538.cryptosms.ui;
+package uk.ac.cam.db538.cryptosms.ui.list;
 
 import java.util.zip.DataFormatException;
 

@@ -79,7 +79,7 @@
         android:orientation="vertical"
         android:gravity="bottom">
 
-		<view class="uk.ac.cam.db538.cryptosms.ui.ListViewMessage"
+		<view class="uk.ac.cam.db538.cryptosms.ui.list.ListViewMessage"
 		    style="?android:attr/listViewWhiteStyle"
 		    android:id="@+id/history"
 		    android:layout_width="fill_parent"

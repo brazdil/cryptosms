@@ -18,7 +18,7 @@
  */
 -->
 
-<uk.ac.cam.db538.cryptosms.ui.ListItemMessage
+<uk.ac.cam.db538.cryptosms.ui.list.ListItemMessage
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/msg_list_item"
     android:layout_width="fill_parent"
@@ -76,4 +76,4 @@
 		        android:layout_height="wrap_content" />
 		</LinearLayout>
 	</RelativeLayout>
-</uk.ac.cam.db538.cryptosms.ui.ListItemMessage>
+</uk.ac.cam.db538.cryptosms.ui.list.ListItemMessage>

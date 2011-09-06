@@ -1,9 +1,11 @@
 package uk.ac.cam.db538.cryptosms.data;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
@@ -23,23 +25,20 @@ public class TextMessage extends Message {
 	protected static final int OFFSET_INDEX = OFFSET_ID + LENGTH_ID;;
 	protected static final int OFFSET_DATA = OFFSET_INDEX + LENGTH_INDEX;
 	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
-	private static final int LENGTH_FIRST_DATALENGTH = 2;
-	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.SYM_OVERHEAD;
 	
-	private static final int OFFSET_FIRST_DATALENGTH = OFFSET_INDEX + LENGTH_INDEX;
-	private static final int OFFSET_FIRST_ENCRYPTION = OFFSET_FIRST_DATALENGTH + LENGTH_FIRST_DATALENGTH;
-	private static final int OFFSET_FIRST_MESSAGEBODY = OFFSET_FIRST_ENCRYPTION + LENGTH_FIRST_ENCRYPTION;
+	private static final int LENGTH_FIRST_MESSAGE_LENGTH = 2;
 	
-	public static final int LENGTH_FIRST_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_MESSAGEBODY;
+	private static final int OFFSET_FIRST_MESSAGE_LENGTH = OFFSET_DATA;
+	private static final int OFFSET_FIRST_MESSAGE_DATA = OFFSET_FIRST_MESSAGE_LENGTH + LENGTH_FIRST_MESSAGE_LENGTH;
+	
+	public static final int LENGTH_FIRST_DATA = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_MESSAGE_DATA;
 	
 	// following parts specific
 	
-	private static final int OFFSET_PART_MESSAGEBODY = OFFSET_INDEX + LENGTH_INDEX;
-	public static final int LENGTH_PART_MESSAGEBODY = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGEBODY;
+	private static final int OFFSET_PART_MESSAGE_DATA = OFFSET_DATA;
+	public static final int LENGTH_PART_MESSAGE_DATA = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGE_DATA;
 
 	private MessageData mStorage;
-	private SessionKeys mKeys;
-	private byte mId;
     
 	public TextMessage(MessageData storage) {
 		super();
@@ -112,10 +111,10 @@ public class TextMessage extends Message {
 		int remains = data.length;
 		mStorage.setAscii(text.getCharset() == TextCharset.ASCII);
 		mStorage.setCompressed(text.isCompressed());
-		mStorage.setNumberOfParts(TextMessage.getPartsCount(text));
+		mStorage.setNumberOfParts(getMessagePartCount(text.getDataLength()));
 		// save
 		while (remains > 0) {
-			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_MESSAGEBODY : LENGTH_PART_MESSAGEBODY);
+			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_DATA : LENGTH_PART_MESSAGE_DATA);
 			mStorage.setPartData(index++, LowLevel.cutData(data, pos, len));
 			pos += len;
 			remains -= len;
@@ -132,34 +131,27 @@ public class TextMessage extends Message {
 	 */
 	@Override
 	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException {
-		mKeys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
-		if (mKeys == null)
+		SessionKeys keys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
+		if (keys == null)
 			throw new MessageException("No keys found");
-		mId = mKeys.getNextID_Out();
+				
+		// get the data, add random data to fit the messages exactly and encrypt it
+		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetric(getStoredData(), keys.getSessionKey_Out());
+		byte[] dataComplete = new byte[LENGTH_FIRST_MESSAGE_LENGTH + dataEncrypted.length];
+		System.arraycopy(LowLevel.getBytesUnsignedShort(dataEncrypted.length), 0, dataComplete, OFFSET_FIRST_MESSAGE_LENGTH - OFFSET_DATA, LENGTH_FIRST_MESSAGE_LENGTH);
+		System.arraycopy(dataEncrypted, 0, dataComplete, OFFSET_FIRST_MESSAGE_DATA - OFFSET_DATA, dataEncrypted.length);
+		
+		int countParts = LowLevel.roundUpDivision(dataComplete.length, LENGTH_DATA);
+		ArrayList<byte[]> listParts = new ArrayList<byte[]>(countParts);
 
-//		EncryptionInterface crypto = Encryption.getEncryption();
-//		
-//		ArrayList<byte[]> list = new ArrayList<byte[]>();
-//		ByteBuffer buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-//		int index = 0, offset;
-//		
-//		// get the data, add random data to fit the messages exactly and encrypt it
-//		byte[] data = getStoredData();
-//		Log.d(MyApplication.APP_TAG, "Text data: " + LowLevel.toHex(data));
-//		int alignedLength = crypto.getSymmetricAlignedLength(data.length);
-//		int totalBytes = LENGTH_FIRST_MESSAGEBODY;
-//		while (totalBytes <= alignedLength)
-//			totalBytes += LENGTH_PART_MESSAGEBODY;
-//
-//		int alignedTotalBytes = totalBytes - (totalBytes % Encryption.SYM_BLOCK_LENGTH);
-//		data = LowLevel.wrapData(data, alignedTotalBytes);
-//		Log.d(MyApplication.APP_TAG, "Aligned data: " + LowLevel.toHex(data));
-//
-//		data = crypto.encryptSymmetric(data, keys.getSessionKey_Out());
-//		Log.d(MyApplication.APP_TAG, "Encrypted data: " + LowLevel.toHex(data));
-//		Log.d(MyApplication.APP_TAG, "Session key: " + LowLevel.toHex(keys.getSessionKey_Out()));
-//		totalBytes += LENGTH_FIRST_ENCRYPTION; 
-//		data = LowLevel.wrapData(data, totalBytes);
+		byte id = keys.getNextID_Out();
+		long index = 0;
+		
+		for (int i = 0; i < countParts; ++i) {
+			int lengthDataPart = Math.min(LENGTH_DATA, dataComplete.length - i * LENGTH_DATA);
+			
+		}
+		
 //		
 //		// first message (always)
 //		byte header = HEADER_TEXT;
@@ -256,8 +248,8 @@ public class TextMessage extends Message {
 				// get the data 
 				// it can't be too long, thanks to getMessageData
 				// but it can be too short (throws IndexOutOfBounds exception
-				byte[] relevantData = getMessageData(dataParts[i]);
-				System.arraycopy(relevantData, 0, dataJoined, getDataPartOffset(i), LENGTH_DATA);
+				byte[] relevantData = LowLevel.cutData(dataParts[i], OFFSET_DATA, LENGTH_DATA);
+				System.arraycopy(relevantData, 0, dataJoined, i * LENGTH_DATA, LENGTH_DATA);
 			} catch (RuntimeException e) {
 				throw new JoiningException(PendingParseResult.CORRUPTED_DATA);
 			}
@@ -290,70 +282,6 @@ public class TextMessage extends Message {
 	}
 	
 	/**
-	 * Returns stored encrypted data for both first and following parts of text messages
-	 * @param data
-	 * @return
-	 */
-	public static byte[] getMessageData(byte[] data) {
-		return LowLevel.cutData(data, OFFSET_DATA, LENGTH_DATA);
-	}
-	
-	/**
-	 * Returns the offset of relevant data expected in given message part
-	 * @param dataLength
-	 * @param index
-	 * @return
-	 */
-	public static int getDataPartOffset(int index) {
-		return index * LENGTH_DATA;
-	}
-
-	/**
-	 * Returns the number of messages necessary to send the assigned message
-	 * @return
-	 * @throws DataFormatException 
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 * @throws MessageException 
-	 */
-	public int getPartsCount() throws StorageFileException, DataFormatException, MessageException {
-		return getPartsCount(getText());
-	}
-	
-	/**
-	 * Returns the number of messages necessary to send the given text
-	 * @return
-	 * @throws DataFormatException 
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 * @throws MessageException 
-	 */
-	public static int getPartsCount(CompressedText text) throws MessageException {
-		return getPartsCount(text.getData().length);
-	}
-	
-	/**
-	 * Returns the number of messages necessary to send given number of bytes
-	 * @return
-	 * @throws DataFormatException 
-	 * @throws IOException 
-	 * @throws StorageFileException 
-	 * @throws MessageException 
-	 */
-	public static int getPartsCount(int dataLength) throws MessageException {
-		dataLength = Encryption.getEncryption().getSymmetricAlignedLength(dataLength);
-		int count = 1; 
-		int remains = dataLength - LENGTH_FIRST_MESSAGEBODY;
-		while (remains > 0) {
-			count++;
-			remains -= LENGTH_PART_MESSAGEBODY;
-		}
-		if (count > 255)
-			throw new MessageException("Message too long!");
-		return count;
-	}
-	
-	/**
 	 * Returns how many bytes are left till another message part will be necessary
 	 * @param text
 	 * @return
@@ -361,59 +289,20 @@ public class TextMessage extends Message {
 	public static int getRemainingBytes(CompressedText text) {
 		int length = text.getDataLength();
 		
-		int inThisMessage = length - LENGTH_FIRST_MESSAGEBODY;
+		int inThisMessage = length - LENGTH_FIRST_DATA;
 		while (inThisMessage > 0)
-			inThisMessage -= LENGTH_PART_MESSAGEBODY;
+			inThisMessage -= LENGTH_PART_MESSAGE_DATA;
 		inThisMessage = -inThisMessage;
 
 		int untilEndOfBlock = (Encryption.SYM_BLOCK_LENGTH - (length % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
 		int remainsBytes = inThisMessage - untilEndOfBlock;
 		if (remainsBytes < 0)
-			remainsBytes += LENGTH_PART_MESSAGEBODY;
+			remainsBytes += LENGTH_PART_MESSAGE_DATA;
 		int remainsBlocks = remainsBytes / Encryption.SYM_BLOCK_LENGTH;
 			
 		int remainsReal = (remainsBlocks * Encryption.SYM_BLOCK_LENGTH) + untilEndOfBlock;
 		
 		return remainsReal;
-	}
-
-	/**
-	 * Returns stored encryption overhead for first part of text messages
-	 * @param data
-	 * @return
-	 */
-	public static byte[] getMessageEncryptionData(byte[] data) {
-			return LowLevel.cutData(data, OFFSET_FIRST_ENCRYPTION, LENGTH_FIRST_ENCRYPTION);
-	}
-
-	/**
-	 * Returns the length of relevant data expected in given message part
-	 * @param dataLength
-	 * @param index
-	 * @return
-	 */
-	public static int getExpectedDataLength(int totalDataLength, int index) {
-		int prev = 0, count = LENGTH_FIRST_MESSAGEBODY;
-		while (count < totalDataLength && index-- > 0) {
-			prev = count;
-			count += LENGTH_PART_MESSAGEBODY;
-		}
-		return totalDataLength - prev;
-	}
-
-	/**
-	 * Returns the offset of relevant data expected in given message part
-	 * @param dataLength
-	 * @param index
-	 * @return
-	 */
-	public static int getExpectedDataOffset(int totalDataLength, int index) {
-		int prev = 0, count = LENGTH_FIRST_MESSAGEBODY;
-		while (count < totalDataLength && index-- > 0) {
-			prev = count;
-			count += LENGTH_PART_MESSAGEBODY;
-		}
-		return prev;
 	}
 
 	/**
@@ -423,7 +312,7 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int getMessageDataLength(byte[] data) {
-		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_DATALENGTH);
+		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_MESSAGE_LENGTH);
 	}
 
 	public static ParseResult parseTextMessage(ArrayList<Pending> idGroup) {
@@ -434,17 +323,8 @@ public class TextMessage extends Message {
 	public byte getHeader() {
 		return HEADER_TEXT;
 	}
-
-	@Override
-	public int getMessagePartCount() {
-		try {
-			return getPartsCount();
-		} catch (StorageFileException e) {
-			return 0;
-		} catch (DataFormatException e) {
-			return 0;
-		} catch (MessageException e) {
-			return 0;
-		}
+	
+	protected int getMessagePartCount(int dataLength) {
+		return 1 + LowLevel.roundUpDivision(dataLength - LENGTH_FIRST_DATA, LENGTH_PART_MESSAGE_DATA);
 	}
 }

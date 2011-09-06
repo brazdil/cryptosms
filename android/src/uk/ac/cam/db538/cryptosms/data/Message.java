@@ -59,7 +59,6 @@ public abstract class Message {
 
     public abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
     public abstract byte getHeader();
-    public abstract int getMessagePartCount();
     
 	/**
 	 * Takes the byte arrays created by getBytes() method and sends 
@@ -143,12 +142,10 @@ public abstract class Message {
 	    	Log.d(MyApplication.APP_TAG, sentIntent.toString());
 	    	
 	    	byte[] dataPart = new byte[MessageData.LENGTH_MESSAGE];
-	    	dataPart[OFFSET_HEADER] = getHeader();
-	    	int offset = OFFSET_HEADER + LENGTH_HEADER;
-	    	int lenData = Math.min(dataSms.get(i).length, MessageData.LENGTH_MESSAGE - offset);
-	    	int lenRandom = MessageData.LENGTH_MESSAGE - lenData - offset;
-	    	System.arraycopy(dataSms.get(i), 0, dataPart, offset, lenData);
-	    	System.arraycopy(Encryption.getEncryption().generateRandomData(lenRandom), 0, dataPart, offset + lenData, lenRandom);
+	    	int lenData = Math.min(dataSms.get(i).length, MessageData.LENGTH_MESSAGE);
+	    	int lenRandom = MessageData.LENGTH_MESSAGE - lenData;
+	    	System.arraycopy(dataSms.get(i), 0, dataPart, 0, lenData);
+	    	System.arraycopy(Encryption.getEncryption().generateRandomData(lenRandom), 0, dataPart, lenData, lenRandom);
 	    	
 	    	// send the data
 	    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), dataPart, sentPI, null);
