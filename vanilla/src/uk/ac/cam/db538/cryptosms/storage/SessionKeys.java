@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;

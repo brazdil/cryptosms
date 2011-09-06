@@ -17,8 +17,6 @@ import java.math.BigInteger;
 class SimpleBigDecimal
     //extends Number   // not in J2ME - add compatibility class?
 {
-    private static final long serialVersionUID = 1L;
-
     private final BigInteger bigInt;
     private final int scale;
 
