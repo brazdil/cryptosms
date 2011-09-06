@@ -1,11 +1,6 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.util.ArrayList;
-import java.util.Map.Entry;
-
 import org.joda.time.DateTime;
-
-import android.content.Context;
 
 import uk.ac.cam.db538.cryptosms.data.Message.MessageType;
 
@@ -38,14 +33,6 @@ public class Pending {
 		return Message.getMessageType(mData);
 	}
 	
-	public int getIndex() {
-		return Message.getMessageIndex(mData);
-	}
-
-	public int getId() {
-		return Message.getMessageId(mData);
-	}
-
 	public String getSender() {
 		return mSender;
 	}

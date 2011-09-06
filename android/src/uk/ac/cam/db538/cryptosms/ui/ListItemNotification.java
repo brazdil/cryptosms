@@ -215,6 +215,14 @@ public class ListItemNotification extends RelativeLayout {
     	case INTERNAL_ERROR:
     		mSubjectView.setText(res.getString(R.string.parse_internal_error));
         	break;
+    	case TIMESTAMP_IN_FUTURE:
+    		mSubjectView.setText(res.getString(R.string.parse_timestamp_in_future));
+        	break;
+    	case TIMESTAMP_OLD:
+    		mSubjectView.setText(res.getString(R.string.parse_timestamp_old));
+        	break;
+        default:
+        	break;
     	}
         
         mDateView.setText(UtilsTextFormat.formatDateTime(parseData.getTimestamp()));

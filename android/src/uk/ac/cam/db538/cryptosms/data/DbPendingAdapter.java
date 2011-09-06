@@ -143,12 +143,20 @@ public class DbPendingAdapter {
 					MessageType type1 = object1.getType();
 					MessageType type2 = object2.getType();
 					if (type1.equals(type2)) {
-						// level 3 - ids
-						return object1.getId() - object2.getId();
+						// level 3 - ids/timestamps
+						if (type1 == MessageType.TEXT) {
+							return TextMessage.getMessageId(object1.getData()) - TextMessage.getMessageId(object2.getData());
+						} else if (type1 == MessageType.HANDSHAKE || type1 == MessageType.CONFIRM) {
+							Long timeStamp1 = Long.valueOf(KeysMessage.getMessageTimeStamp(object1.getData()));
+							Long timeStamp2 = Long.valueOf(KeysMessage.getMessageTimeStamp(object2.getData()));
+							return timeStamp1.compareTo(timeStamp2);
+						} else
+							// unknown type
+							return 0;
 					} else
 						return type1.compareTo(type2);
 				} else
-					return object1.getSender().compareToIgnoreCase(object2.getSender()); 
+					return object1.getSender().compareToIgnoreCase(object2.getSender());
 			}
 		};
 //		Comparator<Pending> comparatorIndex = new Comparator<Pending>() {

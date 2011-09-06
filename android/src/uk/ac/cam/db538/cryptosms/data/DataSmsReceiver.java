@@ -50,7 +50,7 @@ public class DataSmsReceiver extends BroadcastReceiver {
 					for (SmsMessage msg : messages) {
 						// get the data in the message
 						byte[] data = msg.getUserData();
-						Log.d(MyApplication.APP_TAG, "Received data: " + LowLevel.toHex(data));
+						Log.d(MyApplication.APP_TAG, "Received SMS: " + LowLevel.toHex(data) + "(" + data.length + " bytes)");
 						if (data.length != MessageData.LENGTH_MESSAGE) {
 							// TODO: ERROR!!!
 						} else {

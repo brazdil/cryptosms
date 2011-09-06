@@ -1,16 +1,12 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
-import android.util.Log;
-
-import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
-import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -21,6 +17,12 @@ import uk.ac.cam.db538.cryptosms.utils.CompressedText.TextCharset;
 
 public class TextMessage extends Message {
 	// first part specific
+	protected static final int LENGTH_ID = 1;
+	protected static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
+	protected static final int LENGTH_INDEX = 1;
+	protected static final int OFFSET_INDEX = OFFSET_ID + LENGTH_ID;;
+	protected static final int OFFSET_DATA = OFFSET_INDEX + LENGTH_INDEX;
+	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
 	private static final int LENGTH_FIRST_DATALENGTH = 2;
 	public static final int LENGTH_FIRST_ENCRYPTION = Encryption.SYM_OVERHEAD;
 	
@@ -129,7 +131,7 @@ public class TextMessage extends Message {
 	 * @throws MessageException 
 	 */
 	@Override
-	public byte[] getBytes() throws StorageFileException, MessageException, EncryptionException {
+	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException {
 		mKeys = StorageUtils.getSessionKeysForSim(mStorage.getParent());
 		if (mKeys == null)
 			throw new MessageException("No keys found");
@@ -192,6 +194,120 @@ public class TextMessage extends Message {
 		return null;
 	}
 	
+	public static class JoiningException extends Exception {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 456081152855672327L;
+		
+		private PendingParseResult mReason;
+		
+		public JoiningException(PendingParseResult reason) {
+			mReason = reason;
+		}
+		
+		public PendingParseResult getReason() {
+			return mReason;
+		}
+		
+	}
+	
+	protected static byte[] joinParts(ArrayList<Pending> idGroup, int expectedGroupSize) throws JoiningException {
+		// check we have all the parts
+		// there shouldn't be more than 1
+		int groupSize = idGroup.size();
+		if (groupSize < expectedGroupSize || groupSize <= 0)
+			throw new JoiningException(PendingParseResult.MISSING_PARTS);
+		else if (groupSize > expectedGroupSize)
+			throw new JoiningException(PendingParseResult.REDUNDANT_PARTS);
+		
+		// get the data
+		byte[][] dataParts = new byte[groupSize][];
+		int filledParts = 0;
+		for (Pending p : idGroup) {
+			byte[] dataPart = p.getData();
+			int index = getMessageIndex(dataPart);
+			if (index >= 0 && index < idGroup.size()) {
+				// index is fine, check that there wasn't the same one already
+				if (dataParts[index] == null) {
+					// first time we stumbled upon this index
+					// store the message part data in the array
+					dataParts[index] = dataPart;
+					filledParts++;
+				} else
+					// more parts of the same index
+					throw new JoiningException(PendingParseResult.REDUNDANT_PARTS);
+
+			} else
+				// index is bigger than the number of messages in ID group
+				// therefore some parts have to be missing or the data is corrupted
+				throw new JoiningException(PendingParseResult.MISSING_PARTS);
+
+		}
+		// the array was filled with data, so check that there aren't any missing
+		if (filledParts != expectedGroupSize)
+			throw new JoiningException(PendingParseResult.MISSING_PARTS);
+
+		
+		// lets put the data together
+		byte[] dataJoined = new byte[expectedGroupSize * LENGTH_DATA];
+		for (int i = 0; i < expectedGroupSize; ++i) {
+			try {
+				// get the data 
+				// it can't be too long, thanks to getMessageData
+				// but it can be too short (throws IndexOutOfBounds exception
+				byte[] relevantData = getMessageData(dataParts[i]);
+				System.arraycopy(relevantData, 0, dataJoined, getDataPartOffset(i), LENGTH_DATA);
+			} catch (RuntimeException e) {
+				throw new JoiningException(PendingParseResult.CORRUPTED_DATA);
+			}
+		}
+		
+		return dataJoined;
+	}
+
+	protected static byte getMessageIdByte(byte[] data) {
+		return data[OFFSET_ID];
+	}
+
+	/**
+	 * Returns message ID for both first and following parts of text messages
+	 * @param data
+	 * @return
+	 */
+	public static int getMessageId(byte[] data) {
+		return LowLevel.getUnsignedByte(getMessageIdByte(data));
+	}
+	
+	/**
+	 * Expects encrypted data of both first and non-first part of text message 
+	 * and returns its index
+	 * @param data
+	 * @return
+	 */
+	public static int getMessageIndex(byte[] data) {
+		return LowLevel.getUnsignedByte(data[OFFSET_INDEX]);
+	}
+	
+	/**
+	 * Returns stored encrypted data for both first and following parts of text messages
+	 * @param data
+	 * @return
+	 */
+	public static byte[] getMessageData(byte[] data) {
+		return LowLevel.cutData(data, OFFSET_DATA, LENGTH_DATA);
+	}
+	
+	/**
+	 * Returns the offset of relevant data expected in given message part
+	 * @param dataLength
+	 * @param index
+	 * @return
+	 */
+	public static int getDataPartOffset(int index) {
+		return index * LENGTH_DATA;
+	}
+
 	/**
 	 * Returns the number of messages necessary to send the assigned message
 	 * @return
@@ -262,18 +378,6 @@ public class TextMessage extends Message {
 	}
 
 	/**
-	 * Returns stored encrypted data for both first and following parts of text messages
-	 * @param data
-	 * @return
-	 */
-	public static byte[] getMessageData(byte[] data) {
-		if (getMessageIndex(data) == 0)
-			return LowLevel.cutData(data, OFFSET_FIRST_MESSAGEBODY, LENGTH_FIRST_MESSAGEBODY);
-		else
-			return LowLevel.cutData(data, OFFSET_PART_MESSAGEBODY, LENGTH_PART_MESSAGEBODY);
-	}
-	
-	/**
 	 * Returns stored encryption overhead for first part of text messages
 	 * @param data
 	 * @return
@@ -329,11 +433,6 @@ public class TextMessage extends Message {
 	@Override
 	public byte getHeader() {
 		return HEADER_TEXT;
-	}
-
-	@Override
-	public byte getId() {
-		return mId;
 	}
 
 	@Override

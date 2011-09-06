@@ -2,11 +2,9 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
-
-import com.google.inject.internal.Join.JoinException;
+import java.util.Calendar;
 
 import android.util.Log;
-import android.widget.DialerFilter;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
@@ -16,64 +14,68 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionEx
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
-import uk.ac.cam.db538.cryptosms.storage.Header;
+import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
 public class KeysMessage extends Message {
 	
+	// Set handshake validity period to 5 days (4 - 6 days with different time zones)
+	public static final long HANDSHAKE_VALIDITY_PERIOD = 5L * 24L * 60L * 60L * 1000L;
+	// Clock tolerance is 5 mins
+	public static final long CLOCK_TOLERANCE = 5L * 60L * 1000L;
+	
+	protected static final int OFFSET_DATA = OFFSET_HEADER + LENGTH_HEADER;
+	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
+	
+	public static final int LENGTH_TIMESTAMP = 8;
 	public static final int OFFSET_PUBLIC_KEY = 0;
-	public static final int OFFSET_SIGNATURE = EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY;
+	public static final int OFFSET_TIMESTAMP = EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY;
+	public static final int OFFSET_SIGNATURE = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
 	public static final int LENGTH_CONTENT = OFFSET_SIGNATURE + Encryption.ASYM_SIGNATURE_LENGTH;
 	
 	private byte[] mPublicKey;
 	private byte[] mPrivateKey;
-	private byte mId;
+	private long mTimeStamp;
 
 	private byte[] mOtherPublicKey;
-	private byte mOtherId;
+	private long mOtherTimeStamp;
 	
 	private boolean mIsConfirmation;
-	
+		
 	EllipticCurveDeffieHellman mECDH;
 	
 	public KeysMessage() throws StorageFileException {
 		mIsConfirmation = false;
 		
-		// get an ID for these keys
-		mId = Header.getHeader().incrementKeyId();
-		Header.getHeader().saveToFile();
-		
 		mECDH = new EllipticCurveDeffieHellman();
 		mPublicKey = mECDH.getPublicKey();
 		mPrivateKey = mECDH.getPrivateKey();
+		mTimeStamp = getCurrentTimeUTC();
 	}
 	
-	public KeysMessage(byte originalId, byte[] privateKey, byte otherId, byte[] otherPublicKey) {
+	public KeysMessage(long originalTimeStamp, byte[] privateKey, long otherTimeStamp, byte[] otherPublicKey) {
 		mIsConfirmation = false;
 		
-		mId = originalId;
 		mECDH = new EllipticCurveDeffieHellman(privateKey);
 		mPublicKey = mECDH.getPublicKey();
 		mPrivateKey = mECDH.getPrivateKey();
+		mTimeStamp = originalTimeStamp;
 		
-		mOtherId = otherId;
+		mOtherTimeStamp = otherTimeStamp;
 		mOtherPublicKey = otherPublicKey;
 	}
 	
-	public KeysMessage(byte otherId, byte[] otherPublicKey) throws StorageFileException {
+	public KeysMessage(long otherTimeStamp, byte[] otherPublicKey) throws StorageFileException {
 		mIsConfirmation = true;
-		
-		// get an ID for these keys
-		mId = Header.getHeader().incrementKeyId();
-		Header.getHeader().saveToFile();
 		
 		mECDH = new EllipticCurveDeffieHellman();
 		mPublicKey = mECDH.getPublicKey();
 		mPrivateKey = mECDH.getPrivateKey();
+		mTimeStamp = getCurrentTimeUTC();
 
-		mOtherId = otherId;
+		mOtherTimeStamp = otherTimeStamp;
 		mOtherPublicKey = otherPublicKey;
 	}
 	
@@ -83,6 +85,10 @@ public class KeysMessage extends Message {
 	
 	public byte[] getPrivateKey() {
 		return mPrivateKey;
+	}
+	
+	public long getTimeStamp() {
+		return mTimeStamp;
 	}
 	
 	private byte[] getKey(String prefix) {
@@ -111,25 +117,30 @@ public class KeysMessage extends Message {
 	 * @throws EncryptionException 
 	 */
 	@Override
-	public byte[] getBytes() throws StorageFileException, MessageException, EncryptionException {
+	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException {
 		MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
-		Log.d(MyApplication.APP_TAG, "KEYS MESSAGE");
 		if (mIsConfirmation) {
 			hashing.update(getOtherHeader());
-			hashing.update(mOtherId);
+			hashing.update(LowLevel.getBytesLong(mOtherTimeStamp));
 			hashing.update(mOtherPublicKey);
 		}
+		byte[] timeStampBytes = LowLevel.getBytesLong(mTimeStamp);
+
 		hashing.update(getHeader());
-		hashing.update(mId);
+		hashing.update(timeStampBytes);
 		hashing.update(mPublicKey);
 
 		byte[] hash = hashing.digest();
 		byte[] signature = Encryption.getEncryption().sign(hash);
 		
 		byte[] data = new byte[LENGTH_CONTENT];
-		System.arraycopy(mPublicKey, 0, data, 0, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
+		System.arraycopy(mPublicKey, 0, data, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
+		System.arraycopy(timeStampBytes, 0, data, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
 		System.arraycopy(signature, 0, data, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
-		return data;
+		
+		ArrayList<byte[]> dataSms = new ArrayList<byte[]>(1);
+		dataSms.add(data);
+		return dataSms;
 	}
 	
 	public static ParseResult parseKeysMessage(ArrayList<Pending> idGroup) {
@@ -138,33 +149,39 @@ public class KeysMessage extends Message {
 			Contact contact = Contact.getContact(MyApplication.getSingleton().getApplicationContext(), idGroup.get(0).getSender());
 			if (!contact.existsInDatabase())
 				return new ParseResult(idGroup, PendingParseResult.UNKNOWN_SENDER, null);
-	
-			byte[] dataJoined = null;
-			try {
-				dataJoined = joinParts(idGroup, getPartsCount());
-			} catch (JoiningException ex) {
-				return new ParseResult(idGroup, ex.getReason(), null);
-			}
+
+			if (idGroup.size() != getPartsCount())
+				return new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null);
 			
+			byte[] dataAll = idGroup.get(0).getData();
+			byte[] dataRelevant = LowLevel.cutData(dataAll, OFFSET_DATA, LENGTH_DATA);
 			String sender = idGroup.get(0).getSender();
-			byte[] dataFirst = idGroup.get(0).getData();
-			byte header = getMessageHeader(dataFirst);
-			byte id = getMessageIdByte(dataFirst);
-			MessageType type = getMessageType(dataFirst);
+			byte header = getMessageHeader(dataAll);
+			MessageType type = getMessageType(dataAll);
 	
-			byte[] publicKey = LowLevel.cutData(dataJoined, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
-			byte[] signature = LowLevel.cutData(dataJoined, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
-	
+			byte[] publicKey = LowLevel.cutData(dataRelevant, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
+			byte[] timeStampBytes = LowLevel.cutData(dataRelevant, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
+			byte[] signature = LowLevel.cutData(dataRelevant, OFFSET_SIGNATURE, Encryption.ASYM_SIGNATURE_LENGTH);
+			
+			long timeStamp = LowLevel.getLong(timeStampBytes);
+			
+			// check the time stamp isn't too old or in the future
+			long now = getCurrentTimeUTC();
+			if (timeStamp > now + CLOCK_TOLERANCE)
+				return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_IN_FUTURE, null);
+			else if (now - timeStamp > HANDSHAKE_VALIDITY_PERIOD) 
+				return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_OLD, null);
+			
 			if (type == MessageType.HANDSHAKE) {
 				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
 				hashing.update(header);
-				hashing.update(id);
+				hashing.update(timeStampBytes);
 				hashing.update(publicKey);
 				
 				byte[] hash = hashing.digest();
 
 				// cut out the rubbish part at the end
-				dataJoined = LowLevel.cutData(dataJoined, 0, LENGTH_CONTENT);
+				dataRelevant = LowLevel.cutData(dataRelevant, 0, LENGTH_CONTENT);
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -180,7 +197,7 @@ public class KeysMessage extends Message {
 				return new ParseResult(idGroup, 
 				                            PendingParseResult.OK_HANDSHAKE_MESSAGE, 
 				                            new KeysMessage(
-				                            	id,
+				                            	timeStamp,
 				                            	publicKey
 				                            ));
 			} else if (type == MessageType.CONFIRM) {
@@ -191,10 +208,10 @@ public class KeysMessage extends Message {
 				
 				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
 				hashing.update(HEADER_HANDSHAKE);
-				hashing.update(keys.getKeysId());
+				hashing.update(LowLevel.getBytesLong(keys.getTimeStamp()));
 				hashing.update(new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey());
 				hashing.update(header);
-				hashing.update(id);
+				hashing.update(timeStampBytes);
 				hashing.update(publicKey);
 
 				byte[] hash = hashing.digest();
@@ -211,9 +228,9 @@ public class KeysMessage extends Message {
 				
 				// all seems to be fine, so save the result
                 KeysMessage keysMsg = new KeysMessage(
-                    	keys.getKeysId(),
+                    	keys.getTimeStamp(),
                     	keys.getPrivateKey(),
-                    	id,
+                    	timeStamp,
                     	publicKey
                     );
                 
@@ -223,7 +240,7 @@ public class KeysMessage extends Message {
                 keys.setLastID_In((byte) 0);
                 keys.setKeysConfirmed(true);
                 keys.setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
-                keys.setKeysId((byte) 0);
+                keys.setTimeStamp(0L);
                 keys.saveToFile();
 				
 				return new ParseResult(idGroup, 
@@ -234,6 +251,10 @@ public class KeysMessage extends Message {
 		} catch (StorageFileException e) {
 			return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
 		}
+	}
+	
+	private static long getCurrentTimeUTC() {
+		return System.currentTimeMillis();
 	}
 
 	@Override
@@ -252,17 +273,15 @@ public class KeysMessage extends Message {
 	}
 
 	@Override
-	public byte getId() {
-		return mId;
-	}
-	
-	@Override
 	public int getMessagePartCount() {
 		return getPartsCount();
 	}
 
 	public static int getPartsCount() {
-		return LowLevel.roundUpDivision(LENGTH_CONTENT, LENGTH_DATA);
+		return 1;
 	}
 
+	public static long getMessageTimeStamp(byte[] data) {
+		return LowLevel.getLong(LowLevel.cutData(data, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP));
+	}
 }

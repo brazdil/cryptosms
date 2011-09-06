@@ -379,7 +379,7 @@ public class ActivityLists extends ActivityAppState {
 												keys.setSessionKey_In(keysMsg.getKeyIn());
 								                keys.setNextID_Out((byte) 0);
 								                keys.setLastID_In((byte) 0);
-												keys.setKeysSent(true);
+								                keys.setKeysSent(true);
 												keys.setKeysConfirmed(true);
 												keys.saveToFile();
 											} catch (StorageFileException ex) {

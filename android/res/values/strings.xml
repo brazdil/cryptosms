@@ -535,6 +535,8 @@
     <string name="notifications_clear_pending_details">Do you really want to discard this notification?</string>
     <string name="notifications_clear_all_pending">Clear pending notifications</string>
     <string name="notifications_clear_all_pending_details">Do you really want to clear all the pending notifications?</string>
+    <string name="parse_timestamp_in_future">Time stamp in the future</string>
+    <string name="parse_timestamp_old">Handshake expired</string>
 
 </resources>
 

@@ -2,6 +2,7 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import org.joda.time.field.OffsetDateTimeField;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -15,6 +16,7 @@ import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
@@ -26,12 +28,6 @@ public abstract class Message {
 	// same for all messages
 	protected static final int LENGTH_HEADER = 1;
 	protected static final int OFFSET_HEADER = 0;
-	protected static final int LENGTH_ID = 1;
-	protected static final int OFFSET_ID = OFFSET_HEADER + LENGTH_HEADER;
-	protected static final int LENGTH_INDEX = 1;
-	protected static final int OFFSET_INDEX = OFFSET_ID + LENGTH_ID;;
-	protected static final int OFFSET_DATA = OFFSET_INDEX + LENGTH_INDEX;
-	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
 
 	public static class MessageException extends Exception {
 		private static final long serialVersionUID = 4922446456153260918L;
@@ -66,9 +62,8 @@ public abstract class Message {
     private static final String SENT_SMS_ACTION = "CRYPTOSMS_SMS_SENT"; 
     private static long mMessageCounter = 0;
 
-    public abstract byte[] getBytes() throws StorageFileException, MessageException, EncryptionException;
+    public abstract ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException;
     public abstract byte getHeader();
-    public abstract byte getId();
     public abstract int getMessagePartCount();
     
 	/**
@@ -77,30 +72,29 @@ public abstract class Message {
 	 */
 	public void sendSMS(final String phoneNumber, Context context, final MessageSendingListener listener)
 			throws StorageFileException, MessageException, EncryptionException {
-		byte[] dataMessage = getBytes();
-		final ArrayList<byte[]> dataSms = new ArrayList<byte[]>(1);
+		final ArrayList<byte[]> dataSms = getBytes();
 		
-		// align to fit message parts exactly
-		int totalBytes = LENGTH_DATA * LowLevel.roundUpDivision(dataMessage.length, LENGTH_DATA);
-		dataMessage = LowLevel.wrapData(dataMessage, totalBytes);
-		
-		// seperate into message parts
-		ByteBuffer buf;
-		int index = 0, offset = 0;
-		byte header = getHeader(), id = getId();
-		try {
-			while (true) {
-				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
-				buf.put(header);
-				buf.put(id);
-				buf.put(LowLevel.getBytesUnsignedByte(index++));
-				buf.put(LowLevel.cutData(dataMessage, offset, LENGTH_DATA));
-				offset += LENGTH_DATA;
-				dataSms.add(buf.array());
-			}
-		} catch (IndexOutOfBoundsException e) {
-			// end
-		}
+//		// align to fit message parts exactly
+//		int totalBytes = LENGTH_DATA * LowLevel.roundUpDivision(dataMessage.length, LENGTH_DATA);
+//		dataMessage = LowLevel.wrapData(dataMessage, totalBytes);
+//		
+//		// seperate into message parts
+//		ByteBuffer buf;
+//		int index = 0, offset = 0;
+//		byte header = getHeader(), id = getId();
+//		try {
+//			while (true) {
+//				buf = ByteBuffer.allocate(MessageData.LENGTH_MESSAGE);
+//				buf.put(header);
+//				buf.put(id);
+//				buf.put(LowLevel.getBytesUnsignedByte(index++));
+//				buf.put(LowLevel.cutData(dataMessage, offset, LENGTH_DATA));
+//				offset += LENGTH_DATA;
+//				dataSms.add(buf.array());
+//			}
+//		} catch (IndexOutOfBoundsException e) {
+//			// end
+//		}
 		
 		// send
 		int size = dataSms.size();
@@ -153,91 +147,23 @@ public abstract class Message {
 	    	
 	    	Log.d(MyApplication.APP_TAG, sentIntent.toString());
 	    	
+	    	byte[] dataPart = new byte[MessageData.LENGTH_MESSAGE];
+	    	dataPart[OFFSET_HEADER] = getHeader();
+	    	int offset = OFFSET_HEADER + LENGTH_HEADER;
+	    	int lenData = Math.min(dataSms.get(i).length, MessageData.LENGTH_MESSAGE - offset);
+	    	int lenRandom = MessageData.LENGTH_MESSAGE - lenData - offset;
+	    	System.arraycopy(dataSms.get(i), 0, dataPart, offset, lenData);
+	    	System.arraycopy(Encryption.getEncryption().generateRandomData(lenRandom), 0, dataPart, offset + lenData, lenRandom);
+	    	
 	    	// send the data
-	    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), dataSms.get(i), sentPI, null);
+	    	SmsManager.getDefault().sendDataMessage(phoneNumber, null, MyApplication.getSmsPort(), dataPart, sentPI, null);
 		}
-	}
-	
-	public static class JoiningException extends Exception {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 456081152855672327L;
-		
-		private PendingParseResult mReason;
-		
-		public JoiningException(PendingParseResult reason) {
-			mReason = reason;
-		}
-		
-		public PendingParseResult getReason() {
-			return mReason;
-		}
-		
-	}
-	
-	protected static byte[] joinParts(ArrayList<Pending> idGroup, int expectedGroupSize) throws JoiningException {
-		// check we have all the parts
-		// there shouldn't be more than 1
-		int groupSize = idGroup.size();
-		if (groupSize < expectedGroupSize || groupSize <= 0)
-			throw new JoiningException(PendingParseResult.MISSING_PARTS);
-		else if (groupSize > expectedGroupSize)
-			throw new JoiningException(PendingParseResult.REDUNDANT_PARTS);
-		
-		// get the data
-		byte[][] dataParts = new byte[groupSize][];
-		int filledParts = 0;
-		for (Pending p : idGroup) {
-			byte[] dataPart = p.getData();
-			int index = getMessageIndex(dataPart);
-			if (index >= 0 && index < idGroup.size()) {
-				// index is fine, check that there wasn't the same one already
-				if (dataParts[index] == null) {
-					// first time we stumbled upon this index
-					// store the message part data in the array
-					dataParts[index] = dataPart;
-					filledParts++;
-				} else
-					// more parts of the same index
-					throw new JoiningException(PendingParseResult.REDUNDANT_PARTS);
-
-			} else
-				// index is bigger than the number of messages in ID group
-				// therefore some parts have to be missing or the data is corrupted
-				throw new JoiningException(PendingParseResult.MISSING_PARTS);
-
-		}
-		// the array was filled with data, so check that there aren't any missing
-		if (filledParts != expectedGroupSize)
-			throw new JoiningException(PendingParseResult.MISSING_PARTS);
-
-		
-		// lets put the data together
-		byte[] dataJoined = new byte[expectedGroupSize * LENGTH_DATA];
-		for (int i = 0; i < expectedGroupSize; ++i) {
-			try {
-				// get the data 
-				// it can't be too long, thanks to getMessageData
-				// but it can be too short (throws IndexOutOfBounds exception
-				byte[] relevantData = getMessageData(dataParts[i]);
-				System.arraycopy(relevantData, 0, dataJoined, getDataPartOffset(i), Message.LENGTH_DATA);
-			} catch (RuntimeException e) {
-				throw new JoiningException(PendingParseResult.CORRUPTED_DATA);
-			}
-		}
-		
-		return dataJoined;
 	}
 	
 	protected static byte getMessageHeader(byte[] data) {
 		return data[OFFSET_HEADER];
 	}
     
-	protected static byte getMessageIdByte(byte[] data) {
-		return data[OFFSET_ID];
-	}
-
 	public static MessageType getMessageType(byte[] data) {
     	switch (getMessageHeader(data)) {
     	case HEADER_HANDSHAKE:
@@ -250,42 +176,4 @@ public abstract class Message {
     		return MessageType.UNKNOWN;
     	}
     }
-
-	/**
-	 * Returns message ID for both first and following parts of text messages
-	 * @param data
-	 * @return
-	 */
-	public static int getMessageId(byte[] data) {
-		return LowLevel.getUnsignedByte(getMessageIdByte(data));
-	}
-	
-	/**
-	 * Expects encrypted data of both first and non-first part of text message 
-	 * and returns its index
-	 * @param data
-	 * @return
-	 */
-	public static int getMessageIndex(byte[] data) {
-		return LowLevel.getUnsignedByte(data[OFFSET_INDEX]);
-	}
-	
-	/**
-	 * Returns stored encrypted data for both first and following parts of text messages
-	 * @param data
-	 * @return
-	 */
-	public static byte[] getMessageData(byte[] data) {
-		return LowLevel.cutData(data, OFFSET_DATA, LENGTH_DATA);
-	}
-	
-	/**
-	 * Returns the offset of relevant data expected in given message part
-	 * @param dataLength
-	 * @param index
-	 * @return
-	 */
-	public static int getDataPartOffset(int index) {
-		return index * LENGTH_DATA;
-	}
 }
