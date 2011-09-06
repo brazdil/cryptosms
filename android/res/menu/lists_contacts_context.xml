@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/resend_keys" android:title="@string/reset_encryption"></item>
+    <item android:id="@+id/invalidate" android:title="@string/invalidate_encryption"></item>
+    <item android:id="@+id/delete" android:title="@string/delete_conversation"></item>
+    
+</menu>
