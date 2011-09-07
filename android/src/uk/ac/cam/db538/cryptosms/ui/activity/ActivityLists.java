@@ -231,6 +231,7 @@ public class ActivityLists extends ActivityAppState {
 	                        		    mListNotifications.setFastScrollEnabled(true);
 	                        	        // the Clear pending header
 	                        			mClearPendingView = (ListItemNotification) mInflater.inflate(R.layout.item_main_notification, mListNotifications, false);
+	                        			Log.d(MyApplication.APP_TAG, "Adding header");
 	                        			mListNotifications.addHeaderView(mClearPendingView, null, true);
 	                        	    	// create the adapter
 	                        	    	mAdapterNotifications = new AdapterNotifications(mInflater, mListNotifications);
@@ -456,7 +457,8 @@ public class ActivityLists extends ActivityAppState {
 								} finally {
 									database.close();
 								}
-								updateEvents();
+								mAdapterNotifications.setList(new ArrayList<PendingParser.ParseResult>());
+								State.notifyNewEvent();
 							}
 					   })
 					   .create();
@@ -595,7 +597,7 @@ public class ActivityLists extends ActivityAppState {
 		menuProcessPending.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
-				ActivityLists.this.onNewEvent();
+				PendingParser.getSingleton().parseEvents();
 				return true;
 			}
 		});
@@ -628,7 +630,7 @@ public class ActivityLists extends ActivityAppState {
 	@Override
 	public void onPkiLogin() {
 		super.onPkiLogin();
-		Log.d(MyApplication.APP_TAG, "Login");
+		Storage.addListener(mConversationChangeListener);
 		mListConversations.setAdapter(mAdapterConversations);
 		mListContacts.setAdapter(mAdapterContacts);
 		mListNotifications.setAdapter(mAdapterNotifications);
@@ -636,28 +638,32 @@ public class ActivityLists extends ActivityAppState {
 
 	@Override
 	public void onPkiLogout() {
-		super.onPkiLogout();
+		Storage.removeListener(mConversationChangeListener);
 		mListConversations.setAdapter(null);
 		mListContacts.setAdapter(null);
 		mListNotifications.setAdapter(null);
+		super.onPkiLogout();
+	}
+	
+	private boolean mFirstEventParsing = true;
+
+	@Override
+	public void onEventParsingStarted() {
+		super.onEventParsingStarted();
+		if (mFirstEventParsing && (mAdapterNotifications.getList() == null || mAdapterNotifications.getList().size() == 0)) {
+			mListNotificationsLoading.setVisibility(View.VISIBLE);
+			mListNotifications.setVisibility(View.GONE);
+		}
+		mFirstEventParsing = false;
+		Log.d(MyApplication.APP_TAG, "Parsing started (apparently)");
 	}
 
 	@Override
-	public void onNewEvent() {
-		super.onNewEvent();
+	public void onEventParsingFinished() {
+		super.onEventParsingFinished();
 		updateEvents();
-	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-		Storage.addListener(mConversationChangeListener);
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
-		Storage.removeListener(mConversationChangeListener);
+		mListNotificationsLoading.setVisibility(View.GONE);
+		mListNotifications.setVisibility(View.VISIBLE);
 	}
 
 	private void startConversation(Conversation conv) {
@@ -680,8 +686,8 @@ public class ActivityLists extends ActivityAppState {
 		} finally {
 			database.close();
 		}
-		mAdapterNotifications.getList().remove(mNotificationsContextMenuItem);
-		mAdapterNotifications.notifyDataSetChanged();
+		PendingParser.getSingleton().getParseResults().remove(mNotificationsContextMenuItem);
+		updateEvents();
 	}
 	
 	private StorageChangeListener mConversationChangeListener = new StorageChangeListener() {
@@ -704,6 +710,7 @@ public class ActivityLists extends ActivityAppState {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			Log.d(MyApplication.APP_TAG, "Conversation update");
 			if (mAdapterConversations.getList() == null || mAdapterConversations.getList().size() == 0) {
 				mListConversationsLoading.setVisibility(View.VISIBLE);
 				mListConversations.setVisibility(View.GONE);
@@ -729,7 +736,6 @@ public class ActivityLists extends ActivityAppState {
 						listContacts.add(conv);
 	    			conv = conv.getNextConversation();
 	    		}
-
 			} catch (StorageFileException ex) {
 				if (ex.getCause() instanceof EncryptionException) {
 					// don't really care
@@ -775,13 +781,8 @@ public class ActivityLists extends ActivityAppState {
 	}
 
 	public void updateEvents() {
-		if (mAdapterNotifications.getList() == null || mAdapterNotifications.getList().size() == 0) {
-			mListNotificationsLoading.setVisibility(View.VISIBLE);
-			mListNotifications.setVisibility(View.GONE);
-		}
+		Log.d(MyApplication.APP_TAG, "Updating list");
 		mAdapterNotifications.setList(PendingParser.getSingleton().getParseResults());
 		mAdapterNotifications.notifyDataSetChanged();
-		mListNotificationsLoading.setVisibility(View.GONE);
-		mListNotifications.setVisibility(View.VISIBLE);
 	}
 }

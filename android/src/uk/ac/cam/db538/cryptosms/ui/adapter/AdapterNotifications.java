@@ -2,10 +2,12 @@ package uk.ac.cam.db538.cryptosms.ui.adapter;
 
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.ui.list.ListItemNotification;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

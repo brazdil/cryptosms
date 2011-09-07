@@ -500,7 +500,7 @@
     <string name="send_email_report">Send report via email</string>
     <string name="pki_contact_picker_empty">There are not any people with public keys assigned to them. Please use the Public Keys application to exchange them.</string>
     <string name="exchange_method_title">Encryption setup</string>
-    <string name="exchange_method_details">&quot;Please select a means of transferring crypthographic keys used for the encryption of text messages to the selected contact. These will be encrypted with the recipient's public key saved in PKI and signed with your private key.&quot;</string>
+    <string name="exchange_method_details">&quot;Please select a means of transferring cryptographic keys used for the encryption of text messages to the selected contact. These will be encrypted with the recipient's public key saved in PKI and signed with your private key.&quot;</string>
     <string name="exchange_method_text_message">Text message</string>
     <string name="back">Back</string>
     <string name="next">Next</string>

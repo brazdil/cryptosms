@@ -99,7 +99,7 @@ public class MyApplication extends RoboApplication {
 		
 		Pki.init(this.getApplicationContext());
 		SimCard.init(this.getApplicationContext());
-		PendingParser.init(new DbPendingAdapter(getApplicationContext()));
+		PendingParser.init(this.getApplicationContext());
 	}
 	
 	public Notification getNotification() {

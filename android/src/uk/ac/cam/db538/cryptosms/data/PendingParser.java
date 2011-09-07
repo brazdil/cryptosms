@@ -5,11 +5,14 @@ import java.util.Collections;
 
 import org.joda.time.DateTime;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class PendingParser {
 	public enum PendingParseResult {
@@ -30,20 +33,20 @@ public class PendingParser {
 	
 	private static PendingParser mParser;
 	
-	public static void init(DbPendingAdapter database) {
+	public static void init(Context context) {
 		if (mParser == null)
-			mParser = new PendingParser(database);
+			mParser = new PendingParser(context);
 	}
 	
 	public static PendingParser getSingleton() {
 		return mParser;
 	}	
 	
-	private DbPendingAdapter mDatabase;
+	private Context mContext;
 	private ArrayList<ParseResult> mParseResults;
 	
-	private PendingParser(DbPendingAdapter database) {
-		mDatabase = database;
+	private PendingParser(Context context) {
+		mContext = context;
 		mParseResults = new ArrayList<ParseResult>();
 		
 		State.addListener(new StateChangeListener() {
@@ -117,37 +120,32 @@ public class PendingParser {
 		}
 	}
 	
-	public void parseEvents() {
-		synchronized(mDatabase) {
-			new EventsUpdateTask(mParseResults, mDatabase).execute();
-		}
+	public synchronized void parseEvents() {
+		new EventsUpdateTask().execute();
 	}
 
 	private class EventsUpdateTask extends AsyncTask<Void, Void, Void> {
 
-		private DbPendingAdapter mDatabase;
-		private ArrayList<ParseResult> mParseResults;
 		private boolean mUpdateConversations;
-		
-		public EventsUpdateTask(ArrayList<ParseResult> parseResults, DbPendingAdapter database) {
-			this.mParseResults = parseResults;
-			this.mDatabase = database;
-		}
+		private ArrayList<ParseResult> mParseResults;
 		
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
+			State.notifyEventParsingStarted();
+			Log.d(MyApplication.APP_TAG, "Parsing...");
 		}
 		
 		@Override
 		protected Void doInBackground(Void... arg0) {
-			mParseResults.clear();
+			mParseResults = new ArrayList<PendingParser.ParseResult>();
 			
 			// parse pending stuff
-			mDatabase.open();
+			DbPendingAdapter database = new DbPendingAdapter(mContext);
+			database.open();
 			try {
 				// have the pending messages sorted into groups by their type and ID
-				ArrayList<ArrayList<Pending>> idGroups = mDatabase.getAllIdGroups();
+				ArrayList<ArrayList<Pending>> idGroups = database.getAllIdGroups();
 				for(ArrayList<Pending> idGroup : idGroups) {
 					// check that there are not too many parts
 					if (idGroup.size() > 255)
@@ -172,14 +170,14 @@ public class PendingParser {
 					if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
 						parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
 						mParseResults.remove(parseResult);
-						parseResult.removeFromDb(mDatabase);
+						parseResult.removeFromDb(database);
 						mUpdateConversations = true;
 					}
 				}
 
 				Collections.sort(mParseResults, Collections.reverseOrder());
 			} finally {
-				mDatabase.close();
+				database.close();
 			}
 			return null;
 		}
@@ -187,8 +185,12 @@ public class PendingParser {
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
+
+			Log.d(MyApplication.APP_TAG, "Finished parsing");
 			
-			State.notifyEventsParsed();			
+			PendingParser.this.mParseResults = this.mParseResults;
+			
+			State.notifyEventParsingFinished();			
 			if (mUpdateConversations)
 				Storage.notifyChange();
 		}

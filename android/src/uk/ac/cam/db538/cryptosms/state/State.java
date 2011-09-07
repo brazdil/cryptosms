@@ -25,15 +25,20 @@ public class State {
 		public void onNewEvent(){
 		}
 		
-		public void onEventsParsed(){
+		public void onEventParsingFinished(){
 		}
 		
+		public void onEventParsingStarted(){
+		}
+
 		public void onFatalException(Exception ex){
 		}
 	}
 	
 	private static ArrayList<StateChangeListener> mListeners = new ArrayList<StateChangeListener>();
 	private static Exception mFatalException = null;
+	
+	private static boolean mCurrentlyParsing = false;
 	
 	public static void addListener(StateChangeListener listener) {
 		mListeners.add(listener);
@@ -48,6 +53,8 @@ public class State {
 				listener.onLogin();
 				listener.onSimState();
 				listener.onNewEvent();
+				if (mCurrentlyParsing)
+					listener.onEventParsingStarted();
 			} else
 				listener.onLogout();
 		} else
@@ -68,6 +75,7 @@ public class State {
 		for (StateChangeListener listener : mListeners)
 			listener.onLogin();
 		notifySimState();
+		notifyNewEvent();
 	}
 	
 	public static void notifyLogout() {
@@ -101,10 +109,19 @@ public class State {
 		}
 	}
 	
-	public static void notifyEventsParsed() {
+	public static void notifyEventParsingStarted() {
 		if (Pki.isLoggedIn()) {
+			mCurrentlyParsing = true;
 			for (StateChangeListener listener : mListeners)
-				listener.onEventsParsed();
+				listener.onEventParsingStarted();
+		}
+	}
+
+	public static void notifyEventParsingFinished() {
+		if (Pki.isLoggedIn()) {
+			mCurrentlyParsing = false;
+			for (StateChangeListener listener : mListeners)
+				listener.onEventParsingFinished();
 		}
 	}
 

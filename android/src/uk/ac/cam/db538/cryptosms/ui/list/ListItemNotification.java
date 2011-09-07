@@ -28,6 +28,7 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.QuickContactBadge;
 import android.widget.RelativeLayout;
@@ -108,6 +109,7 @@ public class ListItemNotification extends RelativeLayout {
      * Only used for header binding.
      */
     public void bind(String title, String explain) {
+    	Log.d(MyApplication.APP_TAG, "Notification header bound");
         mFromView.setText(title);
         mSubjectView.setText(explain);
     }

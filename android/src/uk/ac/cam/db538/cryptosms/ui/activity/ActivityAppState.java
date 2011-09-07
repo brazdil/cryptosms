@@ -107,8 +107,13 @@ public class ActivityAppState extends RoboActivity {
 		}
 		
 		@Override
-		public void onEventsParsed() {
-			ActivityAppState.this.onEventsParsed();
+		public void onEventParsingFinished() {
+			ActivityAppState.this.onEventParsingFinished();
+		}
+
+		@Override
+		public void onEventParsingStarted() {
+			ActivityAppState.this.onEventParsingStarted();
 		}
 	};
 	
@@ -151,7 +156,11 @@ public class ActivityAppState extends RoboActivity {
 		
 	}
 	
-	public void onEventsParsed() {
+	public void onEventParsingStarted() {
+		
+	}
+
+	public void onEventParsingFinished() {
 		
 	}
 
