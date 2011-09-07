@@ -152,7 +152,7 @@ public final class Storage {
 		public void onUpdate();
 	}
 	
-	static void notifyChange() {
+	public static void notifyChange() {
 		for (StorageChangeListener listener: mGlobalListeners) 
 			listener.onUpdate();
 	}
