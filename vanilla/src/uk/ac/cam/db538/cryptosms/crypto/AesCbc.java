@@ -4,6 +4,9 @@ import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.crypto.params.ParametersWithIV;
+
 public class AesCbc {
 	private static final int AES_BLOCKSIZE = 16;
 	
@@ -54,6 +57,9 @@ public class AesCbc {
 	 * @return
 	 */
 	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key, boolean alignWithRandom, boolean storeLength) {
+		// PARAMETERS!!!
+		ParametersWithIV paramKeyAndIv = new ParametersWithIV(new KeyParameter(key), iv);
+		
 		// set up AES
 		if (mAes == null)
 			mAes = new AesAlgorithm();
