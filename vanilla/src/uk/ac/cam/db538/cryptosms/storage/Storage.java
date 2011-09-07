@@ -55,14 +55,17 @@ public final class Storage {
 			throw new StorageFileException("No filename was set");
 		
 		boolean exists = true;
+		long length = 0L;
 		try {
-			exists = new File(mFilename).exists();
+			File f = new File(mFilename);
+			exists = f.exists();
+			length = f.length();
 			smsFile = new StorageFile(mFilename);
 		} catch (IOException ex) {
 			throw new StorageFileException(ex);
 		}
 		
-		if (!exists)
+		if (!exists || length < ALIGN_SIZE)
 			createFile();
 	}
 	
@@ -108,7 +111,7 @@ public final class Storage {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	byte[] getEntry(long index) throws StorageFileException {
+	synchronized byte[] getEntry(long index) throws StorageFileException {
 		try {
 			long offset = index * CHUNK_SIZE;
 			if (offset > smsFile.mFile.length() - CHUNK_SIZE)
@@ -130,7 +133,7 @@ public final class Storage {
 	 * @throws StorageFileException
 	 * @throws IOException
 	 */
-	void setEntry(long index, byte[] data) throws StorageFileException {
+	synchronized void setEntry(long index, byte[] data) throws StorageFileException {
 		try {
 			long offset = index * CHUNK_SIZE;
 			long fileSize = smsFile.mFile.length();
