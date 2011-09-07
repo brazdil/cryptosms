@@ -28,11 +28,7 @@ import uk.ac.cam.db538.cryptosms.ui.UtilsTextFormat;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Typeface;
 
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.StyleSpan;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -42,7 +38,7 @@ import android.widget.TextView;
  * This class manages the view for given conversation.
  */
 public class ListItemMessage extends RelativeLayout {
-	private static final StyleSpan STYLE_BOLD = new StyleSpan(Typeface.BOLD);
+//	private static final StyleSpan STYLE_BOLD = new StyleSpan(Typeface.BOLD);
 	
 	private TextView mFrom;
 	private TextView mMessageBody;

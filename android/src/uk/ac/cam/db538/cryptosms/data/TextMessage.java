@@ -1,6 +1,5 @@
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
@@ -12,11 +11,8 @@ import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
-import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
-import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
-import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
@@ -400,14 +396,6 @@ public class TextMessage extends Message {
 		int remainingBytesInBlock = (Encryption.SYM_BLOCK_LENGTH - (lenText % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
 		int remainingBlocksInMessage = ((LENGTH_DATA - (lenComplete % LENGTH_DATA)) % LENGTH_DATA) / Encryption.SYM_BLOCK_LENGTH;
 		int remainingBytesInMessage = remainingBlocksInMessage * Encryption.SYM_BLOCK_LENGTH;
-		
-		Log.d(MyApplication.APP_TAG, "REMAINING_BYTES");
-		Log.d(MyApplication.APP_TAG, "text length: " + lenText);
-		Log.d(MyApplication.APP_TAG, "complete length: " + lenComplete);
-		Log.d(MyApplication.APP_TAG, "complete length: " + lenComplete);
-		Log.d(MyApplication.APP_TAG, "bytes in block: " + remainingBytesInBlock);
-		Log.d(MyApplication.APP_TAG, "blocks in message: " + remainingBlocksInMessage);
-		Log.d(MyApplication.APP_TAG, "bytes in message: " + remainingBytesInMessage);
 		
 		return remainingBytesInBlock + remainingBytesInMessage;
 	}

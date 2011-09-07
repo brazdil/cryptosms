@@ -1,11 +1,18 @@
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.joda.time.DateTime;
 
+import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
+
+import android.os.AsyncTask;
+
 public class PendingParser {
-	public static enum PendingParseResult {
+	public enum PendingParseResult {
 		OK_HANDSHAKE_MESSAGE,
 		OK_TEXT_MESSAGE,
 		OK_CONFIRM_MESSAGE,
@@ -19,6 +26,36 @@ public class PendingParser {
 		INTERNAL_ERROR,
 		TIMESTAMP_IN_FUTURE,
 		TIMESTAMP_OLD
+	}
+	
+	private static PendingParser mParser;
+	
+	public static void init(DbPendingAdapter database) {
+		if (mParser == null)
+			mParser = new PendingParser(database);
+	}
+	
+	public static PendingParser getSingleton() {
+		return mParser;
+	}	
+	
+	private DbPendingAdapter mDatabase;
+	private ArrayList<ParseResult> mParseResults;
+	
+	private PendingParser(DbPendingAdapter database) {
+		mDatabase = database;
+		mParseResults = new ArrayList<ParseResult>();
+		
+		State.addListener(new StateChangeListener() {
+			@Override
+			public void onNewEvent() {
+				parseEvents();
+			}
+		});
+	}
+	
+	public ArrayList<ParseResult> getParseResults() {
+		return mParseResults;
 	}
 
 	/**
@@ -80,37 +117,84 @@ public class PendingParser {
 		}
 	}
 	
-	public static ArrayList<ParseResult> parsePending(DbPendingAdapter database) {
-		ArrayList<ParseResult> results = new ArrayList<ParseResult>();
-		// have the pending messages sorted into groups by their type and ID
-		ArrayList<ArrayList<Pending>> idGroups = database.getAllIdGroups();
-		for(ArrayList<Pending> idGroup : idGroups) {
-			// check that there are not too many parts
-			if (idGroup.size() > 255)
-				results.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
-			else if (idGroup.size() > 0) {
-				switch (idGroup.get(0).getType()) {
-				case HANDSHAKE:
-				case CONFIRM:
-					results.add(KeysMessage.parseKeysMessage(idGroup));
-					break;
-				case TEXT:
-					results.add(TextMessage.parseTextMessage(idGroup));
-					// TODO: increment key ID to the lowest we decoded
-					break;
-				}
-			}
+	public void parseEvents() {
+		synchronized(mDatabase) {
+			new EventsUpdateTask(mParseResults, mDatabase).execute();
 		}
-		
-		for (ParseResult parseResult : results) {
-			if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
-				parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
-				results.remove(parseResult);
-				parseResult.removeFromDb(database);
-			}
-		}
-		
-		return results;
 	}
 
+	private class EventsUpdateTask extends AsyncTask<Void, Void, Void> {
+
+		private DbPendingAdapter mDatabase;
+		private ArrayList<ParseResult> mParseResults;
+		private boolean mUpdateConversations;
+		
+		public EventsUpdateTask(ArrayList<ParseResult> parseResults, DbPendingAdapter database) {
+			this.mParseResults = parseResults;
+			this.mDatabase = database;
+		}
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+		
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			mParseResults.clear();
+			
+			// parse pending stuff
+			mDatabase.open();
+			try {
+				// have the pending messages sorted into groups by their type and ID
+				ArrayList<ArrayList<Pending>> idGroups = mDatabase.getAllIdGroups();
+				for(ArrayList<Pending> idGroup : idGroups) {
+					// check that there are not too many parts
+					if (idGroup.size() > 255)
+						mParseResults.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
+					else if (idGroup.size() > 0) {
+						switch (idGroup.get(0).getType()) {
+						case HANDSHAKE:
+						case CONFIRM:
+							mParseResults.add(KeysMessage.parseKeysMessage(idGroup));
+							break;
+						case TEXT:
+							mParseResults.add(TextMessage.parseTextMessage(idGroup));
+							// TODO: increment key ID to the lowest we decoded
+							break;
+						}
+					}
+				}
+				
+				mUpdateConversations = false;
+				
+				for (ParseResult parseResult : mParseResults) {
+					if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
+						parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
+						mParseResults.remove(parseResult);
+						parseResult.removeFromDb(mDatabase);
+						mUpdateConversations = true;
+					}
+				}
+
+				Collections.sort(mParseResults, Collections.reverseOrder());
+			} finally {
+				mDatabase.close();
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+			
+			State.notifyEventsParsed();			
+			if (mUpdateConversations)
+				Storage.notifyChange();
+		}
+	}
+	
+	public static void forceParsing() {
+		getSingleton().parseEvents();
+	}
 }

@@ -105,6 +105,11 @@ public class ActivityAppState extends RoboActivity {
 		public void onNewEvent() {
 			ActivityAppState.this.onNewEvent();
 		}
+		
+		@Override
+		public void onEventsParsed() {
+			ActivityAppState.this.onEventsParsed();
+		}
 	};
 	
 	public void onSimState() {
@@ -146,6 +151,10 @@ public class ActivityAppState extends RoboActivity {
 		
 	}
 	
+	public void onEventsParsed() {
+		
+	}
+
 	public void onFatalException(Exception ex) {
 		getErrorOverlay().modeFatalException(ex);
 		getErrorOverlay().show();

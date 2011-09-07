@@ -7,6 +7,8 @@ import roboguice.application.RoboApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
+import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
+import uk.ac.cam.db538.cryptosms.data.PendingParser;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
@@ -63,7 +65,7 @@ public class MyApplication extends RoboApplication {
 		Preferences.initSingleton(context);
 		if (Encryption.getEncryption() == null)
 			Encryption.setEncryption(new EncryptionPki());
-
+		
 		final UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 			private void logException(Throwable ex) {
@@ -93,18 +95,11 @@ public class MyApplication extends RoboApplication {
 
 		String storageFile = context.getFilesDir().getAbsolutePath() + "/" + MyApplication.STORAGE_FILE_NAME;
 
-		//TODO: Just For Testing!!!
-//		File file = new File(storageFile);
-//		if (file.exists())
-//			file.delete();
-//		File file2 = new File(context.getFilesDir().getAbsolutePath() + "/../databases/pending.db");
-//		if (file2.exists())
-//			file2.delete();
-		
 		Storage.setFilename(storageFile);
 		
 		Pki.init(this.getApplicationContext());
 		SimCard.init(this.getApplicationContext());
+		PendingParser.init(new DbPendingAdapter(getApplicationContext()));
 	}
 	
 	public Notification getNotification() {

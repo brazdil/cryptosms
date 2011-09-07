@@ -17,18 +17,15 @@ import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.data.PendingParser;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.Header;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
-import uk.ac.cam.db538.cryptosms.ui.DialogManager;
 import uk.ac.cam.db538.cryptosms.ui.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSendMessage;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSimIssues;
@@ -39,7 +36,6 @@ import uk.ac.cam.db538.cryptosms.ui.adapter.AdapterNotifications;
 import uk.ac.cam.db538.cryptosms.ui.list.ListItemContact;
 import uk.ac.cam.db538.cryptosms.ui.list.ListItemConversation;
 import uk.ac.cam.db538.cryptosms.ui.list.ListItemNotification;
-import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -778,49 +774,14 @@ public class ActivityLists extends ActivityAppState {
 		}
 	}
 
-	private void updateEvents() {
-		synchronized(mAdapterNotifications) {
-			new EventsUpdateTask().execute();
+	public void updateEvents() {
+		if (mAdapterNotifications.getList() == null || mAdapterNotifications.getList().size() == 0) {
+			mListNotificationsLoading.setVisibility(View.VISIBLE);
+			mListNotifications.setVisibility(View.GONE);
 		}
-	}
-
-	private class EventsUpdateTask extends AsyncTask<Void, Void, Void> {
-
-		private ArrayList<ParseResult> mParseResults = null;
-		private DbPendingAdapter mDatabase;
-
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			if (mAdapterNotifications.getList() == null || mAdapterNotifications.getList().size() == 0) {
-				mListNotificationsLoading.setVisibility(View.VISIBLE);
-				mListNotifications.setVisibility(View.GONE);
-			}
-			mDatabase = new DbPendingAdapter(ActivityLists.this);
-		}
-		
-		@Override
-		protected Void doInBackground(Void... arg0) {
-			// parse pending stuff
-			mDatabase.open();
-			try {
-				mParseResults = PendingParser.parsePending(mDatabase);
-				Collections.sort(mParseResults, Collections.reverseOrder());
-			} finally {
-				mDatabase.close();
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			super.onPostExecute(result);
-			mAdapterNotifications.setList(mParseResults);
-			mAdapterNotifications.notifyDataSetChanged();
-			mListNotificationsLoading.setVisibility(View.GONE);
-			mListNotifications.setVisibility(View.VISIBLE);
-			
-			updateConversations();
-		}
+		mAdapterNotifications.setList(PendingParser.getSingleton().getParseResults());
+		mAdapterNotifications.notifyDataSetChanged();
+		mListNotificationsLoading.setVisibility(View.GONE);
+		mListNotifications.setVisibility(View.VISIBLE);
 	}
 }

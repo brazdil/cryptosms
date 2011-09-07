@@ -3,15 +3,33 @@ package uk.ac.cam.db538.cryptosms.state;
 import java.util.ArrayList;
 
 public class State {
-	public interface StateChangeListener {
-		public void onConnect();
-		public void onLogin();
-		public void onLogout();
-		public void onDisconnect();
-		public void onPkiMissing();
-		public void onSimState();
-		public void onNewEvent();
-		public void onFatalException(Exception ex);
+	public static abstract class StateChangeListener {
+		public void onConnect() {
+		}
+		
+		public void onLogin(){
+		}
+		
+		public void onLogout(){
+		}
+		
+		public void onDisconnect(){
+		}
+		
+		public void onPkiMissing(){
+		}
+		
+		public void onSimState(){
+		}
+		
+		public void onNewEvent(){
+		}
+		
+		public void onEventsParsed(){
+		}
+		
+		public void onFatalException(Exception ex){
+		}
 	}
 	
 	private static ArrayList<StateChangeListener> mListeners = new ArrayList<StateChangeListener>();
@@ -83,6 +101,13 @@ public class State {
 		}
 	}
 	
+	public static void notifyEventsParsed() {
+		if (Pki.isLoggedIn()) {
+			for (StateChangeListener listener : mListeners)
+				listener.onEventsParsed();
+		}
+	}
+
 	public static void fatalException(Exception ex) {
 		notifyDisconnect();
 		mFatalException = ex;

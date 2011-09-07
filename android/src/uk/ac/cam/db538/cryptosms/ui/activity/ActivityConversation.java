@@ -16,10 +16,10 @@ import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
+import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
-import uk.ac.cam.db538.cryptosms.ui.DialogManager;
 import uk.ac.cam.db538.cryptosms.ui.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSimIssues;
@@ -222,10 +222,12 @@ public class ActivityConversation extends ActivityAppState {
 		super.onPkiLogin();
 		updateMessageHistory();
 		mListMessageHistory.setAdapter(mAdapterMessageHistory);
+		Storage.addListener(mStorageChangeListener);
 	}
 
 	@Override
 	public void onPkiLogout() {
+		Storage.removeListener(mStorageChangeListener);
 		mListMessageHistory.setAdapter(null);
 		modeEnabled(false);
 		super.onPkiLogout();
@@ -312,4 +314,12 @@ public class ActivityConversation extends ActivityAppState {
 //			mListNotifications.setVisibility(View.VISIBLE);
 		}
 	}
+	
+	private StorageChangeListener mStorageChangeListener = new StorageChangeListener() {
+		
+		@Override
+		public void onUpdate() {
+			updateMessageHistory();
+		}
+	};
 }
