@@ -688,6 +688,7 @@ public class ActivityLists extends ActivityAppState {
 		}
 		PendingParser.getSingleton().getParseResults().remove(mNotificationsContextMenuItem);
 		updateEvents();
+		PendingParser.forceParsing();
 	}
 	
 	private StorageChangeListener mConversationChangeListener = new StorageChangeListener() {

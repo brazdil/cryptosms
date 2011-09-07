@@ -64,6 +64,9 @@ public class DialogManager {
 		if (dialog != null) {
 			mActiveDialogs.remove(id);
 			dialog.dismiss();
+		} else if (mSavedState != null) {
+			// try removing from saved state
+			mSavedState.remove(id);
 		}
 	}
 	

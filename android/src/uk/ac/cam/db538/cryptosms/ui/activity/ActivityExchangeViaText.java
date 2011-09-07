@@ -1,7 +1,11 @@
 package uk.ac.cam.db538.cryptosms.ui.activity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import roboguice.inject.InjectView;
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,10 +16,17 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
+import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.KeysMessage;
+import uk.ac.cam.db538.cryptosms.data.Pending;
+import uk.ac.cam.db538.cryptosms.data.PendingParser;
+import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
+import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.state.State;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSendMessage;
@@ -69,62 +80,10 @@ public class ActivityExchangeViaText extends ActivityAppState {
 				mSendButton.setEnabled(false);
 				mBackButton.setEnabled(false);
 				
-				// generate session keys
-				final KeysMessage keysMessage;
-				try {
-					keysMessage = new KeysMessage();
-				} catch (StorageFileException e) {
-					State.fatalException(e);
-					return;
-				}
-
 		    	getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING, null);
 
-		    	// send the message
-				try {
-					mCancelled = false;
-					keysMessage.sendSMS(mPhoneNumber, ActivityExchangeViaText.this, new MessageSendingListener() {
-						@Override
-						public void onMessageSent() {
-							Log.d(MyApplication.APP_TAG, "Sent all!");
-							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
-							
-							// go back
-							ActivityExchangeViaText.this.setResult(Activity.RESULT_OK);
-							ActivityExchangeViaText.this.finish();
-						}
-						
-						@Override
-						public void onError(Exception ex) {
-							if (ex instanceof StorageFileException) {
-								State.fatalException(ex);
-								return;
-							}
-							
-							getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
-							
-							Bundle params = new Bundle();
-							params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, ex.getMessage());
-							getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_ERROR, params);
-
-							mSendButton.setEnabled(true);
-							mBackButton.setEnabled(true);
-						}
-						
-						@Override
-						public void onPartSent(int index) {
-						}
-					});
-				} catch (StorageFileException e) {
-					State.fatalException(e);
-					return;
-				} catch (MessageException e) {
-					State.fatalException(e);
-					return;
-				} catch (EncryptionException e) {
-					State.fatalException(e);
-					return;
-				}
+				new SendMessageTask().execute();
+		    	
 			}
 		});
         
@@ -138,6 +97,84 @@ public class ActivityExchangeViaText extends ActivityAppState {
 		if (mCancelled) {
 			mCancelled = false;
 			getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING_MULTIPART);
+		}
+	}
+
+	private class SendMessageTask extends AsyncTask<Void, Void, Void> {
+		
+		private Exception mException = null;
+		private KeysMessage mKeysMessage = null;
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+		}
+		
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			// generate session keys
+			try {
+				mKeysMessage = new KeysMessage();
+			} catch (StorageFileException e) {
+				mException = e;
+				return null;
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+			
+			if (mException != null) {
+				State.fatalException(mException);
+				return;
+			}
+
+	    	// send the message
+			try {
+				mCancelled = false;
+				mKeysMessage.sendSMS(mPhoneNumber, ActivityExchangeViaText.this, new MessageSendingListener() {
+					@Override
+					public void onMessageSent() {
+						getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
+						
+						// go back
+						ActivityExchangeViaText.this.setResult(Activity.RESULT_OK);
+						ActivityExchangeViaText.this.finish();
+					}
+					
+					@Override
+					public void onError(Exception ex) {
+						if (ex instanceof StorageFileException) {
+							State.fatalException(ex);
+							return;
+						}
+						
+						getDialogManager().dismissDialog(UtilsSendMessage.DIALOG_SENDING);
+						
+						Bundle params = new Bundle();
+						params.putString(UtilsSendMessage.PARAM_SENDING_ERROR, ex.getMessage());
+						getDialogManager().showDialog(UtilsSendMessage.DIALOG_SENDING_ERROR, params);
+
+						mSendButton.setEnabled(true);
+						mBackButton.setEnabled(true);
+					}
+					
+					@Override
+					public void onPartSent(int index) {
+					}
+				});
+			} catch (StorageFileException e) {
+				State.fatalException(e);
+				return;
+			} catch (MessageException e) {
+				State.fatalException(e);
+				return;
+			} catch (EncryptionException e) {
+				State.fatalException(e);
+				return;
+			}
 		}
 	}
 }

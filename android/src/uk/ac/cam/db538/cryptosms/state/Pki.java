@@ -202,49 +202,46 @@ public class Pki {
 	}
 	
 	static void setLoggedIn(boolean value, boolean forceNotify) {
-		Log.d(MyApplication.APP_TAG, "Set login: " + Boolean.toString(value));
 		if (mLoggedIn != value || forceNotify) {
 			mLoggedIn = value;
 			if (mLoggedIn) 
 				State.notifyLogin();
 			else {
-				mMasterKey = null; // forget the master key
+//				mMasterKey = null; // forget the master key
 				State.notifyLogout();
 			}
 		}
 	}
 	
 	public static byte[] getMasterKey(boolean forceLogIn) throws PkiNotReadyException {
-		byte[] key = getMasterKey(forceLogIn, true);
-		return key;
+		return getMasterKey(forceLogIn, true);
 	}
 	
 	public static byte[] getMasterKey(boolean forceLogIn, boolean generateAllow) throws PkiNotReadyException {
-		if (isLoggedIn()) {
-			if (mMasterKey == null) {
-				try {
-					if (mPki.hasDataStore(KEY_STORAGE)) {
-						mMasterKey = mPki.getDataStore(KEY_STORAGE);
-						return mMasterKey;
-					}
-					else if (generateAllow) {
-						mPki.setDataStore(KEY_STORAGE, Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
-						return getMasterKey(forceLogIn, false);
-					} else
-						throw new PkiNotReadyException();
-				} catch (NotConnectedException e) {
-					throw new PkiNotReadyException();
-				} catch (TimeoutException e) {
-					throw new PkiNotReadyException();
-				} catch (DeclinedException e) {
-					throw new PkiNotReadyException();
-				} catch (PKIErrorException e) {
-					throw new PkiNotReadyException();
-				} catch (BadInputException e) {
-					throw new PkiNotReadyException();
+		if (mMasterKey != null)
+			return mMasterKey;
+		else if (isLoggedIn()) {
+			try {
+				if (mPki.hasDataStore(KEY_STORAGE)) {
+					mMasterKey = mPki.getDataStore(KEY_STORAGE);
+					return mMasterKey;
 				}
-			} else
-				return mMasterKey;
+				else if (generateAllow) {
+					mPki.setDataStore(KEY_STORAGE, Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
+					return getMasterKey(forceLogIn, false);
+				} else
+					throw new PkiNotReadyException();
+			} catch (NotConnectedException e) {
+				throw new PkiNotReadyException();
+			} catch (TimeoutException e) {
+				throw new PkiNotReadyException();
+			} catch (DeclinedException e) {
+				throw new PkiNotReadyException();
+			} catch (PKIErrorException e) {
+				throw new PkiNotReadyException();
+			} catch (BadInputException e) {
+				throw new PkiNotReadyException();
+			}
 		} else if (isConnected() && forceLogIn) {
 			Pki.login(true);
 			// no need to alter our own login information - broadcast will be sent by PKI
