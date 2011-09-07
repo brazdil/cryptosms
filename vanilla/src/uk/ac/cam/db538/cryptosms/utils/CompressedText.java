@@ -124,4 +124,9 @@ public class CompressedText {
 			return false;
 		}
 	}
+
+	@Override
+	public String toString() {
+		return getMessage();
+	}
 }

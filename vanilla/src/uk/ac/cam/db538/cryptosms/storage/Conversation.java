@@ -265,6 +265,10 @@ public class Conversation implements Comparable<Conversation> {
 		return MessageData.getMessageData(mIndexMessages);
 	}
 	
+	public boolean hasMessageData() {
+		return mIndexMessages != 0;
+	}
+	
 	/**
 	 * Get the first MessageData object in the linked listed attached to this conversation, or null if there isn't any
 	 * @return
