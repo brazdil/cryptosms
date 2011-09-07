@@ -504,7 +504,7 @@
     <string name="exchange_method_text_message">Text message</string>
     <string name="back">Back</string>
     <string name="next">Next</string>
-    <string name="exchange_text_details">The cryptographic keys will be sent via several text messages.</string>
+    <string name="exchange_text_details">The cryptographic keys will be sent via one text message.</string>
     <string name="exchange_text_warning">Warning: Standard text messaging rates apply</string>
     <string name="exchange_text_count">Message count:</string>
     <string name="reset_encryption">Reset encryption</string>
@@ -537,6 +537,7 @@
     <string name="notifications_clear_all_pending_details">Do you really want to clear all the pending notifications?</string>
     <string name="parse_timestamp_in_future">Time stamp in the future</string>
     <string name="parse_timestamp_old">Handshake expired</string>
+    <string name="me">Me</string>
 
 </resources>
 

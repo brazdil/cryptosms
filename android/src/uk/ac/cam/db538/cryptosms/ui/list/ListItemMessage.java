@@ -22,6 +22,7 @@ import java.util.zip.DataFormatException;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
+import uk.ac.cam.db538.cryptosms.storage.MessageData.MessageType;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.ui.UtilsTextFormat;
 
@@ -76,39 +77,39 @@ public class ListItemMessage extends RelativeLayout {
     	return mMessage;
     }
 
-    private CharSequence formatSender() throws StorageFileException, DataFormatException {
-    	Context context = this.getContext();
-//        final int size = android.R.style.TextAppearance_Small;
-//        final int color = 8; // android.R.styleable.Theme_textColorSecondary;
-
-        String from = new String();
-    	Contact contact = Contact.getContact(context, mMessage.getStorage().getParent().getPhoneNumber());
-        from = contact.getPhoneNumber();
-    	if (contact.getName() != null && contact.getName().length() > 0)
-    		from = contact.getName();
-        
-        SpannableStringBuilder buf = new SpannableStringBuilder(from);
-
-//        int before = buf.length();
-//        if (ch.hasDraft()) {
-//            buf.append(" ");
-//            buf.append(context.getResources().getString(R.string.has_draft));
-//            buf.setSpan(new TextAppearanceSpan(context, size, color), before,
-//                    buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-//            buf.setSpan(new ForegroundColorSpan(
-//            		context.getResources().getColor(R.drawable.text_color_red)),
-//                    before, buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+//    private CharSequence formatSender() throws StorageFileException, DataFormatException {
+//    	Context context = this.getContext();
+////        final int size = android.R.style.TextAppearance_Small;
+////        final int color = 8; // android.R.styleable.Theme_textColorSecondary;
+//
+//        String from = new String();
+//    	Contact contact = Contact.getContact(context, mMessage.getStorage().getParent().getPhoneNumber());
+//        from = contact.getPhoneNumber();
+//    	if (contact.getName() != null && contact.getName().length() > 0)
+//    		from = contact.getName();
+//        
+//        SpannableStringBuilder buf = new SpannableStringBuilder(from);
+//
+////        int before = buf.length();
+////        if (ch.hasDraft()) {
+////            buf.append(" ");
+////            buf.append(context.getResources().getString(R.string.has_draft));
+////            buf.setSpan(new TextAppearanceSpan(context, size, color), before,
+////                    buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+////            buf.setSpan(new ForegroundColorSpan(
+////            		context.getResources().getColor(R.drawable.text_color_red)),
+////                    before, buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+////        }
+//
+//        // Unread messages are shown in bold
+//        if (mMessage.getStorage().getUnread()) {
+//            buf.setSpan(STYLE_BOLD, 0, buf.length(),
+//                    Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
 //        }
-
-        // Unread messages are shown in bold
-        if (mMessage.getStorage().getUnread()) {
-            buf.setSpan(STYLE_BOLD, 0, buf.length(),
-                    Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-        
-        buf.append(mMessage.getText().getMessage());
-        return buf;
-    }
+//        
+//        buf.append(mMessage.getText().getMessage());
+//        return buf;
+//    }
 	
     public final void bind(final TextMessage message) {
     	Context context = this.getContext();
@@ -122,13 +123,21 @@ public class ListItemMessage extends RelativeLayout {
         );
 
         try {
-        	mMessageBody.setText(formatSender());
+            if (mMessage.getType() == MessageType.INCOMING) {
+            	Contact contact = Contact.getContact(context, mMessage.getStorage().getParent().getPhoneNumber());
+            	mFrom.setText(contact.getPhoneNumber());
+            	if (contact.getName() != null && contact.getName().length() > 0)
+            		mFrom.setText(contact.getName());
+            } else
+            	mFrom.setText(R.string.me);
+
+            mMessageBody.setText(mMessage.getText().toString());
         } catch (DataFormatException ex) {
         	hasError = true;
         } catch (StorageFileException e) {
         	hasError = true;
         }
-
+        
     	mTimeStamp.setText(UtilsTextFormat.formatDateTime(mMessage.getStorage().getTimeStamp()));
 
         mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);

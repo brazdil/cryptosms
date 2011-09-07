@@ -246,7 +246,9 @@ public class ActivityLists extends ActivityAppState {
 	                        		    			// clicked on the Clear Pending header
 	                        		    			getDialogManager().showDialog(DIALOG_CLEAR_ALL_PENDING, null);
 	                        		    		} else {
-	                        			    		// TODO: clicked on a notification
+	                        			    		// clicked on a notification
+	                        		    			ListItemNotification notification = (ListItemNotification) view;
+	                        		    			notification.performLongClick();
 	                        		    		}
 	                        				}
 	                        			});
@@ -617,6 +619,7 @@ public class ActivityLists extends ActivityAppState {
     		mNewContactView.bind(getString(R.string.tab_contacts_new_contact), getString(R.string.tab_contacts_new_contact_details));
     		mClearPendingView.bind(getString(R.string.clear_pending), getString(R.string.clear_pending_details));
     		
+    		updateConversations();
     		updateEvents();
 		} else {
 			mListNotifications.setAdapter(null);
@@ -724,7 +727,7 @@ public class ActivityLists extends ActivityAppState {
 			try {
 	    		Conversation conv = Header.getHeader().getFirstConversation();
 	    		while (conv != null) {
-	    			if (conv.getFirstMessageData() != null)
+	    			if (conv.hasMessageData())
 	    				listConversations.add(conv);
 					if (StorageUtils.hasKeysForSim(conv))
 						listContacts.add(conv);

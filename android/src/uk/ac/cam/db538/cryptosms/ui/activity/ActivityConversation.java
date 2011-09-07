@@ -109,13 +109,9 @@ public class ActivityConversation extends ActivityAppState {
 			public void afterTextChanged(Editable s) {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
-//				try {
-//					mBytesCounterView.setText(TextMessage.getRemainingBytes(msg) + " (" + TextMessage.getPartsCount(msg) + ")");
-//					mSendButton.setEnabled(true);
-//				} catch (MessageException e) {
-//					mSendButton.setEnabled(false);
-//				}
-//				mBytesCounterView.setVisibility(View.VISIBLE);
+				mBytesCounterView.setText(TextMessage.getRemainingBytes(msg.getDataLength()) + " (" + TextMessage.getMessagePartsCount(msg.getDataLength()) + ")");
+				mSendButton.setEnabled(true);
+				mBytesCounterView.setVisibility(View.VISIBLE);
 			}
 		});
 

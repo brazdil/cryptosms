@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
+import android.content.Context;
 import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
@@ -11,6 +12,8 @@ import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
+import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.state.State;
@@ -104,6 +107,10 @@ public class TextMessage extends Message {
     public CompressedText getText() throws StorageFileException, DataFormatException {
 		return CompressedText.decode(getStoredData());	
 	}
+    
+    public uk.ac.cam.db538.cryptosms.storage.MessageData.MessageType getType() {
+    	return mStorage.getMessageType();
+    }
 	
 	public void setText(CompressedText text) throws StorageFileException, MessageException {
 		byte[] data = text.getData();
@@ -113,7 +120,7 @@ public class TextMessage extends Message {
 		int remains = data.length;
 		mStorage.setAscii(text.getCharset() == TextCharset.ASCII);
 		mStorage.setCompressed(text.isCompressed());
-		mStorage.setNumberOfParts(getMessagePartCount(text.getDataLength()));
+		mStorage.setNumberOfParts(getMessagePartsCount(text.getDataLength()));
 		// save
 		while (remains > 0) {
 			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_DATA : LENGTH_PART_MESSAGE_DATA);
@@ -124,10 +131,14 @@ public class TextMessage extends Message {
 		mStorage.saveToFile();
 	}
 	
-	private static int getLengthComplete(int len) {
-		len = Encryption.getEncryption().getSymmetricEncryptedLength(len);
-		len += LENGTH_FIRST_MESSAGE_LENGTH;
-		return len;
+	private static int getLengthComplete(int lenText) {
+		lenText = Encryption.getEncryption().getSymmetricEncryptedLength(lenText);
+		lenText += LENGTH_FIRST_MESSAGE_LENGTH;
+		return lenText;
+	}
+	
+	public static int getMessagePartsCount(int lenText) {
+		return LowLevel.roundUpDivision(getLengthComplete(lenText), LENGTH_DATA);
 	}
 	
 	private boolean mKeyIncremented = false;
@@ -156,7 +167,7 @@ public class TextMessage extends Message {
 		System.arraycopy(LowLevel.getBytesUnsignedShort(lengthText), 0, dataComplete, OFFSET_FIRST_MESSAGE_LENGTH - OFFSET_DATA, LENGTH_FIRST_MESSAGE_LENGTH);
 		System.arraycopy(dataEncrypted, 0, dataComplete, OFFSET_FIRST_MESSAGE_DATA - OFFSET_DATA, dataEncrypted.length);
 		
-		int countParts = LowLevel.roundUpDivision(dataComplete.length, LENGTH_DATA);
+		int countParts = getMessagePartsCount(lengthText);
 		ArrayList<byte[]> listParts = new ArrayList<byte[]>(countParts);
 
 		byte id = keys.getNextID_Out();
@@ -181,6 +192,18 @@ public class TextMessage extends Message {
 		return listParts;
 	}
 	
+	
+	
+	@Override
+	public void sendSMS(String phoneNumber, Context context,
+			MessageSendingListener listener) throws StorageFileException,
+			MessageException, EncryptionException {
+		mStorage.setMessageType(uk.ac.cam.db538.cryptosms.storage.MessageData.MessageType.OUTGOING);
+		super.sendSMS(phoneNumber, context, listener);
+	}
+
+
+
 	public static class JoiningException extends Exception {
 		/**
 		 * 
@@ -284,7 +307,7 @@ public class TextMessage extends Message {
 				return new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null);
 			
 			// join the parts
-			int countParts = LowLevel.roundUpDivision(dataLength, LENGTH_DATA);
+			int countParts = getMessagePartsCount(dataLength);
 			byte[] dataJoined = null;
 			try {
 				dataJoined = joinParts(idGroup, countParts);
@@ -330,6 +353,7 @@ public class TextMessage extends Message {
 			
 			// save to conversation			
 			MessageData msgData = MessageData.createMessageData(conv);
+			msgData.setMessageType(uk.ac.cam.db538.cryptosms.storage.MessageData.MessageType.INCOMING);
 			TextMessage msgText = new TextMessage(msgData);
 			try {
 				msgText.setText(CompressedText.decode(dataDecrypted));
@@ -347,17 +371,13 @@ public class TextMessage extends Message {
 		}
 	}
 
-	protected static byte getMessageIdByte(byte[] data) {
-		return data[OFFSET_ID];
-	}
-
 	/**
 	 * Returns message ID for both first and following parts of text messages
 	 * @param data
 	 * @return
 	 */
 	public static int getMessageId(byte[] data) {
-		return LowLevel.getUnsignedByte(getMessageIdByte(data));
+		return LowLevel.getUnsignedByte(data[OFFSET_ID]);
 	}
 	
 	/**
@@ -375,23 +395,21 @@ public class TextMessage extends Message {
 	 * @param text
 	 * @return
 	 */
-	public static int getRemainingBytes(CompressedText text) {
-		int length = text.getDataLength();
+	public static int getRemainingBytes(int lenText) {
+		int lenComplete = getLengthComplete(lenText);
+		int remainingBytesInBlock = (Encryption.SYM_BLOCK_LENGTH - (lenText % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
+		int remainingBlocksInMessage = ((LENGTH_DATA - (lenComplete % LENGTH_DATA)) % LENGTH_DATA) / Encryption.SYM_BLOCK_LENGTH;
+		int remainingBytesInMessage = remainingBlocksInMessage * Encryption.SYM_BLOCK_LENGTH;
 		
-		int inThisMessage = length - LENGTH_FIRST_DATA;
-		while (inThisMessage > 0)
-			inThisMessage -= LENGTH_PART_MESSAGE_DATA;
-		inThisMessage = -inThisMessage;
-
-		int untilEndOfBlock = (Encryption.SYM_BLOCK_LENGTH - (length % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
-		int remainsBytes = inThisMessage - untilEndOfBlock;
-		if (remainsBytes < 0)
-			remainsBytes += LENGTH_PART_MESSAGE_DATA;
-		int remainsBlocks = remainsBytes / Encryption.SYM_BLOCK_LENGTH;
-			
-		int remainsReal = (remainsBlocks * Encryption.SYM_BLOCK_LENGTH) + untilEndOfBlock;
+		Log.d(MyApplication.APP_TAG, "REMAINING_BYTES");
+		Log.d(MyApplication.APP_TAG, "text length: " + lenText);
+		Log.d(MyApplication.APP_TAG, "complete length: " + lenComplete);
+		Log.d(MyApplication.APP_TAG, "complete length: " + lenComplete);
+		Log.d(MyApplication.APP_TAG, "bytes in block: " + remainingBytesInBlock);
+		Log.d(MyApplication.APP_TAG, "blocks in message: " + remainingBlocksInMessage);
+		Log.d(MyApplication.APP_TAG, "bytes in message: " + remainingBytesInMessage);
 		
-		return remainsReal;
+		return remainingBytesInBlock + remainingBytesInMessage;
 	}
 
 	/**
@@ -404,18 +422,19 @@ public class TextMessage extends Message {
 		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_MESSAGE_LENGTH);
 	}
 
-	protected int getMessagePartCount(int dataLength) {
-		return LowLevel.roundUpDivision(dataLength - LENGTH_FIRST_DATA, LENGTH_PART_MESSAGE_DATA);
-	}
-
 	@Override
 	protected void onMessageSent(String phoneNumber)
 			throws StorageFileException {
+		mStorage.setDeliveredAll(true);
+		mStorage.saveToFile();
 	}
 
 	@Override
 	protected void onPartSent(String phoneNumber, int index)
 			throws StorageFileException {
+		mStorage.setPartDelivered(index, true);
+		mStorage.saveToFile();
+		
 		if (!mKeyIncremented) {
 			// it at least something was sent, increment the ID and session keys
 			SessionKeys keys = StorageUtils.getSessionKeysForSim(this.getStorage().getParent());

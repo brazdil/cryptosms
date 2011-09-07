@@ -8,22 +8,17 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.TextView;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
 import uk.ac.cam.db538.cryptosms.data.KeysMessage;
-import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
 import uk.ac.cam.db538.cryptosms.state.State;
-import uk.ac.cam.db538.cryptosms.storage.Conversation;
-import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSendMessage;
-import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
 public class ActivityExchangeViaText extends ActivityAppState {
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
@@ -34,8 +29,6 @@ public class ActivityExchangeViaText extends ActivityAppState {
 
 	private String mPhoneNumber;
 	
-	@InjectView(R.id.sms_count)
-	TextView mSmsCountView;
 	@InjectView(R.id.back)
 	Button mBackButton;
 	@InjectView(R.id.send)

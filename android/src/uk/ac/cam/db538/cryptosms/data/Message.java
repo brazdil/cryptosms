@@ -84,7 +84,6 @@ public abstract class Message {
 					// check that it arrived OK
 					switch (getResultCode()) {
 					case Activity.RESULT_OK:
-						Log.d(MyApplication.APP_TAG, "Sent " + intentIndex);
 						// notify and save
 						deliveryConfirms[intentIndex] = true;
 						try {
