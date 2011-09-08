@@ -323,7 +323,7 @@ public class SessionKeys {
 	}
 	
 	public void incrementIn(int count) {
-		for (int i = 0; i < count && LowLevel.getUnsignedByte(getNextID_Out()) < 255; ++i) {
+		for (int i = 0; i < count && LowLevel.getUnsignedByte(getLastID_In()) < 255; ++i) {
 			int id = LowLevel.getUnsignedByte(getLastID_In()) + 1;
 			setLastID_In(LowLevel.getBytesUnsignedByte(id));
 			setSessionKey_In(Encryption.getEncryption().getHash(getSessionKey_In()));
