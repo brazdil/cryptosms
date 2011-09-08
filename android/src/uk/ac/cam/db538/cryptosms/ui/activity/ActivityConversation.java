@@ -294,6 +294,12 @@ public class ActivityConversation extends ActivityAppState {
 			return;
 		}
 	}
+	
+	@Override
+	public void onEventParsingFinished() {
+		super.onEventParsingFinished();
+		onSimState();
+	}
 
 	private void updateMessageHistory() {
 		synchronized(mAdapterMessageHistory) {

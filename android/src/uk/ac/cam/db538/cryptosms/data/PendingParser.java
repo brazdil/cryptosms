@@ -2,6 +2,8 @@ package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.joda.time.DateTime;
 
@@ -9,7 +11,10 @@ import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
+import uk.ac.cam.db538.cryptosms.storage.Conversation;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -161,13 +166,13 @@ public class PendingParser {
 								break;
 							case TEXT:
 								mParseResults.add(TextMessage.parseTextMessage(idGroup));
-								// TODO: increment key ID to the lowest we decoded
 								break;
 							}
 						}
 					}
 					
 					mUpdateConversations = false;
+					HashMap<String, Integer> mapHighestId = new HashMap<String, Integer>();
 					
 					for (ParseResult parseResult : mParseResults) {
 						if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
@@ -175,6 +180,30 @@ public class PendingParser {
 							mParseResults.remove(parseResult);
 							parseResult.removeFromDb(database);
 							mUpdateConversations = true;
+						}
+						
+						if (parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE) {
+							Pending msgPart = parseResult.mIdGroup.get(0);
+							String sender = msgPart.getSender();
+							int id = TextMessage.getMessageId(msgPart.getData());
+							Integer highestId = mapHighestId.get(sender);
+							if (highestId == null)
+								highestId = Integer.valueOf(-1);
+							if (id > highestId)
+								mapHighestId.put(sender, id);
+						}
+					}
+					
+					// increment key ID to the highest we decoded
+					for (Entry<String, Integer> elem : mapHighestId.entrySet()) {
+						try {
+							Conversation conv = Conversation.getConversation(elem.getKey());
+							SessionKeys keys = conv.getSessionKeys(SimCard.getSingleton().getNumber());
+							keys.incrementIn(elem.getValue() - keys.getLastID_In() + 1);
+							keys.saveToFile();
+						} catch (StorageFileException ex) {
+							mException = ex;
+							return null;
 						}
 					}
 	
