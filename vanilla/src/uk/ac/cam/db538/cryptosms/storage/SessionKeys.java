@@ -286,7 +286,8 @@ public class SessionKeys {
 		SENDING_KEYS,
 		SENDING_CONFIRMATION,
 		WAITING_FOR_REPLY,
-		KEYS_EXCHANGED
+		KEYS_EXCHANGED,
+		KEYS_EXPIRED
 	}
 	
 	/**
@@ -298,12 +299,14 @@ public class SessionKeys {
 	 */
 	public SessionKeysStatus getStatus() {
 		if (mKeysSent) {
-			if (mKeysConfirmed)
-				return SessionKeysStatus.KEYS_EXCHANGED;
-			else
+			if (mKeysConfirmed) {
+				if (LowLevel.getUnsignedByte(mNextID_Out) < 255)
+					return SessionKeysStatus.KEYS_EXCHANGED;
+				else
+					return SessionKeysStatus.KEYS_EXPIRED;
+			} else
 				return SessionKeysStatus.WAITING_FOR_REPLY;
-		}
-		else {
+		} else {
 			if (mKeysConfirmed)
 				return SessionKeysStatus.SENDING_CONFIRMATION;
 			else
@@ -312,7 +315,7 @@ public class SessionKeys {
 	}
 	
 	public void incrementOut(int count) {
-		for (int i = 0; i < count; ++i) {
+		for (int i = 0; i < count && LowLevel.getUnsignedByte(getNextID_Out()) < 255; ++i) {
 			int id = LowLevel.getUnsignedByte(getNextID_Out()) + 1;
 			setNextID_Out(LowLevel.getBytesUnsignedByte(id));
 			setSessionKey_Out(Encryption.getEncryption().getHash(getSessionKey_Out()));
@@ -320,7 +323,7 @@ public class SessionKeys {
 	}
 	
 	public void incrementIn(int count) {
-		for (int i = 0; i < count; ++i) {
+		for (int i = 0; i < count && LowLevel.getUnsignedByte(getNextID_Out()) < 255; ++i) {
 			int id = LowLevel.getUnsignedByte(getLastID_In()) + 1;
 			setLastID_In(LowLevel.getBytesUnsignedByte(id));
 			setSessionKey_In(Encryption.getEncryption().getHash(getSessionKey_In()));

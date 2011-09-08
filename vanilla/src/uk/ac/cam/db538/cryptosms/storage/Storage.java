@@ -55,17 +55,15 @@ public final class Storage {
 			throw new StorageFileException("No filename was set");
 		
 		boolean exists = true;
-		long length = 0L;
 		try {
 			File f = new File(mFilename);
 			exists = f.exists();
-			length = f.length();
 			smsFile = new StorageFile(mFilename);
 		} catch (IOException ex) {
 			throw new StorageFileException(ex);
 		}
 		
-		if (!exists || length < ALIGN_SIZE)
+		if (!exists)
 			createFile();
 	}
 	
@@ -89,6 +87,10 @@ public final class Storage {
 		} catch (IOException ex) {
 			throw new StorageFileException(ex);
 		}
+	}
+	
+	public synchronized void deleteFile() {
+		new File(mFilename).delete();
 	}
 	
 	/**
