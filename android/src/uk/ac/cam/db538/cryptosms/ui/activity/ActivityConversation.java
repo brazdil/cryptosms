@@ -6,9 +6,9 @@ import java.util.Comparator;
 
 import roboguice.inject.InjectView;
 import uk.ac.cam.db538.cryptosms.R;
+import uk.ac.cam.db538.cryptosms.SimCard;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
-import uk.ac.cam.db538.cryptosms.data.SimCard;
 import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
@@ -138,6 +138,7 @@ public class ActivityConversation extends ActivityAppState {
 							public void onMessageSent() {
 								pd.cancel();
 								mTextEditor.setText("");
+								mBytesCounterView.setVisibility(View.GONE);
 								updateMessageHistory();
 								onSimState();
 							}

@@ -45,33 +45,35 @@
         android:ellipsize="marquee"  />
 
     <TextView android:id="@+id/date"
-        android:layout_marginTop="2dip"
-        android:layout_marginBottom="10dip"
+        android:layout_marginTop="6dip"
         android:layout_marginLeft="5dip"
+        android:layout_marginRight="7dip"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmallInverse"
         android:singleLine="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true" />
+        android:layout_alignParentTop="true" />
+
+    <ImageView android:id="@+id/type"
+        android:layout_marginLeft="3dip"
+        android:layout_marginBottom="10dip"
+        android:layout_marginRight="7dip"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:visibility="invisible"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/ic_attachment_universal_small" />
 
     <ImageView android:id="@+id/error"
         android:layout_marginLeft="3dip"
         android:visibility="invisible"
-        android:layout_toLeftOf="@id/date"
-        android:layout_alignBottom="@id/date"
+        android:layout_toLeftOf="@id/type"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:layout_alignBottom="@id/type"
         android:src="@drawable/ic_list_alert_sms_failed" />
-
-    <ImageView android:id="@+id/attachment"
-        android:layout_marginLeft="3dip"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:visibility="gone"
-        android:layout_toLeftOf="@id/error"
-        android:layout_alignBottom="@id/date"
-        android:src="@drawable/ic_attachment_universal_small" />
 
     <TextView android:id="@+id/subject"
         android:layout_width="wrap_content"

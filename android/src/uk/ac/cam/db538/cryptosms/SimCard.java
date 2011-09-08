@@ -1,4 +1,4 @@
-package uk.ac.cam.db538.cryptosms.data;
+package uk.ac.cam.db538.cryptosms;
 
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;

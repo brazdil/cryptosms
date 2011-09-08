@@ -30,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.QuickContactBadge;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -41,7 +42,7 @@ public class ListItemNotification extends RelativeLayout {
     private TextView mSubjectView;
     private TextView mFromView;
     private TextView mDateView;
-    private View mDeliveryPendingView;
+    private ImageView mMessageTypeIcon;
     private View mErrorIndicator;
     private QuickContactBadge mAvatarView;
 
@@ -62,7 +63,7 @@ public class ListItemNotification extends RelativeLayout {
         mFromView = (TextView) findViewById(R.id.from);
         mSubjectView = (TextView) findViewById(R.id.subject);
         mDateView = (TextView) findViewById(R.id.date);
-        mDeliveryPendingView = findViewById(R.id.attachment);
+        mMessageTypeIcon = (ImageView) findViewById(R.id.type);
         mErrorIndicator = findViewById(R.id.error);
         mAvatarView = (QuickContactBadge) findViewById(R.id.avatar);
     }
@@ -75,36 +76,6 @@ public class ListItemNotification extends RelativeLayout {
     	return mParseData;
     }
 
-/*    private CharSequence formatMessage(ConversationListItemData ch) {
-        final int size = android.R.style.TextAppearance_Small;
-        final int color = android.R.styleable.Theme_textColorSecondary;
-        String from = ch.getFrom();
-
-        SpannableStringBuilder buf = new SpannableStringBuilder(from);
-
-        if (ch.getMessageCount() > 1) {
-            buf.append(" (" + ch.getMessageCount() + ") ");
-        }
-
-        int before = buf.length();
-        if (ch.hasDraft()) {
-            buf.append(" ");
-            buf.append(mContext.getResources().getString(R.string.has_draft));
-            buf.setSpan(new TextAppearanceSpan(mContext, size, color), before,
-                    buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-            buf.setSpan(new ForegroundColorSpan(
-                    mContext.getResources().getColor(R.drawable.text_color_red)),
-                    before, buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-
-        // Unread messages are shown in bold
-        if (!ch.isRead()) {
-            buf.setSpan(STYLE_BOLD, 0, buf.length(),
-                    Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-        return buf;
-    }*/
-	
     /**
      * Only used for header binding.
      */
@@ -119,28 +90,11 @@ public class ListItemNotification extends RelativeLayout {
     	Resources res = context.getResources();
         setParseData(parseData);
         
-        boolean hasError = false; 
-        boolean hasNoEncryption = false;
+        boolean hasError = false;
         
         setBackgroundDrawable(
     		res.getDrawable(R.drawable.conversation_item_background_read)
         );
-
-        LayoutParams attachmentLayout = (LayoutParams)mDeliveryPendingView.getLayoutParams();
-        if (hasError) {
-            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.error);
-        } else {
-            attachmentLayout.addRule(RelativeLayout.LEFT_OF, R.id.date);
-        }
-
-        LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
-        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasNoEncryption ? R.id.attachment :
-            (hasError ? R.id.error : R.id.date));
-
-        mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
-
-//        mDeliveryPendingView.setVisibility(hasNoEncryption ? VISIBLE : GONE);
-//        mDateView.setText(conv.getFormattedTime());
 
     	Contact contact = Contact.getContact(context, parseData.getIdGroup().get(0).getSender());
     	if (contact.getName() != null && contact.getName().length() > 0)
@@ -157,35 +111,46 @@ public class ListItemNotification extends RelativeLayout {
         	break;
     	case CORRUPTED_DATA:
         	mSubjectView.setText(res.getString(R.string.parse_corrupted_data));
+        	hasError = true;
         	break;
     	case COULD_NOT_DECRYPT:
         	mSubjectView.setText(res.getString(R.string.parse_could_not_decrypt));
+        	hasError = true;
         	break;
     	case COULD_NOT_VERIFY:
         	mSubjectView.setText(res.getString(R.string.parse_could_not_verify));
+        	hasError = true;
         	break;
     	case MISSING_PARTS:
         	mSubjectView.setText(res.getString(R.string.parse_missing_parts));
+        	hasError = true;
         	break;
     	case NO_SESSION_KEYS:
         	mSubjectView.setText(res.getString(R.string.parse_no_session_keys));
+        	hasError = true;
         	break;
     	case REDUNDANT_PARTS:
         	mSubjectView.setText(res.getString(R.string.parse_redundant_parts));
+        	hasError = true;
         	break;
     	case UNKNOWN_SENDER:
         	mSubjectView.setText(res.getString(R.string.parse_unknown_sender));
+        	hasError = true;
         	break;
     	case INTERNAL_ERROR:
     		mSubjectView.setText(res.getString(R.string.parse_internal_error));
+    		hasError = true;
         	break;
     	case TIMESTAMP_IN_FUTURE:
     		mSubjectView.setText(res.getString(R.string.parse_timestamp_in_future));
+    		hasError = true;
         	break;
     	case TIMESTAMP_OLD:
     		mSubjectView.setText(res.getString(R.string.parse_timestamp_old));
+    		hasError = true;
         	break;
         default:
+        	hasError = true;
         	break;
     	}
         
@@ -199,5 +164,24 @@ public class ListItemNotification extends RelativeLayout {
         }
         mAvatarView.setImageDrawable(avatarDrawable);
         mAvatarView.setVisibility(View.VISIBLE);
+        
+        switch (mParseData.getIdGroup().get(0).getType()) {
+        case HANDSHAKE:
+        case CONFIRM:
+        	mMessageTypeIcon.setImageDrawable(res.getDrawable(R.drawable.icon_key_exchange));
+        	break;
+        case TEXT:
+        	mMessageTypeIcon.setImageDrawable(res.getDrawable(R.drawable.icon_message));
+        	break;
+        default:
+        	mMessageTypeIcon.setImageDrawable(res.getDrawable(R.drawable.ic_list_alert_sms_failed));
+        	break;
+        }
+
+        LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
+        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasError ? R.id.error : R.id.type);
+
+        mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
+        mMessageTypeIcon.setVisibility(VISIBLE);
     }
 }

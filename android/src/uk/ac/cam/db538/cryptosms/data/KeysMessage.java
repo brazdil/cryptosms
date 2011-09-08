@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.SimCard;
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
@@ -242,7 +243,6 @@ public class KeysMessage extends Message {
                 keys.setKeysConfirmed(true);
                 keys.setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
                 keys.setTimeStamp(0L);
-                keys.incrementOut(254);
                 keys.saveToFile();
 				
 				return new ParseResult(idGroup, 

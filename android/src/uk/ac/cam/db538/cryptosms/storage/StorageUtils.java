@@ -1,6 +1,6 @@
 package uk.ac.cam.db538.cryptosms.storage;
 
-import uk.ac.cam.db538.cryptosms.data.SimCard;
+import uk.ac.cam.db538.cryptosms.SimCard;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;

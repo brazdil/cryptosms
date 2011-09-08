@@ -80,36 +80,6 @@ public class ListItemConversation extends RelativeLayout {
     	return mConversationHeader;
     }
 
-/*    private CharSequence formatMessage(ConversationListItemData ch) {
-        final int size = android.R.style.TextAppearance_Small;
-        final int color = android.R.styleable.Theme_textColorSecondary;
-        String from = ch.getFrom();
-
-        SpannableStringBuilder buf = new SpannableStringBuilder(from);
-
-        if (ch.getMessageCount() > 1) {
-            buf.append(" (" + ch.getMessageCount() + ") ");
-        }
-
-        int before = buf.length();
-        if (ch.hasDraft()) {
-            buf.append(" ");
-            buf.append(mContext.getResources().getString(R.string.has_draft));
-            buf.setSpan(new TextAppearanceSpan(mContext, size, color), before,
-                    buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-            buf.setSpan(new ForegroundColorSpan(
-                    mContext.getResources().getColor(R.drawable.text_color_red)),
-                    before, buf.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-
-        // Unread messages are shown in bold
-        if (!ch.isRead()) {
-            buf.setSpan(STYLE_BOLD, 0, buf.length(),
-                    Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        }
-        return buf;
-    }*/
-	
 	private String getPreview(Conversation conv) {
 		MessageData firstMessageData = null;
 		try {
@@ -162,7 +132,7 @@ public class ListItemConversation extends RelativeLayout {
         }
 
         LayoutParams subjectLayout = (LayoutParams)mSubjectView.getLayoutParams();
-        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasNoEncryption ? R.id.attachment :
+        subjectLayout.addRule(RelativeLayout.LEFT_OF, hasNoEncryption ? R.id.type :
             (hasError ? R.id.error : R.id.date));
 
         mErrorIndicator.setVisibility(hasError ? VISIBLE : GONE);
