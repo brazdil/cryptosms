@@ -6,6 +6,7 @@ import java.util.Collections;
 import org.joda.time.DateTime;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
@@ -128,6 +129,7 @@ public class PendingParser {
 
 		private boolean mUpdateConversations;
 		private ArrayList<ParseResult> mParseResults;
+		private Exception mException = null;
 		
 		@Override
 		protected void onPreExecute() {
@@ -138,46 +140,50 @@ public class PendingParser {
 		
 		@Override
 		protected Void doInBackground(Void... arg0) {
-			mParseResults = new ArrayList<PendingParser.ParseResult>();
-			
-			// parse pending stuff
-			DbPendingAdapter database = new DbPendingAdapter(mContext);
-			database.open();
 			try {
-				// have the pending messages sorted into groups by their type and ID
-				ArrayList<ArrayList<Pending>> idGroups = database.getAllIdGroups();
-				for(ArrayList<Pending> idGroup : idGroups) {
-					// check that there are not too many parts
-					if (idGroup.size() > 255)
-						mParseResults.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
-					else if (idGroup.size() > 0) {
-						switch (idGroup.get(0).getType()) {
-						case HANDSHAKE:
-						case CONFIRM:
-							mParseResults.add(KeysMessage.parseKeysMessage(idGroup));
-							break;
-						case TEXT:
-							mParseResults.add(TextMessage.parseTextMessage(idGroup));
-							// TODO: increment key ID to the lowest we decoded
-							break;
+				mParseResults = new ArrayList<PendingParser.ParseResult>();
+				
+				// parse pending stuff
+				DbPendingAdapter database = new DbPendingAdapter(mContext);
+				database.open();
+				try {
+					// have the pending messages sorted into groups by their type and ID
+					ArrayList<ArrayList<Pending>> idGroups = database.getAllIdGroups();
+					for(ArrayList<Pending> idGroup : idGroups) {
+						// check that there are not too many parts
+						if (idGroup.size() > 255)
+							mParseResults.add(new ParseResult(idGroup, PendingParseResult.REDUNDANT_PARTS, null));
+						else if (idGroup.size() > 0) {
+							switch (idGroup.get(0).getType()) {
+							case HANDSHAKE:
+							case CONFIRM:
+								mParseResults.add(KeysMessage.parseKeysMessage(idGroup));
+								break;
+							case TEXT:
+								mParseResults.add(TextMessage.parseTextMessage(idGroup));
+								// TODO: increment key ID to the lowest we decoded
+								break;
+							}
 						}
 					}
-				}
-				
-				mUpdateConversations = false;
-				
-				for (ParseResult parseResult : mParseResults) {
-					if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
-						parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
-						mParseResults.remove(parseResult);
-						parseResult.removeFromDb(database);
-						mUpdateConversations = true;
+					
+					mUpdateConversations = false;
+					
+					for (ParseResult parseResult : mParseResults) {
+						if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
+							parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE ) {
+							mParseResults.remove(parseResult);
+							parseResult.removeFromDb(database);
+							mUpdateConversations = true;
+						}
 					}
+	
+					Collections.sort(mParseResults, Collections.reverseOrder());
+				} finally {
+					database.close();
 				}
-
-				Collections.sort(mParseResults, Collections.reverseOrder());
-			} finally {
-				database.close();
+			} catch (WrongKeyDecryptionException ex) {
+				mException = ex;
 			}
 			return null;
 		}
@@ -185,8 +191,11 @@ public class PendingParser {
 		@Override
 		protected void onPostExecute(Void result) {
 			super.onPostExecute(result);
-
-			Log.d(MyApplication.APP_TAG, "Finished parsing");
+			
+			if (mException != null) {
+				State.fatalException(mException);
+				return;
+			}
 			
 			PendingParser.this.mParseResults = this.mParseResults;
 			

@@ -2,6 +2,7 @@ package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
 
+import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.Preferences;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.data.SimCard;
@@ -19,6 +20,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.PhoneNumberUtils;
+import android.util.Log;
 
 public class UtilsSimIssues {
 	private static boolean mImportShown = false;

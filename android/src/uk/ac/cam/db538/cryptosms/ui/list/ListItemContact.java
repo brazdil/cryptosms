@@ -107,6 +107,10 @@ public class ListItemContact extends RelativeLayout {
     			mStatusView.setText(res.getString(R.string.item_contacts_keys_exchanged));
     			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_keys_exchanged));
     			break;
+    		case KEYS_EXPIRED:
+    			mStatusView.setText(res.getString(R.string.item_contacts_keys_expired));
+    			mIconView.setImageDrawable(res.getDrawable(R.drawable.item_contacts_keys_error));
+    			break;
     		}
     	}
     	else {

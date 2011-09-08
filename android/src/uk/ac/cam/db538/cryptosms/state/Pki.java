@@ -204,9 +204,9 @@ public class Pki {
 	static void setLoggedIn(boolean value, boolean forceNotify) {
 		if (mLoggedIn != value || forceNotify) {
 			mLoggedIn = value;
-			if (mLoggedIn) 
+			if (mLoggedIn) {
 				State.notifyLogin();
-			else {
+			} else {
 //				mMasterKey = null; // forget the master key
 				State.notifyLogout();
 			}
@@ -225,8 +225,7 @@ public class Pki {
 				if (mPki.hasDataStore(KEY_STORAGE)) {
 					mMasterKey = mPki.getDataStore(KEY_STORAGE);
 					return mMasterKey;
-				}
-				else if (generateAllow) {
+				} else if (generateAllow) {
 					mPki.setDataStore(KEY_STORAGE, Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
 					return getMasterKey(forceLogIn, false);
 				} else

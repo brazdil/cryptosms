@@ -16,6 +16,8 @@ import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
@@ -50,6 +52,7 @@ public class ActivityConversation extends ActivityAppState {
 	public static final String OPTION_OFFER_KEYS_SETUP = "KEYS_SETUP";
 	
 	private static final String DIALOG_NO_SESSION_KEYS = "DIALOG_NO_SESSION_KEYS";
+	private static final String DIALOG_SESSION_KEY_EXPIRED = "DIALOG_SESSION_KEY_EXPIRED";
 	
 	private Contact mContact;
 	private Conversation mConversation;
@@ -136,6 +139,7 @@ public class ActivityConversation extends ActivityAppState {
 								pd.cancel();
 								mTextEditor.setText("");
 								updateMessageHistory();
+								onSimState();
 							}
 							
 							@Override
@@ -148,6 +152,7 @@ public class ActivityConversation extends ActivityAppState {
 								.setNeutralButton(res.getString(R.string.ok), new DummyOnClickListener())
 								.show();
 								updateMessageHistory();
+								onSimState();
 							}
 							
 							@Override
@@ -199,6 +204,29 @@ public class ActivityConversation extends ActivityAppState {
 				return DIALOG_NO_SESSION_KEYS;
 			}
 		});
+        getDialogManager().addBuilder(new DialogBuilder() {
+			@Override
+			public Dialog onBuild(Bundle params) {
+				return new AlertDialog.Builder(mContext)
+				       .setTitle(res.getString(R.string.conversation_key_expired))
+				       .setMessage(res.getString(R.string.conversation_key_expired_details))
+				       .setPositiveButton(res.getString(R.string.read_only), new DummyOnClickListener())
+				       .setNegativeButton(res.getString(R.string.setup), new OnClickListener() {
+				    	   @Override
+				    	   public void onClick(DialogInterface dialog, int which) {
+				    			Intent intent = new Intent(ActivityConversation.this, ActivityExchangeMethod.class);
+				    			intent.putExtra(ActivityExchangeMethod.OPTION_PHONE_NUMBER, mConversation.getPhoneNumber());
+				    			startActivity(intent);
+				    	   }
+				       })
+				       .create();
+			}
+			
+			@Override
+			public String getId() {
+				return DIALOG_SESSION_KEY_EXPIRED;
+			}
+		});
 	}
 	
 	private void modeEnabled(boolean value) {
@@ -244,9 +272,16 @@ public class ActivityConversation extends ActivityAppState {
 	    try {
 			if (SimCard.getSingleton().isNumberAvailable()) {
 				// check keys availability
-		    	if (StorageUtils.hasKeysExchangedForSim(mConversation)) 
+				SessionKeys keys = mConversation.getSessionKeys(SimCard.getSingleton().getNumber());
+		    	if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED) 
 		    		modeEnabled(true);
-		    	else {
+		    	else if (keys != null && keys.getStatus() == SessionKeysStatus.KEYS_EXPIRED) {
+		    		if (mErrorNoKeysShow) {
+						// outgoing session key has expired 
+						mErrorNoKeysShow = false;
+						getDialogManager().showDialog(DIALOG_SESSION_KEY_EXPIRED, null);
+		    		}
+				} else {
 		    		if (mErrorNoKeysShow) {
 						// secure connection has not been successfully established yet
 						mErrorNoKeysShow = false;
@@ -274,10 +309,6 @@ public class ActivityConversation extends ActivityAppState {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-//			if (mAdapterMessageHistory.getList() == null || mAdapterMessageHistory.getList().size() == 0) {
-//				mListNotificationsLoading.setVisibility(View.VISIBLE);
-//				mListNotifications.setVisibility(View.GONE);
-//			}
 		}
 		
 		@Override
@@ -310,8 +341,6 @@ public class ActivityConversation extends ActivityAppState {
 
 			mAdapterMessageHistory.setList(mTextMessages);
 			mAdapterMessageHistory.notifyDataSetChanged();
-//			mListNotificationsLoading.setVisibility(View.GONE);
-//			mListNotifications.setVisibility(View.VISIBLE);
 		}
 	}
 	

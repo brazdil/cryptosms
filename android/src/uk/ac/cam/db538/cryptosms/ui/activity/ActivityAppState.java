@@ -1,6 +1,7 @@
 package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import roboguice.activity.RoboActivity;
+import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
@@ -118,11 +119,9 @@ public class ActivityAppState extends RoboActivity {
 	};
 	
 	public void onSimState() {
-		
 	}
 	
 	public void onPkiConnect() {
-
 	}
 	
 	public void onPkiDisconnect() {
@@ -153,19 +152,19 @@ public class ActivityAppState extends RoboActivity {
 	}
 
 	public void onNewEvent() {
-		
 	}
 	
 	public void onEventParsingStarted() {
-		
 	}
 
 	public void onEventParsingFinished() {
-		
 	}
 
 	public void onFatalException(Exception ex) {
-		getErrorOverlay().modeFatalException(ex);
+		if (ex instanceof WrongKeyDecryptionException)
+			getErrorOverlay().modeCorruptedFile();
+		else
+			getErrorOverlay().modeFatalException(ex);
 		getErrorOverlay().show();
 		this.closeContextMenu();
 		this.closeOptionsMenu();

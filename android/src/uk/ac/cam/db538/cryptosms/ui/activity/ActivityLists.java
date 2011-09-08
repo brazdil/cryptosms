@@ -782,7 +782,6 @@ public class ActivityLists extends ActivityAppState {
 	}
 
 	public void updateEvents() {
-		Log.d(MyApplication.APP_TAG, "Updating list");
 		mAdapterNotifications.setList(PendingParser.getSingleton().getParseResults());
 		mAdapterNotifications.notifyDataSetChanged();
 	}

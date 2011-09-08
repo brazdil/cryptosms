@@ -242,6 +242,7 @@ public class KeysMessage extends Message {
                 keys.setKeysConfirmed(true);
                 keys.setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
                 keys.setTimeStamp(0L);
+                keys.incrementOut(254);
                 keys.saveToFile();
 				
 				return new ParseResult(idGroup, 

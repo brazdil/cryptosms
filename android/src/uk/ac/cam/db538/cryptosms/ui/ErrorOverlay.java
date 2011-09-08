@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.state.Pki;
+import uk.ac.cam.db538.cryptosms.storage.Storage;
+import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -161,6 +163,26 @@ public class ErrorOverlay extends RelativeLayout {
 //        });
 //		mBottomButton.setText(R.string.quit);
 		
+		mTopButton.setVisibility(VISIBLE);
+		mBottomButton.setVisibility(GONE);
+	}
+
+	public void modeCorruptedFile() {
+		mTextView.setText(R.string.corrupted_file_message);
+
+		mTopButton.setOnClickListener(new OnClickListener(){
+			@Override
+			public void onClick(View v) {
+				try {
+					Storage.getStorage().closeFile();
+					Storage.getStorage().deleteFile();
+				} catch (StorageFileException e) {
+					android.os.Process.killProcess(android.os.Process.myPid());
+				}
+			}
+        });
+		mTopButton.setText(R.string.delete_file);
+
 		mTopButton.setVisibility(VISIBLE);
 		mBottomButton.setVisibility(GONE);
 	}

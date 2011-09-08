@@ -538,6 +538,11 @@
     <string name="parse_timestamp_in_future">Time stamp in the future</string>
     <string name="parse_timestamp_old">Handshake expired</string>
     <string name="me">Me</string>
+    <string name="corrupted_file_message">The storage file cannot be decrypted or the data is corrupted. The master password is stored in PKI, so you can try fixing that first.</string>
+    <string name="delete_file">Delete file</string>
+    <string name="item_contacts_keys_expired">Key expired</string>
+    <string name="conversation_key_expired">Key expired</string>
+    <string name="conversation_key_expired_details">Your cryptographic key has expired. Please set up the encryption again.</string>
 
 </resources>
 

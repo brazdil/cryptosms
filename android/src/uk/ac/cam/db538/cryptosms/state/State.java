@@ -2,36 +2,40 @@ package uk.ac.cam.db538.cryptosms.state;
 
 import java.util.ArrayList;
 
+import android.util.Log;
+
+import uk.ac.cam.db538.cryptosms.MyApplication;
+
 public class State {
 	public static abstract class StateChangeListener {
 		public void onConnect() {
 		}
 		
-		public void onLogin(){
+		public void onLogin() {
 		}
 		
-		public void onLogout(){
+		public void onLogout() {
 		}
 		
-		public void onDisconnect(){
+		public void onDisconnect() {
 		}
 		
-		public void onPkiMissing(){
+		public void onPkiMissing() {
 		}
 		
-		public void onSimState(){
+		public void onSimState() {
 		}
 		
-		public void onNewEvent(){
+		public void onNewEvent() {
 		}
 		
-		public void onEventParsingFinished(){
+		public void onEventParsingFinished() {
 		}
 		
-		public void onEventParsingStarted(){
+		public void onEventParsingStarted() {
 		}
 
-		public void onFatalException(Exception ex){
+		public void onFatalException(Exception ex) {
 		}
 	}
 	
@@ -128,6 +132,7 @@ public class State {
 	public static void fatalException(Exception ex) {
 		notifyDisconnect();
 		mFatalException = ex;
+		Log.e(MyApplication.APP_TAG, "Fatal exception: " + ex.getClass().getName());
 		for (StateChangeListener listener : mListeners)
 			listener.onFatalException(ex);
 	}
