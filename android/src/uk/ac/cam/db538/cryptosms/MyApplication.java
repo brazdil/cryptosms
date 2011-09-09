@@ -81,10 +81,10 @@ public class MyApplication extends RoboApplication {
 			
 			@Override
 			public void uncaughtException(Thread thread, Throwable ex) {
-				logException(ex);
 				if ((ex instanceof WrongKeyDecryptionException) ||
 					(ex instanceof RuntimeException && ex.getCause() instanceof WrongKeyDecryptionException)) {
 					// TODO: Handle better
+					logException(ex);
 					State.fatalException((WrongKeyDecryptionException) ex);
 				}
 				else

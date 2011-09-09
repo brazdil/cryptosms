@@ -5,7 +5,6 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionEx
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
-import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.ui.DialogManager;
 import uk.ac.cam.db538.cryptosms.ui.ErrorOverlay;
 import android.os.Bundle;
@@ -162,8 +161,7 @@ public class ActivityAppState extends RoboActivity {
 	}
 
 	public void onFatalException(Exception ex) {
-		if (ex instanceof WrongKeyDecryptionException ||
-			ex instanceof StorageFileException)
+		if (ex instanceof WrongKeyDecryptionException)
 			getErrorOverlay().modeCorruptedFile();
 		else
 			getErrorOverlay().modeFatalException(ex);
@@ -177,15 +175,10 @@ public class ActivityAppState extends RoboActivity {
 	@Override
 	protected void onStart() {
 		super.onStart();
+		Pki.login(false);
 		State.addListener(mStateListener);
 	}
 	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		Pki.login(false);
-	}
-
 	@Override
 	protected void onStop() {
 		super.onStop();
