@@ -1,10 +1,8 @@
 package uk.ac.cam.db538.cryptosms.utils;
 
-import java.rmi.server.UnicastRemoteObject;
 import java.util.zip.DataFormatException;
 
-import javax.xml.soap.Text;
-
+import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.utils.Compression;
 
@@ -14,8 +12,9 @@ public class CompressedText {
 		UNICODE
 	}
 
-	protected static final byte HEADER_ASCII = (byte) 0x01;
-	protected static final byte HEADER_COMPRESSED = (byte) 0x02;
+	protected static final byte HEADER_ASCII = (byte) 0x80;
+	protected static final byte HEADER_COMPRESSED = (byte) 0x40;
+	protected static final byte HEADER_ALIGNED = (byte) 0x20;
 	
 	private TextCharset mCharset;
 	private boolean mCompression;
@@ -62,6 +61,14 @@ public class CompressedText {
 	public static CompressedText decode(byte[] data) throws DataFormatException {
 		TextCharset charset = ((data[0] & HEADER_ASCII) != 0x00) ? TextCharset.ASCII : TextCharset.UNICODE;
 		boolean compressed = ((data[0] & HEADER_COMPRESSED) != 0x00);
+		boolean aligned = ((data[0] & HEADER_ALIGNED) != 0x00);
+		
+		if (aligned) {
+			// get the length of junk at the end
+			int lengthJunk = LowLevel.getUnsignedByte((byte) (data[0] & 0x0F));
+			// cut out the data
+			data = LowLevel.cutData(data, 0, data.length - lengthJunk);
+		}
 		
 		CompressedText msg = new CompressedText();
 		msg.mData = LowLevel.cutData(data, 1, data.length - 1);
@@ -86,7 +93,7 @@ public class CompressedText {
 		return mData.length + 1;
 	}
 	
-	public byte[] getData() {
+	public byte[] getNormalData() {
 		// add header to the front
 		byte header = 0x00;
 		if (mCharset == TextCharset.ASCII)
@@ -99,6 +106,19 @@ public class CompressedText {
 		System.arraycopy(mData, 0, data, 1, mData.length);
 		
 		return data;
+	}
+	
+	public byte[] getAlignedData() {
+		int lengthData = mData.length + 1;
+		int lengthJunk = (Encryption.SYM_BLOCK_LENGTH - (lengthData % Encryption.SYM_BLOCK_LENGTH)) % Encryption.SYM_BLOCK_LENGTH;
+		byte[] normalData = getNormalData();
+		
+		// put in the ALIGNED flag
+		normalData[0] |= HEADER_ALIGNED;
+		// save the junk length in lower four bits
+		normalData[0] |= LowLevel.getBytesUnsignedByte(lengthJunk) & 0x0F;
+		// wrap the data and return
+		return LowLevel.wrapData(normalData, lengthData + lengthJunk);
 	}
 	
 	public String getMessage() {
