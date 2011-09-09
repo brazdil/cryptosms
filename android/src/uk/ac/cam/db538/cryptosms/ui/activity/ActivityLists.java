@@ -634,6 +634,8 @@ public class ActivityLists extends ActivityAppState {
 		mListConversations.setAdapter(mAdapterConversations);
 		mListContacts.setAdapter(mAdapterContacts);
 		mListNotifications.setAdapter(mAdapterNotifications);
+		updateConversations();
+		updateEvents();
 	}
 
 	@Override
