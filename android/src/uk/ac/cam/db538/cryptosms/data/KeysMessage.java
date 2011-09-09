@@ -3,8 +3,6 @@ package uk.ac.cam.db538.cryptosms.data;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 
-import android.util.Log;
-
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.SimCard;
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
@@ -13,10 +11,10 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
 import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
-import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Conversation;
 import uk.ac.cam.db538.cryptosms.storage.MessageData;
 import uk.ac.cam.db538.cryptosms.storage.SessionKeys;
+import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
@@ -133,7 +131,6 @@ public class KeysMessage extends Message {
 		hashing.update(mPublicKey);
 
 		byte[] hash = hashing.digest();
-		Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 		byte[] signature = Encryption.getEncryption().sign(hash);
 		
 		byte[] data = new byte[OFFSET_DATA + LENGTH_CONTENT];
@@ -161,6 +158,7 @@ public class KeysMessage extends Message {
 			String sender = idGroup.get(0).getSender();
 			byte header = getMessageHeader(dataAll);
 			MessageType type = getMessageType(dataAll);
+			SessionKeys keys = Conversation.getConversation(sender).getSessionKeys(SimCard.getSingleton().getNumber());
 	
 			byte[] publicKey = LowLevel.cutData(dataAll, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
 			byte[] timeStampBytes = LowLevel.cutData(dataAll, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
@@ -174,7 +172,12 @@ public class KeysMessage extends Message {
 				return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_IN_FUTURE, null);
 			else if (now - timeStamp > HANDSHAKE_VALIDITY_PERIOD) 
 				return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_OLD, null);
-			
+			// chechk that it isn't a replay
+			if (keys != null && 
+				keys.getStatus() == SessionKeysStatus.KEYS_EXCHANGED && 
+				timeStamp <= keys.getTimeStamp())
+					return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_OLD, null);
+
 			if (type == MessageType.HANDSHAKE) {
 				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
 				hashing.update(header);
@@ -182,7 +185,6 @@ public class KeysMessage extends Message {
 				hashing.update(publicKey);
 				
 				byte[] hash = hashing.digest();
-				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -203,8 +205,8 @@ public class KeysMessage extends Message {
 				                            ));
 			} else if (type == MessageType.CONFIRM) {
 				// find the session keys for this person
-				SessionKeys keys = Conversation.getConversation(sender).getSessionKeys(SimCard.getSingleton().getNumber());
-				if (keys == null)
+				if (keys == null || keys.getStatus() != SessionKeysStatus.WAITING_FOR_REPLY)
+					// unexpected
 					return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
 				
 				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
@@ -216,7 +218,6 @@ public class KeysMessage extends Message {
 				hashing.update(publicKey);
 
 				byte[] hash = hashing.digest();
-				Log.d(MyApplication.APP_TAG, "Hash: " + LowLevel.toHex(hash));
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -240,7 +241,7 @@ public class KeysMessage extends Message {
                 keys.setSessionKey_In(keysMsg.getKeyIn());
                 keys.setKeysConfirmed(true);
                 keys.setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
-                keys.setTimeStamp(0L);
+                keys.setTimeStamp(timeStamp);
                 keys.saveToFile();
 				
 				return new ParseResult(idGroup, 
@@ -295,6 +296,7 @@ public class KeysMessage extends Message {
 			keys.setKeysConfirmed(true);
 			keys.setSessionKey_Out(this.getKeyOut());
 			keys.setSessionKey_In(this.getKeyIn());
+			keys.setTimeStamp(this.getTimeStamp());
 		} else {
 			keys.setKeysSent(true);
 			keys.setKeysConfirmed(false);
