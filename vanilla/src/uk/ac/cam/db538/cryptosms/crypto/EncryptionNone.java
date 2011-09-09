@@ -25,9 +25,9 @@ public class EncryptionNone implements EncryptionInterface {
 	}
 	
 	@Override
-	public byte[] decryptSymmetric(byte[] data, byte[] key)
-			throws EncryptionException {
-		byte[] dataDecrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, data.length - Encryption.SYM_OVERHEAD);
+	public byte[] decryptSymmetric(byte[] data, byte[] key, int blocks) throws EncryptionException {
+		int length = blocks * Encryption.SYM_BLOCK_LENGTH;
+		byte[] dataDecrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, length - Encryption.SYM_OVERHEAD);
 		byte[] hashSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
 		byte[] hashReal = getHash(dataDecrypted);
 		
@@ -35,6 +35,12 @@ public class EncryptionNone implements EncryptionInterface {
 			if (hashSaved[i] != hashReal[i])
 				throw new EncryptionException(new Exception(LowLevel.toHex(dataDecrypted)));
 		return dataDecrypted;
+	}
+	
+	@Override
+	public byte[] decryptSymmetric(byte[] data, byte[] key)
+			throws EncryptionException {
+		return decryptSymmetric(data, key, data.length / Encryption.SYM_BLOCK_LENGTH);
 	}
 
 	@Override

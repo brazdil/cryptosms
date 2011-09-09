@@ -39,6 +39,7 @@ public interface EncryptionInterface {
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException;
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException;
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException;
+	public byte[] decryptSymmetric(byte[] data, byte[] key, int blocks) throws EncryptionException;
 	
 	public byte[] sign(byte[] data) throws EncryptionException;
 	public boolean verify(byte[] data, byte[] signature, long contactId) throws EncryptionException;
