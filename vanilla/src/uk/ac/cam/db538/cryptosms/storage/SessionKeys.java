@@ -22,16 +22,13 @@ public class SessionKeys {
 	private static final int LENGTH_SIMNUMBER = 32;
 	private static final int LENGTH_SESSIONKEY = Encryption.SYM_KEY_LENGTH;
 	private static final int LENGTH_PRIVATE_KEY = EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY; 
-	private static final int LENGTH_ID = 1;
 	private static final int LENGTH_TIMESTAMP = 8;
 
 	private static final int OFFSET_FLAGS = 0;
 	private static final int OFFSET_SIMNUMBER = OFFSET_FLAGS + LENGTH_FLAGS;
 	private static final int OFFSET_SESSIONKEY_OUTGOING = OFFSET_SIMNUMBER + LENGTH_SIMNUMBER;
-	private static final int OFFSET_NEXTID_OUTGOING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
-	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_NEXTID_OUTGOING + LENGTH_ID;
-	private static final int OFFSET_LASTID_INCOMING = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
-	private static final int OFFSET_PRIVATE_KEY = OFFSET_LASTID_INCOMING + LENGTH_ID;
+	private static final int OFFSET_SESSIONKEY_INCOMING = OFFSET_SESSIONKEY_OUTGOING + LENGTH_SESSIONKEY;
+	private static final int OFFSET_PRIVATE_KEY = OFFSET_SESSIONKEY_INCOMING + LENGTH_SESSIONKEY;
 	private static final int OFFSET_TIMESTAMP = OFFSET_PRIVATE_KEY + LENGTH_PRIVATE_KEY;
 	
 	private static final int OFFSET_RANDOMDATA = OFFSET_TIMESTAMP + LENGTH_TIMESTAMP;
@@ -41,8 +38,6 @@ public class SessionKeys {
 	private static final int OFFSET_PARENTINDEX = OFFSET_PREVINDEX - 4;
 	
 	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;
-	
-	public static final byte DEFAULT_ID = 0x00;
 		
 	// STATIC
 	
@@ -92,9 +87,7 @@ public class SessionKeys {
 	private boolean mKeysConfirmed;
 	private SimNumber mSimNumber;
 	private byte[] mSessionKey_Out;
-	private byte mNextID_Out;
 	private byte[] mSessionKey_In;
-	private byte mLastID_In;
 	private byte[] mPrivateKey;
 	private long mTimeStamp;
 	private long mIndexParent;
@@ -130,9 +123,7 @@ public class SessionKeys {
 			setKeysConfirmed(keysConfirmed);
 			setSimNumber(new SimNumber(Charset.fromAscii8(dataPlain, OFFSET_SIMNUMBER, LENGTH_SIMNUMBER), simSerial));
 			setSessionKey_Out(LowLevel.cutData(dataPlain, OFFSET_SESSIONKEY_OUTGOING, LENGTH_SESSIONKEY));
-			setNextID_Out(dataPlain[OFFSET_NEXTID_OUTGOING]);
 			setSessionKey_In(LowLevel.cutData(dataPlain, OFFSET_SESSIONKEY_INCOMING, LENGTH_SESSIONKEY));
-			setLastID_In(dataPlain[OFFSET_LASTID_INCOMING]);
 			setPrivateKey(LowLevel.cutData(dataPlain, OFFSET_PRIVATE_KEY, LENGTH_PRIVATE_KEY));
 			setTimeStamp(LowLevel.getLong(LowLevel.cutData(dataPlain, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP)));
 			setIndexParent(LowLevel.getUnsignedInt(dataPlain, OFFSET_PARENTINDEX));
@@ -145,9 +136,7 @@ public class SessionKeys {
 			setKeysConfirmed(false);
 			setSimNumber(new SimNumber());
 			setSessionKey_Out(Encryption.getEncryption().generateRandomData(LENGTH_SESSIONKEY));
-			setNextID_Out(DEFAULT_ID);
 			setSessionKey_In(Encryption.getEncryption().generateRandomData(LENGTH_SESSIONKEY));
-			setLastID_In(DEFAULT_ID);
 			setPrivateKey(Encryption.getEncryption().generateRandomData(LENGTH_PRIVATE_KEY));
 			setTimeStamp(0L);
 			setIndexParent(0L);
@@ -186,9 +175,7 @@ public class SessionKeys {
 		
 		// session keys and last IDs and confirmation nonce
 		System.arraycopy(this.mSessionKey_Out, 0, keysBuffer, OFFSET_SESSIONKEY_OUTGOING, LENGTH_SESSIONKEY);
-		keysBuffer[OFFSET_NEXTID_OUTGOING] = (byte) this.mNextID_Out; 
 		System.arraycopy(this.mSessionKey_In, 0, keysBuffer, OFFSET_SESSIONKEY_INCOMING, LENGTH_SESSIONKEY);
-		keysBuffer[OFFSET_LASTID_INCOMING] = (byte) this.mLastID_In; 
 		System.arraycopy(this.mPrivateKey, 0, keysBuffer, OFFSET_PRIVATE_KEY, LENGTH_PRIVATE_KEY);
 		System.arraycopy(LowLevel.getBytesLong(this.mTimeStamp), 0, keysBuffer, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
 		
@@ -299,12 +286,9 @@ public class SessionKeys {
 	 */
 	public SessionKeysStatus getStatus() {
 		if (mKeysSent) {
-			if (mKeysConfirmed) {
-				if (LowLevel.getUnsignedByte(mNextID_Out) < 255)
-					return SessionKeysStatus.KEYS_EXCHANGED;
-				else
-					return SessionKeysStatus.KEYS_EXPIRED;
-			} else
+			if (mKeysConfirmed)
+				return SessionKeysStatus.KEYS_EXCHANGED;
+			else
 				return SessionKeysStatus.WAITING_FOR_REPLY;
 		} else {
 			if (mKeysConfirmed)
@@ -315,19 +299,13 @@ public class SessionKeys {
 	}
 	
 	public void incrementOut(int count) {
-		for (int i = 0; i < count && LowLevel.getUnsignedByte(getNextID_Out()) < 255; ++i) {
-			int id = LowLevel.getUnsignedByte(getNextID_Out()) + 1;
-			setNextID_Out(LowLevel.getBytesUnsignedByte(id));
+		for (int i = 0; i < count; ++i)
 			setSessionKey_Out(Encryption.getEncryption().getHash(getSessionKey_Out()));
-		}
 	}
 	
 	public void incrementIn(int count) {
-		for (int i = 0; i < count && LowLevel.getUnsignedByte(getLastID_In()) < 255; ++i) {
-			int id = LowLevel.getUnsignedByte(getLastID_In()) + 1;
-			setLastID_In(LowLevel.getBytesUnsignedByte(id));
+		for (int i = 0; i < count; ++i)
 			setSessionKey_In(Encryption.getEncryption().getHash(getSessionKey_In()));
-		}
 	}
 
 	// GETTERS / SETTERS
@@ -376,22 +354,6 @@ public class SessionKeys {
 		mSessionKey_In = sessionKeyIn;
 	}
 	
-	public byte getNextID_Out() {
-		return mNextID_Out;
-	}
-	
-	public void setNextID_Out(byte nextID_Out) {
-		mNextID_Out = nextID_Out;
-	}
-
-	public byte getLastID_In() {
-		return mLastID_In;
-	}
-	
-	public void setLastID_In(byte lastID_In) {
-		mLastID_In = lastID_In;
-	}
-
 	public byte[] getPrivateKey() {
 		return mPrivateKey;
 	}
