@@ -45,6 +45,7 @@ public class TextMessage extends Message {
 	public static final int LENGTH_PART_MESSAGE_DATA = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGE_DATA;
 
 	private MessageData mStorage;
+	private int mToBeHashed;
     
 	public TextMessage(MessageData storage) {
 		super();
@@ -128,6 +129,14 @@ public class TextMessage extends Message {
 		mStorage.saveToFile();
 	}
 	
+	public int getToBeHashed() {
+		return mToBeHashed;
+	}
+	
+	public void setToBeHashed(int toBeHashed) {
+		mToBeHashed = toBeHashed;
+	}
+	
 	private static int getLengthComplete(int lenText) {
 		lenText = Encryption.getEncryption().getSymmetricEncryptedLength(lenText);
 		lenText += LENGTH_FIRST_MESSAGE_LENGTH;
@@ -167,19 +176,20 @@ public class TextMessage extends Message {
 		int countParts = getMessagePartsCount(lengthText);
 		ArrayList<byte[]> listParts = new ArrayList<byte[]>(countParts);
 
-		byte id = keys.getNextID_Out();
 		int index = 0;
-		
-		Log.d(MyApplication.APP_TAG, "ENCRYPT - " + id + " - " + LowLevel.toHex(keys.getSessionKey_Out()));
-		Log.d(MyApplication.APP_TAG, "DATA - " + LowLevel.toHex(dataEncrypted));
+		byte[] headerAndId = new byte[2];
+		byte indexByte;
+		Encryption.getEncryption().getRandom().nextBytes(headerAndId);
+		headerAndId[0] &= (byte) 0x3F; // set first two bits to 0
+		headerAndId[0] |= HEADER_TEXT; // set first two bits to HEADER_TEXT
 		
 		for (int i = 0; i < countParts; ++i) {
 			int lengthData = Math.min(LENGTH_DATA, dataComplete.length - i * LENGTH_DATA);
 			int lengthPart = OFFSET_DATA + lengthData;
 			byte[] dataPart = new byte[lengthPart];
 
-			dataPart[OFFSET_HEADER] = HEADER_TEXT;
-			dataPart[OFFSET_ID] = id;
+			dataPart[OFFSET_HEADER] = headerAndId[0];
+			dataPart[OFFSET_ID] = headerAndId[1];
 			dataPart[OFFSET_INDEX] = LowLevel.getBytesUnsignedByte(index++);
 			System.arraycopy(dataComplete, i * LENGTH_DATA, dataPart, OFFSET_DATA, lengthData);
 			
@@ -324,11 +334,10 @@ public class TextMessage extends Message {
 
 			// decrypt
 			byte[] dataDecrypted = null;
-			int lastId = keys.getLastID_In();
+			int toBeHashed = 1;
 			byte[] keyIn = keys.getSessionKey_In();
 			// try hashing the key until it fits
-			while (dataDecrypted == null && lastId <= 0xFF) {
-				Log.d(MyApplication.APP_TAG, "DECRYPT - " + lastId + " - " + LowLevel.toHex(keyIn));
+			while (dataDecrypted == null && toBeHashed <= 10) {
 				try {
 					 dataDecrypted = crypto.decryptSymmetric(dataEncrypted, keyIn);
 				} catch (EncryptionException e) {
@@ -337,7 +346,7 @@ public class TextMessage extends Message {
 				} catch (WrongKeyDecryptionException e) {
 					// this is OK, we'll just try another one
 					keyIn = crypto.getHash(keyIn);
-					lastId++;
+					toBeHashed++;
 				}
 			}
 			
@@ -352,6 +361,7 @@ public class TextMessage extends Message {
 			MessageData msgData = MessageData.createMessageData(conv);
 			msgData.setMessageType(uk.ac.cam.db538.cryptosms.storage.MessageData.MessageType.INCOMING);
 			TextMessage msgText = new TextMessage(msgData);
+			msgText.setToBeHashed(toBeHashed);
 			try {
 				msgText.setText(CompressedText.decode(dataDecrypted));
 			} catch (MessageException e) {
@@ -374,7 +384,10 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int getMessageId(byte[] data) {
-		return LowLevel.getUnsignedByte(data[OFFSET_ID]);
+		byte[] id = new byte[2];
+		id[0] = (byte)(data[OFFSET_HEADER] & 0x7F); // ignore first bit
+		id[1] = data[OFFSET_ID];
+		return LowLevel.getUnsignedShort(id);
 	}
 	
 	/**

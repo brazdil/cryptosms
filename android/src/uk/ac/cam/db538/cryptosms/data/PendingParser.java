@@ -173,7 +173,7 @@ public class PendingParser {
 					}
 					
 					mUpdateConversations = false;
-					HashMap<String, Integer> mapHighestId = new HashMap<String, Integer>();
+					HashMap<String, Integer> mapToBeHashed = new HashMap<String, Integer>();
 					
 					for (ParseResult parseResult : mParseResults) {
 						if (parseResult.getResult() == PendingParseResult.OK_CONFIRM_MESSAGE ||
@@ -186,21 +186,21 @@ public class PendingParser {
 						if (parseResult.getResult() == PendingParseResult.OK_TEXT_MESSAGE) {
 							Pending msgPart = parseResult.mIdGroup.get(0);
 							String sender = msgPart.getSender();
-							int id = TextMessage.getMessageId(msgPart.getData());
-							Integer highestId = mapHighestId.get(sender);
-							if (highestId == null)
-								highestId = Integer.valueOf(-1);
-							if (id > highestId)
-								mapHighestId.put(sender, id);
+							int toBeHashed = ((TextMessage) parseResult.getMessage()).getToBeHashed();
+							Integer toBeHashedMax = mapToBeHashed.get(sender);
+							if (toBeHashedMax == null)
+								toBeHashedMax = Integer.valueOf(0);
+							if (toBeHashed > toBeHashedMax)
+								mapToBeHashed.put(sender, toBeHashed);
 						}
 					}
 					
 					// increment key ID to the highest we decoded
-					for (Entry<String, Integer> elem : mapHighestId.entrySet()) {
+					for (Entry<String, Integer> elem : mapToBeHashed.entrySet()) {
 						try {
 							Conversation conv = Conversation.getConversation(elem.getKey());
 							SessionKeys keys = conv.getSessionKeys(SimCard.getSingleton().getNumber());
-							keys.incrementIn(elem.getValue() - keys.getLastID_In() + 1);
+							keys.incrementIn(elem.getValue());
 							keys.saveToFile();
 						} catch (StorageFileException ex) {
 							mException = ex;

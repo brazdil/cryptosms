@@ -238,8 +238,6 @@ public class KeysMessage extends Message {
                 
                 keys.setSessionKey_Out(keysMsg.getKeyOut());
                 keys.setSessionKey_In(keysMsg.getKeyIn());
-                keys.setNextID_Out((byte) 0);
-                keys.setLastID_In((byte) 0);
                 keys.setKeysConfirmed(true);
                 keys.setPrivateKey(Encryption.getEncryption().generateRandomData(EllipticCurveDeffieHellman.LENGTH_PRIVATE_KEY));
                 keys.setTimeStamp(0L);
@@ -297,8 +295,6 @@ public class KeysMessage extends Message {
 			keys.setKeysConfirmed(true);
 			keys.setSessionKey_Out(this.getKeyOut());
 			keys.setSessionKey_In(this.getKeyIn());
-            keys.setNextID_Out((byte) 0);
-            keys.setLastID_In((byte) 0);
 		} else {
 			keys.setKeysSent(true);
 			keys.setKeysConfirmed(false);

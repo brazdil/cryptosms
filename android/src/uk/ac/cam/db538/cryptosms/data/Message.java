@@ -42,10 +42,10 @@ public abstract class Message {
 		public void onError(Exception ex);
 	}
 	
-	// USE ONLY THE TOP 4 BITS!!!
-	protected static final byte HEADER_HANDSHAKE = (byte) 0x10;
-	protected static final byte HEADER_CONFIRM = (byte) 0x20;
-	protected static final byte HEADER_TEXT = (byte) 0x30;
+	// USE ONLY THE TOP 2 BITS!!!
+	protected static final byte HEADER_TEXT = (byte) 0x00;      // 00000000 
+	protected static final byte HEADER_HANDSHAKE = (byte) 0x40; // 01000000
+	protected static final byte HEADER_CONFIRM = (byte) 0xC0;   // 11000000
 	
 	public static enum MessageType {
 		HANDSHAKE,
@@ -143,7 +143,7 @@ public abstract class Message {
 	}
 	
 	protected static byte getMessageHeader(byte[] data) {
-		return (byte) (data[OFFSET_HEADER] & 0xF0);
+		return (byte) (data[OFFSET_HEADER] & 0xC0);
 	}
     
 	public static MessageType getMessageType(byte[] data) {
