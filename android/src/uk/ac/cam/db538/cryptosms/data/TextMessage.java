@@ -110,7 +110,7 @@ public class TextMessage extends Message {
     }
 	
 	public void setText(CompressedText text) throws StorageFileException, MessageException {
-		byte[] data = text.getData();
+		byte[] data = text.getAlignedData();
 
 		// initialise
 		int pos = 0, index = 0, len;
