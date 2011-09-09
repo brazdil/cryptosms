@@ -224,7 +224,10 @@ public class Pki {
 			try {
 				if (mPki.hasDataStore(KEY_STORAGE)) {
 					mMasterKey = mPki.getDataStore(KEY_STORAGE);
-					return mMasterKey;
+					if (mMasterKey == null)
+						throw new PkiNotReadyException();
+					else
+						return mMasterKey;
 				} else if (generateAllow) {
 					mPki.setDataStore(KEY_STORAGE, Encryption.getEncryption().generateRandomData(Encryption.SYM_KEY_LENGTH));
 					return getMasterKey(forceLogIn, false);
