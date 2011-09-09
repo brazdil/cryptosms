@@ -146,18 +146,14 @@ public final class EncryptionPki implements EncryptionInterface {
 		return decryptSymmetricWithMasterKey(data, false);
 	}
 	
-	/**
-	 * Decrypts data with given key
-	 * @param data
-	 * @return
-	 * @throws EncryptionException
-	 */
 	@Override
-	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
+	public byte[] decryptSymmetric(byte[] data, byte[] key, int blocks)
+			throws EncryptionException {
+		int length = blocks * Encryption.SYM_BLOCK_LENGTH;
 		// cut the file up
 		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
 		byte[] iv = LowLevel.cutData(data, Encryption.MAC_LENGTH, Encryption.SYM_IV_LENGTH);
-		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, data.length - Encryption.SYM_OVERHEAD);
+		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, length - Encryption.SYM_OVERHEAD);
 		
 		// decrypt
 		byte[] dataDecrypted = AesCbc.decrypt(dataEncrypted, iv, key, false);
@@ -169,6 +165,17 @@ public final class EncryptionPki implements EncryptionInterface {
 			return dataDecrypted;
 		else
 			throw new WrongKeyDecryptionException();
+	}
+
+	/**
+	 * Decrypts data with given key
+	 * @param data
+	 * @return
+	 * @throws EncryptionException
+	 */
+	@Override
+	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
+		return decryptSymmetric(data, key, data.length / Encryption.SYM_BLOCK_LENGTH);
 	}
 	
 	private boolean compareMACs(byte[] saved, byte[] actual) {

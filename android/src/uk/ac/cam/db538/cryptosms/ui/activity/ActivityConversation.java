@@ -112,7 +112,7 @@ public class ActivityConversation extends ActivityAppState {
 			public void afterTextChanged(Editable s) {
 				String text = s.toString();
 				CompressedText msg = CompressedText.createFromString(text);
-				mBytesCounterView.setText(TextMessage.getRemainingBytes(msg.getDataLength()) + " (" + TextMessage.getMessagePartsCount(msg.getDataLength()) + ")");
+				mBytesCounterView.setText(TextMessage.getRemainingBytes(msg.getDataLength()) + " (" + TextMessage.getMessagePartCount(msg.getDataLength()) + ")");
 				mSendButton.setEnabled(true);
 				mBytesCounterView.setVisibility(View.VISIBLE);
 			}

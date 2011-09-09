@@ -32,18 +32,6 @@ public class TextMessage extends Message {
 	protected static final int OFFSET_DATA = OFFSET_INDEX + LENGTH_INDEX;
 	protected static final int LENGTH_DATA = MessageData.LENGTH_MESSAGE - OFFSET_DATA;
 	
-	private static final int LENGTH_FIRST_MESSAGE_LENGTH = 2;
-	
-	private static final int OFFSET_FIRST_MESSAGE_LENGTH = OFFSET_DATA;
-	private static final int OFFSET_FIRST_MESSAGE_DATA = OFFSET_FIRST_MESSAGE_LENGTH + LENGTH_FIRST_MESSAGE_LENGTH;
-	
-	public static final int LENGTH_FIRST_DATA = MessageData.LENGTH_MESSAGE - OFFSET_FIRST_MESSAGE_DATA;
-	
-	// following parts specific
-	
-	private static final int OFFSET_PART_MESSAGE_DATA = OFFSET_DATA;
-	public static final int LENGTH_PART_MESSAGE_DATA = MessageData.LENGTH_MESSAGE - OFFSET_PART_MESSAGE_DATA;
-
 	private MessageData mStorage;
 	private int mToBeHashed;
     
@@ -118,10 +106,10 @@ public class TextMessage extends Message {
 		int remains = data.length;
 		mStorage.setAscii(text.getCharset() == TextCharset.ASCII);
 		mStorage.setCompressed(text.isCompressed());
-		mStorage.setNumberOfParts(getMessagePartsCount(text.getDataLength()));
+		mStorage.setNumberOfParts(getMessagePartCount(text.getDataLength()));
 		// save
 		while (remains > 0) {
-			len = Math.min(remains, (index == 0) ? LENGTH_FIRST_DATA : LENGTH_PART_MESSAGE_DATA);
+			len = Math.min(remains, LENGTH_DATA);
 			mStorage.setPartData(index++, LowLevel.cutData(data, pos, len));
 			pos += len;
 			remains -= len;
@@ -135,16 +123,6 @@ public class TextMessage extends Message {
 	
 	public void setToBeHashed(int toBeHashed) {
 		mToBeHashed = toBeHashed;
-	}
-	
-	private static int getLengthComplete(int lenText) {
-		lenText = Encryption.getEncryption().getSymmetricEncryptedLength(lenText);
-		lenText += LENGTH_FIRST_MESSAGE_LENGTH;
-		return lenText;
-	}
-	
-	public static int getMessagePartsCount(int lenText) {
-		return LowLevel.roundUpDivision(getLengthComplete(lenText), LENGTH_DATA);
 	}
 	
 	private boolean mKeyIncremented = false;
@@ -168,32 +146,35 @@ public class TextMessage extends Message {
 		byte[] dataText = getStoredData();
 		int lengthText = dataText.length;
 		byte[] dataEncrypted = Encryption.getEncryption().encryptSymmetric(dataText, keys.getSessionKey_Out());
-		int lengthComplete = getLengthComplete(lengthText);
-		byte[] dataComplete = new byte[lengthComplete];
-		System.arraycopy(LowLevel.getBytesUnsignedShort(lengthText), 0, dataComplete, OFFSET_FIRST_MESSAGE_LENGTH - OFFSET_DATA, LENGTH_FIRST_MESSAGE_LENGTH);
-		System.arraycopy(dataEncrypted, 0, dataComplete, OFFSET_FIRST_MESSAGE_DATA - OFFSET_DATA, dataEncrypted.length);
 		
-		int countParts = getMessagePartsCount(lengthText);
+		int countParts = getMessagePartCount(lengthText);
 		ArrayList<byte[]> listParts = new ArrayList<byte[]>(countParts);
 
 		int index = 0;
 		byte[] headerAndId = new byte[2];
 		byte indexByte;
+		
 		Encryption.getEncryption().getRandom().nextBytes(headerAndId);
 		headerAndId[0] &= (byte) 0x3F; // set first two bits to 0
 		headerAndId[0] |= HEADER_TEXT; // set first two bits to HEADER_TEXT
 		
 		for (int i = 0; i < countParts; ++i) {
-			int lengthData = Math.min(LENGTH_DATA, dataComplete.length - i * LENGTH_DATA);
+			int lengthData = Math.min(LENGTH_DATA, dataEncrypted.length - i * LENGTH_DATA);
 			int lengthPart = OFFSET_DATA + lengthData;
 			byte[] dataPart = new byte[lengthPart];
+			
+			if (index == 0)
+				indexByte = (byte) (countParts & 0x7F); // first bit zero, rest length
+			else
+				indexByte = (byte) (index | 0x80); // first byte one, rest index
 
 			dataPart[OFFSET_HEADER] = headerAndId[0];
 			dataPart[OFFSET_ID] = headerAndId[1];
-			dataPart[OFFSET_INDEX] = LowLevel.getBytesUnsignedByte(index++);
-			System.arraycopy(dataComplete, i * LENGTH_DATA, dataPart, OFFSET_DATA, lengthData);
+			dataPart[OFFSET_INDEX] = indexByte;
+			System.arraycopy(dataEncrypted, i * LENGTH_DATA, dataPart, OFFSET_DATA, lengthData);
 			
 			listParts.add(dataPart);
+			index++;
 		}
 		
 		return listParts;
@@ -303,18 +284,20 @@ public class TextMessage extends Message {
 				return new ParseResult(idGroup, PendingParseResult.NO_SESSION_KEYS, null);
 			
 			// find the first part and retrieve the length of data
-			int dataLength = -1;
+			int countParts = -1;
 			for (Pending p : idGroup)
 				if (getMessageIndex(p.getData()) == 0) {
-					dataLength = getMessageDataLength(p.getData());
+					countParts = getMessagePartCount(p.getData());
 					break;
 				}
-			if (dataLength == -1)
+			if (countParts < 0)
 				// first part not found
 				return new ParseResult(idGroup, PendingParseResult.MISSING_PARTS, null);
+			else if (countParts == 0)
+				// length zero???
+				return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
 			
 			// join the parts
-			int countParts = getMessagePartsCount(dataLength);
 			byte[] dataJoined = null;
 			try {
 				dataJoined = joinParts(idGroup, countParts);
@@ -322,40 +305,38 @@ public class TextMessage extends Message {
 				return new ParseResult(idGroup, ex.getReason(), null);
 			}
 			
-			// check the data length
-			if (dataLength > dataJoined.length)
-				return new ParseResult(idGroup, PendingParseResult.CORRUPTED_DATA, null);
-			
-			// take just the good stuff
-			int offset = OFFSET_FIRST_MESSAGE_DATA - OFFSET_DATA;
-			byte[] dataEncrypted = LowLevel.cutData(dataJoined, offset, getLengthComplete(dataLength) - offset);
-			
-			Log.d(MyApplication.APP_TAG, "DATA - " + LowLevel.toHex(dataEncrypted));
-
 			// decrypt
 			byte[] dataDecrypted = null;
 			int toBeHashed = 1;
-			byte[] keyIn = keys.getSessionKey_In();
-			// try hashing the key until it fits
-			while (dataDecrypted == null && toBeHashed <= 10) {
-				try {
-					 dataDecrypted = crypto.decryptSymmetric(dataEncrypted, keyIn);
-				} catch (EncryptionException e) {
-					// this is bad
-					return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
-				} catch (WrongKeyDecryptionException e) {
-					// this is OK, we'll just try another one
-					keyIn = crypto.getHash(keyIn);
-					toBeHashed++;
+			
+			int blocksTotalMin = LowLevel.roundUpDivision(Encryption.SYM_OVERHEAD, Encryption.SYM_BLOCK_LENGTH);
+			int blocksMin = Math.max(blocksTotalMin, (countParts - 1) * LENGTH_DATA / Encryption.SYM_BLOCK_LENGTH);
+			int blocksMax = Math.max(blocksTotalMin, countParts * LENGTH_DATA / Encryption.SYM_BLOCK_LENGTH);
+			
+			for (int blocks = blocksMin; blocks <= blocksMax; ++blocks) {
+				toBeHashed = 1;
+				byte[] keyIn = keys.getSessionKey_In();
+				// try hashing the key until it fits
+				while (dataDecrypted == null && toBeHashed <= 10) {
+					try {
+						 dataDecrypted = crypto.decryptSymmetric(dataJoined, keyIn, blocks);
+					} catch (EncryptionException e) {
+						// this is bad
+						return new ParseResult(idGroup, PendingParseResult.INTERNAL_ERROR, null);
+					} catch (WrongKeyDecryptionException e) {
+						// this is OK, we'll just try another one
+						keyIn = crypto.getHash(keyIn);
+						toBeHashed++;
+					}
 				}
+				
+				if (dataDecrypted != null)
+					break;
 			}
 			
 			// was it decrypted?
 			if (dataDecrypted == null)
 				return new ParseResult(idGroup, PendingParseResult.COULD_NOT_DECRYPT, null);
-			
-			// take just the text part
-			dataDecrypted = LowLevel.cutData(dataDecrypted, 0, dataLength);
 			
 			// save to conversation			
 			MessageData msgData = MessageData.createMessageData(conv);
@@ -397,7 +378,10 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int getMessageIndex(byte[] data) {
-		return LowLevel.getUnsignedByte(data[OFFSET_INDEX]);
+		if ((data[OFFSET_INDEX] & 0x80) == 0)
+			return 0;
+		else
+			return LowLevel.getUnsignedByte((byte) (data[OFFSET_INDEX] & 0x7F));
 	}
 	
 	/**
@@ -420,10 +404,18 @@ public class TextMessage extends Message {
 	 * @param data
 	 * @return
 	 */
-	protected static int getMessageDataLength(byte[] data) {
-		return LowLevel.getUnsignedShort(data, OFFSET_FIRST_MESSAGE_LENGTH);
+	protected static int getMessagePartCount(byte[] data) {
+		return LowLevel.getUnsignedByte((byte) (data[OFFSET_INDEX] & 0x7F));
 	}
 
+	private static int getLengthComplete(int lenText) {
+		return Encryption.getEncryption().getSymmetricEncryptedLength(lenText);
+	}
+	
+	public static int getMessagePartCount(int lenText) {
+		return LowLevel.roundUpDivision(getLengthComplete(lenText), LENGTH_DATA);
+	}
+	
 	@Override
 	protected void onMessageSent(String phoneNumber)
 			throws StorageFileException {
