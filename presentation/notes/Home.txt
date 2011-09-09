@@ -1,0 +1,91 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2011-09-09T11:40:54.865352
+
+====== CryptoSMS Presentation ======
+
+===== Introduction =====
+
+==== Aims ====
+* Protect the transmission
+* Protect the stored data
+
+==== Reasons ====
+
+==== Facts ====
+* Assumes presence of a service providing means of signing data and verifying signatures (Public Keys)
+* Messages are encrypted using AES-256/CBC algorithm
+* Keys are negotiated using Elliptic Curve Deffie-Hellman protocol
+
+===== Demo =====
+* Start with two phones, one being Alice and the other Bob, both already running CryptoSMS
+* Say that the public keys have already been exchanged
+* Explain the meaning of each tab on the main screen
+* Do a handshake (key negotiation)
+	* Alice
+		* Opens the //Contacts// tab, clicks on //New contact//
+		* (Explain that currently it only supports key negotiation over text messages, but could support other ways in the future)
+		* Selects //Text message//, clicks on //Next//
+		* Confirms sending by clicking //Send//
+		* (Explain that it's waiting for reply from Bob)
+	* Bob
+		* Waits for the handshake request to appear 
+		* Clicks on it, selects //Accept and confirm//
+		* (Explain that Bob has everything to generate the keys and therefore it says Encryption active on the Contacts tab)
+	* Alice
+		* Receives the reply and status changes to //Encryption active// as well
+* Send some messages
+	* Alice
+		* Clicks on Bob's entry in the //Contacts// list, which opens the //Conversation// screen
+		* Types in "Hey Bob!" and clicks on //Send//
+		* The message appears in the list
+	* ''Bob''
+		* New conversation appears in the //Conversations// tab
+		* Clicks on the conversation entry
+		* Types in "Hello Alice" and hits //Send//
+	* Alice
+		* Message from Bob appears on her screen
+
+===== Attacker =====
+* Has access to everything you send (carrier)
+	* Can act as a middle-man and change the sent data
+* Can install a malicious application on your phone
+* Has physical access to your handset (thief)
+
+===== Data SMS =====
+* Special format of text messages that helps with distinguishing it from the rest
+* Advantages
+	* Not touched or saved by the system (gives us full control)
+	* Sent to a specific port (same as TCP/IP - different applications can listen to messages on different ports)
+* Disadvantages
+	* Only 133 bytes instead of 140
+* Therefore, we are very limited in terms of space
+
+===== SMS format =====
+
+==== Multi-part messages ====
+* Multi-part messages are standardized for normal texts, but not for Data SMS
+* We need to recognize, which individual messages belong together and form a multi-part message
+	* First three bytes are used for a header
+		* Byte #1 - type (text / handshake)
+		* Byte #2 - ID
+			* same for all parts
+			* incremented after a message is sent (so the recipient will be receiving messages with ID 1, then 2, 3, etc)
+			* reveals how many messages have been sent between these parties (but the attacker knows that anyway)
+		* Byte #3 - part's index
+			* different for each message part
+			* up to 256 parts ~ 30 KB of data in a single message
+		* Could be shrunk into two bytes by decreasing the maximum number of message parts (which no one is going to use anyway), left for simplicity
+	* First message contains another two bytes with the length of data (enough for the 30 KB of data)
+		* This is not the encrypted data, but rather the text itself
+		* Is used to compute the length of encrypted data and therefore the part count
+	* Leaves us with 130 bytes per text message for the actual data (128 bytes in the first message)
+	* Text messages are said to belong together if they:
+		* Come from the same phone number, and
+		* Have the same type and ID
+	* None of these are verified and therefore can be tempered with by middle-man
+		* Changing the type, ID or part's index leads to denial of service
+		* Changing the data length 
+* The actual transmitted data is cut into chunks of 130 bytes and divided into multiple parts
+
+==== Storing text ====
