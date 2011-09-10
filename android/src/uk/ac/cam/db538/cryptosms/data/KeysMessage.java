@@ -52,7 +52,7 @@ public class KeysMessage extends Message {
 		mECDH = new EllipticCurveDeffieHellman();
 		mPublicKey = mECDH.getPublicKey();
 		mPrivateKey = mECDH.getPrivateKey();
-		mTimeStamp = getCurrentTimeUTC();
+		mTimeStamp = System.currentTimeMillis();
 	}
 	
 	public KeysMessage(long originalTimeStamp, byte[] privateKey, long otherTimeStamp, byte[] otherPublicKey) {
@@ -73,7 +73,7 @@ public class KeysMessage extends Message {
 		mECDH = new EllipticCurveDeffieHellman();
 		mPublicKey = mECDH.getPublicKey();
 		mPrivateKey = mECDH.getPrivateKey();
-		mTimeStamp = getCurrentTimeUTC();
+		mTimeStamp = System.currentTimeMillis();
 
 		mOtherTimeStamp = otherTimeStamp;
 		mOtherPublicKey = otherPublicKey;
@@ -170,7 +170,7 @@ public class KeysMessage extends Message {
 			long timeStamp = LowLevel.getLong(timeStampBytes);
 			
 			// check the time stamp isn't too old or in the future
-			long now = getCurrentTimeUTC();
+			long now = System.currentTimeMillis();
 			if (timeStamp > now + CLOCK_TOLERANCE)
 				return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_IN_FUTURE, null);
 			else if (now - timeStamp > HANDSHAKE_VALIDITY_PERIOD) 
@@ -257,10 +257,6 @@ public class KeysMessage extends Message {
 		}
 	}
 	
-	private static long getCurrentTimeUTC() {
-		return System.currentTimeMillis();
-	}
-
 	private byte getHeader() {
 		if (mIsConfirmation)
 			return HEADER_CONFIRM;
