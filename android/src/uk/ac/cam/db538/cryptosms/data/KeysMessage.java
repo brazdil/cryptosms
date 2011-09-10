@@ -158,7 +158,10 @@ public class KeysMessage extends Message {
 			String sender = idGroup.get(0).getSender();
 			byte header = getMessageHeader(dataAll);
 			MessageType type = getMessageType(dataAll);
-			SessionKeys keys = Conversation.getConversation(sender).getSessionKeys(SimCard.getSingleton().getNumber());
+			Conversation conv = Conversation.getConversation(sender);
+			SessionKeys keys = null;
+			if (conv != null)
+				keys = conv.getSessionKeys(SimCard.getSingleton().getNumber());
 	
 			byte[] publicKey = LowLevel.cutData(dataAll, OFFSET_PUBLIC_KEY, EllipticCurveDeffieHellman.LENGTH_PUBLIC_KEY);
 			byte[] timeStampBytes = LowLevel.cutData(dataAll, OFFSET_TIMESTAMP, LENGTH_TIMESTAMP);
