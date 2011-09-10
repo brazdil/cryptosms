@@ -39,6 +39,8 @@ public class SessionKeys {
 	
 	private static final int LENGTH_RANDOMDATA = OFFSET_PARENTINDEX - OFFSET_RANDOMDATA;
 		
+	private static final int KEYS_VALID_FOR = 365 * 24 * 3600 * 1000; // one year
+	
 	// STATIC
 	
 	private static ArrayList<SessionKeys> cacheSessionKeys = new ArrayList<SessionKeys>();
@@ -287,7 +289,10 @@ public class SessionKeys {
 	public SessionKeysStatus getStatus() {
 		if (mKeysSent) {
 			if (mKeysConfirmed)
-				return SessionKeysStatus.KEYS_EXCHANGED;
+				if (System.currentTimeMillis() - mTimeStamp > KEYS_VALID_FOR)
+					return SessionKeysStatus.KEYS_EXPIRED;
+				else
+					return SessionKeysStatus.KEYS_EXCHANGED;
 			else
 				return SessionKeysStatus.WAITING_FOR_REPLY;
 		} else {
