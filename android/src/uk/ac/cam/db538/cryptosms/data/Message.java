@@ -43,7 +43,8 @@ public abstract class Message {
 	}
 	
 	// USE ONLY THE TOP 2 BITS!!!
-	protected static final byte HEADER_TEXT = (byte) 0x00;      // 00000000 
+	protected static final byte HEADER_TEXT_FIRST = (byte) 0x00;      // 00000000
+	protected static final byte HEADER_TEXT_OTHER = (byte) 0x80;      // 10000000 
 	protected static final byte HEADER_HANDSHAKE = (byte) 0x40; // 01000000
 	protected static final byte HEADER_CONFIRM = (byte) 0xC0;   // 11000000
 	
@@ -152,7 +153,8 @@ public abstract class Message {
     		return MessageType.HANDSHAKE;
     	case HEADER_CONFIRM:
     		return MessageType.CONFIRM;
-    	case HEADER_TEXT:
+    	case HEADER_TEXT_FIRST:
+    	case HEADER_TEXT_OTHER:
     		return MessageType.TEXT;
     	default:
     		return MessageType.UNKNOWN;

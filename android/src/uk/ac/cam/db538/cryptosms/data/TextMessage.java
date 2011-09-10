@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.zip.DataFormatException;
 
 import android.content.Context;
-import android.util.Log;
 
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.SimCard;
@@ -156,7 +155,7 @@ public class TextMessage extends Message {
 		
 		Encryption.getEncryption().getRandom().nextBytes(headerAndId);
 		headerAndId[0] &= (byte) 0x3F; // set first two bits to 0
-		headerAndId[0] |= HEADER_TEXT; // set first two bits to HEADER_TEXT
+		headerAndId[0] |= HEADER_TEXT_FIRST; // set first two bits to HEADER_TEXT_FIRST
 		
 		for (int i = 0; i < countParts; ++i) {
 			int lengthData = Math.min(LENGTH_DATA, dataEncrypted.length - i * LENGTH_DATA);
@@ -164,9 +163,9 @@ public class TextMessage extends Message {
 			byte[] dataPart = new byte[lengthPart];
 			
 			if (index == 0)
-				indexByte = (byte) (countParts & 0x7F); // first bit zero, rest length
+				indexByte = LowLevel.getBytesUnsignedByte(countParts); // first part contains number of parts
 			else
-				indexByte = (byte) (index | 0x80); // first byte one, rest index
+				indexByte = LowLevel.getBytesUnsignedByte(index);
 
 			dataPart[OFFSET_HEADER] = headerAndId[0];
 			dataPart[OFFSET_ID] = headerAndId[1];
@@ -175,6 +174,9 @@ public class TextMessage extends Message {
 			
 			listParts.add(dataPart);
 			index++;
+			
+			headerAndId[0] &= (byte) 0x3F; // set first two bits to 0
+			headerAndId[0] |= HEADER_TEXT_OTHER; // set first two bits to HEADER_TEXT_OTHER
 		}
 		
 		return listParts;
@@ -366,7 +368,7 @@ public class TextMessage extends Message {
 	 */
 	public static int getMessageId(byte[] data) {
 		byte[] id = new byte[2];
-		id[0] = (byte)(data[OFFSET_HEADER] & 0x7F); // ignore first bit
+		id[0] = (byte)(data[OFFSET_HEADER] & 0x3F); // ignore first two bits
 		id[1] = data[OFFSET_ID];
 		return LowLevel.getUnsignedShort(id);
 	}
@@ -378,10 +380,10 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	public static int getMessageIndex(byte[] data) {
-		if ((data[OFFSET_INDEX] & 0x80) == 0)
+		if ((data[OFFSET_HEADER] & 0xC0) == HEADER_TEXT_FIRST)
 			return 0;
 		else
-			return LowLevel.getUnsignedByte((byte) (data[OFFSET_INDEX] & 0x7F));
+			return LowLevel.getUnsignedByte(data[OFFSET_INDEX]);
 	}
 	
 	/**
@@ -405,7 +407,7 @@ public class TextMessage extends Message {
 	 * @return
 	 */
 	protected static int getMessagePartCount(byte[] data) {
-		return LowLevel.getUnsignedByte((byte) (data[OFFSET_INDEX] & 0x7F));
+		return LowLevel.getUnsignedByte(data[OFFSET_INDEX]);
 	}
 
 	private static int getLengthComplete(int lenText) {
