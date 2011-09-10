@@ -67,25 +67,22 @@ Creation-Date: 2011-09-09T11:40:54.865352
 * Multi-part messages are standardized for normal texts, but not for Data SMS
 * We need to recognize, which individual messages belong together and form a multi-part message
 	* First three bytes are used for a header
-		* Byte #1 - type (text / handshake)
-		* Byte #2 - ID
+		* Type (text / handshake) - 2 bits
+		* ID - 14 bits
 			* same for all parts
-			* incremented after a message is sent (so the recipient will be receiving messages with ID 1, then 2, 3, etc)
-			* reveals how many messages have been sent between these parties (but the attacker knows that anyway)
-		* Byte #3 - part's index
+			* random (1:16000 chance of messing everything up)
+		* Number of parts / part's index
 			* different for each message part
 			* up to 256 parts ~ 30 KB of data in a single message
-		* Could be shrunk into two bytes by decreasing the maximum number of message parts (which no one is going to use anyway), left for simplicity
-	* First message contains another two bytes with the length of data (enough for the 30 KB of data)
-		* This is not the encrypted data, but rather the text itself
-		* Is used to compute the length of encrypted data and therefore the part count
-	* Leaves us with 130 bytes per text message for the actual data (128 bytes in the first message)
+	* Leaves us with 130 bytes per text message for the actual data
 	* Text messages are said to belong together if they:
 		* Come from the same phone number, and
 		* Have the same type and ID
 	* None of these are verified and therefore can be tempered with by middle-man
-		* Changing the type, ID or part's index leads to denial of service
-		* Changing the data length 
-* The actual transmitted data is cut into chunks of 130 bytes and divided into multiple parts
+• The actual transmitted data is cut into chunks of 130 bytes and divided between parts
 
 ==== Storing text ====
+* Both ASCII and Unicode
+* Compression with DEFLATE (ZIP)
+* Always chooses the best possibility (especially good for European languages)
+* One byte header
