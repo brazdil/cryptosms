@@ -10,42 +10,113 @@
 \institute{University of Cambridge}
 \date{September 15, 2011}
 
+% TEXT CONSTANTS
+\newcommand{\txtFacts}{Facts}
+\newcommand{\txtTextMessaging}{Text messaging}
+\newcommand{\txtStorageFile}{Storage file}
+
 \begin{document}
-
-\begin{frame}
-\titlepage
-\end{frame}
-
-
-
-\begin{frame}{Data format for SMS}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}%
 
-First message: \\
-\begin{tabularx}{\textwidth}{ |l|l|l|L| }
-  \hline
-  type    & id      & count   & data \\
-  2 bits  & 14 bits & 1 byte  & 130 bytes  \\
-  \hline
-\end{tabularx} \newline
-\\
-Other parts: \\
-\begin{tabularx}{\textwidth}{ |l|l|l|L| }
-  \hline
-  type    & id      & index   & data \\
-  2 bits  & 14 bits & 1 byte  & 130 bytes  \\
-  \hline
-\end{tabularx}
-
+\begin{frame}
+	\titlepage
 \end{frame}
 
+% FACTS
 
-
-\begin{frame}{Secure storage file}
-\begin{figure}
-\centering
-\includegraphics[width=0.7\textwidth]{storage_file}
-\end{figure}
+\begin{frame}{\txtFacts}{Attacker}
+	\begin{itemize}
+		\pause \item{Can read and manipulate everything you send}
+		\pause \item{Can gain physical access to your handset}
+		\pause \item{Can install a malicious application on your phone}
+	\end{itemize}
 \end{frame}
+
+% DEMO
+
+% TEXT MESSAGING
+
+\begin{frame}{Attacker}
+	\begin{itemize}
+		\pause \item{Can read and manipulate everything you send}
+		\pause \item{Can gain physical access to your handset}
+		\pause \item{Can install a malicious application on your phone}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{\txtTextMessaging}{Data structure}
+
+   \begin{block}{First part}
+	\begin{tabularx}{\textwidth}{ |l|l|L| }
+		\hline
+		type1, id  & count   & data \\
+		2 bytes     & 1 byte  & 130 bytes  \\
+		\hline
+	\end{tabularx}
+   \end{block}
+
+   \begin{block}{Other parts}
+	\begin{tabularx}{\textwidth}{ |l|l|L| }
+		\hline
+		type2, id  & index   & data \\
+		2 bytes     & 1 byte  & 130 bytes  \\
+		\hline
+	\end{tabularx}
+   \end{block}
+\end{frame}
+
+% KEY NEGOTIATION
+
+\begin{frame}
+ 
+ 
+   \begin{alertblock}{This is an Alert block}
+   This is an important alert
+   \end{alertblock}
+ 
+   \begin{exampleblock}{This is an Example block}
+   This is an example 
+   \end{exampleblock}
+ 
+\end{frame}
+
+% STORAGE FILE
+
+\begin{frame}{\txtStorageFile}{Internal structure}
+
+	\centering
+	\includegraphics[width=0.8\textwidth]{storage_file}
+\end{frame}
+
+\begin{frame}{\txtStorageFile}{From the outside}
+
+	\begin{tabularx}{\textwidth}{ |l|l|L| }
+		\hline
+		IV & HMAC & Encrypted header \\
+		\hline
+		IV & HMAC & Encrypted entry 1 \\
+		\hline
+		IV & HMAC & Encrypted entry 2 \\
+		\hline
+		IV & HMAC & Encrypted entry 3 \\
+		\hline
+		IV & HMAC & Encrypted entry 4 \\
+		\hline
+		IV & HMAC & Encrypted entry 5 \\
+		\hline
+		IV & HMAC & Encrypted entry 6 \\
+		\hline
+		IV & HMAC & Encrypted entry 7 \\
+		\hline
+	\end{tabularx}
+
+	\centering
+	$\vdots$ \\
+\end{frame}
+
+% PKI COOPERATION
+
+% SUMMARY
+% create a check list of aims
 
 \end{document}

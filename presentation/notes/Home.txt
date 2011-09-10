@@ -14,8 +14,8 @@ Creation-Date: 2011-09-09T11:40:54.865352
 
 ==== Facts ====
 * Assumes presence of a service providing means of signing data and verifying signatures (Public Keys)
-* Messages are encrypted using AES-256/CBC algorithm
-* Keys are negotiated using Elliptic Curve Deffie-Hellman protocol
+* Symmetric encryption AES-256/CBC/HMAC-SHA-256 for both messages and storage file
+* Cryptographic keys are negotiated using Elliptic Curve Deffie-Hellman protocol
 
 ===== Demo =====
 * Start with two phones, one being Alice and the other Bob, both already running CryptoSMS
@@ -52,7 +52,9 @@ Creation-Date: 2011-09-09T11:40:54.865352
 * Can install a malicious application on your phone
 * Has physical access to your handset (thief)
 
-===== Data SMS =====
+===== SMS format =====
+
+==== Data SMS ====
 * Special format of text messages that helps with distinguishing it from the rest
 * Advantages
 	* Not touched or saved by the system (gives us full control)
@@ -60,8 +62,6 @@ Creation-Date: 2011-09-09T11:40:54.865352
 * Disadvantages
 	* Only 133 bytes instead of 140
 * Therefore, we are very limited in terms of space
-
-===== SMS format =====
 
 ==== Multi-part messages ====
 * Multi-part messages are standardized for normal texts, but not for Data SMS
@@ -79,7 +79,7 @@ Creation-Date: 2011-09-09T11:40:54.865352
 		* Come from the same phone number, and
 		* Have the same type and ID
 	* None of these are verified and therefore can be tempered with by middle-man
-• The actual transmitted data is cut into chunks of 130 bytes and divided between parts
+* The actual transmitted data is cut into chunks of 130 bytes and divided between parts
 
 ==== Storing text ====
 * Both ASCII and Unicode
