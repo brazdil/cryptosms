@@ -12,7 +12,6 @@ Creation-Date: 2011-09-09T11:40:54.865352
 
 ==== Reasons ====
 
-
 ==== Facts ====
 * Assumes presence of a service providing means of signing data and verifying signatures (Public Keys)
 * Symmetric encryption AES-256/CBC/HMAC-SHA-256 for both messages and storage file
