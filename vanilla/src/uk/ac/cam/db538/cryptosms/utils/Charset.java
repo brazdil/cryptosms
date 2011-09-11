@@ -211,7 +211,7 @@ public class Charset {
 	 * @param text				Encoded string
 	 * @return
 	 */
-	public static byte[] toUnicode(String text) {
+	public static byte[] toUTF16(String text) {
 		try {
 			return text.getBytes("UTF-16");
 		} catch (UnsupportedEncodingException e) {
@@ -224,7 +224,7 @@ public class Charset {
 	 * @param utfData		Data to be processed
 	 * @return
 	 */
-	public static String fromUnicode(byte[] utfData) {
+	public static String fromUTF16(byte[] utfData) {
 		try {
 			return new String(utfData, "UTF-16");
 		} catch (UnsupportedEncodingException e) {

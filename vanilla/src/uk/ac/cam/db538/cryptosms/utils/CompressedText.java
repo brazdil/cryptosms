@@ -10,12 +10,12 @@ public class CompressedText {
 	public enum TextCharset {
 		ASCII,
 		UTF8,
-		UNICODE
+		UTF16
 	}
 
 	protected static final byte HEADER_ASCII = (byte) 0x40;
 	protected static final byte HEADER_UTF8 = (byte) 0x80;
-	protected static final byte HEADER_UNICODE = (byte) 0xC0;
+	protected static final byte HEADER_UTF16 = (byte) 0xC0;
 	protected static final byte FLAG_COMPRESSED = (byte) 0x20;
 	protected static final byte FLAG_ALIGNED = (byte) 0x10;
 	
@@ -46,22 +46,22 @@ public class CompressedText {
 				msg.mData = dataAscii8Compressed;
 			}
 		} else {
-			// try UNICODE and UTF8
-			byte[] dataUnicode = Charset.toUnicode(text);
-			byte[] dataUnicodeCompressed = Compression.compressZ(dataUnicode);
+			// try UTF16 and UTF8
+			byte[] dataUTF16 = Charset.toUTF16(text);
+			byte[] dataUTF16Compressed = Compression.compressZ(dataUTF16);
 			byte[] dataUTF8 = Charset.toUTF8(text);
 			byte[] dataUTF8Compressed = Compression.compressZ(dataUTF8);
 			
-			// set to UNICODE
-			msg.mCharset = TextCharset.UNICODE;
+			// set to UTF16
+			msg.mCharset = TextCharset.UTF16;
 			msg.mCompression = false;
-			msg.mData = dataUnicode;
+			msg.mData = dataUTF16;
 			
-			// try UNICODE + compression
-			if (msg.mData.length > dataUnicodeCompressed.length) {
-				msg.mCharset = TextCharset.UNICODE;
+			// try UTF16 + compression
+			if (msg.mData.length > dataUTF16Compressed.length) {
+				msg.mCharset = TextCharset.UTF16;
 				msg.mCompression = true;
-				msg.mData = dataUnicodeCompressed;
+				msg.mData = dataUTF16Compressed;
 			}
 			
 			// try UTF8
@@ -83,10 +83,7 @@ public class CompressedText {
 	}
 	
 	public static CompressedText decode(byte[] data) throws DataFormatException {
-		TextCharset charset = ((data[0] & HEADER_ASCII) != 0x00) ? TextCharset.ASCII : TextCharset.UNICODE;
-		boolean compressed = ((data[0] & FLAG_COMPRESSED) != 0x00);
 		boolean aligned = ((data[0] & FLAG_ALIGNED) != 0x00);
-		
 		if (aligned) {
 			// get the length of junk at the end
 			int lengthJunk = LowLevel.getUnsignedByte((byte) (data[0] & 0x0F));
@@ -95,9 +92,8 @@ public class CompressedText {
 		}
 		
 		CompressedText msg = new CompressedText();
+		msg.mCompression = ((data[0] & FLAG_COMPRESSED) != 0x00);
 		msg.mData = LowLevel.cutData(data, 1, data.length - 1);
-		msg.mCharset = charset;
-		msg.mCompression = compressed;
 		
 		byte[] dataDecompressed = null;
 		if (msg.mCompression)
@@ -105,11 +101,23 @@ public class CompressedText {
 		else
 			dataDecompressed = msg.mData;
 		
-		if (msg.mCharset == TextCharset.ASCII)
+		int header = (byte) (data[0] & 0xC0);
+		switch (header) {
+		case HEADER_ASCII:
+			msg.mCharset = TextCharset.ASCII;
 			msg.mString = (msg.mCompression) ? Charset.fromAscii8(dataDecompressed) : Charset.fromAscii7(dataDecompressed);
-		else
-			msg.mString = Charset.fromUnicode(dataDecompressed);
-		
+			break;
+		case HEADER_UTF8:
+			msg.mCharset = TextCharset.UTF8;
+			msg.mString = Charset.fromUTF8(dataDecompressed);
+			break;
+		default:
+		case HEADER_UTF16:
+			msg.mCharset = TextCharset.UTF16;
+			msg.mString = Charset.fromUTF16(dataDecompressed);
+			break;
+		}
+
 		return msg;
 	}
 	
@@ -127,8 +135,8 @@ public class CompressedText {
 		case UTF8:
 			header |= HEADER_UTF8;
 			break;
-		case UNICODE:
-			header |= HEADER_UNICODE;
+		case UTF16:
+			header |= HEADER_UTF16;
 			break;
 		}
 			
