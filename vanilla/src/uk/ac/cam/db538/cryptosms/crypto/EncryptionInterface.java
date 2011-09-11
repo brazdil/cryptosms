@@ -3,6 +3,8 @@ package uk.ac.cam.db538.cryptosms.crypto;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
+import org.spongycastle.crypto.Digest;
+
 public interface EncryptionInterface {
 	public static class WrongKeyDecryptionException extends RuntimeException {
 		private static final long serialVersionUID = 7462739153684558050L;
@@ -29,7 +31,7 @@ public interface EncryptionInterface {
 	public byte[] generateRandomData(int length);
 	
 	public byte[] getHash(byte[] data);
-	public MessageDigest getHashingFunction();
+	public byte[] getHMAC(byte[] data, byte[] key);
 	
 	public int getSymmetricEncryptedLength(int length);
 	public int getSymmetricAlignedLength(int length);
