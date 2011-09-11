@@ -1,5 +1,6 @@
 package uk.ac.cam.db538.cryptosms;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
 
 import roboguice.application.RoboApplication;
@@ -12,6 +13,7 @@ import uk.ac.cam.db538.cryptosms.data.PendingParser;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
+import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import android.app.Notification;
 import android.content.Context;
 import android.content.res.Resources;
