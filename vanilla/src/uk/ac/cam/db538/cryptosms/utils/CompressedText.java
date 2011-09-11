@@ -9,12 +9,15 @@ import uk.ac.cam.db538.cryptosms.utils.Compression;
 public class CompressedText {
 	public enum TextCharset {
 		ASCII,
+		UTF8,
 		UNICODE
 	}
 
-	protected static final byte HEADER_ASCII = (byte) 0x80;
-	protected static final byte HEADER_COMPRESSED = (byte) 0x40;
-	protected static final byte HEADER_ALIGNED = (byte) 0x20;
+	protected static final byte HEADER_ASCII = (byte) 0x40;
+	protected static final byte HEADER_UTF8 = (byte) 0x80;
+	protected static final byte HEADER_UNICODE = (byte) 0xC0;
+	protected static final byte FLAG_COMPRESSED = (byte) 0x20;
+	protected static final byte FLAG_ALIGNED = (byte) 0x10;
 	
 	private TextCharset mCharset;
 	private boolean mCompression;
@@ -24,34 +27,55 @@ public class CompressedText {
 	private CompressedText() {
 	}
 	
-	public static CompressedText createFromString(String text) {
+	public static CompressedText fromString(String text) {
 		CompressedText msg = new CompressedText();
 		msg.mString = text;
 		
 		if (Charset.isConvertableToAscii(text)) {
 			msg.mCharset = TextCharset.ASCII;
 			
-			byte[] dataCompressed = Compression.compressZ(Charset.toAscii8(text)); 
+			byte[] dataAscii8Compressed = Compression.compressZ(Charset.toAscii8(text)); 
 
 			int lengthAscii7 = Charset.computeLengthInAscii7(text);
-			int lengthZlib = dataCompressed.length;
-			if (lengthAscii7 <= lengthZlib) {
+			int lengthAscii8Compressed = dataAscii8Compressed.length;
+			if (lengthAscii7 <= lengthAscii8Compressed) {
 				msg.mCompression = false;
 				msg.mData = Charset.toAscii7(text);
 			} else {
 				msg.mCompression = true;
-				msg.mData = dataCompressed;
+				msg.mData = dataAscii8Compressed;
 			}
 		} else {
-			msg.mCharset = TextCharset.UNICODE;
+			// try UNICODE and UTF8
 			byte[] dataUnicode = Charset.toUnicode(text);
-			byte[] dataCompressed = Compression.compressZ(dataUnicode);
-			if (dataUnicode.length <= dataCompressed.length) {
-				msg.mCompression = false;
-				msg.mData = dataUnicode;
-			} else {
+			byte[] dataUnicodeCompressed = Compression.compressZ(dataUnicode);
+			byte[] dataUTF8 = Charset.toUTF8(text);
+			byte[] dataUTF8Compressed = Compression.compressZ(dataUTF8);
+			
+			// set to UNICODE
+			msg.mCharset = TextCharset.UNICODE;
+			msg.mCompression = false;
+			msg.mData = dataUnicode;
+			
+			// try UNICODE + compression
+			if (msg.mData.length > dataUnicodeCompressed.length) {
+				msg.mCharset = TextCharset.UNICODE;
 				msg.mCompression = true;
-				msg.mData = dataCompressed;
+				msg.mData = dataUnicodeCompressed;
+			}
+			
+			// try UTF8
+			if (msg.mData.length > dataUTF8.length) {
+				msg.mCharset = TextCharset.UTF8;
+				msg.mCompression = false;
+				msg.mData = dataUTF8;
+			}
+
+			// try UTF8 + compression
+			if (msg.mData.length > dataUTF8Compressed.length) {
+				msg.mCharset = TextCharset.UTF8;
+				msg.mCompression = true;
+				msg.mData = dataUTF8Compressed;
 			}
 		}
 		
@@ -60,8 +84,8 @@ public class CompressedText {
 	
 	public static CompressedText decode(byte[] data) throws DataFormatException {
 		TextCharset charset = ((data[0] & HEADER_ASCII) != 0x00) ? TextCharset.ASCII : TextCharset.UNICODE;
-		boolean compressed = ((data[0] & HEADER_COMPRESSED) != 0x00);
-		boolean aligned = ((data[0] & HEADER_ALIGNED) != 0x00);
+		boolean compressed = ((data[0] & FLAG_COMPRESSED) != 0x00);
+		boolean aligned = ((data[0] & FLAG_ALIGNED) != 0x00);
 		
 		if (aligned) {
 			// get the length of junk at the end
@@ -96,10 +120,20 @@ public class CompressedText {
 	public byte[] getNormalData() {
 		// add header to the front
 		byte header = 0x00;
-		if (mCharset == TextCharset.ASCII)
+		switch (mCharset) {
+		case ASCII:
 			header |= HEADER_ASCII;
+			break;
+		case UTF8:
+			header |= HEADER_UTF8;
+			break;
+		case UNICODE:
+			header |= HEADER_UNICODE;
+			break;
+		}
+			
 		if (mCompression)
-			header |= HEADER_COMPRESSED;
+			header |= FLAG_COMPRESSED;
 		
 		byte[] data = new byte[mData.length + 1];
 		data[0] = header;
@@ -114,7 +148,7 @@ public class CompressedText {
 		byte[] normalData = getNormalData();
 		
 		// put in the ALIGNED flag
-		normalData[0] |= HEADER_ALIGNED;
+		normalData[0] |= FLAG_ALIGNED;
 		// save the junk length in lower four bits
 		normalData[0] |= LowLevel.getBytesUnsignedByte(lengthJunk) & 0x0F;
 		// wrap the data and return

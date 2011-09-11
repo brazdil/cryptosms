@@ -3,6 +3,8 @@ package uk.ac.cam.db538.cryptosms.utils;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import org.spongycastle.crypto.RuntimeCryptoException;
+
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 
 
@@ -210,7 +212,11 @@ public class Charset {
 	 * @return
 	 */
 	public static byte[] toUnicode(String text) {
-		return text.getBytes();
+		try {
+			return text.getBytes("UTF-16");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeCryptoException();
+		}
 	}
 
 	/**
@@ -219,6 +225,36 @@ public class Charset {
 	 * @return
 	 */
 	public static String fromUnicode(byte[] utfData) {
-		return new String(utfData);
+		try {
+			return new String(utfData, "UTF-16");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Turns a string into a Unicode series of bytes. 
+	 * @param text				Encoded string
+	 * @return
+	 */
+	public static byte[] toUTF8(String text) {
+		try {
+			return text.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Takes a byte array with Unicode characters in it, and turns it into a string
+	 * @param utfData		Data to be processed
+	 * @return
+	 */
+	public static String fromUTF8(byte[] utfData) {
+		try {
+			return new String(utfData, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
