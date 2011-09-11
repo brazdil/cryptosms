@@ -3,6 +3,8 @@ package uk.ac.cam.db538.cryptosms.data;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 
+import org.spongycastle.crypto.digests.SHA256Digest;
+
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.SimCard;
 import uk.ac.cam.db538.cryptosms.crypto.EllipticCurveDeffieHellman;
@@ -118,19 +120,20 @@ public class KeysMessage extends Message {
 	 */
 	@Override
 	public ArrayList<byte[]> getBytes() throws StorageFileException, MessageException, EncryptionException {
-		MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
+		SHA256Digest hashing = new SHA256Digest(); 
 		if (mIsConfirmation) {
 			hashing.update(getOtherHeader());
-			hashing.update(LowLevel.getBytesLong(mOtherTimeStamp));
-			hashing.update(mOtherPublicKey);
+			hashing.update(LowLevel.getBytesLong(mOtherTimeStamp), 0, 8);
+			hashing.update(mOtherPublicKey, 0, mOtherPublicKey.length);
 		}
 		byte[] timeStampBytes = LowLevel.getBytesLong(mTimeStamp);
 
 		hashing.update(getHeader());
-		hashing.update(timeStampBytes);
-		hashing.update(mPublicKey);
+		hashing.update(timeStampBytes, 0, 8);
+		hashing.update(mPublicKey, 0, mPublicKey.length);
 
-		byte[] hash = hashing.digest();
+		byte[] hash = new byte[Encryption.HASH_LENGTH];
+		hashing.doFinal(hash, 0);
 		byte[] signature = Encryption.getEncryption().sign(hash);
 		
 		byte[] data = new byte[OFFSET_DATA + LENGTH_CONTENT];
@@ -182,12 +185,13 @@ public class KeysMessage extends Message {
 					return new ParseResult(idGroup, PendingParseResult.TIMESTAMP_OLD, null);
 
 			if (type == MessageType.HANDSHAKE) {
-				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
+				SHA256Digest hashing = new SHA256Digest(); 
 				hashing.update(header);
-				hashing.update(timeStampBytes);
-				hashing.update(publicKey);
+				hashing.update(timeStampBytes, 0, 8);
+				hashing.update(publicKey, 0, publicKey.length);
 				
-				byte[] hash = hashing.digest();
+				byte[] hash = new byte[Encryption.HASH_LENGTH];
+				hashing.doFinal(hash, 0);
 				
 				// check the signature
 				boolean signatureVerified = false;
@@ -212,15 +216,18 @@ public class KeysMessage extends Message {
 					// unexpected
 					return new ParseResult(idGroup, PendingParseResult.COULD_NOT_VERIFY, null);
 				
-				MessageDigest hashing = Encryption.getEncryption().getHashingFunction();
+				byte[] prevPublicKey = new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey();
+				
+				SHA256Digest hashing = new SHA256Digest(); 
 				hashing.update(HEADER_HANDSHAKE);
-				hashing.update(LowLevel.getBytesLong(keys.getTimeStamp()));
-				hashing.update(new EllipticCurveDeffieHellman(keys.getPrivateKey()).getPublicKey());
+				hashing.update(LowLevel.getBytesLong(keys.getTimeStamp()), 0, 8);
+				hashing.update(prevPublicKey, 0, prevPublicKey.length);
 				hashing.update(header);
-				hashing.update(timeStampBytes);
-				hashing.update(publicKey);
+				hashing.update(timeStampBytes, 0, 8);
+				hashing.update(publicKey, 0, publicKey.length);
 
-				byte[] hash = hashing.digest();
+				byte[] hash = new byte[Encryption.HASH_LENGTH];
+				hashing.doFinal(hash, 0);
 				
 				// check the signature
 				boolean signatureVerified = false;

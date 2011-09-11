@@ -111,9 +111,9 @@ public final class EncryptionPki implements EncryptionInterface {
 		// save everything
 		byte[] result = new byte[dataEncrypted.length + Encryption.SYM_OVERHEAD];
 		// MAC
-		System.arraycopy(mac, 0, result, 0, Encryption.MAC_LENGTH);
+		System.arraycopy(mac, 0, result, 0, Encryption.HMAC_LENGTH);
 		// IV 
-		System.arraycopy(iv, 0, result, Encryption.MAC_LENGTH, Encryption.SYM_IV_LENGTH);
+		System.arraycopy(iv, 0, result, Encryption.HMAC_LENGTH, Encryption.SYM_IV_LENGTH);
 		//data
 		System.arraycopy(dataEncrypted, 0, result, Encryption.SYM_OVERHEAD, dataEncrypted.length);
 		
@@ -151,8 +151,8 @@ public final class EncryptionPki implements EncryptionInterface {
 			throws EncryptionException {
 		int length = blocks * Encryption.SYM_BLOCK_LENGTH;
 		// cut the file up
-		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.MAC_LENGTH);
-		byte[] iv = LowLevel.cutData(data, Encryption.MAC_LENGTH, Encryption.SYM_IV_LENGTH);
+		byte[] macSaved = LowLevel.cutData(data, 0, Encryption.HMAC_LENGTH);
+		byte[] iv = LowLevel.cutData(data, Encryption.HMAC_LENGTH, Encryption.SYM_IV_LENGTH);
 		byte[] dataEncrypted = LowLevel.cutData(data, Encryption.SYM_OVERHEAD, length - Encryption.SYM_OVERHEAD);
 		
 		// decrypt
@@ -181,7 +181,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	private boolean compareMACs(byte[] saved, byte[] actual) {
 		// compare MACs
 		boolean isCorrect = true;
-		for (int i = 0; i < Encryption.MAC_LENGTH; ++i)
+		for (int i = 0; i < Encryption.HMAC_LENGTH; ++i)
 			isCorrect = isCorrect && saved[i] == actual[i];
 		return isCorrect;
 	}
@@ -230,7 +230,7 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	@Override
-	public MessageDigest getHashingFunction() {
-		return mEncryptionNone.getHashingFunction();
+	public byte[] getHMAC(byte[] data, byte[] key) {
+		return mEncryptionNone.getHMAC(data, key);
 	}
 }
