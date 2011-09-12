@@ -83,6 +83,15 @@ public class CompressedText {
 	}
 	
 	public static CompressedText decode(byte[] data) throws DataFormatException {
+		if (data == null || data.length <= 0) {
+			CompressedText msg = new CompressedText();
+			msg.mCompression = false;
+			msg.mCharset = TextCharset.ASCII;
+			msg.mString = new String();
+			msg.mData = new byte[0];
+			return msg;
+		}
+		
 		boolean aligned = ((data[0] & FLAG_ALIGNED) != 0x00);
 		if (aligned) {
 			// get the length of junk at the end
