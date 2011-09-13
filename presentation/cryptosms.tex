@@ -1,9 +1,11 @@
 \documentclass{beamer}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[english,french]{babel}
 \usepackage{tabularx}
 \usepackage{graphicx}
 \usepackage{epstopdf}
+\usepackage{pifont}
 
 \usetheme{Antibes}
 \title[CryptoSMS]{CryptoSMS\\Text message encryption for Android}
@@ -11,11 +13,20 @@
 \institute{University of Cambridge}
 \date{September 15, 2011}
 
+% getting rid of sections and subsections
+\setbeamertemplate{headline} {
+\begin{beamercolorbox}{section in head/foot}
+	\vskip2pt
+	\vskip10pt
+\end{beamercolorbox}
+}
+
+% tick and fail commands
+\newcommand*\tick{\item[\ding{51}]}
+\newcommand*\fail{\item[\ding{55}]}
+
 % TEXT CONSTANTS
-\newcommand{\txtFacts}{Facts}
-\newcommand{\txtStorageFile}{Storage file}
-\newcommand{\txtTextCompression}{Text compression}
-\newcommand{\txtTextMessaging}{Text messaging}
+\newcommand{\txtTextCompression}{Text compresses very well}
 
 % MARGIN AND PADDING IN TABLES
 \renewcommand*\arraystretch{1.5}
@@ -30,26 +41,52 @@
 
 % FACTS
 
-\begin{frame}{\txtFacts}{Attacker}
+\begin{frame}{Powerful enemies}
 	\begin{itemize}
-		\pause \item{Can read and manipulate everything you send}
-		\pause \item{Can gain physical access to your handset}
-		\pause \item{Can install a malicious application on your phone}
+		\item{Can read and manipulate everything you send}
+		\item{Can send a message from arbitrary phone number}
+		\item{Can gain physical access to your handset}
+		\item{Can install a malicious application on your phone}
 	\end{itemize}
+\end{frame}
+
+\begin{frame}{Strong protection}
+	\vfill
+	\begin{itemize}
+		\item{Messages encrypted with AES-256/CBC/HMAC-SHA-256}
+		\item{Key negotiation with Elliptic Curve Deffie-Hellman}
+		\item{Authentication provided by external application}
+		\item{Forward secrecy}
+		\item{All data stored in an encrypted file}
+	\end{itemize}
+	\vfill
+	\begin{flushright}
+	\emph{With thanks to Richard Clayton and Joseph Bonneau}
+	\end{flushright}
 \end{frame}
 
 % DEMO
 
+\begin{frame}{Demo}
+\end{frame}
+
 % TEXT MESSAGING
 
-\begin{frame}{\txtTextMessaging}{Data structure}
+\begin{frame}{Data SMS standard}
+	\begin{itemize}
+		\item{sent to a specific port}
+		\item{not stored by the OS}
+		\item{133 bytes instead of 140}
+	\end{itemize}
+\end{frame}
 
+\begin{frame}{Message structure}
 	\begin{block}{First part}
 		\verticalspace
 		\begin{tabularx}{\textwidth}{ |l|l|l|l|L| }
 			\hline
-			type1, id   & count   & IV   & HMAC & data \\
-			2 B         & 1 B     & 16 B & 32 B & 84 B  \\
+			mt1, count  & ID      & IV   & MAC & data \\
+			1 B         & 2 B     & 16 B & 32 B & 84 B  \\
 			\hline
 		\end{tabularx}
 	\end{block}
@@ -58,14 +95,18 @@
 		\verticalspace
 		\begin{tabularx}{\textwidth}{ |l|l|L| }
 			\hline
-			type2, id  & index   & data \\
-			2 B    & 1 B  & 130 B  \\
+			mt2, index  & ID   & data \\
+			1 B         & 2 B     & 130 B  \\
 			\hline
 		\end{tabularx}
 	\end{block}
+	
+	\begin{itemize}
+		\item{mt1, mt2 - message types}
+	\end{itemize}
 \end{frame}
 
-\begin{frame}{\txtTextMessaging}{\txtTextCompression}
+\begin{frame}{\txtTextCompression}
 	\begin{exampleblock}{French}
 		\foreignlanguage{french}{Salut Pierre, {\c c}a va? Je suis désolé, mais je ne serai pas là à cinq heures, parce que je suis malade. Je suis libre ce lundi et toi? Quand tu as quelques problèmes, appelles-moi. J'espère que tout sera ok.}
 
@@ -81,47 +122,68 @@
 	\end{exampleblock}
 \end{frame}
 
+\begin{frame}{\txtTextCompression}
+	\begin{exampleblock}{Hebrew}
+		\begin{flushright}
+			\includegraphics[width=\textwidth]{hebrew}
+		\end{flushright}
+		\centering
+		\begin{tabular}{ |c|c|c|c| }
+			\hline
+			UTF-16 & UTF-16 + DEFLATE & UTF-8 & UTF-8 + DEFLATE \\
+			\hline
+			404 B & 201 B & 353 B & 189 B \\
+			\hline
+		\end{tabular}
+	\end{exampleblock}
+\end{frame}
+
+
 % KEY NEGOTIATION
 
-\begin{frame}
-  
-   \begin{alertblock}{This is an Alert block}
-   This is an important alert
-   \end{alertblock}
- 
-   \begin{exampleblock}{This is an Example block}
-   This is an example 
-   \end{exampleblock}
- 
-\end{frame}
+%\begin{frame}{Elliptic Curve Deffie-Hellman}
+%	\begin{block}{Alice $\rightarrow$ Bob}
+%		\[
+%			mt3, t1, DH_A, \{ h( mt3, t1, DH_A ) \}_{P^{-1}_A}
+%		\]
+% 	\end{block}
+%	\begin{block}{Bob $\rightarrow$ Alice}
+%		\[
+%			mt4, t2, DH_B, \{ h( mt3, t1, DH_A, mt4, t2, DH_B ) \}_{P^{-1}_B}
+%		\]
+% 	\end{block}
+%
+%	\begin{itemize}
+%		\item{t1, t2 - timestamps}
+%		\item{$DH_A$, $DH_B$ - Deffie-Hellman public keys}
+%	\end{itemize}
+%\end{frame}
 
 % STORAGE FILE
 
-\begin{frame}{\txtStorageFile}{Internal structure}
-
+\begin{frame}{Storage file structure}
 	\centering
 	\includegraphics[width=0.8\textwidth]{storage_file}
 \end{frame}
 
-\begin{frame}{\txtStorageFile}{From the outside}
-
+\begin{frame}{Reveals nothing to the outside}
 	\begin{tabularx}{\textwidth}{ |l|l|L| }
 		\hline
-		IV & HMAC & Encrypted header \\
+		IV & MAC & Encrypted header \\
 		\hline
-		IV & HMAC & Encrypted entry 1 \\
+		IV & MAC & Encrypted entry 1 \\
 		\hline
-		IV & HMAC & Encrypted entry 2 \\
+		IV & MAC & Encrypted entry 2 \\
 		\hline
-		IV & HMAC & Encrypted entry 3 \\
+		IV & MAC & Encrypted entry 3 \\
 		\hline
-		IV & HMAC & Encrypted entry 4 \\
+		IV & MAC & Encrypted entry 4 \\
 		\hline
-		IV & HMAC & Encrypted entry 5 \\
+		IV & MAC & Encrypted entry 5 \\
 		\hline
-		IV & HMAC & Encrypted entry 6 \\
+		IV & MAC & Encrypted entry 6 \\
 		\hline
-		IV & HMAC & Encrypted entry 7 \\
+		IV & MAC & Encrypted entry 7 \\
 		\hline
 	\end{tabularx}
 
@@ -131,7 +193,24 @@
 
 % PKI COOPERATION
 
+\begin{frame}{Cooperation with the Key Ring}
+	\begin{itemize}
+		\item{Signs data and verifies signatures}
+		\item{Shared login session}
+		\item{Application locks itself after logging out}
+		\item{Storage file key stored in the Key Ring}
+	\end{itemize}
+\end{frame}
+
 % SUMMARY
+
+\begin{frame}{Achievements and issues}
+	\begin{itemize}
+		\tick Messages encrypted and authenticated
+		\tick Data protected in a safe storage file
+		\fail Uninstalling the Key Ring deletes the storage key
+ 	\end{itemize}
+\end{frame}
 % create a check list of aims
 
 \end{document}

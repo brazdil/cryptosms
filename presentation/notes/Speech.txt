@@ -1,0 +1,25 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2011-09-12T14:49:46.368871
+
+====== Speech ======
+Created Monday 12 September 2011
+
+Thank you Alastair and good morning ladies and gentleman.
+
+Text messages are a very popular way of sharing short pieces of information and have become a part of our everyday life. Most of the people would never send a their credit card number via a text message, but there are still all sorts of sensitive data that do get send this way, for example who they're going to meet, where, when and why. And depending on the country, these might be stored by the carriers for several months or even years. Also recent events here in the UK have shown us that it is possible to gain access to these without the knowledge of the user. So CryptoSMS is a project which aims to replace the original Messaging application in Android, while providing the users with means of enhancing the security of their data.
+
+Let's have a look at what we're trying to protect the users against. We assume that the attackers are capable of reading, and also manipulating every single piece of data you send. They may be also capable of sending the user a message from an arbitrary phone number, making them believe it comes from someone they trust. They are certainly able to steal your handset and to gain access to its internal memory. And last but not least, they might be able to trick the user into installing a malicious application, for example by sending the user an email which appears to be from their bank.
+
+So what do we do to protect the users against these threads? First of all, every message is encrypted with the AES algorithm, which was approved by the American NSA to be strong enough to protect  secret documents. The cipher works on 16-byte blocks of data, so we use a method called CBC to chain an arbitrary number of these blocks. An also, each message contains a so called MAC, basically just the hash of the data and the key, which is used by the recipient to check the integrity of the message. 
+
+AES is symmetric cryptographic algorithm, which means that the data is both encrypted and decrypted with the same key, and therefore both of the parties have to agree on the same key, without revealing it to anyone else. For this purpose, we use the Defiie-Hellman key negotiation protocol, which has a nice property that you don't transmit the actual keys. I don't want to go into too much detail here, but basically the two parties exchange numbers that they use to come up with the same number. However, if a third party only knows the transmitted numbers, it is not enough to construct the result as well. And as you've already heard from Dylan, using Defiie-Hellman with Elliptic Curves helped us reduce the size of these transmitted numbers and fit everything in just one message from each party.
+
+These handshake messages also get signed, since we assumed that we can't trust the phone number the message appears to be coming from. But this is done by an external application, namely the Android Key Ring, you've just heard about from Dylan, so I'm not going to talk about that.
+
+We also support forward secrecy, which means that we don't use the same key over and over, because then if a key gets compromised, all of your messages get compromised with it.  So we compute a hash of the current key every time a message is exchanged and save it to be used as the key next time. This way compromising a key results in revealing the message encrypted with it and every message sent after that. However, the previous messages are still safe.
+
+And last but not least, the very same encryption algorithm is used to encrypt all the data stored in the device, thus protecting the history of conversations if the handset gets stolen.
+
+DEMO
+
