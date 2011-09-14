@@ -20,6 +20,7 @@
 	\vskip10pt
 \end{beamercolorbox}
 }
+\setbeamertemplate{navigation symbols}{} 
 
 % tick and fail commands
 \newcommand*\tick{\item[\ding{51}]}
@@ -54,7 +55,7 @@
 	\vfill
 	\begin{itemize}
 		\item{Messages encrypted with AES-256/CBC/HMAC-SHA-256}
-		\item{Key negotiation with Elliptic Curve Deffie-Hellman}
+		\item{Key negotiation with Elliptic Curve Diffie-Hellman}
 		\item{Authentication provided by external application}
 		\item{Forward secrecy}
 		\item{All data stored in an encrypted file}
@@ -67,9 +68,6 @@
 
 % DEMO
 
-\begin{frame}{Demo}
-\end{frame}
-
 % TEXT MESSAGING
 
 \begin{frame}{Data SMS standard}
@@ -77,34 +75,40 @@
 		\item{sent to a specific port}
 		\item{not stored by the OS}
 		\item{133 bytes instead of 140}
+		\item{long messages divided into multiple parts}
+		\begin{itemize}
+			\item{84 bytes in first part}
+			\item{130 bytes in other parts}
+		\end{itemize}
+		\item{text compression with DEFLATE}
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Message structure}
-	\begin{block}{First part}
-		\verticalspace
-		\begin{tabularx}{\textwidth}{ |l|l|l|l|L| }
-			\hline
-			mt1, count  & ID      & IV   & MAC & data \\
-			1 B         & 2 B     & 16 B & 32 B & 84 B  \\
-			\hline
-		\end{tabularx}
-	\end{block}
-
-	\begin{block}{Other parts}
-		\verticalspace
-		\begin{tabularx}{\textwidth}{ |l|l|L| }
-			\hline
-			mt2, index  & ID   & data \\
-			1 B         & 2 B     & 130 B  \\
-			\hline
-		\end{tabularx}
-	\end{block}
-	
-	\begin{itemize}
-		\item{mt1, mt2 - message types}
-	\end{itemize}
-\end{frame}
+%\begin{frame}{Message structure}
+%	\begin{block}{First part}
+%		\verticalspace
+%		\begin{tabularx}{\textwidth}{ |l|l|l|l|L| }
+%			\hline
+%			mt1, count  & ID      & IV   & MAC & data \\
+%			1 B         & 2 B     & 16 B & 32 B & 84 B  \\
+%			\hline
+%		\end{tabularx}
+%	\end{block}
+%
+%	\begin{block}{Other parts}
+%		\verticalspace
+%		\begin{tabularx}{\textwidth}{ |l|l|L| }
+%			\hline
+%			mt2, index  & ID   & data \\
+%			1 B         & 2 B     & 130 B  \\
+%			\hline
+%		\end{tabularx}
+%	\end{block}
+%	
+%	\begin{itemize}
+%		\item{mt1, mt2 - message types}
+%	\end{itemize}
+%\end{frame}
 
 \begin{frame}{\txtTextCompression}
 	\begin{exampleblock}{French}
@@ -161,6 +165,15 @@
 
 % STORAGE FILE
 
+\begin{frame}{Storage file}
+	\begin{itemize}
+		\item{stores all data encrypted}
+		\item{does not reveal its internal structure}
+		\item{not necessary to decrypt the whole file}
+		\item{speed optimized for the most common tasks}
+	\end{itemize}
+\end{frame}
+
 \begin{frame}{Storage file structure}
 	\centering
 	\includegraphics[width=0.8\textwidth]{storage_file}
@@ -206,11 +219,10 @@
 
 \begin{frame}{Achievements and issues}
 	\begin{itemize}
+		\fail Uninstalling the Key Ring deletes the storage key
 		\tick Messages encrypted and authenticated
 		\tick Data protected in a safe storage file
-		\fail Uninstalling the Key Ring deletes the storage key
  	\end{itemize}
 \end{frame}
-% create a check list of aims
 
 \end{document}
