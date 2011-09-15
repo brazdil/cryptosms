@@ -54,7 +54,7 @@
 \begin{frame}{Strong protection}
 	\vfill
 	\begin{itemize}
-		\item{Messages encrypted with AES-256/CBC/HMAC-SHA-256}
+		\item{Messages encrypted with AES/CBC/HMAC}
 		\item{Key negotiation with Elliptic Curve Diffie-Hellman}
 		\item{Authentication provided by external application}
 		\item{Forward secrecy}
@@ -77,7 +77,7 @@
 		\item{133 bytes instead of 140}
 		\item{long messages divided into multiple parts}
 		\begin{itemize}
-			\item{84 bytes in first part}
+			\item{82 bytes in first part}
 			\item{130 bytes in other parts}
 		\end{itemize}
 		\item{text compression with DEFLATE}
@@ -90,7 +90,7 @@
 %		\begin{tabularx}{\textwidth}{ |l|l|l|l|L| }
 %			\hline
 %			mt1, count  & ID      & IV   & MAC & data \\
-%			1 B         & 2 B     & 16 B & 32 B & 84 B  \\
+%			1 B         & 2 B     & 16 B & 32 B & 82 B  \\
 %			\hline
 %		\end{tabularx}
 %	\end{block}
@@ -167,9 +167,9 @@
 
 \begin{frame}{Storage file}
 	\begin{itemize}
-		\item{stores all data encrypted}
-		\item{does not reveal its internal structure}
+		\item{all messages and session keys are reencrypted under a new key}
 		\item{not necessary to decrypt the whole file}
+		\item{does not reveal its internal structure}
 		\item{speed optimized for the most common tasks}
 	\end{itemize}
 \end{frame}
