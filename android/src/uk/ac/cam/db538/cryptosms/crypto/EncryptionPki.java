@@ -1,6 +1,20 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.crypto;
 
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 import uk.ac.cam.db538.cryptosms.crypto.AesCbc;
@@ -15,9 +29,15 @@ import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.NotConnectedException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 
+/*
+ * Class handling encryption through PKI
+ */
 public final class EncryptionPki implements EncryptionInterface {
 	private EncryptionNone mEncryptionNone = null;
 	
+	/**
+	 * Instantiates a new encryption pki.
+	 */
 	public EncryptionPki() {
 		mEncryptionNone = new EncryptionNone();
 	}
@@ -25,9 +45,10 @@ public final class EncryptionPki implements EncryptionInterface {
 	// METHODS 
 	
 	/**
-	 * Returns byte array with random data
-	 * @param length
-	 * @return
+	 * Returns byte array with random data.
+	 *
+	 * @param length the length
+	 * @return the byte[]
 	 */
 	@Override
 	public byte[] generateRandomData(int length) {
@@ -35,9 +56,10 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	/**
-	 * Returns SHA-512 hash of given data 
-	 * @param data
-	 * @return
+	 * Returns SHA-512 hash of given data.
+	 *
+	 * @param data the data
+	 * @return the hash
 	 */
 	@Override
 	public byte[] getHash(byte[] data) {
@@ -47,8 +69,9 @@ public final class EncryptionPki implements EncryptionInterface {
 	/**
 	 * Returns the length of data after encryption.
 	 * Encryption adds some overhead (IV and MAC) and the data is also aligned to 16-byte blocks with random stuff
-	 * @param length
-	 * @return
+	 *
+	 * @param length the length
+	 * @return the symmetric encrypted length
 	 */
 	@Override
 	public int getSymmetricEncryptedLength(int length) {
@@ -56,9 +79,10 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 	
 	/**
-	 * Returns the least multiple of AES_BLOCKSIZE greater than the argument
-	 * @param length
-	 * @return
+	 * Returns the least multiple of AES_BLOCKSIZE greater than the argument.
+	 *
+	 * @param length the length
+	 * @return the symmetric aligned length
 	 */
 	@Override
 	public int getSymmetricAlignedLength(int length) {
@@ -66,11 +90,12 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	/**
-	 * Encrypts data with Master Key stored with PKI
-	 * @param data
-	 * @param forceLogIn
-	 * @return
-	 * @throws EncryptionException
+	 * Encrypts data with Master Key stored with PKI.
+	 *
+	 * @param data the data
+	 * @param forceLogIn the force log in
+	 * @return the byte[]
+	 * @throws EncryptionException the encryption exception
 	 */
 	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException {
@@ -82,10 +107,11 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	/**
-	 * Encrypts data with Master Key stored with PKI
-	 * @param data
-	 * @return
-	 * @throws EncryptionException
+	 * Encrypts data with Master Key stored with PKI.
+	 *
+	 * @param data the data
+	 * @return the byte[]
+	 * @throws EncryptionException the encryption exception
 	 */
 	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
@@ -93,10 +119,11 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 	
 	/**
-	 * Encrypts data with given key
-	 * @param data
-	 * @return
-	 * @throws EncryptionException
+	 * Encrypts data with given key.
+	 *
+	 * @param data the data
+	 * @param key the key
+	 * @return the byte[]
 	 */
 	@Override
 	public byte[] encryptSymmetric(byte[] data, byte[] key) {
@@ -121,10 +148,12 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 	
 	/**
-	 * Decrypts data with Master Key stored with PKI
-	 * @param data
-	 * @return
-	 * @throws EncryptionException
+	 * Decrypts data with Master Key stored with PKI.
+	 *
+	 * @param data the data
+	 * @param forceLogIn the force log in
+	 * @return the byte[]
+	 * @throws EncryptionException the encryption exception
 	 */
 	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn) throws EncryptionException {
@@ -136,16 +165,20 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	/**
-	 * Decrypts data with Master Key stored with PKI
-	 * @param data
-	 * @return
-	 * @throws EncryptionException
+	 * Decrypts data with Master Key stored with PKI.
+	 *
+	 * @param data the data
+	 * @return the byte[]
+	 * @throws EncryptionException the encryption exception
 	 */
 	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data) throws EncryptionException {
 		return decryptSymmetricWithMasterKey(data, false);
 	}
 	
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#decryptSymmetric(byte[], byte[], int)
+	 */
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key, int blocks)
 			throws EncryptionException {
@@ -168,10 +201,12 @@ public final class EncryptionPki implements EncryptionInterface {
 	}
 
 	/**
-	 * Decrypts data with given key
-	 * @param data
-	 * @return
-	 * @throws EncryptionException
+	 * Decrypts data with given key.
+	 *
+	 * @param data the data
+	 * @param key the key
+	 * @return the byte[]
+	 * @throws EncryptionException the encryption exception
 	 */
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key) throws EncryptionException {
@@ -186,6 +221,9 @@ public final class EncryptionPki implements EncryptionInterface {
 		return isCorrect;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#sign(byte[])
+	 */
 	@Override
 	public byte[] sign(byte[] data) throws EncryptionException {
 		try {
@@ -206,6 +244,9 @@ public final class EncryptionPki implements EncryptionInterface {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#verify(byte[], byte[], long)
+	 */
 	@Override
 	public boolean verify(byte[] data, byte[] signature, long contactId)
 			throws EncryptionException {
@@ -229,6 +270,9 @@ public final class EncryptionPki implements EncryptionInterface {
 		return mEncryptionNone.getRandom();
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#getHMAC(byte[], byte[])
+	 */
 	@Override
 	public byte[] getHMAC(byte[] data, byte[] key) {
 		return mEncryptionNone.getHMAC(data, key);

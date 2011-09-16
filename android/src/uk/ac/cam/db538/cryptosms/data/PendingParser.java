@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
@@ -21,6 +36,9 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+/*
+ * Static class that parses messages in the database
+ */
 public class PendingParser {
 	public enum PendingParseResult {
 		OK_HANDSHAKE_MESSAGE,
@@ -40,6 +58,11 @@ public class PendingParser {
 	
 	private static PendingParser mParser;
 	
+	/**
+	 * Inits the singleton.
+	 *
+	 * @param context the context
+	 */
 	public static void init(Context context) {
 		if (mParser == null)
 			mParser = new PendingParser(context);
@@ -69,7 +92,7 @@ public class PendingParser {
 	}
 
 	/**
-	 * Holds the results of pending messages parsing
+	 * Holds the parsing results of pending messages
 	 * @author db538
 	 *
 	 */
@@ -79,6 +102,13 @@ public class PendingParser {
 		private Message mMessage;
 		private DateTime mTimeStamp;
 		
+		/**
+		 * Instantiates a new parses the result.
+		 *
+		 * @param idGroup the id group
+		 * @param result the result
+		 * @param message the message
+		 */
 		ParseResult(ArrayList<Pending> idGroup, PendingParseResult result, Message message) {
 			mIdGroup = idGroup;
 			mResult = result;
@@ -109,6 +139,9 @@ public class PendingParser {
 			return mTimeStamp;
 		}
 
+		/* (non-Javadoc)
+		 * @see java.lang.Comparable#compareTo(java.lang.Object)
+		 */
 		@Override
 		public int compareTo(ParseResult another) {
 			return this.getTimestamp().compareTo(another.getTimestamp());
@@ -121,12 +154,20 @@ public class PendingParser {
 				return null;
 		}
 		
+		/**
+		 * Removes messages in the id group from database
+		 *
+		 * @param database the database
+		 */
 		public void removeFromDb(DbPendingAdapter database) {
 			for (Pending p : mIdGroup)
 				database.removeEntry(p);
 		}
 	}
 	
+	/**
+	 * Parses the pending messages.
+	 */
 	public synchronized void parseEvents() {
 		new EventsUpdateTask().execute();
 	}
@@ -235,6 +276,9 @@ public class PendingParser {
 		}
 	}
 	
+	/**
+	 * Starts parsing
+	 */
 	public static void forceParsing() {
 		getSingleton().parseEvents();
 	}

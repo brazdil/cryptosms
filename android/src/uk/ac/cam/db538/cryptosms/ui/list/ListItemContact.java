@@ -47,10 +47,21 @@ public class ListItemContact extends RelativeLayout {
 
     private Conversation mConversationHeader;
 
+    /**
+     * Instantiates a new list item contact.
+     *
+     * @param context
+     */
     public ListItemContact(Context context) {
         super(context);
     }
 
+    /**
+     * Instantiates a new list item contact.
+     *
+     * @param context the context
+     * @param attrs the attrs
+     */
     public ListItemContact(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -75,12 +86,21 @@ public class ListItemContact extends RelativeLayout {
 
     /**
      * Only used for header binding.
+     *
+     * @param title the title
+     * @param explain the explain
      */
     public void bind(String title, String explain) {
         mFromView.setText(title);
         mStatusView.setText(explain);
     }
 
+    /**
+     * Bind conversation to this item
+     *
+     * @param conv conversation
+     * @throws StorageFileException the storage file exception
+     */
     public final void bind(Conversation conv) throws StorageFileException {
     	setConversationHeader(conv);
     	

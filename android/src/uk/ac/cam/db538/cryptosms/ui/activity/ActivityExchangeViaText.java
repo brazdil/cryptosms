@@ -1,32 +1,35 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.ui.activity;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 import roboguice.inject.InjectView;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
-import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.data.Contact;
-import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.KeysMessage;
-import uk.ac.cam.db538.cryptosms.data.Pending;
-import uk.ac.cam.db538.cryptosms.data.PendingParser;
-import uk.ac.cam.db538.cryptosms.data.TextMessage;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageException;
 import uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.ParseResult;
-import uk.ac.cam.db538.cryptosms.data.PendingParser.PendingParseResult;
 import uk.ac.cam.db538.cryptosms.state.State;
-import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSendMessage;
@@ -91,6 +94,9 @@ public class ActivityExchangeViaText extends ActivityAppState {
         UtilsSendMessage.prepareDialogs(getDialogManager(), this);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onPkiLogin()
+	 */
 	@Override
 	public void onPkiLogin() {
 		super.onPkiLogin();

@@ -1,6 +1,20 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
 
 import roboguice.application.RoboApplication;
@@ -8,12 +22,10 @@ import roboguice.application.RoboApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.WrongKeyDecryptionException;
 import uk.ac.cam.db538.cryptosms.crypto.EncryptionPki;
-import uk.ac.cam.db538.cryptosms.data.DbPendingAdapter;
 import uk.ac.cam.db538.cryptosms.data.PendingParser;
 import uk.ac.cam.db538.cryptosms.state.Pki;
 import uk.ac.cam.db538.cryptosms.state.State;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
-import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import android.app.Notification;
 import android.content.Context;
 import android.content.res.Resources;
@@ -32,7 +44,7 @@ public class MyApplication extends RoboApplication {
 	public static final String PKI_LOGIN = "uk.ac.cam.dje38.pki.login";
 	
 	public static final String NEWLINE = System.getProperty("line.separator");
-	public static final String[] REPORT_EMAILS = new String[] { "db538@cam.ac.uk" }; // TODO: create new email!
+	public static final String[] REPORT_EMAILS = new String[] { }; // TODO: create new email!
 	
 	private static MyApplication mSingleton;
 	

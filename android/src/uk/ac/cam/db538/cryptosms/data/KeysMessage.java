@@ -1,6 +1,20 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.data;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 
 import org.spongycastle.crypto.digests.SHA256Digest;
@@ -21,6 +35,9 @@ import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
 
+/*
+ * Key negotiation message
+ */
 public class KeysMessage extends Message {
 	
 	// Set handshake validity period to 5 days (4 - 6 days with different time zones)
@@ -48,6 +65,11 @@ public class KeysMessage extends Message {
 		
 	EllipticCurveDeffieHellman mECDH;
 	
+	/**
+	 * Instantiates new key negotiation message (first request)
+	 *
+	 * @throws StorageFileException the storage file exception
+	 */
 	public KeysMessage() throws StorageFileException {
 		mIsConfirmation = false;
 		
@@ -57,6 +79,14 @@ public class KeysMessage extends Message {
 		mTimeStamp = System.currentTimeMillis();
 	}
 	
+	/**
+	 * Instantiates new key negotiation message (from reply)
+	 *
+	 * @param originalTimeStamp time stamp of the first message
+	 * @param privateKey private key of this user
+	 * @param otherTimeStamp time stamp from the other user's message
+	 * @param otherPublicKey public key from the other user's message
+	 */
 	public KeysMessage(long originalTimeStamp, byte[] privateKey, long otherTimeStamp, byte[] otherPublicKey) {
 		mIsConfirmation = false;
 		
@@ -69,6 +99,13 @@ public class KeysMessage extends Message {
 		mOtherPublicKey = otherPublicKey;
 	}
 	
+	/**
+	 * Instantiates new key negotiation message (to reply)
+	 *
+	 * @param otherTimeStamp time stamp from the other user's message
+	 * @param otherPublicKey public key from the other user's message
+	 * @throws StorageFileException the storage file exception
+	 */
 	public KeysMessage(long otherTimeStamp, byte[] otherPublicKey) throws StorageFileException {
 		mIsConfirmation = true;
 		
@@ -147,6 +184,12 @@ public class KeysMessage extends Message {
 		return dataSms;
 	}
 	
+	/**
+	 * Parses the message
+	 *
+	 * @param idGroup the id group
+	 * @return the parses the result
+	 */
 	public static ParseResult parseKeysMessage(ArrayList<Pending> idGroup) {
 		try {
 			// check the sender

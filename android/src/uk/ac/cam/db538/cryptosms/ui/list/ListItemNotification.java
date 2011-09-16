@@ -48,10 +48,21 @@ public class ListItemNotification extends RelativeLayout {
 
     private ParseResult mParseData;
 
+    /**
+     * Instantiates a new list item notification.
+     *
+     * @param context the context
+     */
     public ListItemNotification(Context context) {
         super(context);
     }
 
+    /**
+     * Instantiates a new list item notification.
+     *
+     * @param context the context
+     * @param attrs the attrs
+     */
     public ListItemNotification(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -78,6 +89,9 @@ public class ListItemNotification extends RelativeLayout {
 
     /**
      * Only used for header binding.
+     *
+     * @param title the title
+     * @param explain the explain
      */
     public void bind(String title, String explain) {
     	Log.d(MyApplication.APP_TAG, "Notification header bound");
@@ -85,6 +99,11 @@ public class ListItemNotification extends RelativeLayout {
         mSubjectView.setText(explain);
     }
 
+    /**
+     * Bind parsing result to notification
+     *
+     * @param parseData the parse data
+     */
     public final void bind(final ParseResult parseData) {
     	Context context = this.getContext();
     	Resources res = context.getResources();

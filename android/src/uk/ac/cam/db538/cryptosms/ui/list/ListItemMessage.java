@@ -35,7 +35,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
- * This class manages the view for given conversation.
+ * This class manages the view for given message
  */
 public class ListItemMessage extends RelativeLayout {
 //	private static final StyleSpan STYLE_BOLD = new StyleSpan(Typeface.BOLD);
@@ -47,10 +47,21 @@ public class ListItemMessage extends RelativeLayout {
 
     private TextMessage mMessage;
 
+    /**
+     * Instantiates a new list item message.
+     *
+     * @param context the context
+     */
     public ListItemMessage(Context context) {
         super(context);
     }
 
+    /**
+     * Instantiates a new list item message.
+     *
+     * @param context the context
+     * @param attrs the attrs
+     */
     public ListItemMessage(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -107,7 +118,12 @@ public class ListItemMessage extends RelativeLayout {
 //        return buf;
 //    }
 	
-    public final void bind(final TextMessage message) {
+	/**
+	 * Bind message to this item
+	 *
+	 * @param message the message
+	 */
+	public final void bind(final TextMessage message) {
     	Context context = this.getContext();
     	Resources res = context.getResources();
         setMessage(message);

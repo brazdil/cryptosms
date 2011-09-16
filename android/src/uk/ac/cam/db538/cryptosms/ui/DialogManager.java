@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
@@ -7,12 +22,24 @@ import java.util.Map.Entry;
 import android.app.Dialog;
 import android.os.Bundle;
 
+/*
+ * Class that handles all dialogs in the system, 
+ * saving/restoring their state when application is locked
+ */
 public class DialogManager {
 	
 	private static final String INSTANCE_PARAMS = "PARAMS";
 	private static final String INSTANCE_STATE = "STATE";
 	
 	public static interface DialogBuilder {
+		
+		/**
+		 * Called when dialog needs to be created.
+		 * Should return Dialog object
+		 *
+		 * @param params the params
+		 * @return the dialog
+		 */
 		public Dialog onBuild(Bundle params);
 		public String getId();
 	}
@@ -31,6 +58,9 @@ public class DialogManager {
 	private ArrayList<DialogBuilder> mDialogBuilders = new ArrayList<DialogBuilder>();
 	private Bundle mSavedState;
 	
+	/**
+	 * Instantiates a new dialog manager.
+	 */
 	public DialogManager() {
 	}
 	
@@ -44,9 +74,11 @@ public class DialogManager {
 	}
 	
 	/**
-	 * Shows a given dialog
-	 * @param id
-	 * @return
+	 * Shows the given dialog.
+	 *
+	 * @param id the id
+	 * @param params the params
+	 * @return the dialog
 	 */
 	public Dialog showDialog(String id, Bundle params) {
 		for (DialogBuilder builder : mDialogBuilders)
@@ -56,8 +88,9 @@ public class DialogManager {
 	}
 	
 	/**
-	 * Dismisses a given dialog
-	 * @param id
+	 * Dismisses the given dialog.
+	 *
+	 * @param id the id
 	 */
 	public void dismissDialog(String id) {
 		Dialog dialog = getDialog(id);
@@ -70,13 +103,19 @@ public class DialogManager {
 		}
 	}
 	
+	/**
+	 * Gets the dialog object.
+	 *
+	 * @param id the id
+	 * @return the dialog
+	 */
 	public Dialog getDialog(String id) {
 		return mActiveDialogs.get(id).dialog;
 	}
 	
 	/**
-	 * Dismisses all given dialogs and saves their states into a bundle
-	 * @param savedState
+	 * Dismisses all given dialogs and saves their states into a bundle.
+	 *
 	 */
 	public void saveState() {
 		if (mSavedState == null)
@@ -95,8 +134,8 @@ public class DialogManager {
 	}
 	
 	/**
-	 * Restores all previously active dialogs and lets them restore their own state
-	 * @param savedState
+	 * Restores all previously active dialogs and lets them restore their own state.
+	 *
 	 */
 	public void restoreState() {
 		if (mSavedState == null)
@@ -132,10 +171,20 @@ public class DialogManager {
 		mSavedState = savedState;
 	}
 	
+	/**
+	 * Adds a dialog builder.
+	 *
+	 * @param builder the builder
+	 */
 	public void addBuilder(DialogBuilder builder) {
 		mDialogBuilders.add(builder);
 	}
 	
+	/**
+	 * Removes a dialog builder.
+	 *
+	 * @param builder the builder
+	 */
 	public void removeBuilder(DialogBuilder builder) {
 		mDialogBuilders.remove(builder);
 	}

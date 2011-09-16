@@ -21,15 +21,33 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.widget.ListView;
 
+/*
+ * List view showing message history
+ */
 public final class ListViewMessage extends ListView {
+    
+    /**
+     * Instantiates a new list view message.
+     *
+     * @param context the context
+     */
     public ListViewMessage(Context context) {
         super(context);
     }
     
+    /**
+     * Instantiates a new list view message.
+     *
+     * @param context the context
+     * @param attrs the attrs
+     */
     public ListViewMessage(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
     
+    /* (non-Javadoc)
+     * @see android.view.View#onKeyShortcut(int, android.view.KeyEvent)
+     */
     @Override
     public boolean onKeyShortcut(int keyCode, KeyEvent event) {
 //        switch (keyCode) {

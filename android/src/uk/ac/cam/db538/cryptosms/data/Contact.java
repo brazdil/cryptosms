@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.io.IOException;
@@ -22,6 +37,9 @@ import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telephony.PhoneNumberUtils;
 
+/*
+ * Class handling a single contact in the database
+ */
 public class Contact implements Comparable<Contact> {
 	
     private static final String CALLER_ID_SELECTION = "PHONE_NUMBERS_EQUAL(" + Phone.NUMBER
@@ -75,6 +93,13 @@ public class Contact implements Comparable<Contact> {
         mPersonId = contactId;
 	}
 
+    /**
+     * Gets avatar picture of the user
+     *
+     * @param context the context
+     * @param defaultValue the default value
+     * @return the avatar
+     */
     public synchronized Drawable getAvatar(Context context, Drawable defaultValue) {
         if (mAvatar == null) {
             if (mAvatarData != null) {
@@ -85,6 +110,11 @@ public class Contact implements Comparable<Contact> {
         return mAvatar != null ? mAvatar : defaultValue;
     }
     
+    /**
+     * Returns whether this contact is stored in the database
+     *
+     * @return true, if successful
+     */
     public synchronized boolean existsInDatabase() {
         return (mPersonId > 0);
     }    
@@ -126,9 +156,12 @@ public class Contact implements Comparable<Contact> {
 	// STATIC STUFF
 	
 	/**
-     * Queries the caller id info with the phone number.
-     * @return a Contact containing the caller id info corresponding to the number.
-     */
+	 * Queries the caller id info with the phone number.
+	 *
+	 * @param context the context
+	 * @param phoneNumber the phone number
+	 * @return a Contact containing the caller id info corresponding to the number.
+	 */
     public static Contact getContact(Context context, String phoneNumber) {
         phoneNumber = UtilsSimIssues.formatPhoneNumber(phoneNumber);
         
@@ -179,9 +212,13 @@ public class Contact implements Comparable<Contact> {
     }
 
 	/**
-     * Queries the caller id info with the phone number.
-     * @return a Contact containing the caller id info corresponding to the number.
-     */
+	 * Queries the caller id info with the phone number.
+	 *
+	 * @param context the context
+	 * @param phoneNumber the phone number
+	 * @param contactId the contact id
+	 * @return a Contact containing the caller id info corresponding to the number.
+	 */
     public static Contact getContact(Context context, String phoneNumber, long contactId) {
         phoneNumber = UtilsSimIssues.formatPhoneNumber(phoneNumber);
         
@@ -280,7 +317,14 @@ public class Contact implements Comparable<Contact> {
     	private String mPhoneNumber;
     	private Context mContext;
     	
-    	public PhoneNumber(Context context, int type, String phoneNumber) {
+    	/**
+	     * Instantiates a new phone number.
+	     *
+	     * @param context the context
+	     * @param type the type
+	     * @param phoneNumber the phone number
+	     */
+	    public PhoneNumber(Context context, int type, String phoneNumber) {
     		setType(type);
     		setPhoneNumber(phoneNumber);
     		mContext = context;
@@ -301,6 +345,9 @@ public class Contact implements Comparable<Contact> {
 			return mPhoneNumber;
 		}
 		
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
 		@Override
 		public String toString() {
 			Resources res = mContext.getResources();
@@ -320,6 +367,13 @@ public class Contact implements Comparable<Contact> {
 		}
     }
     
+    /**
+     * Gets all phone numbers of a given contact.
+     *
+     * @param context the context
+     * @param contactId the contact id
+     * @return the phone numbers
+     */
     public static ArrayList<PhoneNumber> getPhoneNumbers(Context context, long contactId) {
     	ContentResolver cr = context.getContentResolver();
     	ArrayList<PhoneNumber> list = new ArrayList<PhoneNumber>();
@@ -336,6 +390,9 @@ public class Contact implements Comparable<Contact> {
         return list;
     }
 
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(Contact another) {
 		String nameThis = (this.existsInDatabase() ? this.getName() : this.getPhoneNumber());

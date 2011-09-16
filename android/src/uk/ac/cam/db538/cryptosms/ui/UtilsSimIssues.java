@@ -1,8 +1,22 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.ui;
 
 import java.util.ArrayList;
 
-import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.Preferences;
 import uk.ac.cam.db538.cryptosms.R;
 import uk.ac.cam.db538.cryptosms.SimCard;
@@ -20,8 +34,10 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.telephony.PhoneNumberUtils;
-import android.util.Log;
 
+/*
+ * Utilities for handling issues with SIM card
+ */
 public class UtilsSimIssues {
 	private static boolean mImportShown = false;
 	private static boolean mWarningSIMNotPresent = false;
@@ -31,6 +47,12 @@ public class UtilsSimIssues {
 	private static final String DIALOG_NO_SESSION_KEYS = "DIALOG_NO_SESSION_KEYS";
 	private static final String DIALOG_EXISTING_PHONE_NUMBERS = "DIALOG_EXISTING_PHONE_NUMBERS";
 	
+	/**
+	 * Prepare dialogs.
+	 *
+	 * @param manager the manager
+	 * @param context the context
+	 */
 	public static void prepareDialogs(final DialogManager manager, final Context context) {
 		manager.addBuilder(new DialogBuilder() {
 			@Override
@@ -164,6 +186,15 @@ public class UtilsSimIssues {
 		});
 	}
 	
+	/**
+	 * Handles issues with SIM card.
+	 * Checks that SIM knows its phone number,
+	 * and if not and there already are some session keys, it offers
+	 * an import of these.
+	 *
+	 * @param context the context
+	 * @param dialogManager the dialog manager
+	 */
 	public static void handleSimIssues(Context context, DialogManager dialogManager) {
 		SimNumber simNumber = SimCard.getSingleton().getNumber();
 		
@@ -188,9 +219,11 @@ public class UtilsSimIssues {
 	}
 	
 	/**
-	 * Lets the user transfer some of the existing keys to different SIM / phone number
-	 * @param context
-	 * @throws StorageFileException 
+	 * Lets the user transfer some of the existing keys to different SIM / phone number.
+	 *
+	 * @param context the context
+	 * @param dialogManager the dialog manager
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static void moveSessionKeys(Context context, DialogManager dialogManager) throws StorageFileException {
 		//TODO: Nicer import!!!
@@ -211,6 +244,11 @@ public class UtilsSimIssues {
 			dialogManager.showDialog(DIALOG_NO_SESSION_KEYS, null);
 	}
 	
+	/**
+	 * Shows a dialog for moving session keys
+	 *
+	 * @param dialogManager the dialog manager
+	 */
 	public static void moveSessionKeys(DialogManager dialogManager) {
 		if (!SimCard.getSingleton().isNumberAvailable())
 			return;
@@ -218,6 +256,12 @@ public class UtilsSimIssues {
 		dialogManager.showDialog(DIALOG_EXISTING_PHONE_NUMBERS, null);
 	}
 	
+	/**
+	 * Returns the given phone number in a unified format
+	 *
+	 * @param phoneNumber the phone number
+	 * @return the string
+	 */
 	public static String formatPhoneNumber(String phoneNumber) {
 		return PhoneNumberUtils.stripSeparators(phoneNumber);
 	}

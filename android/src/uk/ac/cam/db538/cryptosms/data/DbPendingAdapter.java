@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
@@ -16,6 +31,9 @@ import android.database.sqlite.*;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.util.Log;
 
+/*
+ * Class communicating with the database
+ */
 public class DbPendingAdapter {
 	private static final String DATABASE_NAME = "pending.db";
 	private static final String DATABASE_TABLE = "sms";
@@ -48,16 +66,30 @@ public class DbPendingAdapter {
 	// Database open/upgrade helper
 	private DbPendingHelper mHelper;
 
+	/**
+	 * Instantiates a database adapter
+	 *
+	 * @param context the context
+	 */
 	public DbPendingAdapter(Context context) {
 		mContext = context;
 		mHelper = new DbPendingHelper(mContext, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
+	/**
+	 * Opens the database
+	 *
+	 * @return the db pending adapter
+	 * @throws SQLException the sQL exception
+	 */
 	public DbPendingAdapter open() throws SQLException {
 		mDatabase = mHelper.getWritableDatabase();
 		return this;
 	}
 
+	/**
+	 * Closes the database
+	 */
 	public void close() {
 		mDatabase.close();
 	}
@@ -85,15 +117,33 @@ public class DbPendingAdapter {
 		return list;
 	}
 
+	/**
+	 * Inserts entry into the database
+	 *
+	 * @param pending the pending
+	 * @return the long
+	 */
 	public long insertEntry(Pending pending) {
 		pending.setRowIndex(mDatabase.insert(DATABASE_TABLE, null, getValues(pending)));
 		return pending.getRowIndex();
 	}
 
+	/**
+	 * Removes an entry from the database
+	 *
+	 * @param pending the pending
+	 * @return true, if successful
+	 */
 	public boolean removeEntry(Pending pending) {
 		return mDatabase.delete(DATABASE_TABLE, KEY_ID + "=" + pending.getRowIndex(), null) > 0;
 	}
 
+	/**
+	 * Gets an entry from the database
+	 *
+	 * @param rowIndex the row index
+	 * @return the entry
+	 */
 	public Pending getEntry(long rowIndex) {
 		Cursor cursor = mDatabase.query(DATABASE_TABLE, 
 				                        null,
@@ -126,6 +176,12 @@ public class DbPendingAdapter {
 		return getAllMatchingEntries(null);
 	}
 	
+	/**
+	 * Gets all entries with given sender
+	 *
+	 * @param sender the sender
+	 * @return the all sender entries
+	 */
 	public ArrayList<Pending> getAllSenderEntries(String sender) {
 		return getAllMatchingEntries(KEY_SENDER + "='" + sender + "'");
 	}
@@ -190,10 +246,19 @@ public class DbPendingAdapter {
 		return idGroups;
 	}
 
+	/**
+	 * Updates an entry in the database
+	 *
+	 * @param pending the pending
+	 * @return true, if successful
+	 */
 	public boolean updateEntry(Pending pending) {
 		return mDatabase.update(DATABASE_TABLE, getValues(pending), KEY_ID + "=" + pending.getRowIndex(), null) > 0;
 	}
 	
+	/**
+	 * Drops all data from the database
+	 */
 	public void clear() {
 		mDatabase.execSQL("DELETE FROM '" + DATABASE_TABLE + "'; VACUUM;");
 	}

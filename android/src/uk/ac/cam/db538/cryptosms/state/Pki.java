@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.state;
 
 import android.content.BroadcastReceiver;
@@ -7,7 +22,6 @@ import android.content.IntentFilter;
 import android.util.Log;
 import uk.ac.cam.db538.cryptosms.MyApplication;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
-import uk.ac.cam.db538.cryptosms.state.State.StateChangeListener;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.BadInputException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.ConnectionListener;
@@ -17,6 +31,9 @@ import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKIErrorException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.PKInotInstalledException;
 import uk.ac.cam.dje38.PKIwrapper.PKIwrapper.TimeoutException;
 
+/*
+ * Static class that takes care of PKI login session
+ */
 public class Pki {
 	private static final String INTENT_PKI_LOGIN = "uk.ac.cam.dje38.pki.login";
 	private static final String INTENT_PKI_LOGOUT = "uk.ac.cam.dje38.pki.logout";
@@ -41,6 +58,11 @@ public class Pki {
 		}
 	}
 
+	/**
+	 * Initializes all PKI related stuff and calls connect()
+	 *
+	 * @param context the context
+	 */
 	public static void init(Context context) {
 		mContext = context;
 		if (mPki != null) return;
@@ -52,7 +74,6 @@ public class Pki {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				Log.d(MyApplication.APP_TAG, "Intent: " + intent.getAction());
 				if (intent.getAction().equals(INTENT_PKI_LOGIN)) {
 					mPki.setTimeout(TIMEOUT_LOGIN_CHECK);
 					try {
@@ -100,6 +121,9 @@ public class Pki {
 		return mPki;
 	}
 	
+	/**
+	 * Connects to PKIwrapper
+	 */
 	public static void connect() {
 		try {
 			if (mPki != null) {
@@ -108,20 +132,16 @@ public class Pki {
 					
 					@Override
 					public void onConnectionDeclined() {
-						// TODO Auto-generated method stub
 						Log.d(MyApplication.APP_TAG, "onConnectionDeclined");
-						
 					}
 					
 					@Override
 					public void onConnectionFailed() {
-						// TODO Auto-generated method stub
 						Log.d(MyApplication.APP_TAG, "onConnectionFailed");
 					}
 					
 					@Override
 					public void onConnectionTimeout() {
-						// TODO Auto-generated method stub
 						Log.d(MyApplication.APP_TAG, "onConnectionTimeout");
 					}
 					
@@ -154,6 +174,11 @@ public class Pki {
 		return !State.isInFatalState() && mPki != null && mPki.isConnected();
 	}
 	
+	/**
+	 * Call login on PKI
+	 *
+	 * @param force login synchronously
+	 */
 	public static void login(boolean force) {
 		Log.d(MyApplication.APP_TAG, "Login: " + (isConnected() ? "connected" : "disconnected") + ", " + (isLoggedIn() ? "logged in" : "logged out") + ", " + (force ? "forced" : "unforced") );
 		if (isConnected() && !isLoggedIn()) {
@@ -174,6 +199,9 @@ public class Pki {
 			State.notifyLogin();
 	}
 
+	/**
+	 * Disconnect from PKI
+	 */
 	public static void disconnect() {
 		if (mPki != null)
 			try {
@@ -183,12 +211,18 @@ public class Pki {
 		}
 	}
 	
+	/**
+	 * PKI is missing
+	 */
 	static void setMissing() {
 		Log.d(MyApplication.APP_TAG, "PKI missing");
 		mMissing = true;
 		State.notifyPkiMissing();
 	}
 
+	/*
+	 * Is PKI missing
+	 */
 	static boolean isMissing() {
 		return mMissing;
 	}
@@ -201,6 +235,12 @@ public class Pki {
 		setLoggedIn(value, false);
 	}
 	
+	/**
+	 * Sets whether the user is logged in
+	 *
+	 * @param value
+	 * @param forceNotify send notification to listeners
+	 */
 	static void setLoggedIn(boolean value, boolean forceNotify) {
 		if (mLoggedIn != value || forceNotify) {
 			mLoggedIn = value;
@@ -213,10 +253,25 @@ public class Pki {
 		}
 	}
 	
+	/**
+	 * Gets the master key to storage file.
+	 *
+	 * @param forceLogIn
+	 * @return the master key
+	 * @throws PkiNotReadyException
+	 */
 	public static byte[] getMasterKey(boolean forceLogIn) throws PkiNotReadyException {
 		return getMasterKey(forceLogIn, true);
 	}
 	
+	/**
+	 * Gets the master key to storage file.
+	 *
+	 * @param forceLogIn
+	 * @param generateAllow if the key is not stored, allow it to be generated
+	 * @return the master key
+	 * @throws PkiNotReadyException
+	 */
 	public static byte[] getMasterKey(boolean forceLogIn, boolean generateAllow) throws PkiNotReadyException {
 		if (mMasterKey != null)
 			return mMasterKey;

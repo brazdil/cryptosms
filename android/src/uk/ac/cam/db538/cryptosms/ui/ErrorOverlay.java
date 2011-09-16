@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.ui;
 
 import java.io.ByteArrayOutputStream;
@@ -19,6 +34,9 @@ import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+/*
+ * Overlay that is shown when application locks itself
+ */
 public class ErrorOverlay extends RelativeLayout {
 
 	private TextView mTextView;
@@ -34,16 +52,34 @@ public class ErrorOverlay extends RelativeLayout {
 		mBottomButton = (Button) this.findViewById(R.id.overlay_error_button_bottom);
 	}
 	
+	/**
+	 * Instantiates a new error overlay.
+	 *
+	 * @param context the context
+	 */
 	public ErrorOverlay(Context context) {
 		super(context);
 		prepare();
 	}
 	
+	/**
+	 * Instantiates a new error overlay.
+	 *
+	 * @param context the context
+	 * @param attrs the attrs
+	 * @param defStyle the def style
+	 */
 	public ErrorOverlay(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		prepare();
 	}
 
+	/**
+	 * Instantiates a new error overlay.
+	 *
+	 * @param context the context
+	 * @param attrs the attrs
+	 */
 	public ErrorOverlay(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		prepare();
@@ -61,18 +97,27 @@ public class ErrorOverlay extends RelativeLayout {
 		mMainView = mainView;
 	}
 	
+	/**
+	 * Show the overlay.
+	 */
 	public void show() {
 		this.setVisibility(VISIBLE);
 		if (mMainView != null)
 			mMainView.setVisibility(GONE);
 	}
 	
+	/**
+	 * Hide the overlay.
+	 */
 	public void hide() {
 		this.setVisibility(GONE);
 		if (mMainView != null)
 			mMainView.setVisibility(VISIBLE);
 	}
 
+	/**
+	 * Show message that the user needs to log in
+	 */
 	public void modeLogin() {
 		mTextView.setText(R.string.logged_out);
 		mTopButton.setOnClickListener(new OnClickListener(){
@@ -87,6 +132,9 @@ public class ErrorOverlay extends RelativeLayout {
 		mBottomButton.setVisibility(GONE);
 	}
 
+	/**
+	 * Show message that the PKI is missing
+	 */
 	public void modePkiMissing() {
 		mTextView.setText(R.string.pki_install_message);
 		
@@ -114,6 +162,9 @@ public class ErrorOverlay extends RelativeLayout {
 		mBottomButton.setVisibility(VISIBLE);
 	}
 
+	/**
+	 * Show message that the app is not connected to PKI
+	 */
 	public void modeDisconnected() {
 		mTextView.setText(R.string.disconnected_message);
 		mTopButton.setOnClickListener(new OnClickListener(){
@@ -128,6 +179,11 @@ public class ErrorOverlay extends RelativeLayout {
 		mBottomButton.setVisibility(GONE);
 	}
 
+	/**
+	 * Show message that there has been a fatal exception
+	 *
+	 * @param ex the exception
+	 */
 	public void modeFatalException(final Exception ex) {
 		mTextView.setText(R.string.fatal_exception_message);
 
@@ -167,6 +223,9 @@ public class ErrorOverlay extends RelativeLayout {
 		mBottomButton.setVisibility(GONE);
 	}
 
+	/**
+	 * Show message that the file is corrupted
+	 */
 	public void modeCorruptedFile() {
 		mTextView.setText(R.string.corrupted_file_message);
 

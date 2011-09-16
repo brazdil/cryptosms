@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import java.util.ArrayList;
@@ -64,6 +79,9 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.TabHost.TabContentFactory;
 import android.widget.TabHost.TabSpec;
 
+/*
+ * Main activity, showing tabs with conversation threads, contacts and notifications 
+ */
 public class ActivityLists extends ActivityAppState {
 	private static final int ACTIVITY_NEW_CONTACT = 1;
 	private static final int ACTIVITY_CHOOSE_KEY = 2;
@@ -111,6 +129,9 @@ public class ActivityLists extends ActivityAppState {
 	
 	// TODO: listen to contact name changes
 	
+	/* (non-Javadoc)
+	 * @see roboguice.activity.RoboActivity#onCreate(android.os.Bundle)
+	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -475,6 +496,9 @@ public class ActivityLists extends ActivityAppState {
 	
 	private String mTempPhoneNumber;
 
+    /* (non-Javadoc)
+     * @see roboguice.activity.RoboActivity#onActivityResult(int, int, android.content.Intent)
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
@@ -512,6 +536,9 @@ public class ActivityLists extends ActivityAppState {
     	}
     }
 
+    /* (non-Javadoc)
+     * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo)
+     */
     @Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
@@ -536,6 +563,9 @@ public class ActivityLists extends ActivityAppState {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
+	 */
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
@@ -578,6 +608,9 @@ public class ActivityLists extends ActivityAppState {
 		return super.onContextItemSelected(item);
 	}
 
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
+	 */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
@@ -604,6 +637,9 @@ public class ActivityLists extends ActivityAppState {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onSimState()
+	 */
 	@Override
 	public void onSimState() {
 		super.onSimState();
@@ -627,6 +663,9 @@ public class ActivityLists extends ActivityAppState {
 	    }
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onPkiLogin()
+	 */
 	@Override
 	public void onPkiLogin() {
 		super.onPkiLogin();
@@ -636,6 +675,9 @@ public class ActivityLists extends ActivityAppState {
 		mListNotifications.setAdapter(mAdapterNotifications);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onPkiLogout()
+	 */
 	@Override
 	public void onPkiLogout() {
 		Storage.removeListener(mConversationChangeListener);
@@ -647,6 +689,9 @@ public class ActivityLists extends ActivityAppState {
 	
 	private boolean mFirstEventParsing = true;
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onEventParsingStarted()
+	 */
 	@Override
 	public void onEventParsingStarted() {
 		super.onEventParsingStarted();
@@ -658,6 +703,9 @@ public class ActivityLists extends ActivityAppState {
 		Log.d(MyApplication.APP_TAG, "Parsing started (apparently)");
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onEventParsingFinished()
+	 */
 	@Override
 	public void onEventParsingFinished() {
 		super.onEventParsingFinished();
@@ -781,6 +829,9 @@ public class ActivityLists extends ActivityAppState {
 		}
 	}
 
+	/**
+	 * Update list of notifications.
+	 */
 	public void updateEvents() {
 		mAdapterNotifications.setList(PendingParser.getSingleton().getParseResults());
 		mAdapterNotifications.notifyDataSetChanged();

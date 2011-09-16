@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.ui.activity;
 
 import java.util.ArrayList;
@@ -21,7 +36,6 @@ import uk.ac.cam.db538.cryptosms.storage.SessionKeys.SessionKeysStatus;
 import uk.ac.cam.db538.cryptosms.storage.Storage;
 import uk.ac.cam.db538.cryptosms.storage.Storage.StorageChangeListener;
 import uk.ac.cam.db538.cryptosms.storage.StorageFileException;
-import uk.ac.cam.db538.cryptosms.storage.StorageUtils;
 import uk.ac.cam.db538.cryptosms.ui.DummyOnClickListener;
 import uk.ac.cam.db538.cryptosms.ui.UtilsContactBadge;
 import uk.ac.cam.db538.cryptosms.ui.UtilsSimIssues;
@@ -47,6 +61,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+/*
+ * Activity showing conversation thread and allowing messages to be sent
+ */
 public class ActivityConversation extends ActivityAppState {
 	public static final String OPTION_PHONE_NUMBER = "PHONE_NUMBER";
 	public static final String OPTION_OFFER_KEYS_SETUP = "KEYS_SETUP";
@@ -71,6 +88,9 @@ public class ActivityConversation extends ActivityAppState {
 	private Context mContext = this;
     private boolean mErrorNoKeysShow;
 
+	/* (non-Javadoc)
+	 * @see roboguice.activity.RoboActivity#onCreate(android.os.Bundle)
+	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
@@ -246,6 +266,9 @@ public class ActivityConversation extends ActivityAppState {
 		Pki.login(false);
 	}
 	
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onPkiLogin()
+	 */
 	@Override
 	public void onPkiLogin() {
 		super.onPkiLogin();
@@ -254,6 +277,9 @@ public class ActivityConversation extends ActivityAppState {
 		Storage.addListener(mStorageChangeListener);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onPkiLogout()
+	 */
 	@Override
 	public void onPkiLogout() {
 		Storage.removeListener(mStorageChangeListener);
@@ -262,6 +288,9 @@ public class ActivityConversation extends ActivityAppState {
 		super.onPkiLogout();
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onSimState()
+	 */
 	@Override
 	public void onSimState() {
 		super.onSimState();
@@ -296,6 +325,9 @@ public class ActivityConversation extends ActivityAppState {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.ui.activity.ActivityAppState#onEventParsingFinished()
+	 */
 	@Override
 	public void onEventParsingFinished() {
 		super.onEventParsingFinished();

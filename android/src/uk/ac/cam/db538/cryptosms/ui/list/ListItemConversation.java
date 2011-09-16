@@ -52,10 +52,21 @@ public class ListItemConversation extends RelativeLayout {
 
     private Conversation mConversationHeader;
 
+    /**
+     * Instantiates a new list item conversation.
+     *
+     * @param context the context
+     */
     public ListItemConversation(Context context) {
         super(context);
     }
 
+    /**
+     * Instantiates a new list item conversation.
+     *
+     * @param context the context
+     * @param attrs the attrs
+     */
     public ListItemConversation(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -110,6 +121,11 @@ public class ListItemConversation extends RelativeLayout {
 	}
 
 
+    /**
+     * Bind a conversation to this item 
+     *
+     * @param conv the conversation
+     */
     public final void bind(final Conversation conv) {
     	Context context = this.getContext();
     	Resources res = context.getResources();

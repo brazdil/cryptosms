@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.data;
 
 import java.util.ArrayList;
@@ -22,6 +37,9 @@ import uk.ac.cam.db538.cryptosms.utils.CompressedText;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.CompressedText.TextCharset;
 
+/*
+ * Class representing an encrypted text message
+ */
 public class TextMessage extends Message {
 	// first part specific
 	protected static final int LENGTH_ID = 1;
@@ -34,6 +52,11 @@ public class TextMessage extends Message {
 	private MessageData mStorage;
 	private int mToBeHashed;
     
+	/**
+	 * Instantiates a new text message.
+	 *
+	 * @param storage the storage
+	 */
 	public TextMessage(MessageData storage) {
 		super();
 		mStorage = storage;
@@ -184,6 +207,9 @@ public class TextMessage extends Message {
 	
 	
 	
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.data.Message#sendSMS(java.lang.String, android.content.Context, uk.ac.cam.db538.cryptosms.data.Message.MessageSendingListener)
+	 */
 	@Override
 	public void sendSMS(String phoneNumber, Context context,
 			MessageSendingListener listener) throws StorageFileException,
@@ -202,6 +228,11 @@ public class TextMessage extends Message {
 		
 		private PendingParseResult mReason;
 		
+		/**
+		 * Instantiates a new joining exception.
+		 *
+		 * @param reason the reason
+		 */
 		public JoiningException(PendingParseResult reason) {
 			mReason = reason;
 		}
@@ -266,6 +297,12 @@ public class TextMessage extends Message {
 		return dataJoined;
 	}
 
+	/**
+	 * Parses the text message.
+	 *
+	 * @param idGroup the id group
+	 * @return the parses the result
+	 */
 	public static ParseResult parseTextMessage(ArrayList<Pending> idGroup) {
 		EncryptionInterface crypto = Encryption.getEncryption();
 		
@@ -362,9 +399,10 @@ public class TextMessage extends Message {
 	}
 
 	/**
-	 * Returns message ID for both first and following parts of text messages
-	 * @param data
-	 * @return
+	 * Returns message ID for both first and following parts of text messages.
+	 *
+	 * @param data the data
+	 * @return the message id
 	 */
 	public static int getMessageId(byte[] data) {
 		byte[] id = new byte[2];
@@ -374,10 +412,11 @@ public class TextMessage extends Message {
 	}
 	
 	/**
-	 * Expects encrypted data of both first and non-first part of text message 
-	 * and returns its index
-	 * @param data
-	 * @return
+	 * Expects encrypted data of both first and non-first part of text message
+	 * and returns its index.
+	 *
+	 * @param data the data
+	 * @return the message index
 	 */
 	public static int getMessageIndex(byte[] data) {
 		if ((data[OFFSET_HEADER] & 0xC0) == HEADER_TEXT_FIRST)
@@ -387,9 +426,10 @@ public class TextMessage extends Message {
 	}
 	
 	/**
-	 * Returns how many bytes are left till another message part will be necessary
-	 * @param text
-	 * @return
+	 * Returns how many bytes are left till another message part will be necessary.
+	 *
+	 * @param lenText the len text
+	 * @return the remaining bytes
 	 */
 	public static int getRemainingBytes(int lenText) {
 		int lenComplete = getLengthComplete(lenText);
@@ -414,6 +454,12 @@ public class TextMessage extends Message {
 		return Encryption.getEncryption().getSymmetricEncryptedLength(lenText);
 	}
 	
+	/**
+	 * Gets the message part count.
+	 *
+	 * @param lenText the len text
+	 * @return the message part count
+	 */
 	public static int getMessagePartCount(int lenText) {
 		return LowLevel.roundUpDivision(getLengthComplete(lenText), LENGTH_DATA);
 	}
