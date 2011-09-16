@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.utils;
 
 import java.util.zip.DataFormatException;
@@ -6,6 +21,9 @@ import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.utils.Compression;
 
+/*
+ * Class representing a String with automatic compression 
+ */
 public class CompressedText {
 	public enum TextCharset {
 		ASCII,
@@ -27,6 +45,12 @@ public class CompressedText {
 	private CompressedText() {
 	}
 	
+	/**
+	 * Creates CompressedText from a String
+	 *
+	 * @param text the text
+	 * @return the compressed text
+	 */
 	public static CompressedText fromString(String text) {
 		CompressedText msg = new CompressedText();
 		msg.mString = text;
@@ -82,6 +106,13 @@ public class CompressedText {
 		return msg;
 	}
 	
+	/**
+	 * Decodes CompressedText from byte array
+	 *
+	 * @param data the data
+	 * @return the compressed text
+	 * @throws DataFormatException the data format exception
+	 */
 	public static CompressedText decode(byte[] data) throws DataFormatException {
 		if (data == null || data.length <= 0) {
 			CompressedText msg = new CompressedText();
@@ -184,6 +215,9 @@ public class CompressedText {
 		return mCharset;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object o) {
 		try {
@@ -196,6 +230,9 @@ public class CompressedText {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return getMessage();

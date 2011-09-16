@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.nio.ByteBuffer;
@@ -48,9 +63,10 @@ class MessageDataPart {
 	}
 	
 	/**
-	 * Replaces an empty entry with new MessagePart
-	 * @return
-	 * @throws StorageFileException
+	 * Replaces an empty entry with new MessagePart.
+	 *
+	 * @return the message data part
+	 * @throws StorageFileException the storage file exception
 	 */
 	static MessageDataPart createMessageDataPart() throws StorageFileException {
 		return new MessageDataPart(Empty.getEmptyIndex(), false);
@@ -58,7 +74,10 @@ class MessageDataPart {
 
 	/**
 	 * Returns an instance of Empty class with given index in file.
-	 * @param index		Index in file
+	 *
+	 * @param index 	Index in file
+	 * @return the message data part
+	 * @throws StorageFileException the storage file exception
 	 */
 	static MessageDataPart getMessageDataPart(long index) throws StorageFileException {
 		if (index <= 0L)
@@ -131,8 +150,9 @@ class MessageDataPart {
 	// FUNCTIONS
 	
 	/**
-	 * Save contents of the class to the storage file
-	 * @throws StorageFileException
+	 * Save contents of the class to the storage file.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	void saveToFile() throws StorageFileException {
 		ByteBuffer msgBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
@@ -192,8 +212,9 @@ class MessageDataPart {
 	}
 
 	/**
-	 * Replace the file space with Empty entry
-	 * @throws StorageFileException
+	 * Replace the file space with Empty entry.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	void delete() throws StorageFileException {
 		MessageDataPart prev = this.getPreviousMessageDataPart();

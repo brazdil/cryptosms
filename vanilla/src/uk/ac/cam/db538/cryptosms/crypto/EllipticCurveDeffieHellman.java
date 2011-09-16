@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.math.BigInteger;
@@ -15,6 +30,9 @@ import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
+/*
+ * Class handling the ECDH key negotiation
+ */
 public class EllipticCurveDeffieHellman {
 	public static final int LENGTH_PUBLIC_KEY = 33;
 	public static final int LENGTH_PRIVATE_KEY = 32;
@@ -43,6 +61,9 @@ public class EllipticCurveDeffieHellman {
 	
 	private AsymmetricCipherKeyPair mKeyPair;
 	
+	/**
+	 * Instantiates a new elliptic curve deffie hellman.
+	 */
 	public EllipticCurveDeffieHellman() {
         ECKeyGenerationParameters paramsKeyGen =
             	new ECKeyGenerationParameters(ECDH_PARAMS, mRandom);
@@ -53,6 +74,11 @@ public class EllipticCurveDeffieHellman {
         mKeyPair = keyGen.generateKeyPair();
 	}
 	
+	/**
+	 * Instantiates a new elliptic curve deffie hellman.
+	 *
+	 * @param privateKey the private key
+	 */
 	public EllipticCurveDeffieHellman(byte[] privateKey) {
         ECKeyGenerationParameters paramsKeyGen =
             	new ECKeyGenerationParameters(ECDH_PARAMS, mRandom);
@@ -71,6 +97,12 @@ public class EllipticCurveDeffieHellman {
 		return ((ECPrivateKeyParameters) mKeyPair.getPrivate()).getD().toByteArray();
 	}
 	
+	/**
+	 * Gets the shared key.
+	 *
+	 * @param otherPublicKey the other public key
+	 * @return the shared key
+	 */
 	public BigInteger getSharedKey(byte[] otherPublicKey) {
 		ECPoint point = ECDH_CURVE.decodePoint(otherPublicKey);
 		

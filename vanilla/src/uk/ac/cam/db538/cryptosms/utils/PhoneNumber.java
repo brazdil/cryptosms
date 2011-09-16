@@ -55,39 +55,68 @@ public class PhoneNumber
     private static final Pattern GLOBAL_PHONE_NUMBER_PATTERN =
             Pattern.compile("[\\+]?[0-9.-]+");
 
-    /** True if c is ISO-LATIN characters 0-9 */
+    /**
+     * True if c is ISO-LATIN characters 0-9.
+     *
+     * @param c the c
+     * @return true, if is iSO digit
+     */
     public static boolean
     isISODigit (char c) {
         return c >= '0' && c <= '9';
     }
 
-    /** True if c is ISO-LATIN characters 0-9, *, # */
+    /**
+     * True if c is ISO-LATIN characters 0-9, *, #.
+     *
+     * @param c the c
+     * @return true, if is 12 key
+     */
     public final static boolean
     is12Key(char c) {
         return (c >= '0' && c <= '9') || c == '*' || c == '#';
     }
 
-    /** True if c is ISO-LATIN characters 0-9, *, # , +, WILD  */
+    /**
+     * True if c is ISO-LATIN characters 0-9, *, # , +, WILD.
+     *
+     * @param c the c
+     * @return true, if is dialable
+     */
     public final static boolean
     isDialable(char c) {
         return (c >= '0' && c <= '9') || c == '*' || c == '#' || c == '+' || c == WILD;
     }
 
-    /** True if c is ISO-LATIN characters 0-9, *, # , + (no WILD)  */
+    /**
+     * True if c is ISO-LATIN characters 0-9, *, # , + (no WILD).
+     *
+     * @param c the c
+     * @return true, if is really dialable
+     */
     public final static boolean
     isReallyDialable(char c) {
         return (c >= '0' && c <= '9') || c == '*' || c == '#' || c == '+';
     }
 
-    /** True if c is ISO-LATIN characters 0-9, *, # , +, WILD, WAIT, PAUSE   */
+    /**
+     * True if c is ISO-LATIN characters 0-9, *, # , +, WILD, WAIT, PAUSE.
+     *
+     * @param c the c
+     * @return true, if is non separator
+     */
     public final static boolean
     isNonSeparator(char c) {
         return (c >= '0' && c <= '9') || c == '*' || c == '#' || c == '+'
                 || c == WILD || c == WAIT || c == PAUSE;
     }
 
-    /** This any anything to the right of this char is part of the
-     *  post-dial string (eg this is PAUSE or WAIT)
+    /**
+     * This any anything to the right of this char is part of the
+     * post-dial string (eg this is PAUSE or WAIT).
+     *
+     * @param c the c
+     * @return true, if is starts post dial
      */
     public final static boolean
     isStartsPostDial (char c) {
@@ -158,6 +187,12 @@ public class PhoneNumber
         }
     }
 
+    /**
+     * Checks if is global phone number.
+     *
+     * @param phoneNumber the phone number
+     * @return true, if is global phone number
+     */
     public static boolean isGlobalPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.length() == 0) {
             return false;
@@ -169,6 +204,10 @@ public class PhoneNumber
     
     /**
      * Compare phone numbers a and b, return true if they're identical enough for caller ID purposes.
+     *
+     * @param a the a
+     * @param b the b
+     * @return true, if successful
      */
     public static boolean compare(String a, String b) {
         // We've used loose comparation at least Eclair, which may change in the future.
@@ -177,6 +216,12 @@ public class PhoneNumber
     }
 
     /**
+     * Compare two phone numbers
+     *
+     * @param a the a
+     * @param b the b
+     * @param useStrictComparation the use strict comparation
+     * @return true, if successful
      * @hide only for testing.
      */
     public static boolean compare(String a, String b, boolean useStrictComparation) {
@@ -186,15 +231,18 @@ public class PhoneNumber
     /**
      * Compare phone numbers a and b, return true if they're identical
      * enough for caller ID purposes.
-     *
+     * 
      * - Compares from right to left
      * - requires MIN_MATCH (7) characters to match
      * - handles common trunk prefixes and international prefixes
-     *   (basically, everything except the Russian trunk prefix)
-     *
+     * (basically, everything except the Russian trunk prefix)
+     * 
      * Note that this method does not return false even when the two phone numbers
      * are not exactly same; rather; we can call this method "similar()", not "equals()".
      *
+     * @param a the a
+     * @param b the b
+     * @return true, if successful
      * @hide
      */
     public static boolean
@@ -292,6 +340,11 @@ public class PhoneNumber
     }
 
     /**
+     * Compare strictly.
+     *
+     * @param a the a
+     * @param b the b
+     * @return true, if successful
      * @hide
      */
     public static boolean
@@ -300,6 +353,12 @@ public class PhoneNumber
     }
 
     /**
+     * Compare strictly.
+     *
+     * @param a the a
+     * @param b the b
+     * @param acceptInvalidCCCPrefix the accept invalid ccc prefix
+     * @return true, if successful
      * @hide
      */
     public static boolean

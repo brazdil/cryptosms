@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.util.*;
@@ -481,11 +496,13 @@ class AesAlgorithm {
     }
 
 
-    /** self-test routine for AES cipher
-     *  @param hkey    key to test in hex
-     *  @param hplain    plaintext to test in hex
-     *  @param hcipher    ciphertext to test in hex
-     *  @param lev    trace level to use
+    /**
+     * self-test routine for AES cipher.
+     *
+     * @param hkey    key to test in hex
+     * @param hplain    plaintext to test in hex
+     * @param hcipher    ciphertext to test in hex
+     * @param lev    trace level to use
      */
     public static void self_test (String hkey, String hplain, String hcipher, int lev) {
 
@@ -519,6 +536,12 @@ class AesAlgorithm {
 
 
 
+    /**
+     * Static_byte array to string.
+     *
+     * @param data the data
+     * @return the string
+     */
     public static String static_byteArrayToString(byte[] data) {
         String res = "";
         StringBuffer sb = new StringBuffer();
@@ -531,6 +554,12 @@ class AesAlgorithm {
         return res;
     }
    
+    /**
+     * Static_string to byte array.
+     *
+     * @param s the s
+     * @return the byte[]
+     */
     public static byte[] static_stringToByteArray(String s){
         byte[] temp = new byte[s.length()];
         for(int i=0;i<s.length();i++){
@@ -539,6 +568,12 @@ class AesAlgorithm {
         return temp;
     }
 
+     /**
+      * Static_int array to string.
+      *
+      * @param t the t
+      * @return the string
+      */
      public static String static_intArrayToString(int[]t){
         StringBuffer sb = new StringBuffer();
         for(int i=0;i<t.length;i++){
@@ -547,8 +582,12 @@ class AesAlgorithm {
         return sb.toString();
     }
 
-    /** self-test routine for AES cipher
-        @param args command line arguments
+    /**
+     * self-test routine for AES cipher.
+     *
+     * @param data the data
+     * @param mode the mode
+     * @return the string
      */
     
     public String _cryptAll(String data, int mode)  {
@@ -573,9 +612,22 @@ class AesAlgorithm {
         return static_byteArrayToString(res);
     }
    
+    /**
+     * Encrypt.
+     *
+     * @param data the data
+     * @return the string
+     */
     public String Encrypt(String data) {
         return _cryptAll(data, 1);
     }
+    
+    /**
+     * Decrypt.
+     *
+     * @param data the data
+     * @return the string
+     */
     public String Decrypt(String data) {
         return _cryptAll(data, 2);
     }

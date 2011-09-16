@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.nio.ByteBuffer;
@@ -7,6 +22,9 @@ import java.security.SecureRandom;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.params.ParametersWithIV;
 
+/*
+ * Class with static methods for AES/CBC encryption/decryption
+ */
 public class AesCbc {
 	private static final int AES_BLOCKSIZE = 16;
 	
@@ -49,12 +67,13 @@ public class AesCbc {
 	
 	/**
 	 * Encrypts data with AES/CBC encryption.
-	 * @param data				Data to encrypt
-	 * @param iv				Initialization vector
-	 * @param key				Encryption key
-	 * @param alignWithRandom	If true, puts random data at the end to align to AES block size. Otherwise puts zeros.
-	 * @param storeLength		If true, stores the length of data used to align to AES block size as one extra byte at the end.
-	 * @return
+	 *
+	 * @param data 			Data to encrypt
+	 * @param iv 			Initialization vector
+	 * @param key 			Encryption key
+	 * @param alignWithRandom If true, puts random data at the end to align to AES block size. Otherwise puts zeros.
+	 * @param storeLength 	If true, stores the length of data used to align to AES block size as one extra byte at the end.
+	 * @return the byte[]
 	 */
 	public static byte[] encrypt(byte[] data, byte[] iv, byte[] key, boolean alignWithRandom, boolean storeLength) {
 		// PARAMETERS!!!
@@ -92,12 +111,13 @@ public class AesCbc {
 	}
 
 	/**
-	 * Decrypts data with AES/CBC algorithm
-	 * @param data			Data to encrypt
-	 * @param iv			Initialization vector
-	 * @param key			Encryption key
-	 * @param lengthStored	Indicates whether the last byte holds the length of random data used to align to AES block size.
-	 * @return
+	 * Decrypts data with AES/CBC algorithm.
+	 *
+	 * @param data 		Data to encrypt
+	 * @param iv 		Initialization vector
+	 * @param key 		Encryption key
+	 * @param lengthStored Indicates whether the last byte holds the length of random data used to align to AES block size.
+	 * @return the byte[]
 	 */
 	public static byte[] decrypt(byte[] data, byte[] iv, byte[] key, boolean lengthStored) {
 		// set up AES

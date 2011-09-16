@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.io.File;
@@ -81,6 +96,11 @@ public final class Storage {
 		Empty.addEmptyEntries(countFreeEntries);
 	}
 	
+	/**
+	 * Close file.
+	 *
+	 * @throws StorageFileException the storage file exception
+	 */
 	public synchronized void closeFile() throws StorageFileException {
 		try {
 			smsFile.mFile.close();
@@ -89,6 +109,9 @@ public final class Storage {
 		}
 	}
 	
+	/**
+	 * Delete file.
+	 */
 	public synchronized void deleteFile() {
 		new File(mFilename).delete();
 	}
@@ -107,11 +130,11 @@ public final class Storage {
 	}
 
 	/**
-	 * Reads data from specified entry index the file
-	 * @param index
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
+	 * Reads data from specified entry index the file.
+	 *
+	 * @param index the index
+	 * @return the entry
+	 * @throws StorageFileException the storage file exception
 	 */
 	synchronized byte[] getEntry(long index) throws StorageFileException {
 		try {
@@ -129,11 +152,11 @@ public final class Storage {
 	}
 	
 	/**
-	 * Saves data to specified entry index the file
-	 * @param index
-	 * @return
-	 * @throws StorageFileException
-	 * @throws IOException
+	 * Saves data to specified entry index the file.
+	 *
+	 * @param index the index
+	 * @param data the data
+	 * @throws StorageFileException the storage file exception
 	 */
 	synchronized void setEntry(long index, byte[] data) throws StorageFileException {
 		try {
@@ -154,23 +177,43 @@ public final class Storage {
 	private static ArrayList<StorageChangeListener> mGlobalListeners = new ArrayList<StorageChangeListener>();
 	
 	public static interface StorageChangeListener {
+		
+		/**
+		 * On update.
+		 */
 		public void onUpdate();
 	}
 	
+	/**
+	 * Notify change.
+	 */
 	public static void notifyChange() {
 		for (StorageChangeListener listener: mGlobalListeners) 
 			listener.onUpdate();
 	}
 	
+	/**
+	 * Adds a listener.
+	 *
+	 * @param listener the listener
+	 */
 	public static void addListener(StorageChangeListener listener) {
 		mGlobalListeners.add(listener);
 	}
 	
+	/**
+	 * Removes listener.
+	 *
+	 * @param listener the listener
+	 */
 	public static void removeListener(StorageChangeListener listener) {
 		mGlobalListeners.remove(listener);
 	}
 	
 	// FOR TESTING ONLY
+	/**
+	 * Deletes the singleton.
+	 */
 	static void freeSingleton() {
 		if (mSingleton != null)
 			try {

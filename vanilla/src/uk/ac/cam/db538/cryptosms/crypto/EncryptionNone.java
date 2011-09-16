@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.crypto;
 
 import java.security.NoSuchAlgorithmException;
@@ -9,13 +24,23 @@ import org.spongycastle.crypto.params.KeyParameter;
 
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 
+/*
+ * Class implementing the EncryptionInterface but not encrypting anything at all
+ */
 public class EncryptionNone implements EncryptionInterface {
+	
+	/**
+	 * Inits the encryption.
+	 */
 	public static void initEncryption() {
 		Encryption.setEncryption(new EncryptionNone());
 	}
 	
 	private SecureRandom mRandom = null;
 			
+	/**
+	 * Instantiates a new encryption none.
+	 */
 	public EncryptionNone() {
         try {
             mRandom = SecureRandom.getInstance("SHA1PRNG");
@@ -24,6 +49,9 @@ public class EncryptionNone implements EncryptionInterface {
         }
 	}
 	
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#decryptSymmetric(byte[], byte[], int)
+	 */
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key, int blocks) throws EncryptionException {
 		int length = blocks * Encryption.SYM_BLOCK_LENGTH;
@@ -37,18 +65,27 @@ public class EncryptionNone implements EncryptionInterface {
 		return dataDecrypted;
 	}
 	
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#decryptSymmetric(byte[], byte[])
+	 */
 	@Override
 	public byte[] decryptSymmetric(byte[] data, byte[] key)
 			throws EncryptionException {
 		return decryptSymmetric(data, key, data.length / Encryption.SYM_BLOCK_LENGTH);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#decryptSymmetricWithMasterKey(byte[])
+	 */
 	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data)
 			throws EncryptionException {
 		return decryptSymmetricWithMasterKey(data, false);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#encryptSymmetric(byte[], byte[])
+	 */
 	@Override
 	public byte[] encryptSymmetric(byte[] data, byte[] key) {
 		int alignedLength = Encryption.getEncryption().getSymmetricAlignedLength(data.length);
@@ -61,12 +98,18 @@ public class EncryptionNone implements EncryptionInterface {
 		return buffer;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#encryptSymmetricWithMasterKey(byte[])
+	 */
 	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data)
 			throws EncryptionException {
 		return encryptSymmetricWithMasterKey(data, false);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#generateRandomData(int)
+	 */
 	@Override
 	public byte[] generateRandomData(int length) {
 		byte[] data = new byte[length];
@@ -74,16 +117,25 @@ public class EncryptionNone implements EncryptionInterface {
 		return data;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#getSymmetricAlignedLength(int)
+	 */
 	@Override
 	public int getSymmetricAlignedLength(int length) {
 		return LowLevel.closestGreatestMultiple(length, Encryption.SYM_BLOCK_LENGTH);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#getSymmetricEncryptedLength(int)
+	 */
 	@Override
 	public int getSymmetricEncryptedLength(int length) {
 		return getSymmetricAlignedLength(length) + Encryption.SYM_OVERHEAD;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#getHash(byte[])
+	 */
 	@Override
 	public byte[] getHash(byte[] data) {
 		SHA256Digest sha256 = new SHA256Digest();
@@ -95,6 +147,9 @@ public class EncryptionNone implements EncryptionInterface {
 			throw new RuntimeException("SHA-256 internal error");
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#getHMAC(byte[], byte[])
+	 */
 	@Override
 	public byte[] getHMAC(byte[] data, byte[] key) {
 		HMac mac = new HMac(new SHA256Digest());
@@ -107,23 +162,35 @@ public class EncryptionNone implements EncryptionInterface {
 			throw new RuntimeException("HMAC internal error");
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#encryptSymmetricWithMasterKey(byte[], boolean)
+	 */
 	@Override
 	public byte[] encryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn)
 			throws EncryptionException {
 		return encryptSymmetric(data, null);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#decryptSymmetricWithMasterKey(byte[], boolean)
+	 */
 	@Override
 	public byte[] decryptSymmetricWithMasterKey(byte[] data, boolean forceLogIn)
 			throws EncryptionException {
 		return decryptSymmetric(data, null);
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#sign(byte[])
+	 */
 	@Override
 	public byte[] sign(byte[] dataEncrypted) throws EncryptionException {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface#verify(byte[], byte[], long)
+	 */
 	@Override
 	public boolean verify(byte[] data, byte[] signature, long contactId)
 			throws EncryptionException {

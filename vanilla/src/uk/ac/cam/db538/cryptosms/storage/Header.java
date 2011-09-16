@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.nio.ByteBuffer;
@@ -55,7 +70,9 @@ public class Header {
 	/**
 	 * Only to be called from within Database.createFile()
 	 * Forces the header to be created with default values and written to the file.
-	 * @throws StorageFileException 
+	 *
+	 * @return the header
+	 * @throws StorageFileException the storage file exception
 	 */
 	static Header createHeader() throws StorageFileException {
 		cacheHeader = new Header(false);
@@ -116,8 +133,9 @@ public class Header {
 	}
 
 	/**
-	 * Save data to the storage file
-	 * @throws StorageFileException
+	 * Save data to the storage file.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void saveToFile() throws StorageFileException {
 		ByteBuffer headerBuffer = ByteBuffer.allocate(LENGTH_ENCRYPTED_HEADER);
@@ -166,9 +184,10 @@ public class Header {
 	}
 
 	/**
-	 * Insert new element into the linked list of conversations
-	 * @param conv
-	 * @throws StorageFileException
+	 * Insert new element into the linked list of conversations.
+	 *
+	 * @param conv the conv
+	 * @throws StorageFileException the storage file exception
 	 */
 	void attachConversation(Conversation conv) throws StorageFileException {
 		long indexFirstInStack = getIndexConversations();
@@ -187,9 +206,10 @@ public class Header {
 	}
 
 	/**
-	 * Insert new element into the stack of empty entries
-	 * @param conv
-	 * @throws StorageFileException
+	 * Insert new element into the stack of empty entries.
+	 *
+	 * @param empty the empty
+	 * @throws StorageFileException the storage file exception
 	 */
 	void attachEmpty(Empty empty) throws StorageFileException {
 		long indexFirstInStack = getIndexEmpty();
@@ -242,6 +262,11 @@ public class Header {
 		mKeyId = LowLevel.getBytesUnsignedByte(keyId);
 	}
 
+	/**
+	 * Increment key id.
+	 *
+	 * @return the byte
+	 */
 	public byte incrementKeyId() {
 		return mKeyId++;
 	}

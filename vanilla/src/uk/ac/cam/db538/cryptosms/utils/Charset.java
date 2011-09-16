@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.utils;
 
 import java.io.UnsupportedEncodingException;
@@ -8,13 +23,17 @@ import org.spongycastle.crypto.RuntimeCryptoException;
 import uk.ac.cam.db538.cryptosms.crypto.Encryption;
 
 
+/*
+ * Class with static methods for encoding/decoding text in different charsets
+ */
 public class Charset {
 	private static final String CHARSET_ASCII = "US-ASCII";
 
 	/**
-	 * Checks whether each character in String is representable by 7-bit ASCII
-	 * @param text
-	 * @return
+	 * Checks whether each character in String is representable by 7-bit ASCII.
+	 *
+	 * @param text the text
+	 * @return true, if is convertable to ascii
 	 */
 	public static boolean isConvertableToAscii(String text) {
 		for (int i = 0; i < text.length(); ++i)
@@ -24,10 +43,11 @@ public class Charset {
 	}
 	
 	/**
-	 * Computes how many bytes a text would occupy if it was 
-	 * encoded in 7-bit ASCII
-	 * @param text
-	 * @return
+	 * Computes how many bytes a text would occupy if it was
+	 * encoded in 7-bit ASCII.
+	 *
+	 * @param text the text
+	 * @return the int
 	 */
 	public static int computeLengthInAscii7(String text) {
 		int len = text.length();
@@ -82,58 +102,64 @@ public class Charset {
 	}
 
 	/**
-	 * Turns a string into an 8-bit ASCII series of bytes. 
-	 * @param text				Encoded string
-	 * @return
+	 * Turns a string into an 8-bit ASCII series of bytes.
+	 *
+	 * @param text 			Encoded string
+	 * @return the byte[]
 	 */
 	public static byte[] toAscii8(String text) {
 		return toAscii8(text, text.length());
 	}
 
 	/**
-	 * Turns a string into an 8-bit ASCII series of bytes. 
-	 * @param text				Encoded string
-	 * @param bufferLength		Maximum size of the resulting array
-	 * @return
+	 * Turns a string into an 8-bit ASCII series of bytes.
+	 *
+	 * @param text 			Encoded string
+	 * @param bufferLength 	Maximum size of the resulting array
+	 * @return the byte[]
 	 */
 	public static byte[] toAscii8(String text, int bufferLength) {
 		return toBytes(text, bufferLength, CHARSET_ASCII);
 	}
 	
 	/**
-	 * Takes a byte array with 8-bit ASCII characters in it, and turns it into a string
-	 * @param latinData		Data to be processed
-	 * @return
+	 * Takes a byte array with 8-bit ASCII characters in it, and turns it into a string.
+	 *
+	 * @param latinData 	Data to be processed
+	 * @return the string
 	 */
 	public static String fromAscii8(byte[] latinData) {
 		return fromAscii8(latinData, 0, latinData.length);
 	}
 	
 	/**
-	 * Takes a byte array with 8-bit ASCII characters in it, and turns it into a string
-	 * @param latinData		Data to be processed
-	 * @param offset		Offset in the array
-	 * @param len			Length of data
-	 * @return
+	 * Takes a byte array with 8-bit ASCII characters in it, and turns it into a string.
+	 *
+	 * @param latinData 	Data to be processed
+	 * @param offset 	Offset in the array
+	 * @param len 		Length of data
+	 * @return the string
 	 */
 	public static String fromAscii8(byte[] latinData, int offset, int len) {
 		return fromBytes(latinData, offset, len, CHARSET_ASCII);
 	}
 
 	/**
-	 * Turns a string into an 7-bit ASCII series of bytes. 
-	 * @param text				Encoded string
-	 * @return
+	 * Turns a string into an 7-bit ASCII series of bytes.
+	 *
+	 * @param text 			Encoded string
+	 * @return the byte[]
 	 */
 	public static byte[] toAscii7(String text) {
 		return toAscii7(text, computeLengthInAscii7(text));
 	}
 
 	/**
-	 * Turns a string into an 7-bit ASCII series of bytes. 
-	 * @param text				Encoded string
-	 * @param bufferLength		Maximum size of the resulting array
-	 * @return
+	 * Turns a string into an 7-bit ASCII series of bytes.
+	 *
+	 * @param text 			Encoded string
+	 * @param bufferLength 	Maximum size of the resulting array
+	 * @return the byte[]
 	 */
 	public static byte[] toAscii7(String text, int bufferLength) {
 		int bigLength = text.length();
@@ -163,20 +189,22 @@ public class Charset {
 	}
 	
 	/**
-	 * Takes a byte array with 7-bit ASCII characters in it, and turns it into a string
-	 * @param asciiData		Data to be processed
-	 * @return
+	 * Takes a byte array with 7-bit ASCII characters in it, and turns it into a string.
+	 *
+	 * @param asciiData 	Data to be processed
+	 * @return the string
 	 */
 	public static String fromAscii7(byte[] asciiData) {
 		return fromAscii7(asciiData, 0, asciiData.length);
 	}
 	
 	/**
-	 * Takes a byte array with 7-bit ASCII characters in it, and turns it into a string
-	 * @param asciiData		Data to be processed
-	 * @param offset		Offset in the array
-	 * @param len			Length of data
-	 * @return
+	 * Takes a byte array with 7-bit ASCII characters in it, and turns it into a string.
+	 *
+	 * @param compressedData the compressed data
+	 * @param offset 	Offset in the array
+	 * @param len 		Length of data
+	 * @return the string
 	 */
 	public static String fromAscii7(byte[] compressedData, int offset, int len) {
 		int bufferLength = len;
@@ -207,9 +235,10 @@ public class Charset {
 	}
 
 	/**
-	 * Turns a string into a Unicode series of bytes. 
-	 * @param text				Encoded string
-	 * @return
+	 * Turns a string into a Unicode series of bytes.
+	 *
+	 * @param text 			Encoded string
+	 * @return the byte[]
 	 */
 	public static byte[] toUTF16(String text) {
 		try {
@@ -220,9 +249,10 @@ public class Charset {
 	}
 
 	/**
-	 * Takes a byte array with Unicode characters in it, and turns it into a string
-	 * @param utfData		Data to be processed
-	 * @return
+	 * Takes a byte array with Unicode characters in it, and turns it into a string.
+	 *
+	 * @param utfData 	Data to be processed
+	 * @return the string
 	 */
 	public static String fromUTF16(byte[] utfData) {
 		try {
@@ -233,9 +263,10 @@ public class Charset {
 	}
 
 	/**
-	 * Turns a string into a Unicode series of bytes. 
-	 * @param text				Encoded string
-	 * @return
+	 * Turns a string into a Unicode series of bytes.
+	 *
+	 * @param text 			Encoded string
+	 * @return the byte[]
 	 */
 	public static byte[] toUTF8(String text) {
 		try {
@@ -246,9 +277,10 @@ public class Charset {
 	}
 
 	/**
-	 * Takes a byte array with Unicode characters in it, and turns it into a string
-	 * @param utfData		Data to be processed
-	 * @return
+	 * Takes a byte array with Unicode characters in it, and turns it into a string.
+	 *
+	 * @param utfData 	Data to be processed
+	 * @return the string
 	 */
 	public static String fromUTF8(byte[] utfData) {
 		try {

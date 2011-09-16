@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.nio.ByteBuffer;
@@ -62,8 +77,10 @@ public class MessageData {
 
 	/**
 	 * Returns an instance of a new MessageData entry in the storage file.
-	 * @return
-	 * @throws StorageFileException
+	 *
+	 * @param parent the parent
+	 * @return the message data
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static MessageData createMessageData(Conversation parent) throws StorageFileException {
 		// create a new one
@@ -74,7 +91,10 @@ public class MessageData {
 
 	/**
 	 * Returns an instance of Empty class with given index in file.
-	 * @param index		Index in file
+	 *
+	 * @param index 	Index in file
+	 * @return the message data
+	 * @throws StorageFileException the storage file exception
 	 */
 	static MessageData getMessageData(long index) throws StorageFileException {
 		if (index <= 0L)
@@ -179,7 +199,8 @@ public class MessageData {
 
 	/**
 	 * Save the contents of this class to its place in the storage file.
-	 * @throws StorageFileException
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void saveToFile() throws StorageFileException {
 		ByteBuffer msgBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
@@ -272,9 +293,10 @@ public class MessageData {
 	}
 	
 	/**
-	 * Replaces assigned message parts with given list
-	 * @param list
-	 * @throws StorageFileException
+	 * Replaces assigned message parts with given list.
+	 *
+	 * @param list the list
+	 * @throws StorageFileException the storage file exception
 	 */
 	void assignMessageDataParts(ArrayList<MessageDataPart> list) throws StorageFileException {
 		// delete all previous message parts
@@ -316,8 +338,9 @@ public class MessageData {
 	}
 	
 	/**
-	 * Delete Message and all the MessageParts it controls
-	 * @throws StorageFileException
+	 * Delete Message and all the MessageParts it controls.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void delete() throws StorageFileException {
 		MessageData prev = this.getPreviousMessageData();
@@ -364,7 +387,11 @@ public class MessageData {
 	// MESSAGE HIGH LEVEL
 	
 	/**
-	 * Returns the data assigned to message part at given index
+	 * Returns the data assigned to message part at given index.
+	 *
+	 * @param index the index
+	 * @return the part data
+	 * @throws StorageFileException the storage file exception
 	 */
 	public byte[] getPartData(int index) throws StorageFileException {
 		if (index == 0) 
@@ -461,10 +488,11 @@ public class MessageData {
 	}
 	
 	/**
-	 * Sets data to given message part
-	 * @param index
-	 * @param data
-	 * @throws StorageFileException
+	 * Sets data to given message part.
+	 *
+	 * @param index the index
+	 * @param data the data
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void setPartData(int index, byte[] data) throws StorageFileException {
 		// if it's too long, just cut it
@@ -482,10 +510,11 @@ public class MessageData {
 	}
 
 	/**
-	 * Returns whether given message part was delivered
-	 * @param index
-	 * @return
-	 * @throws StorageFileException
+	 * Returns whether given message part was delivered.
+	 *
+	 * @param index the index
+	 * @return the part delivered
+	 * @throws StorageFileException the storage file exception
 	 */
 	public boolean getPartDelivered(int index) throws StorageFileException {
 		if (index == 0)
@@ -495,10 +524,11 @@ public class MessageData {
 	}
 
 	/**
-	 * Sets whether given message part was delivered
-	 * @param index
-	 * @return
-	 * @throws StorageFileException
+	 * Sets whether given message part was delivered.
+	 *
+	 * @param index the index
+	 * @param delivered the delivered
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void setPartDelivered(int index, boolean delivered) throws StorageFileException {
 		if (index == 0) {

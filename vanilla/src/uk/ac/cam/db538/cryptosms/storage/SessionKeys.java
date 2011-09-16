@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.util.ArrayList;
@@ -8,6 +23,7 @@ import uk.ac.cam.db538.cryptosms.crypto.EncryptionInterface.EncryptionException;
 import uk.ac.cam.db538.cryptosms.utils.Charset;
 import uk.ac.cam.db538.cryptosms.utils.LowLevel;
 import uk.ac.cam.db538.cryptosms.utils.SimNumber;
+
 
 /**
  * 
@@ -56,7 +72,11 @@ public class SessionKeys {
 	}
 
 	/**
-	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file  
+	 * Returns a new instance of the SessionKeys class, which replaces an empty entry in the file.
+	 *
+	 * @param parent the parent
+	 * @return the session keys
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static SessionKeys createSessionKeys(Conversation parent) throws StorageFileException {
 		SessionKeys keys = new SessionKeys(Empty.getEmptyIndex(), false);
@@ -65,8 +85,11 @@ public class SessionKeys {
 	}
 
 	/**
-	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file  
-	 * @param index		Index in file
+	 * Returns a new instance of the SessionKeys class, which represents a given entry in the file.
+	 *
+	 * @param index 	Index in file
+	 * @return the session keys
+	 * @throws StorageFileException the storage file exception
 	 */
 	static SessionKeys getSessionKeys(long index) throws StorageFileException {
 		if (index <= 0L)
@@ -156,8 +179,9 @@ public class SessionKeys {
 	// FUNCTIONS
 
 	/**
-	 * Saves contents of the class to the storage file
-	 * @throws StorageFileException
+	 * Saves contents of the class to the storage file.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void saveToFile() throws StorageFileException {
 		byte[] keysBuffer = new byte[Storage.ENCRYPTED_ENTRY_SIZE];
@@ -233,8 +257,9 @@ public class SessionKeys {
 	}
 	
 	/**
-	 * Delete Message and all the MessageParts it controls
-	 * @throws StorageFileException
+	 * Delete Message and all the MessageParts it controls.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void delete() throws StorageFileException {
 		SessionKeys prev = this.getPreviousSessionKeys();
@@ -303,11 +328,21 @@ public class SessionKeys {
 		}
 	}
 	
+	/**
+	 * Increments outgoing session key
+	 *
+	 * @param count the count
+	 */
 	public void incrementOut(int count) {
 		for (int i = 0; i < count; ++i)
 			setSessionKey_Out(Encryption.getEncryption().getHash(getSessionKey_Out()));
 	}
 	
+	/**
+	 * Increments incoming session key
+	 *
+	 * @param count the count
+	 */
 	public void incrementIn(int count) {
 		for (int i = 0; i < count; ++i)
 			setSessionKey_In(Encryption.getEncryption().getHash(getSessionKey_In()));

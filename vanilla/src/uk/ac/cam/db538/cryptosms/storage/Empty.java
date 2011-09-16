@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.nio.ByteBuffer;
@@ -33,8 +48,10 @@ class Empty {
 	}
 	
 	/**
-	 * Returns an instance of Empty class at the end of the file
-	 * @param index		Index in file
+	 * Returns an instance of Empty class at the end of the file.
+	 *
+	 * @return the empty
+	 * @throws StorageFileException the storage file exception
 	 */
 	static Empty createEmpty() throws StorageFileException {
 		// create a new one at the end of the file
@@ -45,7 +62,10 @@ class Empty {
 
 	/**
 	 * Returns an instance of Empty class with given index in file. Reads it from the file if not cached.
-	 * @param index		Index in file
+	 *
+	 * @param index 	Index in file
+	 * @return the empty
+	 * @throws StorageFileException the storage file exception
 	 */
 	static Empty getEmpty(long index) throws StorageFileException {
 		if (index <= 0L)
@@ -65,9 +85,10 @@ class Empty {
 	/**
 	 * Creates a new Empty class at the index of an already existing element.
 	 * This old element has to make sure that it there are no pointers pointing to it before it asks to be written over.
-	 * @param index		Index in the file
-	 * @return	
-	 * @throws StorageFileException
+	 *
+	 * @param index 	Index in the file
+	 * @return the empty
+	 * @throws StorageFileException the storage file exception
 	 */
 	static Empty replaceWithEmpty(long index) throws StorageFileException {
 		Empty empty = new Empty(index, false);
@@ -86,9 +107,10 @@ class Empty {
 	
 	/**
 	 * Returns an index of several entries that were removed from the linked list of empty entries and are now available to be replaced by useful data entry.
-	 * @param count		Number of entries requested
-	 * @return
-	 * @throws StorageFileException
+	 *
+	 * @param count 	Number of entries requested
+	 * @return the empty indices
+	 * @throws StorageFileException the storage file exception
 	 */
 	static long[] getEmptyIndices(int count) throws StorageFileException {
 		long[] indices = new long[count];
@@ -117,9 +139,10 @@ class Empty {
 	}
 	
 	/**
-	 * Appends new empty entries to the storage file
-	 * @param count		Number of entries requested
-	 * @throws StorageFileException
+	 * Appends new empty entries to the storage file.
+	 *
+	 * @param count 	Number of entries requested
+	 * @throws StorageFileException the storage file exception
 	 */
 	static void addEmptyEntries(int count) throws StorageFileException {
 		for (int i = 0; i < count; ++i) {
@@ -184,8 +207,9 @@ class Empty {
 	// FUNCTIONS
 	
 	/**
-	 * Saves contents of the class to the storage file
-	 * @throws StorageFileException
+	 * Saves contents of the class to the storage file.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void saveToFile() throws StorageFileException {
 		ByteBuffer entryBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);

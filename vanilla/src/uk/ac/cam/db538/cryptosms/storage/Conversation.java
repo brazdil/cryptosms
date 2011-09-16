@@ -1,3 +1,18 @@
+/*
+ *   Copyright 2011 David Brazdil
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 package uk.ac.cam.db538.cryptosms.storage;
 
 import java.nio.ByteBuffer;
@@ -54,8 +69,9 @@ public class Conversation implements Comparable<Conversation> {
 	
 	/**
 	 * Returns instance of a new Conversation created in one of the empty spaces in file.
-	 * @return
-	 * @throws StorageFileException 
+	 *
+	 * @return the conversation
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static Conversation createConversation() throws StorageFileException {
 		// create a new one
@@ -67,7 +83,10 @@ public class Conversation implements Comparable<Conversation> {
 	
 	/**
 	 * Returns an instance of Conversation class with given index in file.
-	 * @param phoneNumber		Contacts phone number
+	 *
+	 * @param phoneNumber 	Contacts phone number
+	 * @return the conversation
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static Conversation getConversation(String phoneNumber) throws StorageFileException {
 		Conversation conv = Header.getHeader().getFirstConversation();
@@ -81,7 +100,10 @@ public class Conversation implements Comparable<Conversation> {
 
 	/**
 	 * Returns an instance of Conversation class with given index in file.
-	 * @param index		Index in file
+	 *
+	 * @param index 	Index in file
+	 * @return the conversation
+	 * @throws StorageFileException the storage file exception
 	 */
 	static Conversation getConversation(long index) throws StorageFileException {
 		if (index <= 0L)
@@ -98,10 +120,10 @@ public class Conversation implements Comparable<Conversation> {
 		return new Conversation(index, true);
 	}
 	
-	/** 
-	 * Explicitly requests each conversation in the file to be loaded to memory
-	 * @throws StorageFileException
-	 * @throws WrongKeyException 
+	/**
+	 * Explicitly requests each conversation in the file to be loaded to memory.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static void cacheAllConversations() throws StorageFileException {
 		Conversation convCurrent = Header.getHeader().getFirstConversation();
@@ -157,6 +179,8 @@ public class Conversation implements Comparable<Conversation> {
 	
 	/**
 	 * Saves data to the storage file.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void saveToFile() throws StorageFileException {
 		ByteBuffer convBuffer = ByteBuffer.allocate(Storage.ENCRYPTED_ENTRY_SIZE);
@@ -217,9 +241,10 @@ public class Conversation implements Comparable<Conversation> {
 
 	/**
 	 * Attaches new SessionKeys object to the conversation.
-	 * Deletes other SessionKeys already attached with the same simNumber. 
-	 * @param keys
-	 * @throws StorageFileException
+	 * Deletes other SessionKeys already attached with the same simNumber.
+	 *
+	 * @param keys the keys
+	 * @throws StorageFileException the storage file exception
 	 */
 	void attachSessionKeys(SessionKeys keys) throws StorageFileException {
 		long indexFirstInStack = getIndexSessionKeys();
@@ -237,9 +262,10 @@ public class Conversation implements Comparable<Conversation> {
 	}
 	
 	/**
-	 * Attach new MessageData object to the conversation 
-	 * @param msg
-	 * @throws StorageFileException
+	 * Attach new MessageData object to the conversation.
+	 *
+	 * @param msg the msg
+	 * @throws StorageFileException the storage file exception
 	 */
 	void attachMessageData(MessageData msg) throws StorageFileException {
 		long indexFirstInStack = getIndexMessages();
@@ -265,6 +291,11 @@ public class Conversation implements Comparable<Conversation> {
 		return MessageData.getMessageData(mIndexMessages);
 	}
 	
+	/**
+	 * Checks for message data.
+	 *
+	 * @return true, if successful
+	 */
 	public boolean hasMessageData() {
 		return mIndexMessages != 0;
 	}
@@ -285,8 +316,9 @@ public class Conversation implements Comparable<Conversation> {
 	}
 
 	/**
-	 * Delete MessageData and all the MessageDataParts it controls
-	 * @throws StorageFileException
+	 * Delete MessageData and all the MessageDataParts it controls.
+	 *
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void delete() throws StorageFileException {
 		Conversation prev = this.getPreviousConversation();
@@ -339,10 +371,11 @@ public class Conversation implements Comparable<Conversation> {
 	}
 
 	/**
-	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any
-	 * @param simNumber
-	 * @return
-	 * @throws StorageFileException
+	 * Returns session keys assigned to this conversation for specified SIM number, or null if there aren't any.
+	 *
+	 * @param simNumber the sim number
+	 * @return the session keys
+	 * @throws StorageFileException the storage file exception
 	 */
 	public SessionKeys getSessionKeys(SimNumber simNumber) throws StorageFileException {
 		SessionKeys keys = getFirstSessionKeys();
@@ -361,9 +394,10 @@ public class Conversation implements Comparable<Conversation> {
 	 * its SIM number is replaced for the one in param replacement and
 	 * all the other keys matching the param replacement are deleted.
 	 * If there isn't one matching param original, nothing happens.
-	 * @param original
-	 * @param replacement
-	 * @throws StorageFileException
+	 *
+	 * @param original the original
+	 * @param replacement the replacement
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void replaceSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException {
 		if (original.equals(replacement))
@@ -420,8 +454,9 @@ public class Conversation implements Comparable<Conversation> {
 	 * Goes through all the SessionKeys assigned with the Conversation
 	 * and deletes those that match the simNumber in parameter,
 	 * Nothing happens if none are found.
-	 * @param simNumber
-	 * @throws StorageFileException
+	 *
+	 * @param simNumber the sim number
+	 * @throws StorageFileException the storage file exception
 	 */
 	public void deleteSessionKeys(SimNumber simNumber) throws StorageFileException {
 		SessionKeys temp, keys = getFirstSessionKeys();
@@ -478,6 +513,10 @@ public class Conversation implements Comparable<Conversation> {
 	/**
 	 * Calls replaceSessionKeys on all the conversations.
 	 * Calls an update of listeners afterwards.
+	 *
+	 * @param original the original
+	 * @param replacement the replacement
+	 * @throws StorageFileException the storage file exception
 	 */
 	public static void changeAllSessionKeys(SimNumber original, SimNumber replacement) throws StorageFileException {
 		Conversation conv = Header.getHeader().getFirstConversation();
@@ -515,9 +554,10 @@ public class Conversation implements Comparable<Conversation> {
 	}
 
 	/**
-	 * Filters list of SIM numbers, looking only for phone numbers
-	 * @param simNumbers
-	 * @return
+	 * Filters list of SIM numbers, looking only for phone numbers.
+	 *
+	 * @param simNumbers the sim numbers
+	 * @return the array list
 	 */
 	public static ArrayList<SimNumber> filterOnlyPhoneNumbers(ArrayList<SimNumber> simNumbers) {
 		ArrayList<SimNumber> phoneNumbers = new ArrayList<SimNumber>();
@@ -528,10 +568,11 @@ public class Conversation implements Comparable<Conversation> {
 	}
 
 	/**
-	 * Filters list of SIM numbers, removing specified one
-	 * @param simNumbers
-	 * @param filter
-	 * @return
+	 * Filters list of SIM numbers, removing specified one.
+	 *
+	 * @param simNumbers the sim numbers
+	 * @param filter the filter
+	 * @return the array list
 	 */
 	public static ArrayList<SimNumber> filterOutNumber(ArrayList<SimNumber> simNumbers, SimNumber filter) {
 		ArrayList<SimNumber> numbers = new ArrayList<SimNumber>();
@@ -598,6 +639,9 @@ public class Conversation implements Comparable<Conversation> {
 		this.mIndexNext = indexNext;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(Conversation another) {
 		try {

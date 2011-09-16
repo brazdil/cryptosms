@@ -11,6 +11,12 @@ class Util {
     //......................................................................
     // utility conversions between byte, short and int arrays
 
+    /**
+     * Short2byte.
+     *
+     * @param sa the sa
+     * @return the byte[]
+     */
     public static byte[] short2byte (short[] sa) {
         int length = sa.length;
         byte[] ba = new byte[length * 2];
@@ -23,6 +29,12 @@ class Util {
     }
 
     //......................................................................
+    /**
+     * Byte2short.
+     *
+     * @param ba the ba
+     * @return the short[]
+     */
     public static short[] byte2short (byte[] ba) {
         int length = ba.length;
         short[] sa = new short[length / 2];
@@ -34,6 +46,12 @@ class Util {
     }
 
     //......................................................................
+    /**
+     * Int2byte.
+     *
+     * @param ia the ia
+     * @return the byte[]
+     */
     public static byte[] int2byte (int[] ia) {
         int length = ia.length;
         byte[] ba = new byte[length * 4];
@@ -48,6 +66,12 @@ class Util {
     }
 
     //......................................................................
+    /**
+     * Byte2int.
+     *
+     * @param ba the ba
+     * @return the int[]
+     */
     public static int[] byte2int (byte[] ba) {
         int length = ba.length;
         int[] ia = new int[length / 4];
@@ -265,7 +289,7 @@ class Util {
 
     //......................................................................
     /**
-     * Returns true if the string consists ONLY of valid hex characters
+     * Returns true if the string consists ONLY of valid hex characters.
      *
      * @param hex string of hex characters
      * @return true if a valid hex string
